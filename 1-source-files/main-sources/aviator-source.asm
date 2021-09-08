@@ -65,44 +65,7 @@ L0172 = &0172
 L0173 = &0173
 L0174 = &0174
 L0175 = &0175
-USERV = &0200
-BRKV = &0202
-IRQ1V = &0204
-IRQ2V = &0206
-CLIV = &0208
-BYTEV = &020A
-WORDV = &020C
-WRCHV = &020E
-RDCHV = &0210
-FILEV = &0212
-ARGSV = &0214
-BGETV = &0216
-BPUTV = &0218
-GBPBV = &021A
-FINDV = &021C
-FSCV = &021E
-EVENTV = &0220
-UPTV = &0222
-NETV = &0224
-VDUV = &0226
-KEYV = &0228
-INSV = &022A
-REMV = &022C
-CNPV = &022E
-INDV1 = &0230
-INDV2 = &0232
-INDV3 = &0234
-L0400 = &0400
-L04D8 = &04D8
-L04D9 = &04D9
-L04EC = &04EC
-L0500 = &0500
-L05C8 = &05C8
-L0600 = &0600
 L0700 = &0700
-L075F = &075F
-L07E4 = &07E4
-L07FC = &07FC
 L0900 = &0900
 L091F = &091F
 L095F = &095F
@@ -112,14 +75,6 @@ L0A1F = &0A1F
 L0A5F = &0A5F
 L0AFC = &0AFC
 L0AFD = &0AFD
-L0B00 = &0B00
-L0B1F = &0B1F
-L0B54 = &0B54
-L0B5E = &0B5E
-L0B6A = &0B6A
-L0BFC = &0BFC
-L0BFD = &0BFD
-L0BFF = &0BFF
 L0C00 = &0C00
 L0C01 = &0C01
 L0C02 = &0C02
@@ -146,7 +101,6 @@ L0C26 = &0C26
 L0C2A = &0C2A
 L0C2D = &0C2D
 L0C2E = &0C2E
-L0C30 = &0C30
 L0C32 = &0C32
 L0C40 = &0C40
 L0C43 = &0C43
@@ -278,6 +232,19 @@ L1025 = &1025
 L1064 = &1064
 L107B = &107B
 L107F = &107F
+
+L5800 = &5800
+L5900 = &5900
+L5A00 = &5A00
+L5B00 = &5B00
+L5C00 = &5C00
+L5D00 = &5D00
+
+L5940 = &5940
+L5948 = &5948
+L5A68 = &5A68
+L5A70 = &5A70
+
 L6020 = &6020
 L6160 = &6160
 L6258 = &6258
@@ -308,33 +275,29 @@ L7E9A = &7E9A
 L7EAA = &7EAA
 L8CA9 = &8CA9
 VIA = &FE00
-LFE64 = &FE64
-LFE65 = &FE65
-LFE6B = &FE6B
-OSWRSC = &FFB3
-OSRDSC = &FFB9
-OSEVEN = &FFBF
-GSINIT = &FFC2
-GSREAD = &FFC5
-NVRDCH = &FFC8
-NNWRCH = &FFCB
-OSFIND = &FFCE
-OSGBPB = &FFD1
-OSBPUT = &FFD4
-OSBGET = &FFD7
-OSARGS = &FFDA
-OSFILE = &FFDD
-OSRDCH = &FFE0
-OSASCI = &FFE3
-OSNEWL = &FFE7
 OSWRCH = &FFEE
 OSWORD = &FFF1
 OSBYTE = &FFF4
 OSCLI = &FFF7
 
- org &1100
+CODE% = &1100
 
-.BeebDisStartAddr
+ORG CODE%
+
+\ ******************************************************************************
+\
+\       Name: L1100
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L1100
 
  DEX
  SEC
@@ -4516,7 +4479,7 @@ L1D47 = L1D46+1
  JSR L4B4C
 
  LDA #&14
- STA L075F
+ STA L075E+1
  LDA #&F6
  STA L095F
  LDA #&FC
@@ -4861,7 +4824,7 @@ L1D47 = L1D46+1
 
 .L2608
 
- STA L0BFF,X
+ STA L0BFE+1,X
  DEX
  BNE L2608
 
@@ -4984,9 +4947,9 @@ L1D47 = L1D46+1
  JSR L250E
 
  LDA #&40
- STA LFE6B
+ STA VIA+&6B
  LDA #&EA
- STA LFE65
+ STA VIA+&65
 
 .L26C4
 
@@ -5018,10 +4981,10 @@ L1D47 = L1D46+1
 
  LDY L008A
  LDA #&3C
- STA L0500,Y
+ STA L04FF+1,Y
  INY
  LDA #&3D
- STA L0500,Y
+ STA L04FF+1,Y
  INY
  STY L008A
  JMP L2704
@@ -5040,7 +5003,7 @@ L1D47 = L1D46+1
 .L270E
 
  STA L04D8,X
- STA L04EC,X
+ STA L04EB+1,X
  DEX
  BPL L270E
 
@@ -5287,7 +5250,7 @@ L1D47 = L1D46+1
 .L285B
 
  INX
- LDY L0600,X
+ LDY L05FE+2,X
  STX L0CC6
  LDX L3F30,Y
  LDA #&00
@@ -5309,7 +5272,7 @@ L1D47 = L1D46+1
 .L287F
 
  LDX L008C
- LDA L0500,X
+ LDA L04FF+1,X
  STA L008B
  LDA #&01
  STA L0089
@@ -5325,14 +5288,14 @@ L1D47 = L1D46+1
 
  INC L008D
  LDX L008D
- STA L0500,X
+ STA L04FF+1,X
  JMP L28A7
 
 .L28A0
 
  INC L008F
  LDX L008F
- STA L0600,X
+ STA L05FE+2,X
 
 .L28A7
 
@@ -5375,7 +5338,7 @@ L1D47 = L1D46+1
 .L28C2
 
  LDX L008C
- LDY L0500,X
+ LDY L04FF+1,X
  STY L008B
  LDX L3F30,Y
  STX L0088
@@ -5412,7 +5375,7 @@ L1D47 = L1D46+1
  INC L008D
  LDX L008D
  LDA L008B
- STA L0500,X
+ STA L04FF+1,X
  JMP L291B
 
 .L2910
@@ -5422,7 +5385,7 @@ L1D47 = L1D46+1
 
  INC L008F
  LDX L008F
- STA L0600,X
+ STA L05FE+2,X
 
 .L291B
 
@@ -5476,7 +5439,7 @@ L1D47 = L1D46+1
  ADC #&01
  STA L008E
  TAX
- LDA L0600,X
+ LDA L05FE+2,X
  STA L008B
  CMP #&3C
  BEQ L293A
@@ -5496,7 +5459,7 @@ L1D47 = L1D46+1
 
  INC L008F
  LDX L008F
- STA L0600,X
+ STA L05FE+2,X
  RTS
 
 \ ******************************************************************************
@@ -5517,7 +5480,7 @@ L1D47 = L1D46+1
  INC L008A
  INC L008D
  LDX L008D
- STA L0500,X
+ STA L04FF+1,X
 
 .L2972
 
@@ -6175,7 +6138,7 @@ L1D47 = L1D46+1
 .L2C44
 
  TAX
- LDA L0500,X
+ LDA L04FF+1,X
  STA L008B
  BNE L2C51
 
@@ -6827,7 +6790,7 @@ L1D47 = L1D46+1
  BNE L2F4D
 
  STA L420F,X
- LDA LFE64
+ LDA VIA+&64
  AND #&0F
  CMP #&0E
  BCS L2F4D
@@ -7485,7 +7448,7 @@ L1D47 = L1D46+1
 
 .L31BD
 
- LDA L04D9
+ LDA L04D8+1
  BEQ L31D4
 
  BMI L31C7
@@ -7567,7 +7530,7 @@ L1D47 = L1D46+1
  BEQ L3222
 
  LDA #&40
- STA L04D9
+ STA L04D8+1
  RTS
 
 \ ******************************************************************************
@@ -7881,7 +7844,7 @@ L1D47 = L1D46+1
  SBC L0A1F
  STA L0A00,Y
  LDA L0074
- SBC L0B1F
+ SBC L0B1E+1
  STA L0B00,Y
  STX L007D
  STY L007E
@@ -10124,7 +10087,7 @@ L1D47 = L1D46+1
 .L4D6E
 
  LDX L44F0
- LDA LFE64
+ LDA VIA+&64
  STA L44F1,X
 
 .L4D77
@@ -10635,7 +10598,7 @@ L1D47 = L1D46+1
 
 .L502B
 
- STA L0BFD
+ STA L0BFB+2
  LDA #&FD
  STA L0088
  LDA #&1B
@@ -10849,10 +10812,10 @@ L1D47 = L1D46+1
  STA L0088
  JSR L1D8D
 
- LDA L0BFC
+ LDA L0BFB+1
  SEC
  SBC #&10
- STA L0BFC
+ STA L0BFB+1
  LDX #&83
  LDY #&FC
  JSR L4B25
@@ -11722,7 +11685,7 @@ L1D47 = L1D46+1
  CLC
  ADC L0C30
  STA L0C30
- LDA L0BFD
+ LDA L0BFB+2
  BPL L5593
 
  DEC L0073
@@ -11757,7 +11720,7 @@ L1D47 = L1D46+1
  STA L0AFC
  LDA L0C77
  SBC L0C74
- STA L0BFC
+ STA L0BFB+1
  LDA L0C15
  BMI L55F3
 
@@ -11928,7 +11891,7 @@ L1D47 = L1D46+1
 
  LDX #&EC
  LDY #&04
- LDA LFE64
+ LDA VIA+&64
  LSR A
  JSR L57B3
 
@@ -12210,7 +12173,7 @@ L1D47 = L1D46+1
  LDA L0C15
  BMI L57E3
 
- AND LFE64
+ AND VIA+&64
 
 .L57BB
 
@@ -12299,7 +12262,39 @@ L1D47 = L1D46+1
 
  BRK
 
-.L5800
+\ ******************************************************************************
+\
+\       Name: from5800
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+ORG &5800
+
+.from5800
+
+\ ******************************************************************************
+\
+\       Name: L0400
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+ORG &0400
+
+.L0400
 
  RTI
 
@@ -12311,13 +12306,13 @@ L1D47 = L1D46+1
  LDA L0400,X
  TAY
  AND #&01
- BEQ L5814
+ BEQ L0414
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L5814
+\       Name: L0414
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12328,34 +12323,34 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L5814
+.L0414
 
  TYA
  ORA #&01
  STA L0400,X
  LDA L4900,X
- BMI L5837
+ BMI L0437
 
  STA L0071
- BEQ L582B
+ BEQ L042B
 
  LDA L0700,X
  STA L0070
  JMP L0D46
 
-.L582B
+.L042B
 
  LDA L0700,X
- BNE L5832
+ BNE L0432
 
  LDA #&01
 
-.L5832
+.L0432
 
  STA L0070
  JMP L0D46
 
-.L5837
+.L0437
 
  LDA #&00
  SEC
@@ -12365,14 +12360,14 @@ L1D47 = L1D46+1
  SBC L4900,X
  STA L0071
  LDA L4A00,X
- BMI L5855
+ BMI L0455
 
  STA L0081
  LDA L0900,X
  STA L0080
  JMP L0D6A
 
-.L5855
+.L0455
 
  LDA #&00
  SEC
@@ -12385,7 +12380,7 @@ L1D47 = L1D46+1
  ORA #&08
  STA L007F
  LDA L0B00,X
- BMI L587C
+ BMI L047C
 
  STA L0083
  LDA L0A00,X
@@ -12394,7 +12389,7 @@ L1D47 = L1D46+1
  STA L0082
  JMP L0D94
 
-.L587C
+.L047C
 
  LDA #&00
  SEC
@@ -12410,39 +12405,39 @@ L1D47 = L1D46+1
  STA L007F
  LDA L0081
  CMP L0071
- BCC L58A8
+ BCC L04A8
 
- BNE L58A2
+ BNE L04A2
 
  LDA L0080
  CMP L0070
- BCC L58A8
+ BCC L04A8
 
-.L58A2
+.L04A2
 
  LDA #&20
  ORA L007F
  STA L007F
 
-.L58A8
+.L04A8
 
  LDA L0083
  CMP L0071
- BCC L58BC
+ BCC L04BC
 
- BNE L58B6
+ BNE L04B6
 
  LDA L0082
  CMP L0070
- BCC L58BC
+ BCC L04BC
 
-.L58B6
+.L04B6
 
  LDA L007F
  ORA #&10
  STA L007F
 
-.L58BC
+.L04BC
 
  LDY L0070
  LDX L0071
@@ -12458,6 +12453,9 @@ L1D47 = L1D46+1
  LDA L0087
  STA L0085
  LDY L0080
+
+.L04D8
+
  LDX L0081
  JSR L0E69
 
@@ -12468,6 +12466,9 @@ L1D47 = L1D46+1
  LDA L0087
  STA L0086
  LDY L0082
+
+.L04EB
+
  LDX L0083
  JSR L0E69
 
@@ -12475,21 +12476,19 @@ L1D47 = L1D46+1
 
  LDX L0088
  LDA L4900,X
- BMI L5902
+ BMI L0502
 
  LDA L4A00,X
- BPL L5919
+ BPL L0519
 
-.L58FF
+.L04FF
 
  JMP L0E07
 
-L5900 = L58FF+1
-
-.L5902
+.L0502
 
  LDA L4A00,X
- BMI L5919
+ BMI L0519
 
  LDA #&50
  SEC
@@ -12500,7 +12499,7 @@ L5900 = L58FF+1
  STA L4A00,X
  JMP L0E28
 
-.L5919
+.L0519
 
  LDA #&50
  CLC
@@ -12511,35 +12510,31 @@ L5900 = L58FF+1
  STA L4A00,X
  LDX L0088
  LDA L4900,X
- BMI L5937
+ BMI L0537
 
  LDA L0B00,X
- BPL L594E
+ BPL L054E
 
  JMP L0E3C
 
-.L5937
+.L0537
 
  LDA L0B00,X
- BMI L594E
+ BMI L054E
 
  LDA #&60
  SEC
 
-.L593F
+.L053F
 
  SBC L0071
-L5940 = L593F+1
  STA L0A00,X
  LDA #&00
  SBC L0082
-
-.L5948
-
  STA L0B00,X
  JMP L0E5D
 
-.L594E
+.L054E
 
  LDA #&60
  CLC
@@ -12591,47 +12586,47 @@ L5940 = L593F+1
  ADC L3A00,Y
  TAX
  LDY #&00
- BCC L59BB
+ BCC L05BB
 
  LDY #&10
 
-.L59BB
+.L05BB
 
  LDA L3800,X
  ADC L0070
- BCC L59C3
+ BCC L05C3
 
  INY
 
-.L59C3
+.L05C3
 
  ADC L007B
- BCC L59C8
+ BCC L05C8
 
  INY
 
-.L59C8
+.L05C8
 
  ADC L0073
  STA L0070
  TYA
  ADC L3700,X
  ADC L0071
- BCC L59DB
+ BCC L05DB
 
  CLC
  ADC L0084
  SEC
  JMP L0EDD
 
-.L59DB
+.L05DB
 
  ADC L0084
  ROR A
  ROR L0070
  STA L0071
  LDA L007A
- BEQ L5A16
+ BEQ L0616
 
  AND #&F0
  LDX L0084
@@ -12646,29 +12641,28 @@ L5940 = L593F+1
  LDA L3800,X
  ADC L007A
 
-.L59FE
+.L05FE
 
  LDA L3A00,Y
-L5A00 = L59FE+2
  ADC L3700,X
  ROR A
  CLC
  ADC L0070
  STA L0070
- BCC L5A16
+ BCC L0616
 
  INC L0071
- BNE L5A16
+ BNE L0616
 
  LDA #&FF
  STA L0071
  STA L0070
 
-.L5A16
+.L0616
 
  LDA L007C
  AND #&C0
- BEQ L5A47
+ BEQ L0647
 
  STA L007C
  CLC
@@ -12678,19 +12672,19 @@ L5A00 = L59FE+2
  STA L0077
  LSR A
  BIT L007C
- BVS L5A2F
+ BVS L062F
 
  LDA #&00
  BIT L007C
 
-.L5A2F
+.L062F
 
- BPL L5A34
+ BPL L0634
 
  CLC
  ADC L0077
 
-.L5A34
+.L0634
 
  TAY
  LDX L0071
@@ -12701,15 +12695,15 @@ L5A00 = L59FE+2
  SEC
  SBC L0078
  STA L0070
- BCS L5A47
+ BCS L0647
 
  DEC L0071
 
-.L5A47
+.L0647
 
  RTS
 
- BEQ L5A77
+ BEQ L0677
 
  LDA L4700,X
  AND #&07
@@ -12719,20 +12713,20 @@ L5A00 = L59FE+2
  CMP #&0D
  TXA
  STY L0074
- BCC L5A66
+ BCC L0666
 
-.L5A5B
+.L065B
 
  ASL L0074
  ROL A
- BCC L5A5B
+ BCC L065B
 
  LDY L0074
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L5A63
+\       Name: L0663
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12743,32 +12737,26 @@ L5A00 = L59FE+2
 \
 \ ******************************************************************************
 
-.L5A63
+.L0663
 
  ASL L0074
  ROL A
 
-.L5A66
+.L0666
 
  BIT L0072
-
-.L5A68
-
- BEQ L5A63
+ BEQ L0663
 
  TAY
  LDX L0074
  LDA L3700,X
-
-.L5A70
-
  ORA L3800,Y
  LDY L3800,X
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L5A77
+\       Name: L0677
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12779,10 +12767,10 @@ L5A00 = L59FE+2
 \
 \ ******************************************************************************
 
-.L5A77
+.L0677
 
  CPY #&00
- BEQ L5A97
+ BEQ L0697
 
  LDA L4700,Y
  AND #&07
@@ -12790,18 +12778,18 @@ L5A00 = L59FE+2
  CMP #&04
  TYA
  LDY #&00
- BCC L5A8E
+ BCC L068E
 
-.L5A89
+.L0689
 
  ASL A
- BCC L5A89
+ BCC L0689
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L5A8D
+\       Name: L068D
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12812,14 +12800,14 @@ L5A00 = L59FE+2
 \
 \ ******************************************************************************
 
-.L5A8D
+.L068D
 
  ASL A
 
-.L5A8E
+.L068E
 
  BIT L0072
- BEQ L5A8D
+ BEQ L068D
 
  TAX
  LDA L3800,X
@@ -12827,7 +12815,7 @@ L5A00 = L59FE+2
 
 \ ******************************************************************************
 \
-\       Name: L5A97
+\       Name: L0697
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12838,7 +12826,7 @@ L5A00 = L59FE+2
 \
 \ ******************************************************************************
 
-.L5A97
+.L0697
 
  TSX
  INX
@@ -12868,97 +12856,95 @@ L5A00 = L59FE+2
  TAY
  INY
  CPY #&07
- BCC L5AC6
+ BCC L06C6
 
  JMP L0FCA
 
-.L5AC6
+.L06C6
 
  CPX #&07
- BCC L5AE4
+ BCC L06E4
 
  LDA L0086
  SEC
  SBC L0087
- BEQ L5ADA
+ BEQ L06DA
 
- BPL L5ADE
+ BPL L06DE
 
  LDA L0071
- BMI L5AE4
+ BMI L06E4
 
  JMP L0FE2
 
-.L5ADA
+.L06DA
 
  LDA L0071
- BMI L5AE4
+ BMI L06E4
 
-.L5ADE
+.L06DE
 
  LDA L0081
- BMI L5AE4
+ BMI L06E4
 
  INC L0074
 
-.L5AE4
+.L06E4
 
  TYA
- BMI L5AF0
+ BMI L06F0
 
  JMP L0FEC
 
-.L5AEA
+.L06EA
 
  DEX
  DEY
  CPY L0074
- BCS L5AEA
+ BCS L06EA
 
-.L5AF0
+.L06F0
 
  TXA
- BMI L5AFC
+ BMI L06FC
 
  JMP L0FF8
 
-.L5AF6
+.L06F6
 
  DEX
  DEY
  CPX L0074
- BCS L5AF6
+ BCS L06F6
 
-.L5AFC
+.L06FC
 
  TXA
- BMI L5B17
+ BMI L0717
 
-.L5AFF
+.L06FF
 
- BNE L5B06
-
-L5B00 = L5AFF+1
+ BNE L0706
  ASL L0080
  JMP L1025
 
-.L5B06
+.L0706
 
  LDA L0081
 
-.L5B08
+.L0708
 
  ASL L0080
  ROL A
  ROL L0083
  DEX
- BNE L5B08
+ BNE L0708
 
  STA L0081
  ASL L0080
  JMP L1025
 
-.L5B17
+.L0717
 
  EOR #&FF
  CLC
@@ -12966,55 +12952,55 @@ L5B00 = L5AFF+1
  TAX
  LDA L0081
 
-.L5B1F
+.L071F
 
  LSR A
  DEX
- BNE L5B1F
+ BNE L071F
 
  STA L0081
- BCC L5B3B
+ BCC L073B
 
  INC L0081
- BNE L5B3B
+ BNE L073B
 
  INC L0083
  LDA L0083
  CMP #&40
- BCC L5B3B
+ BCC L073B
 
  LDA #&3F
  STA L0083
  LDA #&FF
  STA L0081
 
-.L5B3B
+.L073B
 
  TYA
- BMI L5B56
+ BMI L0756
 
- BNE L5B45
+ BNE L0745
 
  ASL L0070
  JMP L1064
 
-.L5B45
+.L0745
 
  LDA L0071
 
-.L5B47
+.L0747
 
  ASL L0070
  ROL A
  ROL L0082
  DEY
- BNE L5B47
+ BNE L0747
 
  STA L0071
  ASL L0070
  JMP L1064
 
-.L5B56
+.L0756
 
  EOR #&FF
  CLC
@@ -13022,38 +13008,51 @@ L5B00 = L5AFF+1
  TAY
  LDA L0071
 
-.L5B5E
+.L075E
 
  LSR A
  DEY
- BNE L5B5E
+ BNE L075E
 
  STA L0071
- BCC L5B7A
+ BCC L077A
 
  INC L0071
- BNE L5B7A
+ BNE L077A
 
  INC L0082
  LDA L0082
  CMP #&40
- BCC L5B7A
+ BCC L077A
 
  LDA #&3F
  STA L0082
  LDA #&FF
  STA L0071
 
-.L5B7A
+.L077A
 
  RTS
 
+\ ******************************************************************************
+\
+\       Name: L0781
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
  LDA #&02
- BNE L5B81
+ BNE L0781
 
  LDA #&00
 
-.L5B81
+.L0781
 
  STA L0076
  LDA #&00
@@ -13078,7 +13077,7 @@ L5B00 = L5AFF+1
  STA L0081
  SBC L0082
  STA L007A
- BPL L5BC9
+ BPL L07C9
 
  LDA #&80
  ORA L0076
@@ -13091,7 +13090,7 @@ L5B00 = L5AFF+1
  SBC L007A
  STA L007A
 
-.L5BC9
+.L07C9
 
  LDA L0A00,Y
  STA L0078
@@ -13102,11 +13101,14 @@ L5B00 = L5AFF+1
  STA L0079
  SBC L0083
  STA L007B
- BPL L5BF1
+ BPL L07F1
 
  LDA #&40
  ORA L0076
  STA L0076
+
+.L07E4
+
  LDA #&00
  SEC
  SBC L0075
@@ -13115,25 +13117,61 @@ L5B00 = L5AFF+1
  SBC L007B
  STA L007B
 
-.L5BF1
+.L07F1
 
  LDA #&00
  LDX L0073
  LDY L0083
- BEQ L5C01
+ BEQ &0801
 
  PHP
  LDX #&00
+
+.L07FC
+
  PLP
  CLC
- BMI L5C02
+ BMI &0802
 
-.L5C00
+COPYBLOCK L0400, P%, from5800
+
+\ ******************************************************************************
+\
+\       Name: from5C00
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+ORG &5C00
+
+.from5C00
+
+\ ******************************************************************************
+\
+\       Name: L0B00
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+ORG &0B00
+
+.L0B00
 
  LDA #&16
-L5C01 = L5C00+1
 
-.L5C02
+.L0B02
 
  JSR OSWRCH
 
@@ -13142,19 +13180,22 @@ L5C01 = L5C00+1
 
  LDY #&00
 
-.L5C0C
+.L0B0C
 
  LDA L0B54,Y
  JSR OSWRCH
 
  INY
  CPY #&0A
- BNE L5C0C
+ BNE L0B0C
 
  LDA #&1F
  JSR OSWRCH
 
  LDA #&04
+
+.L0B1E
+
  JSR OSWRCH
 
  LDA #&0A
@@ -13162,14 +13203,14 @@ L5C01 = L5C00+1
 
  LDY #&00
 
-.L5C28
+.L0B28
 
  LDA L0B5E,Y
  JSR OSWRCH
 
  INY
  CPY #&0B
- BNE L5C28
+ BNE L0B28
 
  LDX #&46
  LDY #&0B
@@ -13186,7 +13227,7 @@ L5C01 = L5C00+1
 
 \ ******************************************************************************
 \
-\       Name: L5C49
+\       Name: L0B49
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -13198,13 +13239,48 @@ L5C01 = L5C00+1
 \ ******************************************************************************
 
  EQUB &41, &53, &48, &42, &44, &20, &37, &31
- EQUB &30, &30, &0D, &17, &00, &0A, &17, &00
- EQUB &00, &00, &00, &00, &00, &50, &6C, &65
- EQUB &61, &73, &65, &20, &77, &61, &69, &74
+ EQUB &30, &30, &0D
 
 \ ******************************************************************************
 \
-\       Name: L5C69
+\       Name: L0B54
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0B54
+
+ EQUB &17, &00, &0A, &17, &00
+ EQUB &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: L0B5E
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0B5E
+
+ EQUB &50, &6C, &65
+ EQUB &61, &73, &65, &20, &77, &61, &69, &74
+ EQUB &0D
+
+\ ******************************************************************************
+\
+\       Name: L0B6A
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13215,25 +13291,38 @@ L5C01 = L5C00+1
 \
 \ ******************************************************************************
 
-.L5C69
+.L0B6A
 
- ORA L8CA9
+ LDA #&8C
  JSR OSBYTE
 
  LDY #&00
 
-.L5C71
+\ ******************************************************************************
+\
+\       Name: L0B71
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0B71
 
  LDA L0400,Y
  STA L0D00,Y
- LDA L0500,Y
+ LDA L04FF+1,Y
  STA L0E00,Y
- LDA L0600,Y
+ LDA L05FE+2,Y
  STA L0F00,Y
  LDA L0700,Y
  STA L1000,Y
  DEY
- BNE L5C71
+ BNE L0B71
 
  NOP
  NOP
@@ -13281,6 +13370,7 @@ L5C01 = L5C00+1
 
  LDX #&03
  LDY #&EF
+
  JSR L0C2E
 
  LDX #&9C
@@ -13297,11 +13387,14 @@ L5C01 = L5C00+1
 
  LDX #&97
  LDY #&F8
+
+.L0BFB
+
  JSR L0C2E
 
- LDY #&79
+.L0BFE
 
-.L5D00
+ LDY #&79
 
  LDX #&00
  JSR L0C64
@@ -13314,12 +13407,12 @@ L5C01 = L5C00+1
  ADC #&30
  TAY
  CPY #&09
- BNE L5D00
+ BNE L0C00
 
  LDY #&FF
  LDX #&13
 
-.L5D17
+.L0C17
 
  JSR L0C64
 
@@ -13328,19 +13421,19 @@ L5C01 = L5C00+1
  ADC #&18
  TAX
  CPX #&A3
- BNE L5D17
+ BNE L0C17
 
  JMP L2698
 
  LDA #&45
- BNE L5D30
+ BNE L0C30
 
  LDA #&04
- BNE L5D30
+ BNE L0C30
 
  LDA #&05
 
-.L5D30
+.L0C30
 
  PHA
  LDA #&19
@@ -13405,16 +13498,16 @@ L5C01 = L5C00+1
 
  STY L0073
 
-.L5D87
+.L0C87
 
  LDA #&00
  LDY L0073
 
-.L5D8B
+.L0C8B
 
  STA (L0070),Y
  DEY
- BNE L5D8B
+ BNE L0C8B
 
  LDA L0070
  CLC
@@ -13424,13 +13517,13 @@ L5C01 = L5C00+1
  ADC #&01
  STA L0071
  DEC L0072
- BNE L5D87
+ BNE L0C87
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L5DA2
+\       Name: L0CA2
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -13454,6 +13547,8 @@ L5C01 = L5C00+1
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00
 
+COPYBLOCK L0B00, P%, from5C00
+
 \ ******************************************************************************
 \
 \       Name: L5E00
@@ -13466,6 +13561,8 @@ L5C01 = L5C00+1
 \ 
 \
 \ ******************************************************************************
+
+ORG &5E00
 
 .L5E00
 
@@ -13489,9 +13586,9 @@ L5C01 = L5C00+1
  LDA L5800,Y
  STA L0400,Y
  LDA L5900,Y
- STA L0500,Y
+ STA L04FF+1,Y
  LDA L5A00,Y
- STA L0600,Y
+ STA L05FE+2,Y
  LDA L5B00,Y
  STA L0700,Y
  LDA L5C00,Y
@@ -13510,6 +13607,5 @@ L5C01 = L5C00+1
  NOP
  JMP L0B00
 
-.BeebDisEndAddr
 
-SAVE "3-assembled-output/AVIA.bin",BeebDisStartAddr,BeebDisEndAddr
+SAVE "3-assembled-output/AVIA.bin", CODE%, P%
