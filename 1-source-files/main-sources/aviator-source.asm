@@ -67,7 +67,20 @@ L0173 = &0173
 L0174 = &0174
 L0175 = &0175
 
+L0400 = &0400
+L04D8 = &04D8
+L04D9 = &04D9
+L04EC = $04EC
+
+L0500 = &0500
+L05C8 = $05C8
+
+L0600 = $0600
+
 L0700 = &0700
+L075F = $075F
+L07E4 = $07E4
+L07FC = $07FC
 
 L0900 = &0900
 L091F = &091F
@@ -216,34 +229,6 @@ L0CFC = &0CFC
 L0CFD = &0CFD
 L0CFE = &0CFE
 L0CFF = &0CFF
-
-L0D00 = &0D00
-L0D01 = &0D01
-L0D46 = &0D46
-L0D6A = &0D6A
-L0D94 = &0D94
-
-L0E00 = &0E00
-L0E07 = &0E07
-L0E28 = &0E28
-L0E3C = &0E3C
-L0E5D = &0E5D
-L0E69 = &0E69
-L0EDD = &0EDD
-
-L0F00 = &0F00
-L0F48 = &0F48
-L0FA7 = &0FA7
-L0FCA = &0FCA
-L0FE2 = &0FE2
-L0FEC = &0FEC
-L0FF8 = &0FF8
-
-L1000 = &1000
-L1025 = &1025
-L1064 = &1064
-L107B = &107B
-L107F = &107F
 
 L5940 = &5940           \ Screen addresses (mode 5 is &5800 to &7FFF)
 L5948 = &5948
@@ -4486,7 +4471,7 @@ L1D47 = L1D46+1
  JSR L4B4C
 
  LDA #&14
- STA L075E+1
+ STA L075F
  LDA #&F6
  STA L095F
  LDA #&FC
@@ -4988,10 +4973,10 @@ L1D47 = L1D46+1
 
  LDY L008A
  LDA #&3C
- STA L04FF+1,Y
+ STA L0500,Y
  INY
  LDA #&3D
- STA L04FF+1,Y
+ STA L0500,Y
  INY
  STY L008A
  JMP L2704
@@ -5010,7 +4995,7 @@ L1D47 = L1D46+1
 .L270E
 
  STA L04D8,X
- STA L04EB+1,X
+ STA L04EC,X
  DEX
  BPL L270E
 
@@ -5257,7 +5242,7 @@ L1D47 = L1D46+1
 .L285B
 
  INX
- LDY L05FE+2,X
+ LDY L0600,X
  STX L0CC6
  LDX L3F30,Y
  LDA #0
@@ -5279,7 +5264,7 @@ L1D47 = L1D46+1
 .L287F
 
  LDX L008C
- LDA L04FF+1,X
+ LDA L0500,X
  STA L008B
  LDA #1
  STA L0089
@@ -5295,14 +5280,14 @@ L1D47 = L1D46+1
 
  INC L008D
  LDX L008D
- STA L04FF+1,X
+ STA L0500,X
  JMP L28A7
 
 .L28A0
 
  INC L008F
  LDX L008F
- STA L05FE+2,X
+ STA L0600,X
 
 .L28A7
 
@@ -5345,7 +5330,7 @@ L1D47 = L1D46+1
 .L28C2
 
  LDX L008C
- LDY L04FF+1,X
+ LDY L0500,X
  STY L008B
  LDX L3F30,Y
  STX L0088
@@ -5382,7 +5367,7 @@ L1D47 = L1D46+1
  INC L008D
  LDX L008D
  LDA L008B
- STA L04FF+1,X
+ STA L0500,X
  JMP L291B
 
 .L2910
@@ -5392,7 +5377,7 @@ L1D47 = L1D46+1
 
  INC L008F
  LDX L008F
- STA L05FE+2,X
+ STA L0600,X
 
 .L291B
 
@@ -5446,7 +5431,7 @@ L1D47 = L1D46+1
  ADC #1
  STA L008E
  TAX
- LDA L05FE+2,X
+ LDA L0600,X
  STA L008B
  CMP #&3C
  BEQ L293A
@@ -5466,7 +5451,7 @@ L1D47 = L1D46+1
 
  INC L008F
  LDX L008F
- STA L05FE+2,X
+ STA L0600,X
  RTS
 
 \ ******************************************************************************
@@ -5487,7 +5472,7 @@ L1D47 = L1D46+1
  INC L008A
  INC L008D
  LDX L008D
- STA L04FF+1,X
+ STA L0500,X
 
 .L2972
 
@@ -6145,7 +6130,7 @@ L1D47 = L1D46+1
 .L2C44
 
  TAX
- LDA L04FF+1,X
+ LDA L0500,X
  STA L008B
  BNE L2C51
 
@@ -7455,7 +7440,7 @@ L1D47 = L1D46+1
 
 .L31BD
 
- LDA L04D8+1
+ LDA L04D9
  BEQ L31D4
 
  BMI L31C7
@@ -7537,7 +7522,7 @@ L1D47 = L1D46+1
  BEQ L3222
 
  LDA #&40
- STA L04D8+1
+ STA L04D9
  RTS
 
 \ ******************************************************************************
@@ -12296,11 +12281,11 @@ ORG &5800
 
 .from5800
 
-ORG &0400
+ORG &0D00
 
 \ ******************************************************************************
 \
-\       Name: L0400
+\       Name: L0D00
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12311,9 +12296,11 @@ ORG &0400
 \
 \ ******************************************************************************
 
-.L0400
+.L0D00
 
  RTI
+
+.L0D01
 
  LDX L0088
  LDA #0
@@ -12323,13 +12310,13 @@ ORG &0400
  LDA L0400,X
  TAY
  AND #1
- BEQ L0414
+ BEQ L0D14
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L0414
+\       Name: L0D14
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12340,34 +12327,34 @@ ORG &0400
 \
 \ ******************************************************************************
 
-.L0414
+.L0D14
 
  TYA
  ORA #1
  STA L0400,X
  LDA L4900,X
- BMI L0437
+ BMI L0D37
 
  STA L0071
- BEQ L042B
+ BEQ L0D2B
 
  LDA L0700,X
  STA L0070
  JMP L0D46
 
-.L042B
+.L0D2B
 
  LDA L0700,X
- BNE L0432
+ BNE L0D32
 
  LDA #1
 
-.L0432
+.L0D32
 
  STA L0070
  JMP L0D46
 
-.L0437
+.L0D37
 
  LDA #0
  SEC
@@ -12376,15 +12363,18 @@ ORG &0400
  LDA #0
  SBC L4900,X
  STA L0071
+
+.L0D46
+
  LDA L4A00,X
- BMI L0455
+ BMI L0D55
 
  STA L0081
  LDA L0900,X
  STA L0080
  JMP L0D6A
 
-.L0455
+.L0D55
 
  LDA #0
  SEC
@@ -12396,8 +12386,11 @@ ORG &0400
  LDA L007F
  ORA #8
  STA L007F
+
+.L0D6A
+
  LDA L0B00,X
- BMI L047C
+ BMI L0D7C
 
  STA L0083
  LDA L0A00,X
@@ -12406,7 +12399,7 @@ ORG &0400
  STA L0082
  JMP L0D94
 
-.L047C
+.L0D7C
 
  LDA #0
  SEC
@@ -12420,41 +12413,44 @@ ORG &0400
  LDA L007F
  ORA #4
  STA L007F
+
+.L0D94
+
  LDA L0081
  CMP L0071
- BCC L04A8
+ BCC L0DA8
 
- BNE L04A2
+ BNE L0DA2
 
  LDA L0080
  CMP L0070
- BCC L04A8
+ BCC L0DA8
 
-.L04A2
+.L0DA2
 
  LDA #&20
  ORA L007F
  STA L007F
 
-.L04A8
+.L0DA8
 
  LDA L0083
  CMP L0071
- BCC L04BC
+ BCC L0DBC
 
- BNE L04B6
+ BNE L0DB6
 
  LDA L0082
  CMP L0070
- BCC L04BC
+ BCC L0DBC
 
-.L04B6
+.L0DB6
 
  LDA L007F
  ORA #&10
  STA L007F
 
-.L04BC
+.L0DBC
 
  LDY L0070
  LDX L0071
@@ -12471,8 +12467,6 @@ ORG &0400
  STA L0085
  LDY L0080
 
-.L04D8
-
  LDX L0081
  JSR L0E69
 
@@ -12483,9 +12477,6 @@ ORG &0400
  LDA L0087
  STA L0086
  LDY L0082
-
-.L04EB
-
  LDX L0083
  JSR L0E69
 
@@ -12493,19 +12484,21 @@ ORG &0400
 
  LDX L0088
  LDA L4900,X
- BMI L0502
+ BMI L0E02
 
  LDA L4A00,X
- BPL L0519
+ BPL L0E19
 
-.L04FF
+.L0DFF
 
  JMP L0E07
 
-.L0502
+.L0E02
 
  LDA L4A00,X
- BMI L0519
+ BMI L0E19
+
+.L0E07
 
  LDA #&50
  SEC
@@ -12516,7 +12509,7 @@ ORG &0400
  STA L4A00,X
  JMP L0E28
 
-.L0519
+.L0E19
 
  LDA #&50
  CLC
@@ -12525,24 +12518,29 @@ ORG &0400
  LDA #0
  ADC L0083
  STA L4A00,X
+
+.L0E28
+
  LDX L0088
  LDA L4900,X
- BMI L0537
+ BMI L0E37
 
  LDA L0B00,X
- BPL L054E
+ BPL L0E4E
 
  JMP L0E3C
 
-.L0537
+.L0E37
 
  LDA L0B00,X
- BMI L054E
+ BMI L0E4E
+
+.L0E3C
 
  LDA #&60
  SEC
 
-.L053F
+.L0E3F
 
  SBC L0071
  STA L0A00,X
@@ -12551,7 +12549,7 @@ ORG &0400
  STA L0B00,X
  JMP L0E5D
 
-.L054E
+.L0E4E
 
  LDA #&60
  CLC
@@ -12560,12 +12558,17 @@ ORG &0400
  LDA #0
  ADC L0082
  STA L0B00,X
+
+.L0E5D
+
  LDA L0400,X
  ORA L007F
  STA L0400,X
  RTS
 
  JSR L0F48
+
+.L0E69
 
  JSR L0F48
 
@@ -12603,47 +12606,50 @@ ORG &0400
  ADC L3A00,Y
  TAX
  LDY #0
- BCC L05BB
+ BCC L0EBB
 
  LDY #&10
 
-.L05BB
+.L0EBB
 
  LDA L3800,X
  ADC L0070
- BCC L05C3
+ BCC L0EC3
 
  INY
 
-.L05C3
+.L0EC3
 
  ADC L007B
- BCC L05C8
+ BCC L0EC8
 
  INY
 
-.L05C8
+.L0EC8
 
  ADC L0073
  STA L0070
  TYA
  ADC L3700,X
  ADC L0071
- BCC L05DB
+ BCC L0EDB
 
  CLC
  ADC L0084
  SEC
  JMP L0EDD
 
-.L05DB
+.L0EDB
 
  ADC L0084
+
+.L0EDD
+
  ROR A
  ROR L0070
  STA L0071
  LDA L007A
- BEQ L0616
+ BEQ L0F16
 
  AND #&F0
  LDX L0084
@@ -12658,7 +12664,7 @@ ORG &0400
  LDA L3800,X
  ADC L007A
 
-.L05FE
+.L0EFE
 
  LDA L3A00,Y
  ADC L3700,X
@@ -12666,20 +12672,20 @@ ORG &0400
  CLC
  ADC L0070
  STA L0070
- BCC L0616
+ BCC L0F16
 
  INC L0071
- BNE L0616
+ BNE L0F16
 
  LDA #&FF
  STA L0071
  STA L0070
 
-.L0616
+.L0F16
 
  LDA L007C
  AND #&C0
- BEQ L0647
+ BEQ L0F47
 
  STA L007C
  CLC
@@ -12689,19 +12695,19 @@ ORG &0400
  STA L0077
  LSR A
  BIT L007C
- BVS L062F
+ BVS L0F2F
 
  LDA #0
  BIT L007C
 
-.L062F
+.L0F2F
 
- BPL L0634
+ BPL L0F34
 
  CLC
  ADC L0077
 
-.L0634
+.L0F34
 
  TAY
  LDX L0071
@@ -12712,38 +12718,17 @@ ORG &0400
  SEC
  SBC L0078
  STA L0070
- BCS L0647
+ BCS L0F47
 
  DEC L0071
 
-.L0647
+.L0F47
 
- RTS
-
- BEQ L0677
-
- LDA L4700,X
- AND #7
- CLC
- ADC #8
- STA L0087
- CMP #&0D
- TXA
- STY L0074
- BCC L0666
-
-.L065B
-
- ASL L0074
- ROL A
- BCC L065B
-
- LDY L0074
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L0663
+\       Name: L0F48
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12754,15 +12739,51 @@ ORG &0400
 \
 \ ******************************************************************************
 
-.L0663
+.L0F48
+
+ BEQ L0F77
+
+ LDA L4700,X
+ AND #7
+ CLC
+ ADC #8
+ STA L0087
+ CMP #&0D
+ TXA
+ STY L0074
+ BCC L0F66
+
+.L0F5B
+
+ ASL L0074
+ ROL A
+ BCC L0F5B
+
+ LDY L0074
+ RTS
+
+\ ******************************************************************************
+\
+\       Name: L0F63
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0F63
 
  ASL L0074
  ROL A
 
-.L0666
+.L0F66
 
  BIT L0072
- BEQ L0663
+ BEQ L0F63
 
  TAY
  LDX L0074
@@ -12773,7 +12794,7 @@ ORG &0400
 
 \ ******************************************************************************
 \
-\       Name: L0677
+\       Name: L0F77
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12784,10 +12805,10 @@ ORG &0400
 \
 \ ******************************************************************************
 
-.L0677
+.L0F77
 
  CPY #0
- BEQ L0697
+ BEQ L0F97
 
  LDA L4700,Y
  AND #7
@@ -12795,18 +12816,18 @@ ORG &0400
  CMP #4
  TYA
  LDY #0
- BCC L068E
+ BCC L0F8E
 
-.L0689
+.L0F89
 
  ASL A
- BCC L0689
+ BCC L0F89
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L068D
+\       Name: L0F8D
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12817,14 +12838,14 @@ ORG &0400
 \
 \ ******************************************************************************
 
-.L068D
+.L0F8D
 
  ASL A
 
-.L068E
+.L0F8E
 
  BIT L0072
- BEQ L068D
+ BEQ L0F8D
 
  TAX
  LDA L3800,X
@@ -12832,7 +12853,7 @@ ORG &0400
 
 \ ******************************************************************************
 \
-\       Name: L0697
+\       Name: L0F97
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12843,7 +12864,7 @@ ORG &0400
 \
 \ ******************************************************************************
 
-.L0697
+.L0F97
 
  TSX
  INX
@@ -12856,6 +12877,21 @@ ORG &0400
  DEX
  STX L0087
  RTS
+
+\ ******************************************************************************
+\
+\       Name: L0FA7
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0FA7
 
  LDA #0
  STA L0082
@@ -12873,95 +12909,105 @@ ORG &0400
  TAY
  INY
  CPY #7
- BCC L06C6
+ BCC L0FC6
 
  JMP L0FCA
 
-.L06C6
+.L0FC6
 
  CPX #7
- BCC L06E4
+ BCC L0FE4
+
+.L0FCA
 
  LDA L0086
  SEC
  SBC L0087
- BEQ L06DA
+ BEQ L0FDA
 
- BPL L06DE
+ BPL L0FDE
 
  LDA L0071
- BMI L06E4
+ BMI L0FE4
 
  JMP L0FE2
 
-.L06DA
+.L0FDA
 
  LDA L0071
- BMI L06E4
+ BMI L0FE4
 
-.L06DE
+.L0FDE
 
  LDA L0081
- BMI L06E4
+ BMI L0FE4
+
+.L0FE2
 
  INC L0074
 
-.L06E4
+.L0FE4
 
  TYA
- BMI L06F0
+ BMI L0FF0
 
  JMP L0FEC
 
-.L06EA
+.L0FEA
 
  DEX
  DEY
- CPY L0074
- BCS L06EA
 
-.L06F0
+.L0FEC
+
+ CPY L0074
+ BCS L0FEA
+
+.L0FF0
 
  TXA
- BMI L06FC
+ BMI L0FFC
 
  JMP L0FF8
 
-.L06F6
+.L0FF6
 
  DEX
  DEY
- CPX L0074
- BCS L06F6
 
-.L06FC
+.L0FF8
+
+ CPX L0074
+ BCS L0FF6
+
+.L0FFC
 
  TXA
- BMI L0717
+ BMI L1017
 
-.L06FF
+.L0FFF
 
- BNE L0706
+ BNE L1006
  ASL L0080
  JMP L1025
 
-.L0706
+.L1006
 
  LDA L0081
 
-.L0708
+.L1008
 
  ASL L0080
  ROL A
  ROL L0083
  DEX
- BNE L0708
+ BNE L1008
 
  STA L0081
  ASL L0080
  JMP L1025
 
-.L0717
+.L1017
 
  EOR #&FF
  CLC
@@ -12969,55 +13015,58 @@ ORG &0400
  TAX
  LDA L0081
 
-.L071F
+.L101F
 
  LSR A
  DEX
- BNE L071F
+ BNE L101F
 
  STA L0081
- BCC L073B
+
+.L1025
+
+ BCC L103B
 
  INC L0081
- BNE L073B
+ BNE L103B
 
  INC L0083
  LDA L0083
  CMP #&40
- BCC L073B
+ BCC L103B
 
  LDA #&3F
  STA L0083
  LDA #&FF
  STA L0081
 
-.L073B
+.L103B
 
  TYA
- BMI L0756
+ BMI L1056
 
- BNE L0745
+ BNE L1045
 
  ASL L0070
  JMP L1064
 
-.L0745
+.L1045
 
  LDA L0071
 
-.L0747
+.L1047
 
  ASL L0070
  ROL A
  ROL L0082
  DEY
- BNE L0747
+ BNE L1047
 
  STA L0071
  ASL L0070
  JMP L1064
 
-.L0756
+.L1056
 
  EOR #&FF
  CLC
@@ -13025,35 +13074,38 @@ ORG &0400
  TAY
  LDA L0071
 
-.L075E
+.L105E
 
  LSR A
  DEY
- BNE L075E
+ BNE L105E
 
  STA L0071
- BCC L077A
+
+.L1064
+
+ BCC L107A
 
  INC L0071
- BNE L077A
+ BNE L107A
 
  INC L0082
  LDA L0082
  CMP #&40
- BCC L077A
+ BCC L107A
 
  LDA #&3F
  STA L0082
  LDA #&FF
  STA L0071
 
-.L077A
+.L107A
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L0781
+\       Name: L107B
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13064,12 +13116,16 @@ ORG &0400
 \
 \ ******************************************************************************
 
+.L107B
+
  LDA #2
- BNE L0781
+ BNE L1081
+
+.L107F
 
  LDA #0
 
-.L0781
+.L1081
 
  STA L0076
  LDA #0
@@ -13094,7 +13150,7 @@ ORG &0400
  STA L0081
  SBC L0082
  STA L007A
- BPL L07C9
+ BPL L10C9
 
  LDA #&80
  ORA L0076
@@ -13107,7 +13163,7 @@ ORG &0400
  SBC L007A
  STA L007A
 
-.L07C9
+.L10C9
 
  LDA L0A00,Y
  STA L0078
@@ -13118,13 +13174,11 @@ ORG &0400
  STA L0079
  SBC L0083
  STA L007B
- BPL L07F1
+ BPL L10F1
 
  LDA #&40
  ORA L0076
  STA L0076
-
-.L07E4
 
  LDA #0
  SEC
@@ -13134,23 +13188,20 @@ ORG &0400
  SBC L007B
  STA L007B
 
-.L07F1
+.L10F1
 
  LDA #0
  LDX L0073
  LDY L0083
- BEQ &0801
+ BEQ &1101
 
  PHP
  LDX #0
-
-.L07FC
-
  PLP
  CLC
- BMI &0802
+ BMI &1102
 
-COPYBLOCK L0400, P%, from5800
+COPYBLOCK L0D00, P%, from5800
 
 \ ******************************************************************************
 \
