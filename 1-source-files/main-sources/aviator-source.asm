@@ -20,10 +20,10 @@
 \
 \ ******************************************************************************
 
-L0070 = &0070
-L0071 = &0071
-L0072 = &0072
-L0073 = &0073
+P = &0070
+Q = &0071
+R = &0072
+S = &0073
 L0074 = &0074
 L0075 = &0075
 L0076 = &0076
@@ -156,7 +156,6 @@ L0C80 = &0C80
 L0C82 = &0C82
 L0C83 = &0C83
 L0C84 = &0C84
-L0C85 = &0C85
 L0C86 = &0C86
 L0C89 = &0C89
 L0C8A = &0C8A
@@ -297,7 +296,7 @@ ORG CODE%
  CPX #&98
  ROR A
  EOR #&40
- LDX L0072
+ LDX R
  LDY L0082
  BEQ L1115
 
@@ -414,9 +413,9 @@ ORG CODE%
  EOR #&C0
  STA L0076
  LDA L0077
- STA L0072
+ STA R
  LDA L0078
- STA L0073
+ STA S
 
 .L1198
 
@@ -527,11 +526,11 @@ ORG CODE%
 
 .L11F1
 
- LDA L0072
+ LDA R
  STA L3C00,X
  LDA L0077
  STA L3C60,X
- LDA L0073
+ LDA S
  STA L3CC0,X
  LDA L0078
  STA L3D20,X
@@ -544,11 +543,11 @@ ORG CODE%
 
 .L1214
 
- LDA L0072
+ LDA R
  LSR A
  LSR A
  TAX
- LDA L0073
+ LDA S
  LSR A
  LSR A
  LSR A
@@ -556,10 +555,10 @@ ORG CODE%
  CLC
  LDA L4F00,X
  ADC L4800,Y
- STA L0070
+ STA P
  LDA L4F28,X
  ADC L4820,Y
- STA L0071
+ STA P+1
  LDA L0075
  CMP L0074
  BCC L1239
@@ -638,7 +637,7 @@ L125D = L125C+1
 
  LDA #&9F
  SEC
- SBC L0073
+ SBC S
  TAY
  LDA #&FF
  SEC
@@ -660,10 +659,10 @@ L125D = L125C+1
 
 .L12C4
 
- LDA L0072
+ LDA R
  AND #3
  TAX
- LDA L0072
+ LDA R
  LSR A
  LSR A
  STA L0081
@@ -775,18 +774,18 @@ L1324 = L1323+1
 
 .L1326
 
- ORA (L0070),Y
- STA (L0070),Y
+ ORA (P),Y
+ STA (P),Y
 
 .L132A
 
- LDA L0070
+ LDA P
  CLC
  ADC #8
- STA L0070
+ STA P
  BCC L1335
 
- INC L0071
+ INC P+1
 
 .L1335
 
@@ -806,15 +805,15 @@ L1343 = L1342+1
 
 .L1345
 
- ORA (L0070),Y
- STA (L0070),Y
- LDA L0070
+ ORA (P),Y
+ STA (P),Y
+ LDA P
  SEC
  SBC #8
- STA L0070
+ STA P
  BCS L1354
 
- DEC L0071
+ DEC P+1
 
 .L1354
 
@@ -837,8 +836,8 @@ L1364 = L1363+1
 
 .L1366
 
- ORA (L0070),Y
- STA (L0070),Y
+ ORA (P),Y
+ STA (P),Y
 
 .L136A
 
@@ -850,21 +849,21 @@ L1364 = L1363+1
  AND #7
  BNE L137D
 
- LDA L0070
+ LDA P
  CLC
 
 .L1373
 
  ADC #&38
 L1374 = L1373+1
- STA L0070
- LDA L0071
+ STA P
+ LDA P+1
 
 .L1379
 
  ADC #1
 L137A = L1379+1
- STA L0071
+ STA P+1
 
 .L137D
 
@@ -952,7 +951,7 @@ L137A = L1379+1
 
  LDA #&9F
  SEC
- SBC L0073
+ SBC S
  TAY
  LDA #&FF
  SEC
@@ -974,7 +973,7 @@ L137A = L1379+1
 
 .L1403
 
- LDA L0072
+ LDA R
  AND #3
  TAX
 
@@ -995,7 +994,7 @@ L1409 = L1408+1
 
  STA L0079
  CLC
- LDX L0072
+ LDX R
 
 .L1417
 
@@ -1004,8 +1003,8 @@ L1418 = L1417+1
 
 .L1419
 
- ORA (L0070),Y
- STA (L0070),Y
+ ORA (P),Y
+ STA (P),Y
  LDA L0083
  ADC L0074
 
@@ -1026,21 +1025,21 @@ L1422 = L1421+1
  AND #7
  BNE L1417
 
- LDA L0070
+ LDA P
  CLC
 
 .L142E
 
  ADC #&C8
 L142F = L142E+1
- STA L0070
- LDA L0071
+ STA P
+ LDA P+1
 
 .L1434
 
  ADC #&FE
 L1435 = L1434+1
- STA L0071
+ STA P+1
  CPY L007B
  CLC
  BNE L1417
@@ -1061,10 +1060,10 @@ L1435 = L1434+1
 L1449 = L1448+1
  BNE L1459
 
- LDA L0070
+ LDA P
  CLC
  ADC #8
- STA L0070
+ STA P
 
 .L1453
 
@@ -1072,7 +1071,7 @@ L1449 = L1448+1
 L1454 = L1453+1
  BCC L1459
 
- INC L0071
+ INC P+1
 
 .L1459
 
@@ -1095,10 +1094,10 @@ L1454 = L1453+1
 L146B = L146A+1
  BNE L147B
 
- LDA L0070
+ LDA P
  SEC
  SBC #8
- STA L0070
+ STA P
 
 .L1475
 
@@ -1106,7 +1105,7 @@ L146B = L146A+1
 L1476 = L1475+1
  BCS L147B
 
- DEC L0071
+ DEC P+1
 
 .L147B
 
@@ -1142,9 +1141,9 @@ L1476 = L1475+1
  EOR #&C0
  STA L0076
  LDA L0CE0
- STA L0072
+ STA R
  LDA L0CE1
- STA L0073
+ STA S
  LDA #4
  BIT L0076
  BMI L149F
@@ -1355,10 +1354,10 @@ L1476 = L1475+1
 
 .L1598
 
- LDA L0073
+ LDA S
  CLC
  ADC #4
- STA L0073
+ STA S
  BCC L15A3
 
  INC L0083
@@ -1405,9 +1404,9 @@ L1476 = L1475+1
 
  LDA #0
  STA L0087
- LDA L0072
+ LDA R
  CLC
- ADC L0073
+ ADC S
  STA L0084
  LDA L0082
  ADC L0083
@@ -1425,9 +1424,9 @@ L1476 = L1475+1
 
  LDA #&80
  STA L0087
- LDA L0073
+ LDA S
  SEC
- SBC L0072
+ SBC R
  STA L0084
  LDA L0083
  SBC L0082
@@ -1450,17 +1449,17 @@ L1476 = L1475+1
  LDA L0074
  CLC
  ADC L0075
- STA L0070
+ STA P
  LDA L007A
  ADC L007B
- STA L0071
- LDA L0070
+ STA P+1
+ LDA P
  CLC
  ADC #2
- STA L0070
+ STA P
  BCC L1623
 
- INC L0071
+ INC P+1
 
 .L1623
 
@@ -1504,8 +1503,8 @@ L1476 = L1475+1
  LDA L0087
  ORA #&40
  STA L0087
- LDA L0073
- STA L0072
+ LDA S
+ STA R
  LDA L0083
  STA L0082
 
@@ -1523,27 +1522,27 @@ L1476 = L1475+1
 
 .L167B
 
- ASL L0070
- ROL L0071
+ ASL P
+ ROL P+1
  ASL L007F
  ROL L0080
 
 .L1683
 
- LDA L0071
+ LDA P+1
  CMP L0085
  BCC L167B
 
  BNE L1691
 
- LDA L0070
+ LDA P
  CMP L0084
  BCC L167B
 
 .L1691
 
- LSR L0071
- ROR L0070
+ LSR P+1
+ ROR P
  ROR L007C
  LSR L0080
  ROR L007F
@@ -1551,13 +1550,13 @@ L1476 = L1475+1
 
 .L169D
 
- LDA L0071
+ LDA P+1
  CMP L0085
  BCC L16BF
 
  BNE L1691
 
- LDA L0070
+ LDA P
  CMP L0084
  BCC L16BF
 
@@ -1569,8 +1568,8 @@ L1476 = L1475+1
 
  BEQ L16BF
 
- LDA L0071
- ORA L0070
+ LDA P+1
+ ORA P
  ORA L007C
  BNE L1691
 
@@ -1593,10 +1592,10 @@ L1476 = L1475+1
  SBC L007C
  STA L0079
  LDA L0084
- SBC L0070
+ SBC P
  STA L0084
  LDA L0085
- SBC L0071
+ SBC P+1
  STA L0085
  BNE L169D
 
@@ -1622,11 +1621,11 @@ L1476 = L1475+1
  LDA L0089
  BMI L1715
 
- LDA L0072
+ LDA R
  CLC
  ADC L0078
- STA L0072
- STA L0073
+ STA R
+ STA S
  LDA L0082
  ADC L0081
  STA L0082
@@ -1635,11 +1634,11 @@ L1476 = L1475+1
 
 .L1715
 
- LDA L0072
+ LDA R
  SEC
  SBC L0078
- STA L0072
- STA L0073
+ STA R
+ STA S
  LDA L0082
  SBC L0081
  STA L0082
@@ -1654,8 +1653,8 @@ L1476 = L1475+1
 
  LDA #&9F
  SEC
- SBC L0072
- STA L0073
+ SBC R
+ STA S
  LDA #0
  SBC L0082
  STA L0083
@@ -1665,8 +1664,8 @@ L1476 = L1475+1
 
  LDA #&9F
  SEC
- SBC L0073
- STA L0072
+ SBC S
+ STA R
  LDA #0
  SBC L0083
  STA L0082
@@ -1676,17 +1675,17 @@ L1476 = L1475+1
  LDA L0082
  BNE L1775
 
- LDA L0072
+ LDA R
  CMP #&9C
  BCS L1775
 
  CMP #4
  BCC L1775
 
- LDA L0073
+ LDA S
  SEC
  SBC #4
- STA L0073
+ STA S
  BCC L1775
 
  CMP #&98
@@ -1695,9 +1694,9 @@ L1476 = L1475+1
  LDA #1
  ORA L0076
  STA L0076
- LDA L0072
+ LDA R
  STA L0CE0
- LDA L0073
+ LDA S
  STA L0CE1
  RTS
 
@@ -1721,11 +1720,11 @@ L1476 = L1475+1
 .L1778
 
  LDA L0077
- STA L0072
+ STA R
  LDA L0081
  STA L0082
  LDA L0078
- STA L0073
+ STA S
  LDA L0079
  STA L0083
  LDA L0085
@@ -1808,12 +1807,12 @@ L1476 = L1475+1
 .L17B3
 
  LDA L3C00,X
- STA L0072
+ STA R
  STA L0CE0
  LDA L3C60,X
  STA L0077
  LDA L3CC0,X
- STA L0073
+ STA S
  STA L0CE1
  LDA L3D20,X
  STA L0078
@@ -1847,7 +1846,7 @@ L1476 = L1475+1
 
 .L17FA
 
- LDA L0072
+ LDA R
  AND #1
  BEQ L1806
 
@@ -1957,8 +1956,8 @@ L1476 = L1475+1
  LDX L0078
  JSR L1902
 
- STA L0071
- STY L0070
+ STA P+1
+ STY P
  LDA L0078
  EOR #&FF
  TAX
@@ -1967,36 +1966,36 @@ L1476 = L1475+1
  STA L0077
  JSR L1902
 
- STA L0073
- STY L0072
+ STA S
+ STY R
  LDY L0CC4
  BIT L007C
  BVS L18CD
 
  BMI L18B3
 
- LDA L0071
+ LDA P+1
  STA L0173,Y
- LDA L0070
+ LDA P
  AND #&FE
  STA L0163,Y
- LDA L0073
+ LDA S
  STA L0170,Y
- LDA L0072
+ LDA R
  AND #&FE
  STA L0160,Y
  JMP L1901
 
 .L18B3
 
- LDA L0071
+ LDA P+1
  STA L0173,Y
- LDA L0070
+ LDA P
  ORA #1
  STA L0163,Y
- LDA L0073
+ LDA S
  STA L0170,Y
- LDA L0072
+ LDA R
  ORA #1
  STA L0160,Y
  BNE L1901
@@ -2005,28 +2004,28 @@ L1476 = L1475+1
 
  BMI L18E9
 
- LDA L0073
+ LDA S
  STA L0173,Y
- LDA L0072
+ LDA R
  AND #&FE
  STA L0163,Y
- LDA L0071
+ LDA P+1
  STA L0170,Y
- LDA L0070
+ LDA P
  ORA #1
  STA L0160,Y
  BNE L1901
 
 .L18E9
 
- LDA L0073
+ LDA S
  STA L0173,Y
- LDA L0072
+ LDA R
  ORA #1
  STA L0163,Y
- LDA L0071
+ LDA P+1
  STA L0170,Y
- LDA L0070
+ LDA P
  AND #&FE
  STA L0160,Y
 
@@ -2090,7 +2089,7 @@ L1476 = L1475+1
 
 .L1931
 
- LDX L0073
+ LDX S
  LDY L0076
  LDA L3800,Y
  ORA L3700,X
@@ -2098,7 +2097,7 @@ L1476 = L1475+1
  AND #&F0
  ORA L4300,X
  STA L0075
- LDX L0072
+ LDX R
  AND #&F0
  ORA L3700,X
  TAX
@@ -2119,7 +2118,7 @@ L1476 = L1475+1
  BIT L007C
  BPL L198E
 
- LDX L0072
+ LDX R
  LDA L0076
  AND #&0F
  ORA L3800,X
@@ -2196,7 +2195,7 @@ L1476 = L1475+1
  LDA L0CCB
  CLC
  ADC #8
- STA L0070
+ STA P
  LDA #2
  STA L0086
 
@@ -2206,7 +2205,7 @@ L1476 = L1475+1
 
 .L19D2
 
- LDY L0070
+ LDY P
  LDA L0080,X
  STA L007A
  AND #&0F
@@ -2214,9 +2213,9 @@ L1476 = L1475+1
  BEQ L1A0C
 
  LDA L4260,Y
- STA L0073
+ STA S
  LDA L4220,Y
- STA L0072
+ STA R
  AND #1
  BEQ L19F2
 
@@ -2226,10 +2225,10 @@ L1476 = L1475+1
 
 .L19F2
 
- STX L0071
+ STX P+1
  JSR L1931
 
- LDX L0071
+ LDX P+1
  LDY L0086
  LDA L0077
  CLC
@@ -2241,11 +2240,11 @@ L1476 = L1475+1
 
 .L1A0C
 
- LDA L0070
+ LDA P
  CMP L0CCB
  BEQ L1A1D
 
- DEC L0070
+ DEC P
  DEX
  BPL L19D2
 
@@ -2265,24 +2264,24 @@ L1476 = L1475+1
  BCS L1A47
 
  LDA L0CE0,X
- STA L0070
+ STA P
  LDA #0
- STA L0072
+ STA R
  LDA L0CE3,X
  BPL L1A37
 
- DEC L0072
+ DEC R
 
 .L1A37
 
- ASL L0070
+ ASL P
  ROL A
- ROL L0072
+ ROL R
  DEY
  BNE L1A37
 
  STA L0CE0,X
- LDA L0072
+ LDA R
  STA L0CE3,X
 
 .L1A47
@@ -2295,16 +2294,16 @@ L1476 = L1475+1
 .L1A4C
 
  LDA #0
- STA L0072
+ STA R
  LDA L0CE3,X
  BPL L1A57
 
- DEC L0072
+ DEC R
 
 .L1A57
 
  STA L0CE0,X
- LDA L0072
+ LDA R
  STA L0CE3,X
  JMP L1A47
 
@@ -2356,17 +2355,17 @@ L1476 = L1475+1
  ADC L007A
  AND #&FE
  ORA L007C
- STA L0072
+ STA R
  LDA L0079
  ADC L007B
- STA L0073
+ STA S
  BCC L1ACF
 
  LDA #&FF
- STA L0073
+ STA S
  LDA #&FE
  ORA L007C
- STA L0072
+ STA R
 
 .L1ACF
 
@@ -2390,16 +2389,16 @@ L1476 = L1475+1
  LDA L0078
  SEC
  SBC L007A
- STA L0072
+ STA R
  LDA L0079
  SBC L007B
- STA L0073
+ STA S
  BCC L1AE8
 
- LDA L0072
+ LDA R
  AND #&FE
  ORA L007C
- STA L0072
+ STA R
  RTS
 
 \ ******************************************************************************
@@ -2419,14 +2418,14 @@ L1476 = L1475+1
 
  LDA #0
  SEC
- SBC L0072
+ SBC R
  AND #&FE
  ORA L007C
  EOR #1
- STA L0072
+ STA R
  LDA #0
- SBC L0073
- STA L0073
+ SBC S
+ STA S
  RTS
 
 \ ******************************************************************************
@@ -2532,9 +2531,9 @@ L1476 = L1475+1
  STA L007B
  LDX L0CC4
  LDA L0164,X
- STA L0072
+ STA R
  LDA L0174,X
- STA L0073
+ STA S
  JSR L1D77
 
  LDY L0CCB
@@ -2544,9 +2543,9 @@ L1476 = L1475+1
  STA L007B
  JSR L1AA6
 
- LDA L0072
+ LDA R
  STA L4223,Y
- LDA L0073
+ LDA S
  STA L4263,Y
  LDA L4225,Y
  STA L007A
@@ -2554,9 +2553,9 @@ L1476 = L1475+1
  STA L007B
  LDX L0CC4
  LDA L0161,X
- STA L0072
+ STA R
  LDA L0171,X
- STA L0073
+ STA S
  JSR L1D77
 
  LDY L0CCB
@@ -2567,15 +2566,15 @@ L1476 = L1475+1
  STA L007B
  JSR L1AA6
 
- LDA L0072
+ LDA R
  STA L4225,Y
- LDA L0073
+ LDA S
  STA L4265,Y
  LDX L0CC4
  LDA L0161,X
- STA L0072
+ STA R
  LDA L0171,X
- STA L0073
+ STA S
  LDX #2
  LDY #0
  JSR L1D13
@@ -2583,9 +2582,9 @@ L1476 = L1475+1
  LDX L0CC4
  LDA L0164,X
  EOR #1
- STA L0072
+ STA R
  LDA L0174,X
- STA L0073
+ STA S
  JSR L1D77
 
  LDY L0CCB
@@ -2599,9 +2598,9 @@ L1476 = L1475+1
  STA L4222,Y
  LDA L0079
  STA L4262,Y
- LDA L0072
+ LDA R
  EOR #1
- STA L0072
+ STA R
  JSR L1D77
 
  LDY L0CCB
@@ -2611,14 +2610,14 @@ L1476 = L1475+1
  STA L007B
  JSR L1AA6
 
- LDA L0072
+ LDA R
  STA L4220,Y
- LDA L0073
+ LDA S
  STA L4260,Y
  LDA L0CE0
- STA L0072
+ STA R
  LDA L0CE3
- STA L0073
+ STA S
  LDX L0CC4
  LDA L0161,X
  STA L007A
@@ -2633,9 +2632,9 @@ L1476 = L1475+1
  STA L007B
  JSR L1AA6
 
- LDA L0072
+ LDA R
  STA L4222,Y
- LDA L0073
+ LDA S
  STA L4262,Y
  LDX L0CC4
  LDA L0163,X
@@ -2690,12 +2689,12 @@ L1476 = L1475+1
  ADC L0CC4
  TAX
  LDA L0160,X
- STA L0072
+ STA R
 
 .L1CFB
 
  LDA L0170,X
- STA L0073
+ STA S
  JMP L1D23
 
 .L1D03
@@ -2706,7 +2705,7 @@ L1476 = L1475+1
  TAX
  LDA L0160,X
  EOR #1
- STA L0072
+ STA R
  JMP L1CFB
 
 .L1D13
@@ -2751,7 +2750,7 @@ L1476 = L1475+1
 .L1D3A
 
  LDX L007B
- LDY L0072
+ LDY R
  JSR L1821
 
  STA L0078
@@ -2769,7 +2768,7 @@ L1D47 = L1D46+1
 
 .L1D4E
 
- LDX L0073
+ LDX S
  LDY L007B
  JSR L1821
 
@@ -2784,7 +2783,7 @@ L1D47 = L1D46+1
 
 .L1D62
 
- LDX L0073
+ LDX S
  LDY L007A
  JSR L1821
 
@@ -2812,7 +2811,7 @@ L1D47 = L1D46+1
 
 .L1D77
 
- LDA L0072
+ LDA R
  EOR L007A
  AND #1
  STA L007C
@@ -2869,7 +2868,7 @@ L1D47 = L1D46+1
  LDA L0CCB
  CLC
  ADC #8
- STA L0070
+ STA P
  LDA #2
  STA L0086
 
@@ -2879,9 +2878,9 @@ L1D47 = L1D46+1
 
 .L1DC5
 
- LDY L0070
+ LDY P
  LDA L4260,Y
- STA L0073
+ STA S
  BNE L1DD5
 
  LDA L4220,Y
@@ -2891,17 +2890,17 @@ L1D47 = L1D46+1
 .L1DD5
 
  LDA L4220,Y
- STA L0072
+ STA R
  LDA L0080,X
  STA L007A
  LDA L0083,X
  STA L007B
  LDA #0
  STA L007C
- STX L0071
+ STX P+1
  JSR L17E3
 
- LDX L0071
+ LDX P+1
  LDY L0086
  LDA L0078
  CLC
@@ -2917,11 +2916,11 @@ L1D47 = L1D46+1
 
 .L1E07
 
- LDY L0070
+ LDY P
  CPY L0CCB
  BEQ L1E18
 
- DEC L0070
+ DEC P
  DEX
  BPL L1DC5
 
@@ -3015,47 +3014,47 @@ L1D47 = L1D46+1
 .L1E7B
 
  LDA L0CEE
- STA L0072
+ STA R
  LDA L0CFE
  LSR A
- ROR L0072
+ ROR R
  LSR A
- ROR L0072
- STA L0073
+ ROR R
+ STA S
  LDA #0
  STA L0074
- LDA L0072
+ LDA R
  LSR A
  LSR A
  CLC
- ADC L0072
+ ADC R
  ROR A
  LSR A
  CLC
- ADC L0072
+ ADC R
  ROR A
  CLC
- ADC L0072
+ ADC R
  ROR A
  LSR A
  STA L4FFF
- LDA L0073
+ LDA S
  LSR A
  ROR L0074
  LSR A
  ROR L0074
  CLC
- ADC L0073
+ ADC S
  ROR A
  ROR L0074
  LSR A
  ROR L0074
  CLC
- ADC L0073
+ ADC S
  ROR A
  ROR L0074
  CLC
- ADC L0073
+ ADC S
  ROR A
  ROR L0074
  LSR A
@@ -3225,11 +3224,11 @@ L1D47 = L1D46+1
 
  LDY #0
  STY L007C
- STY L0072
+ STY R
  JSR L227A
 
  CLC
- STA L0073
+ STA S
  LDY #3
  JSR L227A
 
@@ -3240,12 +3239,12 @@ L1D47 = L1D46+1
  JSR L227A
 
  SEC
- SBC L0073
+ SBC S
  BPL L1FB2
 
  STA L0074
  LDA #&80
- STA L0072
+ STA R
  LDA #0
  SEC
  SBC L0074
@@ -3264,8 +3263,8 @@ L1D47 = L1D46+1
 
  STA L0074
  LDA #&40
- ORA L0072
- STA L0072
+ ORA R
+ STA R
  LDA #0
  SEC
  SBC L0074
@@ -3275,10 +3274,10 @@ L1D47 = L1D46+1
  CLC
  ADC #1
  STA L0078
- LDA L0073
+ LDA S
  CLC
  ADC #&35
- STA L0073
+ STA S
  LDA L0079
  CLC
  ADC #&E3
@@ -3319,7 +3318,7 @@ L1D47 = L1D46+1
 
  LDX #1
  LDA #&80
- STA L0073
+ STA S
  LDA #&50
  STA L0077
  LDA L0C0D
@@ -3384,24 +3383,24 @@ L1D47 = L1D46+1
 .L2058
 
  LDA #&80
- STA L0073
+ STA S
  LDA #&7D
  STA L0077
  LDA L0C1F
- STA L0072
+ STA R
  LDA L0C0F
  LDX #3
 
 .L206A
 
- LSR L0072
+ LSR R
  ROR A
  DEX
  BPL L206A
 
- STA L0072
+ STA R
  LSR A
- ADC L0072
+ ADC R
  LSR A
  LSR A
  STA L0079
@@ -3496,7 +3495,7 @@ L1D47 = L1D46+1
  STA L7524
  LDA #&88
  STA L7534
- LDA L0073
+ LDA S
  STA L007A
  STA L4FAA,X
  LDA L0079
@@ -3518,7 +3517,7 @@ L1D47 = L1D46+1
  LDA L0078
  STA L0075
  STA L4FDA,X
- LDA L0072
+ LDA R
  STA L0076
  STA L4FE2,X
  LDA #0
@@ -3552,7 +3551,7 @@ L1D47 = L1D46+1
  LDA #&D8
  STA L0077
  LDA #0
- STA L0073
+ STA S
  LDA #3
  STA L0074
  LDA #1
@@ -3568,7 +3567,7 @@ L1D47 = L1D46+1
  LDA #&50
  STA L0077
  LDA #&80
- STA L0073
+ STA S
  LDA #1
  STA L0074
  LDA #5
@@ -3593,7 +3592,7 @@ L1D47 = L1D46+1
 .L216E
 
  LDY #0
- STY L0072
+ STY R
  LDY L4F92,X
  INY
  STY L007C
@@ -3613,7 +3612,7 @@ L1D47 = L1D46+1
  BCS L218D
 
  LDY #&40
- STY L0072
+ STY R
  BNE L21A2
 
 .L218D
@@ -3623,7 +3622,7 @@ L1D47 = L1D46+1
 
  ADC L007C
  LDY #&C0
- STY L0072
+ STY R
  BNE L21A4
 
 .L2199
@@ -3632,7 +3631,7 @@ L1D47 = L1D46+1
  BCS L2179
 
  LDY #&80
- STY L0072
+ STY R
 
 .L21A2
 
@@ -3640,10 +3639,10 @@ L1D47 = L1D46+1
 
 .L21A4
 
- STA L0073
+ STA S
  LDA L4F92,X
  SEC
- SBC L0073
+ SBC S
  CMP L4FA2,X
  BCC L21B4
 
@@ -3654,7 +3653,7 @@ L1D47 = L1D46+1
  CLC
  ADC #1
  STA L0078
- LDA L0073
+ LDA S
  CLC
  ADC #1
  LSR A
@@ -3794,10 +3793,10 @@ L1D47 = L1D46+1
  LDA L4800,Y
  CLC
  ADC L4F00,X
- STA L0070
+ STA P
  LDA L4820,Y
  ADC L4F28,X
- STA L0071
+ STA P+1
  LDA #&9F
  SEC
  SBC L007B
@@ -3809,18 +3808,18 @@ L1D47 = L1D46+1
  BMI L226D
 
  LDA L0082,X
- ORA (L0070),Y
+ ORA (P),Y
  JMP L2273
 
 .L226D
 
  LDA L0082,X
  EOR #&FF
- AND (L0070),Y
+ AND (P),Y
 
 .L2273
 
- STA (L0070),Y
+ STA (P),Y
  DEC L0086
  BNE L2215
 
@@ -3956,7 +3955,7 @@ L1D47 = L1D46+1
 
  CLC
  ADC L0077
- BIT L0073
+ BIT S
  BMI L22E8
 
  STA L007B
@@ -4103,7 +4102,7 @@ L1D47 = L1D46+1
  ADC L0C2D,X
  STA L0C2D,X
  LDA L0CB0,X
- STA L0070
+ STA P
  ADC L0C0C,X
  LDY L4F5C,X
  BEQ L235C
@@ -4116,7 +4115,7 @@ L1D47 = L1D46+1
 
  CLC
  ADC #3
- BIT L0070
+ BIT P
  BPL L2367
 
  ADC #&FA
@@ -6302,21 +6301,21 @@ L1D47 = L1D46+1
  JSR L1D8D
 
  LDA L4A00
- STA L0072
+ STA R
  LDA L4900
- STA L0073
+ STA S
  LDX #3
 
 .L2D1A
 
- LSR L0072
+ LSR R
  ROR L0900
- LSR L0073
+ LSR S
  ROR L0700
  DEX
  BPL L2D1A
 
- LSR L0072
+ LSR R
  LDA L0900
  ROR A
  ADC #0
@@ -6538,7 +6537,7 @@ L1D47 = L1D46+1
  CLC
  ADC #&10
  ASL A
- STA L0070
+ STA P
  PHP
  ROR A
  SEC
@@ -6549,7 +6548,7 @@ L1D47 = L1D46+1
  STA L0076
  LDX #2
  LDY #4
- BIT L0070
+ BIT P
  BVS L2E5B
 
  BPL L2E59
@@ -6620,47 +6619,47 @@ L1D47 = L1D46+1
 
  TXA
  LDX #&13
- STX L0072
+ STX R
  LDY #&59
  LDX #&48
 
 .L2EAB
 
- STY L0071
- STX L0070
- STA L0073
+ STY P+1
+ STX P
+ STA S
 
 .L2EB1
 
  LDY #0
- LDA L0073
+ LDA S
 
 .L2EB5
 
- STA (L0070),Y
+ STA (P),Y
  DEY
  BNE L2EB5
 
  LDY #&2F
- INC L0071
+ INC P+1
 
 .L2EBE
 
- STA (L0070),Y
+ STA (P),Y
  DEY
  BPL L2EBE
 
- LDA L0070
+ LDA P
  CLC
  ADC #&40
- STA L0070
+ STA P
  BCC L2ECE
 
- INC L0071
+ INC P+1
 
 .L2ECE
 
- DEC L0072
+ DEC R
  BNE L2EB1
 
  RTS
@@ -7090,7 +7089,7 @@ L1D47 = L1D46+1
  LDA #&7D
  STA L0081
  LDA #&40
- STA L0071
+ STA P+1
  LDA #&A0
  STA L0082
  STA L0080
@@ -7135,7 +7134,7 @@ L1D47 = L1D46+1
  LSR L0081
  LSR L0082
  LSR L0080
- LSR L0071
+ LSR P+1
  DEX
  BNE L3088
 
@@ -7159,14 +7158,14 @@ L1D47 = L1D46+1
 
 .L30AD
 
- STY L0071
+ STY P+1
  JSR L3181
 
- LDY L0071
+ LDY P+1
  STA L0CB8,Y
  LDA L0076
  STA L0CA8,Y
- LDA L0072
+ LDA R
  STA L0CE0,Y
  INY
  CPY #3
@@ -7268,7 +7267,7 @@ L1D47 = L1D46+1
 
  LDA L4400,Y
  CLC
- ADC L0071
+ ADC P+1
  STA L0077,X
  LDA L4478,Y
  ADC #5
@@ -7362,8 +7361,8 @@ L1D47 = L1D46+1
 .L3181
 
  LDA #0
- STA L0070
- STA L0072
+ STA P
+ STA R
  TXA
  CLC
  ADC #&28
@@ -7376,7 +7375,7 @@ L1D47 = L1D46+1
  SBC L4478,X
  BPL L319F
 
- DEC L0070
+ DEC P
 
 .L319F
 
@@ -7384,10 +7383,10 @@ L1D47 = L1D46+1
 
 .L31A1
 
- LSR L0070
+ LSR P
  ROR A
  ROR L0076
- ROR L0072
+ ROR R
  DEY
  BPL L31A1
 
@@ -7647,15 +7646,15 @@ L1D47 = L1D46+1
 .L328B
 
  LDA #0
- STA L0072
+ STA R
  LDA L0CBB,X
  BPL L3296
 
- DEC L0072
+ DEC R
 
 .L3296
 
- LSR L0072
+ LSR R
  ROR A
  STA L0CE3,X
  LDA L0CB8,X
@@ -7665,7 +7664,7 @@ L1D47 = L1D46+1
 
 .L32A4
 
- LSR L0072
+ LSR R
  ROR L0CE3,X
  ROR A
  ROR L0074,X
@@ -7719,13 +7718,13 @@ L1D47 = L1D46+1
  BPL L32EB
 
  LDA L4906
- STA L0070
+ STA P
  LDY #6
 
 .L32FB
 
  LDA L4900,Y
- EOR L0070
+ EOR P
  BMI L3309
 
  INY
@@ -7736,19 +7735,19 @@ L1D47 = L1D46+1
 
 .L3309
 
- LDA L0070
+ LDA P
  BPL L3316
 
  DEY
  LDA #1
- STA L0071
+ STA P+1
  LDX #4
  BNE L331C
 
 .L3316
 
  LDA #2
- STA L0071
+ STA P+1
  LDX #3
 
 .L331C
@@ -7769,7 +7768,7 @@ L1D47 = L1D46+1
  DEX
  BPL L3321
 
- LDX L0071
+ LDX P+1
  JSR L1A67
 
 .L333A
@@ -9134,13 +9133,13 @@ L1D47 = L1D46+1
 
  LDX #7
  LDA #&77
- STA L0070
+ STA P
  LDA #&88
- STA L0071
+ STA P+1
  LDA #&EE
- STA L0072
+ STA R
  LDA #&11
- STA L0073
+ STA S
 
 .L4852
 
@@ -9149,27 +9148,27 @@ L1D47 = L1D46+1
 .L4854
 
  LDA L5948,X
- AND L0070
- ORA L0071
+ AND P
+ ORA P+1
  STA L5948,X
  LDA L5A70,X
- AND L0072
- ORA L0073
+ AND R
+ ORA S
  STA L5A70,X
  DEX
  DEY
  BPL L4854
 
- LDA L0072
+ LDA R
  ASL A
- AND L0072
- STA L0072
- LDA L0070
+ AND R
+ STA R
+ LDA P
  LSR A
- AND L0070
- STA L0070
- ASL L0073
- LSR L0071
+ AND P
+ STA P
+ ASL S
+ LSR P+1
  CPX #&FF
  BNE L4852
 
@@ -9193,7 +9192,7 @@ L1D47 = L1D46+1
  LDY #&5B
  LDX #&C8
  LDA #8
- STA L0072
+ STA R
  LDA #0
  JSR L2EAB
 
@@ -9235,13 +9234,13 @@ L1D47 = L1D46+1
 .L48A2
 
  LDA #&77
- STA L0070
+ STA P
  LDA #&88
- STA L0071
+ STA P+1
  LDA #&EE
- STA L0072
+ STA R
  LDA #&11
- STA L0073
+ STA S
 
 .L48B2
 
@@ -9250,21 +9249,21 @@ L1D47 = L1D46+1
 .L48B4
 
  LDA L5940,X
- AND L0070
- ORA L0071
+ AND P
+ ORA P+1
  STA L5940,X
  LDA L5A68,X
- AND L0072
- ORA L0073
+ AND R
+ ORA S
  STA L5A68,X
  DEX
  DEY
  BPL L48B4
 
- LSR L0072
- LSR L0073
- LSR L0070
- LSR L0071
+ LSR R
+ LSR S
+ LSR P
+ LSR P+1
  CPX #&FF
  BNE L48B2
 
@@ -9273,7 +9272,7 @@ L1D47 = L1D46+1
  LDY #&5B
  LDX #&C0
  LDA #8
- STA L0072
+ STA R
  LDA #0
  JSR L2EAB
 
@@ -9572,30 +9571,30 @@ L1D47 = L1D46+1
 
  RTS
 
- STA L0071
+ STA P+1
  LDY #2
 
 .L4B9F
 
  TYA
  CLC
- ADC L0071
+ ADC P+1
  TAX
  SEC
  LDA L0CED,Y
  SBC L36C0,X
- STA L0070
+ STA P
  LDA L0CFD,Y
  SBC L36D5,X
  BMI L4BC9
 
  LSR A
- ROR L0070
+ ROR P
  LSR A
  BNE L4BC9
 
- ROR L0070
- LDA L0070
+ ROR P
+ LDA P
  CMP L36EA,X
  BCS L4BC9
 
@@ -9941,7 +9940,7 @@ L1D47 = L1D46+1
  DEX
  BPL L4CD1
 
- STA L0070
+ STA P
 
 .L4CD7
 
@@ -9954,23 +9953,23 @@ L1D47 = L1D46+1
 .L4CE0
 
  LDA #0
- STA L0072
+ STA R
  JSR L4D77
 
  TAX
  LDA L44F1,X
  LSR A
- AND L0070
+ AND P
  BCC L4CF4
 
- DEC L0072
+ DEC R
  EOR #&FF
 
 .L4CF4
 
  ADC L0CA8,Y
  STA L0CA8,Y
- LDA L0072
+ LDA R
  ADC L0CB8,Y
  STA L0CB8,Y
  DEY
@@ -10300,7 +10299,7 @@ L1D47 = L1D46+1
  LDY #&5F
  LDX #&88
  LDA #3
- STA L0072
+ STA R
  LDA #0
  JSR L2EAB
 
@@ -10587,16 +10586,16 @@ L1D47 = L1D46+1
  LDX L0C94
  BPL L502B
 
- STX L0071
+ STX P+1
  LDA L0C84
  SEC
- ROR L0071
+ ROR P+1
  ROR A
  EOR #&FF
  STA L0AFD
  LDA #&FE
  CLC
- SBC L0071
+ SBC P+1
 
 .L502B
 
@@ -10637,14 +10636,14 @@ L1D47 = L1D46+1
 
  TAY
  LDA L44F1,Y
- STA L0070
+ STA P
  LDA L368C
  CMP #&10
  BCS L5081
 
  EOR #&0F
  ASL A
- LSR L0070
+ LSR P
  LDY #1
  JSR L57BB
 
@@ -10767,10 +10766,10 @@ L1D47 = L1D46+1
 
 .L5115
 
- STA L0070
+ STA P
  SEC
  LDA L49FC
- SBC L0070
+ SBC P
  STA L49FC
  JMP L5127
 
@@ -10788,7 +10787,7 @@ L1D47 = L1D46+1
  STA L0CE8
  LDA L0C03
  LSR A
- STA L0070
+ STA P
  LDX #0
  STX L0C9C
  TXA
@@ -10796,14 +10795,14 @@ L1D47 = L1D46+1
  STA L0076
  LDA L0C13
  AND #&80
- ORA L0070
- STA L0071
+ ORA P
+ STA P+1
  TXA
  SEC
  SBC L0076
  STA L09FC
  TXA
- SBC L0071
+ SBC P+1
  STA L4AFC
 
 .L5151
@@ -10855,13 +10854,13 @@ L1D47 = L1D46+1
  BEQ L51D6
 
  LDA L0C1F
- STA L0072
+ STA R
  LDA L0C0F
  LDX #3
 
 .L51AD
 
- LSR L0072
+ LSR R
  ROR A
  DEX
  BPL L51AD
@@ -10946,19 +10945,19 @@ L1D47 = L1D46+1
 .L51FB
 
  LDA #0
- STA L0072
+ STA R
  LDA L0C83,X
  STA L0076
  LDA L0C93,X
  BPL L520B
 
- DEC L0072
+ DEC R
 
 .L520B
 
  ASL L0076
  ROL A
- ROL L0072
+ ROL R
  PHA
  LDA L0C8C,X
  CLC
@@ -10968,7 +10967,7 @@ L1D47 = L1D46+1
  ADC L0C89,X
  STA L0C89,X
  LDA L0C99,X
- ADC L0072
+ ADC R
  STA L0C99,X
  DEX
  BPL L51FB
@@ -10995,7 +10994,7 @@ L1D47 = L1D46+1
 .L522F
 
  LDA #0
- STA L0072
+ STA R
  LDA L0C09,X
  CLC
  ADC L0C89,X
@@ -11003,17 +11002,17 @@ L1D47 = L1D46+1
  LDA L0C99,X
  BPL L5244
 
- DEC L0072
+ DEC R
 
 .L5244
 
  ADC L0CED,X
  STA L0CED,X
  LDA L0CFD,X
- ADC L0072
+ ADC R
  STA L0CFD,X
  LDA L0C6D,X
- ADC L0072
+ ADC R
  STA L0C6D,X
  LDA L0CEA,X
  CLC
@@ -11074,7 +11073,7 @@ L1D47 = L1D46+1
 .L529D
 
  LDA L0C03,X
- STA L0070
+ STA P
  ASL A
  STA L0C43,X
  LDA L0C13,X
@@ -11086,26 +11085,26 @@ L1D47 = L1D46+1
 
  LDA #0
  SEC
- SBC L0070
- STA L0070
+ SBC P
+ STA P
  LDA #0
  SBC L0C13,X
 
 .L52BD
 
- STA L0071
+ STA P+1
  CPX #1
  BNE L52D3
 
- LDA L0070
+ LDA P
  STA L007A
- LDA L0071
+ LDA P+1
  ASL L007A
  ROL A
  ASL L007A
  ROL A
  STA L007B
- LDA L0071
+ LDA P+1
 
 .L52D3
 
@@ -11114,16 +11113,16 @@ L1D47 = L1D46+1
 
  BNE L52E1
 
- LDA L0070
+ LDA P
  CMP L0082
  BCC L52E7
 
- LDA L0071
+ LDA P+1
 
 .L52E1
 
  STA L0083
- LDA L0070
+ LDA P
  STA L0082
 
 .L52E7
@@ -11204,9 +11203,9 @@ L1D47 = L1D46+1
 
  LDA L0082
  AND #&FE
- STA L0072
+ STA R
  LDA L0083
- STA L0073
+ STA S
  LDX #5
  LDA #0
  STA L1D47
@@ -11353,7 +11352,7 @@ L1D47 = L1D46+1
 .L5410
 
  LDA L4F80,X
- STA L0072
+ STA R
  LDY L0C40,X
  LDA L0C50,X
  JSR L546E
@@ -11385,15 +11384,15 @@ L1D47 = L1D46+1
  BPL L5452
 
  LDA #0
- STA L0072
+ STA R
  LDA L0078
  BPL L5445
 
- DEC L0072
+ DEC R
 
 .L5445
 
- LSR L0072
+ LSR R
  ROR L0078
  ROR L0077
  ROR L0076
@@ -11438,8 +11437,8 @@ L1D47 = L1D46+1
 
 .L546E
 
- STY L0070
- STA L0071
+ STY P
+ STA P+1
 
 .L5472
 
@@ -11447,27 +11446,27 @@ L1D47 = L1D46+1
 
 .L5474
 
- LDX L0071
+ LDX P+1
  BPL L5484
 
  LDA #0
  SEC
- SBC L0070
- STA L0070
+ SBC P
+ STA P
  LDA #0
- SBC L0071
+ SBC P+1
  TAX
 
 .L5484
 
- LDY L0072
+ LDY R
  JSR L1821
 
  STA L0078
  LDA L0076
  STA L0077
- LDY L0072
- LDX L0070
+ LDY R
+ LDX P
  JSR L1821
 
  CLC
@@ -11476,7 +11475,7 @@ L1D47 = L1D46+1
  LDA #0
  ADC L0078
  STA L0078
- LDX L0071
+ LDX P+1
  BPL L54B8
 
  LDA #0
@@ -11517,13 +11516,13 @@ L1D47 = L1D46+1
 .L54BB
 
  LDA #&7D
- STA L0072
+ STA R
  LDA L0C00,X
- STA L0070
+ STA P
  LDA L0C10,X
- STA L0071
- ASL L0070
- ROL L0071
+ STA P+1
+ ASL P
+ ROL P+1
  JSR L5472
 
  LDA L0086
@@ -11625,7 +11624,7 @@ L1D47 = L1D46+1
 
 .L5539
 
- STA L0072
+ STA R
  LDY L0C45
  LDA L0C55
  JSR L546E
@@ -11682,7 +11681,7 @@ L1D47 = L1D46+1
  BPL L555F
 
  LDA #0
- STA L0073
+ STA S
  LDA L0AFD
  CLC
  ADC L0C30
@@ -11690,14 +11689,14 @@ L1D47 = L1D46+1
  LDA L0BFB+2
  BPL L5593
 
- DEC L0073
+ DEC S
 
 .L5593
 
  ADC L0C80
  STA L0C80
  LDA L0C90
- ADC L0073
+ ADC S
  STA L0C90
  SEC
  LDA L0C32
@@ -11759,7 +11758,7 @@ L1D47 = L1D46+1
 
  STA L0077
  LDY L0C1F
- STY L0072
+ STY R
  LDA L0C0F
  LDX L007D
  BEQ L562B
@@ -11768,7 +11767,7 @@ L1D47 = L1D46+1
  BCC L561E
 
  ASL A
- ROL L0072
+ ROL R
 
 .L561E
 
@@ -11780,14 +11779,14 @@ L1D47 = L1D46+1
  BCC L562B
 
  ASL A
- ROL L0072
+ ROL R
 
 .L562B
 
  SEC
  SBC L0077
  TAX
- LDA L0072
+ LDA R
  SBC L0078
  TAY
  BPL L563A
@@ -12051,7 +12050,7 @@ L1D47 = L1D46+1
 
  LDA L0C8A
  ROR A
- STA L0072
+ STA R
  LDX L0CF2
  BNE L5739
 
@@ -12080,7 +12079,7 @@ L1D47 = L1D46+1
 
  BCC L575A
 
- LDA L0072
+ LDA R
  STA L0C8A
  LDX L0CF2
  BEQ L575A
@@ -12142,7 +12141,7 @@ L1D47 = L1D46+1
 
 .L579F
 
- LDA L0072
+ LDA R
  CMP #&0C
  BCS L57B2
 
@@ -12231,11 +12230,11 @@ L1D47 = L1D46+1
 
 .L57E4
 
- STY L0071
- STX L0070
+ STY P+1
+ STX P
  LDA L0CFE
  EOR #&FF
- STA L0072
+ STA R
  JSR L5474
 
  TAY
@@ -12306,7 +12305,7 @@ ORG &0D00
  LDA #0
  STA L007F
  LDA #&10
- STA L0072
+ STA R
  LDA L0400,X
  TAY
  AND #1
@@ -12335,11 +12334,11 @@ ORG &0D00
  LDA L4900,X
  BMI L0D37
 
- STA L0071
+ STA P+1
  BEQ L0D2B
 
  LDA L0700,X
- STA L0070
+ STA P
  JMP L0D46
 
 .L0D2B
@@ -12351,7 +12350,7 @@ ORG &0D00
 
 .L0D32
 
- STA L0070
+ STA P
  JMP L0D46
 
 .L0D37
@@ -12359,10 +12358,10 @@ ORG &0D00
  LDA #0
  SEC
  SBC L0700,X
- STA L0070
+ STA P
  LDA #0
  SBC L4900,X
- STA L0071
+ STA P+1
 
 .L0D46
 
@@ -12417,13 +12416,13 @@ ORG &0D00
 .L0D94
 
  LDA L0081
- CMP L0071
+ CMP P+1
  BCC L0DA8
 
  BNE L0DA2
 
  LDA L0080
- CMP L0070
+ CMP P
  BCC L0DA8
 
 .L0DA2
@@ -12435,13 +12434,13 @@ ORG &0D00
 .L0DA8
 
  LDA L0083
- CMP L0071
+ CMP P+1
  BCC L0DBC
 
  BNE L0DB6
 
  LDA L0082
- CMP L0070
+ CMP P
  BCC L0DBC
 
 .L0DB6
@@ -12452,8 +12451,8 @@ ORG &0D00
 
 .L0DBC
 
- LDY L0070
- LDX L0071
+ LDY P
+ LDX P+1
  JSR L0F48
 
  TAX
@@ -12461,7 +12460,7 @@ ORG &0D00
  STA L0084
  LDA L4700,X
  AND #&F8
- STA L0073
+ STA S
  STY L007C
  LDA L0087
  STA L0085
@@ -12470,9 +12469,9 @@ ORG &0D00
  LDX L0081
  JSR L0E69
 
- LDA L0071
+ LDA P+1
  STA L0081
- LDA L0070
+ LDA P
  STA L0080
  LDA L0087
  STA L0086
@@ -12542,7 +12541,7 @@ ORG &0D00
 
 .L0E3F
 
- SBC L0071
+ SBC P+1
  STA L0A00,X
  LDA #0
  SBC L0082
@@ -12553,7 +12552,7 @@ ORG &0D00
 
  LDA #&60
  CLC
- ADC L0071
+ ADC P+1
  STA L0A00,X
  LDA #0
  ADC L0082
@@ -12588,7 +12587,7 @@ ORG &0D00
  AND #&F0
  ORA L3700,Y
  TAY
- LDX L0073
+ LDX S
  AND #&0F
  ORA L4500,X
  TAX
@@ -12596,11 +12595,11 @@ ORG &0D00
  CLC
  LDX L0076
  ADC L3A00,X
- STA L0070
+ STA P
  LDX L0074
  LDA L3A00,X
  ADC #1
- STA L0071
+ STA P+1
  LDX L0075
  LDA L3A00,X
  ADC L3A00,Y
@@ -12613,7 +12612,7 @@ ORG &0D00
 .L0EBB
 
  LDA L3800,X
- ADC L0070
+ ADC P
  BCC L0EC3
 
  INY
@@ -12627,11 +12626,11 @@ ORG &0D00
 
 .L0EC8
 
- ADC L0073
- STA L0070
+ ADC S
+ STA P
  TYA
  ADC L3700,X
- ADC L0071
+ ADC P+1
  BCC L0EDB
 
  CLC
@@ -12646,8 +12645,8 @@ ORG &0D00
 .L0EDD
 
  ROR A
- ROR L0070
- STA L0071
+ ROR P
+ STA P+1
  LDA L007A
  BEQ L0F16
 
@@ -12670,16 +12669,16 @@ ORG &0D00
  ADC L3700,X
  ROR A
  CLC
- ADC L0070
- STA L0070
+ ADC P
+ STA P
  BCC L0F16
 
- INC L0071
+ INC P+1
  BNE L0F16
 
  LDA #&FF
- STA L0071
- STA L0070
+ STA P+1
+ STA P
 
 .L0F16
 
@@ -12710,17 +12709,17 @@ ORG &0D00
 .L0F34
 
  TAY
- LDX L0071
+ LDX P+1
  JSR L1821
 
  STA L0078
- LDA L0070
+ LDA P
  SEC
  SBC L0078
- STA L0070
+ STA P
  BCS L0F47
 
- DEC L0071
+ DEC P+1
 
 .L0F47
 
@@ -12782,7 +12781,7 @@ ORG &0D00
 
 .L0F66
 
- BIT L0072
+ BIT R
  BEQ L0F63
 
  TAY
@@ -12844,7 +12843,7 @@ ORG &0D00
 
 .L0F8E
 
- BIT L0072
+ BIT R
  BEQ L0F8D
 
  TAX
@@ -12871,8 +12870,8 @@ ORG &0D00
  INX
  TXS
  LDA #0
- STA L0071
- STA L0070
+ STA P+1
+ STA P
  LDX L0085
  DEX
  STX L0087
@@ -12927,14 +12926,14 @@ ORG &0D00
 
  BPL L0FDE
 
- LDA L0071
+ LDA P+1
  BMI L0FE4
 
  JMP L0FE2
 
 .L0FDA
 
- LDA L0071
+ LDA P+1
  BMI L0FE4
 
 .L0FDE
@@ -13047,23 +13046,23 @@ ORG &0D00
 
  BNE L1045
 
- ASL L0070
+ ASL P
  JMP L1064
 
 .L1045
 
- LDA L0071
+ LDA P+1
 
 .L1047
 
- ASL L0070
+ ASL P
  ROL A
  ROL L0082
  DEY
  BNE L1047
 
- STA L0071
- ASL L0070
+ STA P+1
+ ASL P
  JMP L1064
 
 .L1056
@@ -13072,7 +13071,7 @@ ORG &0D00
  CLC
  ADC #1
  TAY
- LDA L0071
+ LDA P+1
 
 .L105E
 
@@ -13080,13 +13079,13 @@ ORG &0D00
  DEY
  BNE L105E
 
- STA L0071
+ STA P+1
 
 .L1064
 
  BCC L107A
 
- INC L0071
+ INC P+1
  BNE L107A
 
  INC L0082
@@ -13097,7 +13096,7 @@ ORG &0D00
  LDA #&3F
  STA L0082
  LDA #&FF
- STA L0071
+ STA P+1
 
 .L107A
 
@@ -13134,17 +13133,17 @@ ORG &0D00
  LDX L007D
  LDY L007E
  LDA L0900,X
- STA L0072
+ STA R
  LDA L4A00,X
  STA L0082
  LDA L0A00,X
- STA L0073
+ STA S
  LDA L0B00,X
  STA L0083
  LDA L0900,Y
  STA L0077
  SEC
- SBC L0072
+ SBC R
  STA L0074
  LDA L4A00,Y
  STA L0081
@@ -13168,7 +13167,7 @@ ORG &0D00
  LDA L0A00,Y
  STA L0078
  SEC
- SBC L0073
+ SBC S
  STA L0075
  LDA L0B00,Y
  STA L0079
@@ -13191,7 +13190,7 @@ ORG &0D00
 .L10F1
 
  LDA #0
- LDX L0073
+ LDX S
  LDY L0083
  BEQ &1101
 
@@ -13242,7 +13241,7 @@ ORG &0B00
                         \ cursor, whose bytes are in the variable at CURSOR, so
                         \ set up a counter in Y
 
-.SCREENL1
+.SCREEN_L1
 
  LDA CURSOR,Y           \ Print the Y-th value from CURSOR
  JSR OSWRCH
@@ -13250,7 +13249,7 @@ ORG &0B00
  INY                    \ Increment the loop counter
 
  CPY #10                \ Loop back to print the next character until we have
- BNE SCREENL1           \ printed all 10, in other words:
+ BNE SCREEN_L1          \ printed all 10, in other words:
                         \
                         \   VDU 23, 0, 10, 23, 0, 0, 0, 0, 0, 0
 
@@ -13264,7 +13263,7 @@ ORG &0B00
  LDY #0                 \ We now want to print the "Please wait" message in
                         \ variable WAIT, so set up a counter in Y
 
-.SCREENL2
+.SCREEN_L2
 
  LDA WAIT,Y             \ Print the Y-th value from WAIT
  JSR OSWRCH
@@ -13272,7 +13271,7 @@ ORG &0B00
  INY                    \ Increment the loop counter
 
  CPY #11                \ Loop back to print the next character until we have
- BNE SCREENL2           \ printed all 11 ("Please wait")
+ BNE SCREEN_L2          \ printed all 11 ("Please wait")
 
  LDX #LO(DASHBD)        \ Set (Y X) to point to DASHBD ("L.DASHBD 7100")
  LDY #HI(DASHBD)
@@ -13285,7 +13284,7 @@ ORG &0B00
  LDY #0
  JSR OSBYTE
 
- JMP L0B6A
+ JMP SETUP              \ Jump down to SETUP to continue the setup process
 
 \ ******************************************************************************
 \
@@ -13334,9 +13333,9 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L0B6A
+\       Name: SETUP
 \       Type: Subroutine
-\   Category: 
+\   Category: Start and end
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13345,74 +13344,94 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L0B6A
+.SETUP
 
  LDA #140               \ Call OSBYTE with A = 140 to select the tape filing
  JSR OSBYTE             \ system (i.e. do a *TAPE command)
 
- LDY #0                 \ We now copy the following blocks in memory:
+ LDY #0                 \ We now copy the following block in memory:
                         \
                         \   * &0400-&07FF is copied to &0D00-&10FF
                         \
                         \ so we set up a byte counter in Y
                         \
                         \ Note that this is the same block that was copied from
-                        \ &5800-&5BFF in the ENTRY routine
+                        \ &5800-&5BFF in the ENTRY routine, so in all we end up
+                        \ moving code as follows:
+                        \
+                        \   * &5800-&5BFF is copied to &0400-&07FF
+                        \                      then to &0D00-&10FF
+                        \   * &5C00-&5DFF is copied to &0B00-&0CFF
+                        \
+                        \ As the rest of the main code file runs from &1100 to
+                        \ &57FF, this gives us a continuous block of code from
+                        \ &0B00 to &57FF, followed by screen memory at &5800 to
+                        \ &7FFF
 
-.L0B6AL1
+.SETUP_L1
 
- LDA &0400,Y
+ LDA &0400,Y            \ Copy the Y-th byte of &0400 to the Y-th byte of &0D00
  STA &0D00,Y
- LDA &0500,Y
+
+ LDA &0500,Y            \ Copy the Y-th byte of &0500 to the Y-th byte of &0E00
  STA &0E00,Y
- LDA &0600,Y
+
+ LDA &0600,Y            \ Copy the Y-th byte of &0600 to the Y-th byte of &0F00
  STA &0F00,Y
- LDA &0700,Y
+
+ LDA &0700,Y            \ Copy the Y-th byte of &0700 to the Y-th byte of &1000
  STA &1000,Y
 
- DEY
+ DEY                    \ Decrement the loop counter
 
- BNE L0B6AL1
+ BNE SETUP_L1           \ Loop back until we have copied a whole page of bytes
 
+ NOP                    \ This code has been replaced by NOPs in this
+ NOP                    \ unprotected version, so presumably this contained some
+ NOP                    \ kind of copy protection or decryption code
  NOP
- NOP
- NOP
- NOP
- LDA #&58
- STA L0071
+
+ LDA #&58               \ Set P(1 0) = &5800, so the call to CLS starts clearing
+ STA P+1                \ from address &5800, the start of screen memory
  LDA #0
- STA L0070
- LDA #2
- STA L0072
- LDY #0
- JSR L0C85
+ STA P
 
- LDA #&58
- STA L0071
+ LDA #2                 \ Set R = 2, so we clear 2 character rows
+ STA R
+
+ LDY #0                 \ Set Y = 0, so we clear 256 bytes per row
+
+ JSR CLS                \ Call CLS to clear the first 256 bytes of the first two
+                        \ character rows on screen
+
+ LDA #&58               \ Set P(1 0) = &58FF
+ STA P+1
  LDA #&FF
- STA L0070
+ STA P
+
  LDA #2
- STA L0072
+ STA R
+
  LDY #&40
- JSR L0C85
+ JSR CLS
 
  LDA #&5A
- STA L0071
+ STA P+1
  LDA #&7F
- STA L0070
+ STA P
  LDA #&12
- STA L0072
+ STA R
  LDY #8
- JSR L0C85
+ JSR CLS
 
  LDA #&5B
- STA L0071
+ STA P+1
  LDA #&B7
- STA L0070
+ STA P
  LDA #&12
- STA L0072
+ STA R
  LDY #8
- JSR L0C85
+ JSR CLS
 
  LDX #3
  LDY #&60
@@ -13493,29 +13512,29 @@ ORG &0B00
  JSR OSWRCH
 
  LDA #0
- STA L0070
+ STA P
  TXA
  ASL A
- ROL L0070
+ ROL P
  ASL A
- ROL L0070
+ ROL P
  ASL A
- ROL L0070
+ ROL P
  JSR OSWRCH
 
- LDA L0070
+ LDA P
  JSR OSWRCH
 
  LDA #0
- STA L0070
+ STA P
  TYA
  ASL A
- ROL L0070
+ ROL P
  ASL A
- ROL L0070
+ ROL P
  JSR OSWRCH
 
- LDA L0070
+ LDA P
  JSR OSWRCH
 
  RTS
@@ -13546,30 +13565,65 @@ ORG &0B00
  DEX
  RTS
 
- STY L0073
+\ ******************************************************************************
+\
+\       Name: CLS
+\       Type: Subroutine
+\   Category: Screen
+\    Summary: Clear the specified number of rows on-screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Zeroes Y bytes from P(1 0) + (n * 320), where n = 0 to R.
+\
+\ In other words, zero Y bytes on each of R character rows, starting at screen
+\ address P(1 0).
+\
+\ Arguments:
+\
+\   Y                   The width of each character row to zero (in bytes),
+\                       0 indicates 256 bytes
+\
+\   P(1 0)              The address of the start of the page of memory to zero
+\
+\   R                   The number of rows to zero
+\
+\ ******************************************************************************
 
-.L0C87
+.CLS
 
- LDA #0
- LDY L0073
+ STY S                  \ Store the width of each character row in S
 
-.L0C8B
+.CLS_L1
 
- STA (L0070),Y
- DEY
- BNE L0C8B
+ LDA #0                 \ We are about to zero a block of memory, so set A = 0
+                        \ so we can use it as our overwrite value
 
- LDA L0070
- CLC
- ADC #&40
- STA L0070
- LDA L0071
- ADC #1
- STA L0071
- DEC L0072
- BNE L0C87
+ LDY S                  \ Fetch the width of each character row, which we stored
+                        \ in S above
 
- RTS
+.CLS_L2
+
+ STA (P),Y              \ Zero the Y-th byte of the page at P(1 0)
+
+ DEY                    \ Decrement the byte pointer
+
+ BNE CLS_L2             \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
+
+ LDA P                  \ Set P(1 0) = P(1 0) + 320
+ CLC                    \
+ ADC #LO(320)           \ starting with the low bytes
+ STA P
+
+ LDA P+1                \ And then the high bytes
+ ADC #HI(320)
+ STA P+1
+
+ DEC R                  \ Decrement the row counter in R
+
+ BNE CLS_L1             \ Loop back until we have zeroed R rows
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -13642,9 +13696,9 @@ ORG &5E00
                         \ so we set up a byte counter in Y
                         \
                         \ Note that the &5800-&5BFF block gets copied again in
-                        \ the L0B6A routine, so it ends up at &0D00-&10FF
+                        \ the SETUP routine, so it ends up at &0D00-&10FF
 
-.ENTRYL1
+.ENTRY_L1
 
  LDA &5800,Y            \ Copy the Y-th byte of &5800 to the Y-th byte of &0400
  STA &0400,Y
@@ -13666,7 +13720,7 @@ ORG &5E00
 
  DEY                    \ Decrement the loop counter
 
- BNE ENTRYL1            \ Loop back until we have copied a whole page of bytes
+ BNE ENTRY_L1           \ Loop back until we have copied a whole page of bytes
 
  NOP                    \ This code has been replaced by NOPs in this
  NOP                    \ unprotected version, so presumably this contained some
