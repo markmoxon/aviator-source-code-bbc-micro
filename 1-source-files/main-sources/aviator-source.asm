@@ -80,6 +80,9 @@ L0A5F = &0A5F
 L0AFC = &0AFC
 L0AFD = &0AFD
 
+L0B00 = &0B00
+L0B1F = &0B1F
+
 L0C00 = &0C00
 L0C01 = &0C01
 L0C02 = &0C02
@@ -7848,7 +7851,7 @@ L1D47 = L1D46+1
  SBC L0A1F
  STA L0A00,Y
  LDA L0074
- SBC L0B1E+1
+ SBC L0B1F
  STA L0B00,Y
  STX L007D
  STY L007E
@@ -12293,6 +12296,8 @@ ORG &5800
 
 .from5800
 
+ORG &0400
+
 \ ******************************************************************************
 \
 \       Name: L0400
@@ -12305,8 +12310,6 @@ ORG &5800
 \ 
 \
 \ ******************************************************************************
-
-ORG &0400
 
 .L0400
 
@@ -13166,72 +13169,68 @@ ORG &5C00
 
 .from5C00
 
-\ ******************************************************************************
-\
-\       Name: L0B00
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 ORG &0B00
 
-.L0B00
+\ ******************************************************************************
+\
+\       Name: SCREEN
+\       Type: Subroutine
+\   Category: Start and end
+\    Summary: Set up the screen mode and load the dashboard image
+\
+\ ******************************************************************************
 
- LDA #&16
+.SCREEN
 
-.L0B02
+ LDA #22                \ Switch to screen mode 5 with the following VDU
+ JSR OSWRCH             \ command:
+ LDA #5                 \
+ JSR OSWRCH             \   VDU 22, 5
 
+ LDY #0                 \ We now want to print the VDU command to disable the
+                        \ cursor, whose bytes are in the variable at CURSOR, so
+                        \ set up a counter in Y
+
+.SCREENL1
+
+ LDA CURSOR,Y           \ Print the Y-th value from CURSOR
  JSR OSWRCH
 
- LDA #5
+ INY                    \ Increment the loop counter
+
+ CPY #10                \ Loop back to print the next character until we have
+ BNE SCREENL1           \ printed all 10, in other words:
+                        \
+                        \   VDU 23, 0, 10, 23, 0, 0, 0, 0, 0, 0
+
+ LDA #31                \ Move the text cursor to column 4, row 10 with the
+ JSR OSWRCH             \ following VDU command:
+ LDA #4                 \
+ JSR OSWRCH             \   VDU 31, 4, 10
+ LDA #10
  JSR OSWRCH
 
- LDY #0
+ LDY #0                 \ We now want to print the "Please wait" message in
+                        \ variable WAIT, so set up a counter in Y
 
-.L0B0C
+.SCREENL2
 
- LDA L0B54,Y
+ LDA WAIT,Y             \ Print the Y-th value from WAIT
  JSR OSWRCH
 
- INY
- CPY #&0A
- BNE L0B0C
+ INY                    \ Increment the loop counter
 
- LDA #&1F
- JSR OSWRCH
+ CPY #11                \ Loop back to print the next character until we have
+ BNE SCREENL2           \ printed all 11 ("Please wait")
 
- LDA #4
+ LDX #LO(DASHBD)        \ Set (Y X) to point to DASHBD ("L.DASHBD 7100")
+ LDY #HI(DASHBD)
 
-.L0B1E
+ JSR OSCLI              \ Call OSCLI to run the OS command in DASHBD, which
+                        \ loads the dashboard image into the screen
 
- JSR OSWRCH
-
- LDA #&0A
- JSR OSWRCH
-
- LDY #0
-
-.L0B28
-
- LDA L0B5E,Y
- JSR OSWRCH
-
- INY
- CPY #&0B
- BNE L0B28
-
- LDX #&46
- LDY #&0B
- JSR OSCLI
-
- LDA #&81
- LDX #&FF
+ LDA #129               \ Call OSBYTE with A = 129, X = &FF and Y = 0 to scan
+ LDX #&FF               \ the keyboard for &FF centiseconds (2.56 seconds)
  LDY #0
  JSR OSBYTE
 
@@ -13239,54 +13238,45 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L0B46
+\       Name: DASHBD
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Start and end
+\    Summary: The OS command string for loading the dashboard image in DASHBD
 \
 \ ******************************************************************************
 
-.L0B46
+.DASHBD
 
- EQUS "L.DASHBD 7100"
+ EQUS "L.DASHBD 7100"   \ This is short for "*LOAD DASHBD 7100"
  EQUB 13
 
 \ ******************************************************************************
 \
-\       Name: L0B54
+\       Name: CURSOR
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Start and end
+\    Summary: The VDU command for disabling the cursor
 \
 \ ******************************************************************************
 
-.L0B54
+.CURSOR
 
- EQUB &17, &00, &0A, &17, &00
- EQUB &00, &00, &00, &00, &00
+ EQUB 23, 0, 10, 23     \ Set 6845 register R10 = 23
+ EQUB 0, 0, 0           \
+ EQUB 0, 0, 0           \ This is the "cursor start" register, so this sets the
+                        \ cursor start line at 0, effectively disabling the
+                        \ cursor
 
 \ ******************************************************************************
 \
-\       Name: L0B5E
+\       Name: WAIT
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Start and end
+\    Summary: The "Please wait" message shown when the game loads
 \
 \ ******************************************************************************
 
-.L0B5E
+.WAIT
 
  EQUS "Please wait"
  EQUB 13
@@ -13306,36 +13296,32 @@ ORG &0B00
 
 .L0B6A
 
- LDA #&8C
- JSR OSBYTE
+ LDA #140               \ Call OSBYTE with A = 140 to select the tape filing
+ JSR OSBYTE             \ system (i.e. do a *TAPE command)
 
- LDY #0
+ LDY #0                 \ We now copy the following blocks in memory:
+                        \
+                        \   * &0400-&07FF is copied to &0D00-&10FF
+                        \
+                        \ so we set up a byte counter in Y
+                        \
+                        \ Note that this is the same block that was copied from
+                        \ &5800-&5BFF in the ENTRY routine
 
-\ ******************************************************************************
-\
-\       Name: L0B71
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+.L0B6AL1
 
-.L0B71
+ LDA &0400,Y
+ STA &0D00,Y
+ LDA &0500,Y
+ STA &0E00,Y
+ LDA &0600,Y
+ STA &0F00,Y
+ LDA &0700,Y
+ STA &1000,Y
 
- LDA L0400,Y
- STA L0D00,Y
- LDA L04FF+1,Y
- STA L0E00,Y
- LDA L05FE+2,Y
- STA L0F00,Y
- LDA L0700,Y
- STA L1000,Y
  DEY
- BNE L0B71
+
+ BNE L0B6AL1
 
  NOP
  NOP
@@ -13579,46 +13565,68 @@ ORG &5E00
 
 .ENTRY
 
- LDA #129
- LDX #0
- LDY #&FF
+ LDA #129               \ Call OSBYTE with A = 129, X = 0 and Y = &FF to detect
+ LDX #0                 \ the machine type. This call is undocumented and is not
+ LDY #&FF               \ the recommended way to determine the machine type
+ JSR OSBYTE             \ (OSBYTE 0 is the correct way), but this call returns
+                        \ the following:
+                        \
+                        \   * X = Y = 0   if this is a BBC Micro with MOS 0.1
+                        \   * X = Y = &FF if this is a BBC Micro with MOS 1.20
+
+ CPX #0                 \ This checks the MOS version, but the code has been
+ NOP                    \ replaced by NOPs in this unprotected version
+ NOP
+
+ LDA #200               \ Call OSBYTE with A = 200, X = 3 and Y = 0 to disable
+ LDX #3                 \ the ESCAPE key and clear memory if the BREAK key is
+ LDY #0                 \ pressed
  JSR OSBYTE
 
- CPX #0
- NOP
- NOP
- LDA #&C8
- LDX #3
- LDY #0
- JSR OSBYTE
+ LDY #0                 \ We now copy the following blocks in memory:
+                        \
+                        \   * &5800-&5BFF is copied to &0400-&07FF
+                        \   * &5C00-&5DFF is copied to &0B00-&0CFF
+                        \
+                        \ so we set up a byte counter in Y
+                        \
+                        \ Note that the &5800-&5BFF block gets copied again in
+                        \ the L0B6A routine, so it ends up at &0D00-&10FF
 
- LDY #0
+.ENTRYL1
 
-.L5E18
+ LDA &5800,Y            \ Copy the Y-th byte of &5800 to the Y-th byte of &0400
+ STA &0400,Y
 
- LDA &5800,Y
- STA L0400,Y
- LDA &5900,Y
- STA L04FF+1,Y
- LDA &5A00,Y
- STA L05FE+2,Y
- LDA &5B00,Y
- STA L0700,Y
- LDA &5C00,Y
- STA L0B00,Y
- LDA &5D00,Y
- STA L0C00,Y
- DEY
- BNE L5E18
+ LDA &5900,Y            \ Copy the Y-th byte of &5900 to the Y-th byte of &0500
+ STA &0500,Y
 
+ LDA &5A00,Y            \ Copy the Y-th byte of &5A00 to the Y-th byte of &0600
+ STA &0600,Y
+
+ LDA &5B00,Y            \ Copy the Y-th byte of &5B00 to the Y-th byte of &0700
+ STA &0700,Y
+
+ LDA &5C00,Y            \ Copy the Y-th byte of &5C00 to the Y-th byte of &0B00
+ STA &0B00,Y
+
+ LDA &5D00,Y            \ Copy the Y-th byte of &5D00 to the Y-th byte of &0C00
+ STA &0C00,Y
+
+ DEY                    \ Decrement the loop counter
+
+ BNE ENTRYL1            \ Loop back until we have copied a whole page of bytes
+
+ NOP                    \ This code has been replaced by NOPs in this
+ NOP                    \ unprotected version, so presumably this contained some
+ NOP                    \ kind of copy protection or decryption code
  NOP
  NOP
  NOP
  NOP
- NOP
- NOP
- NOP
- JMP L0B00
+
+ JMP SCREEN             \ Jump to the SCREEN routine that just moved to &0B00
+                        \ to set up the screen and continue the setup process
 
 \ ******************************************************************************
 \
