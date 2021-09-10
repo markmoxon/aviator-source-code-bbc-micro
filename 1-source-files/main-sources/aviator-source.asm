@@ -180,7 +180,7 @@ L0CB3 = &0CB3
 L0CB8 = &0CB8
 L0CBA = &0CBA
 L0CBB = &0CBB
-L0CBE = &0CBE
+L0CBE = &0CBE           \ Gun sights?
 L0CBF = &0CBF
 L0CC0 = &0CC0
 L0CC1 = &0CC1
@@ -195,7 +195,12 @@ L0CC9 = &0CC9
 L0CCA = &0CCA
 L0CCB = &0CCB
 L0CCC = &0CCC           \ OB in original
-L0CCD = &0CCD
+
+Joystick = &0CCD        \ Joystick configuration
+                        \
+                        \   * 0 = keyboard
+                        \   * 128 = joystick
+
 L0CCE = &0CCE
 L0CCF = &0CCF
 L0CD0 = &0CD0           \ Set to 255 in Reset
@@ -263,39 +268,50 @@ L0CFD = &0CFD           \ Set to 198 in Reset
 L0CFE = &0CFE
 L0CFF = &0CFF           \ Set to 72 in Reset
 
+\ Screen address variables
+\ Row1_Block2_3 = Row 1, block 2, byte 3
+\ All count from zero
+
 \ Canopy screen addresses (rows 0 to 19)
 
-Row1_Block0 = &5940     \ Row 1, block 0
-Row1_Block1 = &5948     \ Row 1, block 1
-Row1_Block38 = &5A68    \ Row 1, block 38 (last but one)
-Row1_Block39 = &5A70    \ Row 1, block 39 (last)
-Row6_Block20 = &6020    \ Row 6, start + 160, block 20
-Row7_Block20 = &6160    \ Row 7, start + 160, block 20 
-Row8_Block11 = &6258    \ Row 8, start + 88, block 11
+Row1_Block0_0 = &5940   \ First block on second row
+Row1_Block1_0 = &5948   \ Second block on second row
+Row1_Block38_0 = &5A68  \ Last block but one on second row
+Row1_Block39_0 = &5A70  \ Last block on second row
+
+Row6_Block20_0 = &6020  \ 
+Row7_Block20_0 = &6160  \ 
+Row8_Block11_0 = &6258  \ 
 
 \ Dashboard screen addresses (rows 20 to 31)
 
-L72E7 = &72E7           
-L7427 = &7427
-L7524 = &7524
-L752A = &752A
-L7534 = &7534
-L7567 = &7567
-L7697 = &7697
-L769F = &769F
-L76A7 = &76A7
-L76AF = &76AF
-L77A9 = &77A9
-L77E7 = &77E7
-L7857 = &7857
-L785E = &785E
-L785F = &785F
-L7927 = &7927
-L7998 = &7998
-L7999 = &7999
-L7A67 = &7A67
-L7BD5 = &7BD5
-L7CE4 = &7CE4
+Row21_Block20_7 = &72E7 \ First block of joystick position display
+Row22_Block20_7 = &7427 \ Second block of joystick position display
+Row23_Block20_7 = &7567 \ Third block of joystick position display
+Row24_Block20_7 = &76A7 \ Fourth block of joystick position display
+                        \ Right-middle block of joystick position display
+Row25_Block20_7 = &77E7 \ Fifth block of joystick position display
+Row26_Block20_7 = &7927 \ Sixth block of joystick position display
+Row27_Block20_7 = &7A67 \ Seventh block of joystick position display
+
+Row24_Block18_7 = &7697 \ Left block of joystick position display
+Row24_Block19_7 = &769F \ Left-middle block of joystick position display
+Row24_Block21_7 = &76AF \ Right block of joystick position display
+
+Row23_Block12_4 = &7524 \ Left block of artificial horizon
+Row23_Block13_2 = &752A \ Middle block of artificial horizon
+Row23_Block14_4 = &7534 \ Right block of artificial horizon
+
+Row25_Block31_1 = &77A9 \ Left block of radar horizontal middle line
+Row25_Block34_7 = &7857 \ Left-middle block of radar horizontal middle line
+Row25_Block35_6 = &785E \ Right-middle block of radar horizontal middle line
+Row25_Block35_7 = &785F \ Right-middle block of radar horizontal middle line
+Row26_Block35_0 = &7998 \ Block containing bottom bit of centre cross in radar
+Row26_Block35_1 = &7999 \ Block containing bottom bit of centre cross in radar
+
+Row28_Block26_5 = &7BD5 \ Centre block of slip and turn indicator
+
+Row29_Block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
 
 Row30_Block0_2 = &7D82  \ Theme indicator
 Row30_Block32_2 = &7E82 \ Undercarriage indicator
@@ -3378,19 +3394,19 @@ ORG CODE%
  JSR L2129
 
  LDA #&22
- STA L7697
- STA L76AF
+ STA Row24_Block18_7
+ STA Row24_Block21_7
  LDA #&44
- STA L769F
+ STA Row24_Block19_7
  LDA #&99
- STA L76A7
+ STA Row24_Block20_7
  LDA #&88
- STA L72E7
- STA L7427
- STA L7567
- STA L77E7
- STA L7927
- STA L7A67
+ STA Row21_Block20_7
+ STA Row22_Block20_7
+ STA Row23_Block20_7
+ STA Row25_Block20_7
+ STA Row26_Block20_7
+ STA Row27_Block20_7
  LDA L0C0E
  SEC
  JSR L22F7
@@ -3525,15 +3541,15 @@ ORG CODE%
 
 .L20E2
 
- STA L752A,Y
+ STA Row23_Block13_2,Y
  LDA #&44
  DEY
  BPL L20E2
 
  LDA #&33
- STA L7524
+ STA Row23_Block12_4
  LDA #&88
- STA L7534
+ STA Row23_Block14_4
  LDA S
  STA L007A
  STA L4FAA,X
@@ -3710,7 +3726,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L21CD
+\       Name: L21CD (Part 1 of 3)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -3773,7 +3789,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L21F0
+\       Name: L21CD (Part 2 of 3)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -3854,7 +3870,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L223B
+\       Name: L21CD (Part 3 of 3)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -4232,7 +4248,7 @@ ORG CODE%
  JSR L1E42
 
  LDA #&77
- STA L7BD5
+ STA Row28_Block26_5
  RTS
 
 \ ******************************************************************************
@@ -4787,25 +4803,37 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2532
+\       Name: ScanKeyboard
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The internal key number of the key to scan for
+\
+\ Returns:
+\
+\   Z flag              If set (BEQ) then the key is being pressed, clear (BNE)
+\                       if it is not being pressed
 \
 \ ******************************************************************************
 
-.L2532
+.ScanKeyboard
 
- LDA #&81
- LDY #&FF
- JSR OSBYTE
+ LDA #129               \ Call OSBYTE with A = 129, X = key number and Y = &FF
+ LDY #&FF               \ to scan the keyboard for the key in X, returning the
+ JSR OSBYTE             \ following:
+                        \
+                        \   * X = Y = 0   if the key is not being pressed
+                        \   * X = Y = &FF if the key is being pressed
 
- CPX #&FF
- RTS
+ CPX #&FF               \ Return an equality in the flags if the key is being
+                        \ pressed
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4828,8 +4856,9 @@ ORG CODE%
 .L2540
 
  LDY L0076
- LDX L4F50,Y
- JSR L2532
+
+ LDX L4F50,Y            \ Scan the keyboard to see if the key in L4F50+Y is
+ JSR ScanKeyboard       \ being pressed
 
  BNE L2555
 
@@ -4841,8 +4870,9 @@ ORG CODE%
 .L2555
 
  LDY L0076
- LDX L4F56,Y
- JSR L2532
+
+ LDX L4F56,Y            \ Scan the keyboard to see if the key in L4F56+Y is
+ JSR ScanKeyboard       \ being pressed
 
  BNE L256A
 
@@ -5353,8 +5383,8 @@ ORG CODE%
  LDA L0CC5
  BEQ L27AF
 
- LDX #&86
- JSR L2532
+ LDX #&86               \ Scan the keyboard to see if the right arrow is being
+ JSR ScanKeyboard       \ pressed
 
  BNE L27AF
 
@@ -5404,8 +5434,8 @@ ORG CODE%
 
  JSR L33A1
 
- LDX #&DC
- JSR L2532
+ LDX #&DC               \ Scan the keyboard to see if "T" is being pressed
+ JSR ScanKeyboard
 
  BNE L2802
 
@@ -5469,8 +5499,8 @@ ORG CODE%
 
 .L2839
 
- LDX #&C8
- JSR L2532
+ LDX #&C8               \ Scan the keyboard to see if "P" is being pressed
+ JSR ScanKeyboard
 
  BNE L2851
 
@@ -6597,13 +6627,13 @@ ORG CODE%
  BNE L2D66
 
  LDA #&88
- STA L785E
- STA L7998
- STA L7999
+ STA Row25_Block35_6
+ STA Row26_Block35_0
+ STA Row26_Block35_1
  LDA #&11
- STA L7857
+ STA Row25_Block34_7
  LDA #&CC
- STA L785F
+ STA Row25_Block35_7
 
 .L2D66
 
@@ -6900,8 +6930,8 @@ ORG CODE%
  STX R                  \ canopy view except for the top row containing the
                         \ canopy edge)
 
- LDY #HI(Row1_Block1)   \ Set (Y X) to the screen address for row 1, block 1
- LDX #LO(Row1_Block1)
+ LDY #HI(Row1_Block1_0) \ Set (Y X) to the screen address for row 1, block 1
+ LDX #LO(Row1_Block1_0)
 
                         \ Fall through into FillCanopyRows to fill the canopy
                         \ view, from the top row to the bottom, avoiding the top
@@ -7733,7 +7763,7 @@ ORG CODE%
 
 .L31B9
 
- STA L77A9
+ STA Row25_Block31_1
  RTS
 
 \ ******************************************************************************
@@ -8210,13 +8240,13 @@ ORG CODE%
 
 .L33C7
 
- LDX #&DB
- JSR L2532
+ LDX #&DB               \ Scan the keyboard to see if "7" is being pressed
+ JSR ScanKeyboard
 
  BEQ L33D9
 
- LDX #&EA
- JSR L2532
+ LDX #&EA               \ Scan the keyboard to see if "8" is being pressed
+ JSR ScanKeyboard
 
  BNE L33ED
 
@@ -9274,7 +9304,7 @@ ORG CODE%
  JSR L4B9B
  BCC L42DF
  LDA #&20
- LDX L77A9
+ LDX Row25_Block31_1
  BNE L42EB
 
 .L42B3
@@ -9293,7 +9323,7 @@ ORG CODE%
  LDA #&00
  JSR L4B9B
  BCC L42D5
- LDX L77A9
+ LDX Row25_Block31_1
  BNE L42B3
  LDA #&05
  BNE L42EB
@@ -9551,7 +9581,7 @@ ORG CODE%
 
 .L46D8
 
- LDA L7CE4
+ LDA Row29_Block20_4
  BEQ L46FE
 
  LDX #1
@@ -9691,14 +9721,14 @@ ORG CODE%
 
 .L4854
 
- LDA Row1_Block1,X
+ LDA Row1_Block1_0,X
  AND P
  ORA P+1
- STA Row1_Block1,X
- LDA Row1_Block39,X
+ STA Row1_Block1_0,X
+ LDA Row1_Block39_0,X
  AND R
  ORA S
- STA Row1_Block39,X
+ STA Row1_Block39_0,X
  DEX
  DEY
  BPL L4854
@@ -9805,14 +9835,14 @@ ORG CODE%
 
 .L48B4
 
- LDA Row1_Block0,X
+ LDA Row1_Block0_0,X
  AND P
  ORA P+1
- STA Row1_Block0,X
- LDA Row1_Block38,X
+ STA Row1_Block0_0,X
+ LDA Row1_Block38_0,X
  AND R
  ORA S
- STA Row1_Block38,X
+ STA Row1_Block38_0,X
  DEX
  DEY
  BPL L48B4
@@ -10745,8 +10775,8 @@ ORG CODE%
 
 .L4D9D
 
- LDX #&B6
- JSR L2532
+ LDX #&B6               \ Scan the keyboard to see if RETURN is being pressed
+ JSR ScanKeyboard
 
  BNE L4D9D
 
@@ -10927,8 +10957,8 @@ ORG CODE%
 
  JSR L4840
 
- LDX #&DA
- JSR L2532
+ LDX #&DA               \ Scan the keyboard to see if "I" is being pressed
+ JSR ScanKeyboard
 
  BNE L4E38
 
@@ -10968,24 +10998,24 @@ ORG CODE%
 .L4E44
 
  LDA #&88
- ORA Row6_Block20,Y
- STA Row6_Block20,Y
+ ORA Row6_Block20_0,Y
+ STA Row6_Block20_0,Y
  LDA #&88
- ORA Row7_Block20,Y
- STA Row7_Block20,Y
+ ORA Row7_Block20_0,Y
+ STA Row7_Block20_0,Y
  DEY
  BPL L4E44
 
  LDA #&77
- ORA Row8_Block11
- STA Row8_Block11
+ ORA Row8_Block11_0
+ STA Row8_Block11_0
  SEC
  LDY #&88
 
 .L4E62
 
  LDA #&FF
- STA Row8_Block11,Y
+ STA Row8_Block11_0,Y
  TYA
  SBC #8
  TAY
@@ -10993,31 +11023,34 @@ ORG CODE%
 
 .L4E6D
 
- LDX #&9F
- JSR L2532
+ LDX #&9F               \ Scan the keyboard to see if TAB is being pressed
+ JSR ScanKeyboard
 
- BNE L4E85
+ BNE L4E85              \ If TAB is not being pressed, jump to L4E85
 
- LDA L0CCD
- BNE L4E8A
+ LDA Joystick           \ If Joystick is non-zero, jump to L4E8A to return from the
+ BNE L4E8A              \ subroutine
 
- LDA L7CE4
- EOR #&88
- STA L7CE4
- LDA #&80
- BNE L4E87
+ LDA Row29_Block20_4    \ Toggle the joystick indicator pixel above the middle
+ EOR #%10001000         \ of the rudder indicator
+ STA Row29_Block20_4
+
+ LDA #128               \ Set A = 128 to use as the value for Joystick below
+
+ BNE L4E87              \ Jump to L4E87 to skip the following instruction (this
+                        \ BNE is effectively a JMP as A is never zero)
 
 .L4E85
 
- LDA #0
+ LDA #0                 \ Set A = 0 to use as the value for Joystick below
 
 .L4E87
 
- STA L0CCD
+ STA Joystick           \ Set Joystick = A
 
 .L4E8A
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11161,11 +11194,12 @@ ORG CODE%
 
 .L4F50
 
- EQUB &A9, &BE, &AE, &DE, &CA, &BC
-
+ EQUB &A9, &BE, &AE, &DE, &CA, &BC      \ Flight keys
+                                        \ L, A, S, W, U, F
 .L4F56
 
- EQUB &99, &A8, &CD, &DD, &9B, &FF
+ EQUB &99, &A8, &CD, &DD, &9B, &FF      \ Also flight keys
+                                        \ <, ;, D, E, B, SHIFT
 
 .L4F5C
 
