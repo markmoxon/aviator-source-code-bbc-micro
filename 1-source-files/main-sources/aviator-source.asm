@@ -21,7 +21,7 @@
 \ ******************************************************************************
 
 P = &0070
-Q = &0071
+Q = &0071               \ DTIP in original
 R = &0072
 S = &0073
 L0074 = &0074
@@ -44,7 +44,7 @@ L0084 = &0084
 L0085 = &0085
 L0086 = &0086
 L0087 = &0087
-L0088 = &0088
+L0088 = &0088           \ PP in original
 L0089 = &0089
 L008A = &008A
 L008B = &008B
@@ -186,14 +186,14 @@ L0CC1 = &0CC1
 L0CC2 = &0CC2
 L0CC3 = &0CC3
 L0CC4 = &0CC4
-L0CC5 = &0CC5           \ Set to 1 in Reset (is this a key logger for 'U'?)
+L0CC5 = &0CC5           \ Set to 1 in Reset ("on ground" flag?)
 L0CC6 = &0CC6
 L0CC7 = &0CC7
 L0CC8 = &0CC8
 L0CC9 = &0CC9
 L0CCA = &0CCA
 L0CCB = &0CCB
-L0CCC = &0CCC
+L0CCC = &0CCC           \ OB in original
 L0CCD = &0CCD
 L0CCE = &0CCE
 L0CCF = &0CCF
@@ -209,7 +209,14 @@ L0CE3 = &0CE3
 L0CE4 = &0CE4
 L0CE5 = &0CE5
 L0CE6 = &0CE6           \ Set to 1 in Reset, Reset2
-L0CE7 = &0CE7           \ Set to 255 in Reset
+
+Theme = &0CE7           \ Theme status
+                        \
+                        \   * Positive (bit 7 = 0) = the Theme is enabled
+                        \   * Negative (bit 7 = 1) = the Theme is not enabled
+                        \
+                        \ Set to 255 (Theme not enabled) in Reset
+
 L0CE8 = &0CE8           \ Set to 1 in Reset
 L0CE9 = &0CE9
 L0CEA = &0CEA
@@ -217,18 +224,33 @@ L0CEC = &0CEC
 L0CED = &0CED           \ Set to 229 in Reset
 L0CEE = &0CEE           \ Set to 10 in Reset
 L0CEF = &0CEF           \ Set to 92 in Reset
-L0CF0 = &0CF0
-L0CF1 = &0CF1
 
-Undercarriage = &0CF2   \ Undercarriage indicator
+L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
+                        \ UIndicator
+
+L0CF1 = &0CF1           \ ? FRFLAG in original
+
+Undercarriage = &0CF2   \ Undercarriage status
                         \
                         \   * 0 = undercarriage is up
                         \   * Non-zero = undercarriage is down
                         \
-                        \ Set to 1 (down) in Reset
+                        \ Set to 1 (undercarriage is down) in Reset
              
-L0CF3 = &0CF3
-L0CF5 = &0CF5           \ Set to 1 in Reset
+Flaps = &0CF3           \ Flaps status
+                        \
+                        \   * 0 = flaps are off
+                        \   * Non-zero = flaps are on
+                        \
+                        \ Set to 0 (flaps are off) in Reset
+
+Brakes = &0CF5          \ Brakes status
+                        \
+                        \   * 0 = brakes are off
+                        \   * Non-zero = brakes are on
+                        \
+                        \ Set to 1 (brakes are on) in Reset
+
 L0CF7 = &0CF7
 L0CF8 = &0CF8           \ Set to 10 in Reset
 L0CF9 = &0CF9
@@ -272,10 +294,11 @@ L7999 = &7999
 L7A67 = &7A67
 L7BD5 = &7BD5
 L7CE4 = &7CE4
-L7D82 = &7D82
-Row30_Block32_2 = &7E82 \ Row 30 + &102 = 258 = 32 + 2 \ Undercarriage indicator
-L7E9A = &7E9A
-L7EAA = &7EAA
+
+Row30_Block0_2 = &7D82  \ Theme indicator
+Row30_Block32_2 = &7E82 \ Undercarriage indicator
+Row30_Block35_2 = &7E9A \ Flaps indicator
+Row30_Block37_2 = &7EAA \ Brakes indicator
 
 VIA = &FE00             \ Memory-mapped space for accessing internal hardware,
                         \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
@@ -586,15 +609,14 @@ ORG CODE%
  BMI L1252
 
  LDA #5
- STA L131B
+ STA L131A+1
  LDA #9
- STA L1320
+ STA L131F+1
 
 .L1247
 
  LDA #&60
-L1248 = L1247+1
- STA L1364
+ STA L1363+1
  LDA #&27
  STA L007A
  BNE L1265
@@ -602,15 +624,14 @@ L1248 = L1247+1
 .L1252
 
  LDA #&24
- STA L131B
+ STA L131A+1
  LDA #&28
- STA L1320
+ STA L131F+1
 
 .L125C
 
  LDA #&6A
-L125D = L125C+1
- STA L1364
+ STA L1363+1
  LDA #0
  STA L007A
 
@@ -624,9 +645,9 @@ L125D = L125C+1
  LDA #&88
  STA L136B
  LDA #&C8
- STA L1374
+ STA L1373+1
  LDA #&FE
- STA L137A
+ STA L1379+1
  LDA #&9E
  SEC
  SBC L0078
@@ -640,9 +661,9 @@ L125D = L125C+1
  LDA #&98
  STA L136B
  LDA #&38
- STA L1374
+ STA L1373+1
  LDA #1
- STA L137A
+ STA L1379+1
  LDA #&A0
  SEC
  SBC L0078
@@ -769,14 +790,11 @@ L125D = L125C+1
 
  BCC L1321
 
-L131B = L131A+1
  JSR L135F
 
 .L131F
 
  BNE L132A
-
-L1320 = L131F+1
 
 .L1321
 
@@ -785,7 +803,6 @@ L1320 = L131F+1
 .L1323
 
  LDA L2E60,X
-L1324 = L1323+1
 
 .L1326
 
@@ -816,7 +833,6 @@ L1324 = L1323+1
 .L1342
 
  LDA L2E6A,X
-L1343 = L1342+1
 
 .L1345
 
@@ -847,7 +863,6 @@ L1343 = L1342+1
 .L1363
 
  LDA L2E60,X
-L1364 = L1363+1
 
 .L1366
 
@@ -870,14 +885,12 @@ L1364 = L1363+1
 .L1373
 
  ADC #&38
-L1374 = L1373+1
  STA P
  LDA P+1
 
 .L1379
 
  ADC #1
-L137A = L1379+1
  STA P+1
 
 .L137D
@@ -920,9 +933,9 @@ L137A = L1379+1
  LDA #&88
  STA L1426
  LDA #&C8
- STA L142F
+ STA L142E+1
  LDA #&FE
- STA L1435
+ STA L1434+1
  LDA #7
  STA L007B
  BNE L13C2
@@ -934,9 +947,9 @@ L137A = L1379+1
  LDA #&98
  STA L1426
  LDA #&38
- STA L142F
+ STA L142E+1
  LDA #1
- STA L1435
+ STA L1434+1
  LDA #&A0
  STA L007B
 
@@ -946,7 +959,7 @@ L137A = L1379+1
  BMI L13D5
 
  LDA #&1D
- STA L1422
+ STA L1421+1
  LDA L0077
  CLC
  ADC #1
@@ -956,7 +969,7 @@ L137A = L1379+1
 .L13D5
 
  LDA #&3F
- STA L1422
+ STA L1421+1
  LDA L0077
  SEC
  SBC #1
@@ -995,7 +1008,6 @@ L137A = L1379+1
 .L1408
 
  LDA #8
-L1409 = L1408+1
  CPX #0
  BEQ L1412
 
@@ -1014,7 +1026,6 @@ L1409 = L1408+1
 .L1417
 
  LDA L0079
-L1418 = L1417+1
 
 .L1419
 
@@ -1027,7 +1038,6 @@ L1418 = L1417+1
 
  BCS L1440
 
-L1422 = L1421+1
  STA L0083
 
 .L1425
@@ -1046,14 +1056,12 @@ L1422 = L1421+1
 .L142E
 
  ADC #&C8
-L142F = L142E+1
  STA P
  LDA P+1
 
 .L1434
 
  ADC #&FE
-L1435 = L1434+1
  STA P+1
  CPY L007B
  CLC
@@ -1072,7 +1080,6 @@ L1435 = L1434+1
 .L1448
 
  CMP #0
-L1449 = L1448+1
  BNE L1459
 
  LDA P
@@ -1083,7 +1090,6 @@ L1449 = L1448+1
 .L1453
 
  LDA #8
-L1454 = L1453+1
  BCC L1459
 
  INC P+1
@@ -1106,7 +1112,6 @@ L1454 = L1453+1
 .L146A
 
  CMP #&10
-L146B = L146A+1
  BNE L147B
 
  LDA P
@@ -1117,7 +1122,6 @@ L146B = L146A+1
 .L1475
 
  LDA #1
-L1476 = L1475+1
  BCS L147B
 
  DEC P+1
@@ -1200,12 +1204,12 @@ L1476 = L1475+1
 
 .L14CA
 
- STA L1248
- STA L1324
- STA L125D
- STA L1343
+ STA L1247+1
+ STA L1323+1
+ STA L125C+1
+ STA L1342+1
  LDA L0CC3
- STA L1418
+ STA L1417+1
  LDA #&A9
  STA L1417
  RTS
@@ -1234,48 +1238,48 @@ L1476 = L1475+1
  BMI L1520
 
  LDA #&74
- STA L1248
- STA L1324
+ STA L1247+1
+ STA L1323+1
  LDA #&7E
- STA L125D
- STA L1343
+ STA L125C+1
+ STA L1342+1
  LDA #&80
- STA L1409
+ STA L1408+1
  LDA #8
- STA L1449
+ STA L1448+1
  LDA #&80
- STA L1454
+ STA L1453+1
  LDA #0
- STA L146B
+ STA L146A+1
  LDA #&10
- STA L1476
+ STA L1475+1
  BNE L1549
 
 .L1520
 
  LDA #&60
- STA L1248
- STA L1324
+ STA L1247+1
+ STA L1323+1
  LDA #&6A
- STA L125D
- STA L1343
+ STA L125C+1
+ STA L1342+1
  LDA #8
- STA L1409
+ STA L1408+1
  LDA #0
- STA L1449
+ STA L1448+1
  LDA #8
- STA L1454
+ STA L1453+1
  LDA #&10
- STA L146B
+ STA L146A+1
  LDA #1
- STA L1476
+ STA L1475+1
 
 .L1549
 
  LDA #&A5
  STA L1417
  LDA #&79
- STA L1418
+ STA L1417+1
  RTS
 
 \ ******************************************************************************
@@ -2775,7 +2779,6 @@ L1476 = L1475+1
 .L1D46
 
  ADC #&80
-L1D47 = L1D46+1
  STA L0077
  BCC L1D4E
 
@@ -2976,24 +2979,29 @@ L1D47 = L1D46+1
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   ??? (11 in Reset, value in L4FFA is passed sometimes)
 \
 \ ******************************************************************************
 
 .L1E42
 
- STX L0087
- CPX #0
+ STX L0087              \ Set L0087 to the value in X
+
+ CPX #0                 \ If X = 0, jump down to L1E51
  BEQ L1E51
 
- CPX #2
+ CPX #2                 \ If X < 2 (i.e. X = 1), jump down to L1E66
  BCC L1E66
 
- BEQ L1E7B
+ BEQ L1E7B              \ If X = 2, jump down to L1E7B
 
- JMP L1EE5
+ JMP L1EE5              \ X > 2, so jump down to L1EE5
 
 .L1E51
+
+                        \ If we get here then X = 0
 
  LDA L0CFB
  STA L0074
@@ -3012,6 +3020,8 @@ L1D47 = L1D46+1
 
 .L1E66
 
+                        \ If we get here then X = 1
+
  LDA L0C15
  BPL L1E70
 
@@ -3027,6 +3037,8 @@ L1D47 = L1D46+1
  JMP L209D
 
 .L1E7B
+
+                        \ If we get here then X = 2
 
  LDA L0CEE
  STA R
@@ -3096,19 +3108,25 @@ L1D47 = L1D46+1
 
 .L1EDF
 
+                        \ If we get here then X = 3
+
  LDA L4FFF
  JMP L209D
 
 .L1EE5
 
- CPX #4
+                        \ If we get here then X > 2
+
+ CPX #4                 \ If X < 4 (i.e. X = 3), jump up to L1EDF
  BCC L1EDF
 
- BEQ L1EEE
+ BEQ L1EEE              \ If X = 4, jump down to L1EEE
 
- JMP L1F39
+ JMP L1F39              \ X > 4, so jump down to L1F39
 
 .L1EEE
+
+                        \ If we get here then X = 4
 
  LDA L0C8A
  STA L0074
@@ -3171,14 +3189,18 @@ L1D47 = L1D46+1
 
 .L1F39
 
- CPX #6
+                        \ If we get here then X > 4
+
+ CPX #6                 \ If X < 6 (i.e. X = 5), jump down to L1F42
  BCC L1F42
 
- BEQ L1F80
+ BEQ L1F80              \ If X = 6, jump down to L1F80
 
- JMP L1FE4
+ JMP L1FE4              \ X > 6, so jump down to L1FE4
 
 .L1F42
+
+                        \ If we get here then X = 5
 
  LDA L0C01
  STA L0074
@@ -3232,10 +3254,14 @@ L1D47 = L1D46+1
 
 .L1F80
 
+                        \ If we get here then X = 6
+
  LDA L0C9C
  JMP L209D
 
 .L1F86
+
+                        \ If we get here then X = 7
 
  LDY #0
  STY L007C
@@ -3301,35 +3327,26 @@ L1D47 = L1D46+1
 
 .L1FE4
 
- CPX #7
+                        \ If we get here then X > 6
+
+ CPX #7                 \ If X = 7, jump up to L1F86
  BEQ L1F86
 
- CPX #9
+ CPX #9                 \ If X < 9 (i.e. X = 8), jump down to L200E
  BCC L200E
 
- BEQ L1FF5
+ BEQ L1FF5              \ If X = 9, jump down to L1FF5
 
- CPX #&0B
+ CPX #11                \ If X < 11 (i.e. X = 10), jump down to L200E
  BCC L200E
 
- BEQ L2058
+ BEQ L2058              \ If X = 11, jump down to L2058
 
  RTS
 
-\ ******************************************************************************
-\
-\       Name: L1FF5
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 .L1FF5
+
+                        \ If we get here then X = 9
 
  LDX #1
  LDA #&80
@@ -3346,6 +3363,8 @@ L1D47 = L1D46+1
  BNE L207F
 
 .L200E
+
+                        \ If we get here then X = 8 or 10
 
  LDA #&80
  JSR L2129
@@ -3382,64 +3401,71 @@ L1D47 = L1D46+1
 
  RTS
 
-\ ******************************************************************************
-\
-\       Name: L2058
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 .L2058
 
- LDA #&80
+                        \ If we get here then X = 11
+
+ LDA #128               \ Set S = 128
  STA S
- LDA #&7D
+
+ LDA #125               \ Set L0077 = 125
  STA L0077
- LDA L0C1F
+
+ LDA L0C1F              \ Set (R A) = (L0C1F L0C0F)
  STA R
  LDA L0C0F
- LDX #3
+
+ LDX #3                 \ Set X = 3 to act as a shift counter in the following
+                        \ loop
 
 .L206A
 
- LSR R
+ LSR R                  \ Set (R A) = (R A) / 2
  ROR A
- DEX
- BPL L206A
 
- STA R
+ DEX                    \ Decrement the shift counter
+
+ BPL L206A              \ Loop back until we have shifted right by 4 places, so
+                        \ we now have:
+                        \
+                        \   (R A) = (R A) / 8
+
+ STA R                  \ Set L0079 = (A / 2 + A) / 4
  LSR A
  ADC R
  LSR A
  LSR A
  STA L0079
- LDX #3
- LDY #&F3
- LDA #7
+
+ LDX #3                 \ Set X = 3
+
+ LDY #243               \ Set Y = 243 to use as the value of L4FFC below
+
+ LDA #7                 \ Set A = 7 to use as the value of L0075 below
 
 .L207F
 
- STA L0075
- LDA #1
+ STA L0075              \ Set L0075 = A
+
+ LDA #1                 \ Set L0074 = 1
  STA L0074
- STY L4FFC
- LDA L4FEA,X
+
+ STY L4FFC              \ Set L4FFC = Y
+
+ LDA L4FEA,X            \ Set L0078 = the X-th byte of L4FEA
  STA L0078
- LDA L0079
+
+ LDA L0079              \ Set the X-th byte of L4FEA = L0079
  STA L4FEA,X
+
  JSR L22D1
 
- LDA #0
+ LDA #0                 \ Set L007F = 0
  STA L007F
+
  JSR L22CC
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -3960,11 +3986,37 @@ L1D47 = L1D46+1
  LDA L0079
  JMP L22D7
 
+\ ******************************************************************************
+\
+\       Name: L22D1
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L22D1
 
  LDA #&80
  STA L007F
  LDA L0078
+
+\ ******************************************************************************
+\
+\       Name: L22D7
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L22D7
 
@@ -4199,7 +4251,7 @@ L1D47 = L1D46+1
 
  STX L0C0F
  STY L0C1F
- LDX #&0B
+ LDX #11
  JSR L1E42
 
 .L23B2
@@ -4217,7 +4269,7 @@ L1D47 = L1D46+1
 
 .L23C1
 
- JSR L250E
+ JSR BIndicator
 
 .L23C4
 
@@ -4228,7 +4280,7 @@ L1D47 = L1D46+1
 
  BMI L23D3
 
- JSR L2457
+ JSR FIndicator
 
  JMP L23D6
 
@@ -4341,7 +4393,7 @@ L1D47 = L1D46+1
 \       Name: UIndicator
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Update the Undercarriage indicator
+\    Summary: Update the undercarriage indicator ("U") and related variables
 \
 \ ******************************************************************************
 
@@ -4349,17 +4401,17 @@ L1D47 = L1D46+1
 
  LDA L4F85              \ Set A = L4F85
 
- LDY Undercarriage      \ If Undercarriage <> 0 then the undercarriage is down,
- BNE UIndicator1        \ so jump to UIndicator1
+ LDY Undercarriage      \ If Undercarriage is non-zero then the undercarriage is
+ BNE UIndicator1        \ down, so jump to UIndicator1
 
                         \ If we get here then the undercarriage is up
 
- SEC                    \ The undercarriage is down, so set A = A - 10
+ SEC                    \ Set A = A - 10
  SBC #10
 
  LDX #5                 \ Set X = 5 to store in L0CF0 below
 
- LDY #%01010101         \ Set Y to a four-pixel block with pixels 1 and 3 in
+ LDY #%01010101         \ Set Y to a four-pixel block with pixels 0 and 2 in
                         \ white, to act as the centre of the undercarriage
                         \ indicator when turned off
 
@@ -4378,17 +4430,17 @@ L1D47 = L1D46+1
 
  LDX #10                \ Set X = 10 to store in L0CF0 below
 
- LDY #%01110111         \ Set Y to a four-pixel block with pixels 1, 2 and 3 in
+ LDY #%01110111         \ Set Y to a four-pixel block with pixels 0, 1 and 2 in
                         \ white, to act as the centre of the undercarriage
                         \ indicator when turned on
 
 .UIndicator2
 
  STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 10 or
-                        \ reduced by 10 for undercarriage down/up)
+                        \ reduced by 10 for undercarriage down/up) ???
 
  STX L0CF0              \ Store X in L0CF0 (5 if undercarriage is up, 10 if it
-                        \ is down)
+                        \ is down) ???
 
  TYA                    \ Set A to the pixel pattern in Y
 
@@ -4397,11 +4449,12 @@ L1D47 = L1D46+1
 
 .UIndicatorL1
 
- STA Row30_Block32_2,X  \ Store A in row X of the undercarriage indicator
+ STA Row30_Block32_2,X  \ Update pixel row X of the undercarriage indicator to
+                        \ the pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL UIndicatorL1       \ Loop back to update the top row of the indicator
+ BPL UIndicatorL1       \ Loop back to update the next row of the indicator
 
  RTS                    \ Return from the subroutine
 
@@ -4414,52 +4467,72 @@ L1D47 = L1D46+1
 
 \ ******************************************************************************
 \
-\       Name: L2457
+\       Name: FIndicator
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Dashboard
+\    Summary: Update the flaps indicator ("F") and and related variables
 \
 \ ******************************************************************************
 
-.L2457
+.FIndicator
 
- LDA L4F85
- LDY L0CF3
- BNE L2468
+ LDA L4F85              \ Set A = L4F85
+ 
+ LDY Flaps              \ If Flaps is non-zero then the flaps are on, so jump
+ BNE FIndicator1        \ to FIndicator1
 
- SEC
- SBC #&C8
- LDX #0
- LDY #&44
- BNE L246F
+                        \ If we get here then the flaps are off
 
-.L2468
+ SEC                    \ Set A = A - 200
+ SBC #200
 
- CLC
- ADC #&C8
- LDX #&98
- LDY #&CC
+ LDX #0                 \ Set X = 5 to store in L4F87 below
 
-.L246F
+ LDY #%01000100         \ Set Y to a four-pixel block with pixel 2 in white, to
+                        \ act as the centre of the flaps indicator when turned
+                        \ off
 
- STA L4F85
- STX L4F87
- TYA
- LDX #2
+ BNE FIndicator2        \ Jump to FIndicator2 to update the indicator (this
+                        \ BNE is effectively a JMP as Y is never zero)
 
-.L2478
+.FIndicator1
 
- STA L7E9A,X
- DEX
- BPL L2478
+                        \ If we get here then the flaps are on
 
-.L247E
+ CLC                    \ Set A = A + 200
+ ADC #200
 
- RTS
+ LDX #152               \ Set X = 152 to store in L4F87 below
+
+ LDY #%11001100         \ Set Y to a four-pixel block with pixels 2 and 3 in
+                        \ white, to act as the centre of the flaps indicator
+                        \ when turned on
+
+.FIndicator2
+
+ STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 200 or
+                        \ reduced by 200 for flaps on/off) ???
+
+ STX L4F87              \ Store X in L4F87 (5 if flaps are off, 152 if they are
+                        \ on) ???
+
+ TYA                    \ Set A to the pixel pattern in Y
+
+ LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
+                        \ pixel rows in the flaps indicator
+
+.FIndicator_L1
+
+ STA Row30_Block35_2,X  \ Update pixel row X of the flaps indicator to the pixel
+                        \ pattern in A
+
+ DEX                    \ Decrement the byte counter to the pixel row above
+
+ BPL FIndicator_L1      \ Loop back to update the next row of the indicator
+
+.FIndicator_RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4478,7 +4551,7 @@ L1D47 = L1D46+1
 
  LDA L0CF1
  ORA L368F
- BNE L247E
+ BNE FIndicator_RTS
 
  LDX #&E4
  JSR L4B4A
@@ -4568,10 +4641,48 @@ L1D47 = L1D46+1
 
 \ ******************************************************************************
 \
-\       Name: L250E
+\       Name: BIndicator
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Dashboard
+\    Summary: Update the brakes indicator ("B")
+\
+\ ******************************************************************************
+
+.BIndicator
+
+ LDA #%01110111         \ Set A to a four-pixel block with pixels 0, 1 and 2 in
+                        \ white, to act as the centre of the brakes indicator
+                        \ when turned on
+
+ LDX Brakes             \ If Brakes is non-zero then the brakes are on, so
+ BNE BIndicator1        \ jump to BIndicator1
+
+ LDA #%01010101         \ Set A to a four-pixel block with pixels 0 and 2 in
+                        \ white, to act as the centre of the brakes indicator
+                        \ when turned off
+
+.BIndicator1
+
+ LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
+                        \ pixel rows in the brakes indicator
+
+.BIndicator2
+
+ STA Row30_Block37_2,X  \ Update pixel row X of the brakes indicator to the
+                        \ pixel pattern in A
+
+ DEX                    \ Decrement the byte counter to the pixel row above
+
+ BPL BIndicator2        \ Loop back to update the next row of the indicator
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: TIndicator
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Update the Theme indicator ("T")
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4579,58 +4690,34 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L250E
+.TIndicator
 
- LDA #&77
- LDX L0CF5
- BNE L2517
+ LDA #%01110111         \ Set A to a four-pixel block with pixels 0, 1 and 2 in
+                        \ white, to act as the centre of the Theme indicator
+                        \ when turned on
 
- LDA #&55
+ LDX Theme              \ If Theme is positive then the Theme is enabled, so
+ BPL TIndicator1        \ jump to TIndicator1
 
-.L2517
+ LDA #%01010101         \ Set A to a four-pixel block with pixels 0 and 2 in
+                        \ white, to act as the centre of the Theme indicator
+                        \ when turned off
 
- LDX #2
+.TIndicator1
 
-.L2519
+ LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
+                        \ pixel rows in the Theme indicator
 
- STA L7EAA,X
- DEX
- BPL L2519
+.TIndicator_L1
 
- RTS
+ STA Row30_Block0_2,X   \ Update pixel row X of the Theme indicator to the pixel
+                        \ pattern in A
 
-\ ******************************************************************************
-\
-\       Name: L2520
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+ DEX                    \ Decrement the byte counter to the pixel row above
 
-.L2520
+ BPL TIndicator_L1      \ Loop back to update the next row of the indicator
 
- LDA #&77
- LDX L0CE7
- BPL L2529
-
- LDA #&55
-
-.L2529
-
- LDX #2
-
-.L252B
-
- STA L7D82,X
- DEX
- BPL L252B
-
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4727,7 +4814,7 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L257B
+.L257B                  \ MOBJ or UOBJ in original
 
  LDA L4400,Y
  CLC
@@ -4805,12 +4892,8 @@ L1D47 = L1D46+1
 \
 \       Name: Reset
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Start and end
+\    Summary: Reset most variables to prepare for a new flight
 \
 \ ******************************************************************************
 
@@ -4818,7 +4901,8 @@ L1D47 = L1D46+1
 
  LDX #0                 \ Set A = 0 to use as our zero value
 
- TXA                    \ Set X = 0 to use as a byte counter in the ResetL1 loop
+ TXA                    \ Set X = 0 to use as a counter for zeroing 256 bytes in
+                        \ the ResetL1 loop
 
  STA L4202              \ Set L4202 = 0
 
@@ -4842,8 +4926,8 @@ L1D47 = L1D46+1
 
  BNE ResetL1            \ Loop back until we have zeroed &0400 to &04FF
 
- LDX #255               \ Set X = 255 to use as a byte counter in the ResetL2
-                        \ loop
+ LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
+                        \ in the ResetL2 loop
 
  STA L05C8              \ Set L05C8 = 0
 
@@ -4851,15 +4935,17 @@ L1D47 = L1D46+1
 
 .ResetL2
 
-                        \ This loop zeroes &0C00 to &0CFE
+                        \ This loop zeroes &0C00 to &0CFE, which resets all of
+                        \ the variables in the &0C00 workspace
 
- STA L0BFF,X            \ Zero the X-1-st byte of page &C
+ STA L0BFF,X            \ Zero the X-1-th byte of page &C
 
  DEX                    \ Decrement the byte counter
 
  BNE ResetL2            \ Loop back until we have zeroed &0C00 to &0CFE
 
- LDX #7                 \ Set X = 7 to use as a byte counter in the ResetL3 loop
+ LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
+                        \ the ResetL3 loop
 
 .ResetL3
 
@@ -4891,14 +4977,14 @@ L1D47 = L1D46+1
  LDA #242               \ Set L4F85 = 242
  STA L4F85
 
- LDA #1                 \ Set Undercarriage = 1
+ LDA #1                 \ Set Undercarriage = 1 (undercarriage is down)
  STA Undercarriage
 
- STA L0CF5              \ Set L0CF5 = 1
+ STA Brakes             \ Set Brakes = 1 (brakes on)
 
  STA L0CE8              \ Set L0CE8 = 1
 
- JSR UIndicator         \ Call UIndicator to update the Undercarriage indicator
+ JSR UIndicator         \ Update the undercarriage indicator
 
  LDA #1                 \ Set L0CC5 = 1
  STA L0CC5
@@ -4906,12 +4992,13 @@ L1D47 = L1D46+1
  LDA #47                \ Set L0CD1 = 47
  STA L0CD1
 
- LDA #255               \ Set L0CE7 = 255
- STA L0CE7
+ LDA #255               \ Set Theme = 255
+ STA Theme
 
  STA L0CD0              \ Set L0CD0 = 255
 
- LDX #7                 \ Set X = 7 to use as a byte counter in the ResetL4 loop
+ LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
+                        \ the ResetL4 loop
 
  STX L0CFA              \ Set L0CFA = 7
 
@@ -4925,7 +5012,8 @@ L1D47 = L1D46+1
 
  BPL ResetL4            \ Loop back until we have zeroed L4208 to L4208+7
 
- LDX #2
+ LDX #2                 \ Set X = 2 to use as a counter for zeroing 3 bytes in
+                        \ the ResetL5 loop
 
 .ResetL5
 
@@ -4937,17 +5025,17 @@ L1D47 = L1D46+1
 
  BPL ResetL5            \ Loop back until we have zeroed L4203 to L4203+2
 
- JSR L2520              \ ???
+ JSR TIndicator         \ Update the Theme indicator
 
  LDX #11                \ ???
  JSR L1E42
 
- LDA #65                \ Set L3692 = 65
- STA L3692
+ LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
+ STA L3692              \ 66 times in the ResetL6 loop
 
 .ResetL6
 
- DEC L3692              \ Decrement L3692
+ DEC L3692              \ Decrement the counter in L3692
 
  JSR L33A1              \ ???
 
@@ -5001,19 +5089,19 @@ L1D47 = L1D46+1
 
 .MainLoop
 
- LDA #0                 \ Set L369F = 0
+ LDA #0                 \ Set L369F = 0 ???
  STA L369F
 
- STA L369E              \ Set L369E = 0
+ STA L369E              \ Set L369E = 0 ???
 
  LDA #14                \ Call SetEnvelope with A = 14 to set up the second
  JSR SetEnvelope        \ sound envelope
 
 .MainLoopL1
 
- JSR ClearCanopy        \ Clear the canopy view, avoiding the canopy edges
+ JSR ClearCanopy        \ Clear the canopy view, leaving the canopy edges alone
 
- JSR Reset
+ JSR Reset              \ Reset most variables to prepare for a new flight
 
  JSR L253C
 
@@ -5021,12 +5109,13 @@ L1D47 = L1D46+1
 
  JSR L2BDC
 
- JSR L2457
+ JSR FIndicator         \ Update the flaps indicator
 
- JSR L250E
+ JSR BIndicator         \ Update the brakes indicator
 
  LDA #&40
  STA VIA+&6B
+
  LDA #&EA
  STA VIA+&65
 
@@ -5100,7 +5189,7 @@ L1D47 = L1D46+1
 
 .L272C
 
- LDA L0CE7
+ LDA Theme
  BMI L2734
 
  JSR L2DAC
@@ -5139,7 +5228,7 @@ L1D47 = L1D46+1
 
 .L2767
 
- LDA L0CE7
+ LDA Theme
  BNE L279D
 
  LDA L0CF1
@@ -5202,12 +5291,12 @@ L1D47 = L1D46+1
  LDA L0CF1
  BEQ L27C8
 
- LDA L0CE7
+ LDA Theme
  BPL L27C8
 
  LDA #8
- STA L0CE7
- JSR L2520
+ STA Theme
+ JSR TIndicator
 
 .L27C8
 
@@ -5895,7 +5984,7 @@ L1D47 = L1D46+1
 
  BNE L2B09
 
- LDA L0CE7
+ LDA Theme
  BNE L2B1D
 
  LDA #8
@@ -6704,7 +6793,7 @@ L1D47 = L1D46+1
 \       Name: ClearCanopy
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Clear the canopy to black, avoiding the canopy edges
+\    Summary: Clear the canopy to black, leaving the canopy edges alone
 \
 \ ******************************************************************************
 
@@ -6713,14 +6802,15 @@ L1D47 = L1D46+1
  LDX #0                 \ Set X = 0 so we clear the canopy to black
 
                         \ Fall through into FillCanopy to fill the canopy with
-                        \ black, avoiding the top and side edges
+                        \ black, leaving the top and side edges alone
 
 \ ******************************************************************************
 \
 \       Name: FillCanopy
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Fill the canopy with a specified colour, avoiding the canopy edges
+\    Summary: Fill the canopy with a specified colour, leaving the canopy edges
+\             alone
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6838,7 +6928,7 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L2ED3
+.L2ED3                  \ DLP. in original
 
  STA L0074
 
@@ -6876,7 +6966,7 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L2EE6
+.L2EE6                  \ UBUL in original
 
  LDY #&0F
  STY L0CCC
@@ -6931,9 +7021,9 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L2F1C
+.L2F1C                  \ SUTR in original
 
- LDX L0CE7
+ LDX Theme
  BMI L2F4D
 
  BEQ L2F4D
@@ -6948,37 +7038,24 @@ L1D47 = L1D46+1
  BCS L2F4D
 
  ORA #&10
- DEC L0CE7
+ DEC Theme
  LDX #8
 
 .L2F3B
 
  DEX
- CPX L0CE7
+ CPX Theme
  BNE L2F45
 
  STA L4208,X
  RTS
-
-\ ******************************************************************************
-\
-\       Name: L2F45
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
 
 .L2F45
 
  CMP L4208,X
  BNE L2F3B
 
- INC L0CE7
+ INC Theme
 
 .L2F4D
 
@@ -7166,7 +7243,7 @@ L1D47 = L1D46+1
  BPL L300A
 
  LDA #8
- STA L0CE7
+ STA Theme
  LDX #0
  LDA #&50
  JSR L4BCB
@@ -7420,7 +7497,7 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L3129
+.L3129                  \ STIP in original
 
  LDX #2
 
@@ -7445,19 +7522,6 @@ L1D47 = L1D46+1
 
  RTS
 
-\ ******************************************************************************
-\
-\       Name: L3143
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 .L3143
 
  BEQ L312B
@@ -7468,7 +7532,20 @@ L1D47 = L1D46+1
  STA L007A,X
  JMP L313A
 
-.L3152
+\ ******************************************************************************
+\
+\       Name: L3152
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L3152                  \ HITS in original
 
  LDX #2
 
@@ -7519,7 +7596,7 @@ L1D47 = L1D46+1
 \
 \ ******************************************************************************
 
-.L3181
+.L3181                  \ ADIF in original
 
  LDA #0
  STA P
@@ -8074,19 +8151,6 @@ L1D47 = L1D46+1
 
  RTS
 
-\ ******************************************************************************
-\
-\       Name: L33A9
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 .L33A9
 
  LDX #&80
@@ -8179,12 +8243,12 @@ L1D47 = L1D46+1
  CMP #&0E
  BCC L33FF
 
- LDA L0CF3
+ LDA Flaps
  BEQ L33FF
 
  LDA #0
- STA L0CF3
- JSR L2457
+ STA Flaps
+ JSR FIndicator
 
 .L33FF
 
@@ -8316,11 +8380,11 @@ L1D47 = L1D46+1
 
  EQUB &49
 
-.L368E
+.L368E                  \ EPTR in orginal
 
  EQUB &3D
 
-.L368F
+.L368F                  \ EPLO in orginal
 
  EQUB &26               \ Zeroed in Reset
 
@@ -8848,7 +8912,7 @@ L1D47 = L1D46+1
 
  EQUB &C1
 
-.L4208
+.L4208                  \ ? FLDPTR in original
 
  EQUB &65, &64, &62, &61, &60, &5F, &5E \ Zeroed in Reset
 
@@ -9066,7 +9130,7 @@ L1D47 = L1D46+1
  EQUB &00, &01, &02, &03, &04, &05, &06, &07
  EQUB &08, &09, &0A, &0B, &0C, &0D, &0E, &0F
 
-.L4400
+.L4400                  \ XALO in original
 
  EQUB &23
 
@@ -9110,7 +9174,7 @@ L1D47 = L1D46+1
 
 .L4478
 
- EQUB &20
+ EQUB &20                  \ XAHI in original
 
 .L4479
 
@@ -10689,20 +10753,23 @@ L1D47 = L1D46+1
 
 .L4F84
 
- EQUB &9C
+ EQUB &9C               \ Always either &9C or &27 (156 or 39)
 
 .L4F85
 
-\ Goes up by 10 in UIndicator if undercarriage is down
-\ Goes down by 10 in UIndicator if undercarriage is pulled up
-\ Is this altitude?
+\ Goes up by 10 if undercarriage is down
+\ Goes down by 10 if undercarriage is up
+\ Goes up by 200 if flaps are on
+\ Goes down by 200 if flaps are off
+\ Is this air speed? Acceleration? Drag factor?
 
  EQUB &16               \ Set to 198 in Reset
  EQUB &28
 
 .L4F87
 
- EQUB &98               \ Zeroed in Reset
+ EQUB 152               \ Zeroed in Reset
+                        \ Set to 5 if flaps are off, 152 if they are on
 
  EQUB &00, &00, &FF, &8D, &BE, &00, &05
  EQUB &7D, &FF, &50
@@ -10946,7 +11013,7 @@ L1D47 = L1D46+1
 
 .L50E7
 
- LDX L0CF5
+ LDX Brakes
  BNE L50DE
 
  JSR L564D
@@ -11427,7 +11494,7 @@ L1D47 = L1D46+1
  STA S
  LDX #5
  LDA #0
- STA L1D47
+ STA L1D46+1
 
 .L5360
 
@@ -11495,7 +11562,7 @@ L1D47 = L1D46+1
  BPL L5360
 
  LDA #&80
- STA L1D47
+ STA L1D46+1
  LDA L0C43
  STA L0C46
  LDA L0C53
@@ -11510,7 +11577,7 @@ L1D47 = L1D46+1
  LDA L0C45
  STA L0C47
  LDX #2
- LDA L0CF3
+ LDA Flaps
  PHP
  BEQ L53E7
 
@@ -13533,7 +13600,7 @@ ORG &0B00
  EQUB 23, 0, 10, 23     \ Set 6845 register R10 = 23
  EQUB 0, 0, 0           \
  EQUB 0, 0, 0           \ This is the "cursor start" register, so this sets the
-                        \ cursor start line at 0, effectively disabling the
+                        \ cursor start line at 23, effectively disabling the
                         \ cursor
 
 \ ******************************************************************************
@@ -13602,9 +13669,9 @@ ORG &0B00
 
  BNE SetupL1            \ Loop back until we have copied a whole page of bytes
 
- NOP                    \ This code has been replaced by NOPs in this
- NOP                    \ unprotected version, so presumably this contained some
- NOP                    \ kind of copy protection or decryption code
+ NOP                    \ Presumably this contained some kind of copy protection
+ NOP                    \ or decryption code that has been replaced by NOPs in
+ NOP                    \ this unprotected version of the game
  NOP
 
                         \ The following two calls to ClearRows clear the first
@@ -13767,16 +13834,19 @@ ORG &0B00
 \
 \ Arguments:
 \
-\   X                   The x-coordinate to move the graphics cursor to
+\   X                   The x-coordinate of the point (0-159)
 \
-\   Y                   The y-coordinate to move the graphics cursor to
+\   Y                   The y-coordinate of the point (0-255)
 \
 \ ******************************************************************************
 
 .Point
 
- LDA #69
- BNE Plot
+ LDA #69                \ Set A = 69 so the following VDU 25 command plots a
+                        \ point at an absolute position on-screen
+
+ BNE Plot               \ Jump to Plot to do the move (this BNE is effectively a
+                        \ JMP as A is never zero
 
 \ ******************************************************************************
 \
@@ -13789,9 +13859,9 @@ ORG &0B00
 \
 \ Arguments:
 \
-\   X                   The x-coordinate to move the graphics cursor to
+\   X                   The x-coordinate to move the graphics cursor to (0-159)
 \
-\   Y                   The y-coordinate to move the graphics cursor to
+\   Y                   The y-coordinate to move the graphics cursor to (0-255)
 \
 \ ******************************************************************************
 
@@ -13814,9 +13884,9 @@ ORG &0B00
 \
 \ Arguments:
 \
-\   X                   The x-coordinate at the end of the line
+\   X                   The x-coordinate of the end of the line (0-159)
 \
-\   Y                   The y-coordinate at the end of the line
+\   Y                   The y-coordinate of the end of the line (0-255)
 \
 \ ******************************************************************************
 
@@ -13844,9 +13914,9 @@ ORG &0B00
 \
 \                         * 69 = Draw point at coordinate
 \
-\   X                   The x-coordinate for the plot command
+\   X                   The x-coordinate for the plot command (0-159)
 \
-\   Y                   The y-coordinate for the plot command
+\   Y                   The y-coordinate for the plot command (0-255)
 \
 \ ******************************************************************************
 
@@ -13964,14 +14034,14 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ Zero a block of Y bytes on R screen rows, starting from screen address
-\ P(1 0) on the first row.
+\ This routine zeroes a block of Y bytes on R screen rows, starting from screen
+\ address P(1 0) on the first row.
 \
 \ A value of Y = 0 will zero 256 bytes.
 \
 \ In other words, P(1 0) represents the top-left pixel to blank, Y represents
-\ the width of the area to blank (with 8 bytes per character block), and R is
-\ the number of rows to blank.
+\ the width of the area to blank (with a value of 8 per character block), and R
+\ contains the number of rows to blank.
 \
 \ Arguments:
 \
@@ -14055,10 +14125,6 @@ COPYBLOCK L0B00, P%, from5C00
 \    Summary: The main entry point for the game: move code into lower memory and
 \             call it
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
 ORG &5E00
@@ -14074,9 +14140,10 @@ ORG &5E00
                         \   * X = Y = 0   if this is a BBC Micro with MOS 0.1
                         \   * X = Y = &FF if this is a BBC Micro with MOS 1.20
 
- CPX #0                 \ This checks the MOS version, but the code has been
- NOP                    \ replaced by NOPs in this unprotected version
- NOP
+ CPX #0                 \ This checks the MOS version, but presumably this
+ NOP                    \ contained some kind of copy protection or decryption
+ NOP                    \ code that has been replaced by NOPs in this
+                        \ unprotected version of the game
 
  LDA #200               \ Call OSBYTE with A = 200, X = 3 and Y = 0 to disable
  LDX #3                 \ the ESCAPE key and clear memory if the BREAK key is
@@ -14117,9 +14184,9 @@ ORG &5E00
 
  BNE EntryL1            \ Loop back until we have copied a whole page of bytes
 
- NOP                    \ This code has been replaced by NOPs in this
- NOP                    \ unprotected version, so presumably this contained some
- NOP                    \ kind of copy protection or decryption code
+ NOP                    \ Presumably this contained some kind of copy protection
+ NOP                    \ or decryption code that has been replaced by NOPs in
+ NOP                    \ this unprotected version of the game
  NOP
  NOP
  NOP
