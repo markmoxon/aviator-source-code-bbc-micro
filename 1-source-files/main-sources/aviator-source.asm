@@ -24,10 +24,10 @@ P = &0070
 Q = &0071               \ DTIP in original
 R = &0072
 S = &0073
-L0074 = &0074
-L0075 = &0075
-L0076 = &0076
-L0077 = &0077
+T = &0074
+U = &0075
+V = &0076
+W = &0077
 L0078 = &0078
 L0079 = &0079
 L007A = &007A
@@ -36,6 +36,7 @@ L007C = &007C
 L007D = &007D
 L007E = &007E
 L007F = &007F
+
 L0080 = &0080
 L0081 = &0081
 L0082 = &0082
@@ -100,26 +101,26 @@ L0BFD = &0BFD
 L0BFF = &0BFF
 
 L0C00 = &0C00
-L0C01 = &0C01
+L0C01 = &0C01           \ Related to indicator X = 5
 L0C02 = &0C02
 L0C03 = &0C03
 L0C05 = &0C05
 L0C06 = &0C06
 L0C08 = &0C08
 L0C09 = &0C09
-L0C0C = &0C0C
-L0C0D = &0C0D
-L0C0E = &0C0E
-L0C0F = &0C0F
+L0C0C = &0C0C           \ Related to indicator X = 8 or 10
+L0C0D = &0C0D           \ Related to indicator X = 9
+L0C0E = &0C0E           \ Related to indicator X = 8 or 10
+L0C0F = &0C0F           \ Related to indicator X = 11
 L0C10 = &0C10
-L0C11 = &0C11
+L0C11 = &0C11           \ Related to indicator X = 5
 L0C12 = &0C12
 L0C13 = &0C13
-L0C15 = &0C15
+L0C15 = &0C15           \ Related to indicator X = 1
 L0C16 = &0C16
 L0C18 = &0C18
 L0C19 = &0C19
-L0C1F = &0C1F
+L0C1F = &0C1F           \ Related to indicator X = 11
 L0C20 = &0C20
 L0C26 = &0C26
 L0C2A = &0C2A
@@ -161,7 +162,7 @@ L0C83 = &0C83
 L0C84 = &0C84
 L0C86 = &0C86
 L0C89 = &0C89
-L0C8A = &0C8A
+L0C8A = &0C8A           \ Related to indicator X = 4
 L0C8C = &0C8C
 L0C90 = &0C90
 L0C92 = &0C92
@@ -169,18 +170,31 @@ L0C93 = &0C93
 L0C94 = &0C94
 L0C96 = &0C96
 L0C99 = &0C99
-L0C9A = &0C9A
-L0C9C = &0C9C
-L0CA0 = &0CA0
-L0CA3 = &0CA3
-L0CA5 = &0CA5
+L0C9A = &0C9A           \ Related to indicator X = 4
+L0C9C = &0C9C           \ Related to indicator X = 6
+
+\ Populated with values from KeyTable1Low or KeyTable2Low when key is pressed
+KeyLoggerLow = &0CA0    \ L or < (elevator dive/pitch)      =   1 or  1
+                        \ A or + (rudder yaw left/right)    =   1 or  1
+                        \ S or D (aileron bank left/right)  =   1 or  1
+                        \ W or E (throttle down/up)         = -15 or 15
+                        \ U or B (undercarriage, brakes)    =   4 or  7
+                        \ F or SHIFT (flaps, fire)          =   5 or  8
+
 L0CA8 = &0CA8
-L0CB0 = &0CB0
-L0CB3 = &0CB3
+
+\ Populated with values from KeyTable1High or KeyTable2High when key is pressed
+KeyLoggerHigh = &0CB0   \ L or < (elevator dive/pitch)      = -1 or 1
+                        \ A or + (rudder yaw left/right)    = -1 or 1
+                        \ S or D (aileron bank left/right)  = -1 or 1
+                        \ W or E (throttle down/up)         = -1 or 0
+                        \ U or B (undercarriage, brakes)    =  0 or 0
+                        \ F or SHIFT (flaps, fire)          =  0 or 0
+
 L0CB8 = &0CB8
 L0CBA = &0CBA
 L0CBB = &0CBB
-L0CBE = &0CBE           \ Gun sights?
+L0CBE = &0CBE           \ Show gun sights?
 L0CBF = &0CBF
 L0CC0 = &0CC0
 L0CC1 = &0CC1
@@ -200,6 +214,8 @@ Joystick = &0CCD        \ Joystick configuration
                         \
                         \   * 0 = keyboard
                         \   * 128 = joystick
+                        \
+                        \ Set to 0 (keyboard) in Reset
 
 L0CCE = &0CCE
 L0CCF = &0CCF
@@ -229,7 +245,7 @@ L0CE9 = &0CE9
 L0CEA = &0CEA
 L0CEC = &0CEC
 L0CED = &0CED           \ Set to 229 in Reset
-L0CEE = &0CEE           \ Set to 10 in Reset
+L0CEE = &0CEE           \ Set to 10 in Reset, related to indicator X = 2
 L0CEF = &0CEF           \ Set to 92 in Reset
 
 L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
@@ -262,10 +278,10 @@ L0CF7 = &0CF7
 L0CF8 = &0CF8           \ Set to 10 in Reset
 L0CF9 = &0CF9
 L0CFA = &0CFA           \ Set to 7 in Reset
-L0CFB = &0CFB
+L0CFB = &0CFB           \ Related to indicator X = 0
 L0CFC = &0CFC
 L0CFD = &0CFD           \ Set to 198 in Reset
-L0CFE = &0CFE
+L0CFE = &0CFE           \ Related to indicator X = 2
 L0CFF = &0CFF           \ Set to 72 in Reset
 
 \ Screen address variables
@@ -279,24 +295,24 @@ Row1_Block1_0 = &5948   \ Second block on second row
 Row1_Block38_0 = &5A68  \ Last block but one on second row
 Row1_Block39_0 = &5A70  \ Last block on second row
 
-Row6_Block20_0 = &6020  \ 
-Row7_Block20_0 = &6160  \ 
-Row8_Block11_0 = &6258  \ 
+Row6_Block20_0 = &6020  \ Top of gun sight?
+Row7_Block20_0 = &6160  \ Middle of gun sight?
+Row8_Block11_0 = &6258  \ Left end of horizontal bar in gun sight?
 
 \ Dashboard screen addresses (rows 20 to 31)
 
-Row21_Block20_7 = &72E7 \ First block of joystick position display
-Row22_Block20_7 = &7427 \ Second block of joystick position display
-Row23_Block20_7 = &7567 \ Third block of joystick position display
-Row24_Block20_7 = &76A7 \ Fourth block of joystick position display
-                        \ Right-middle block of joystick position display
-Row25_Block20_7 = &77E7 \ Fifth block of joystick position display
-Row26_Block20_7 = &7927 \ Sixth block of joystick position display
-Row27_Block20_7 = &7A67 \ Seventh block of joystick position display
+Row21_Block20_7 = &72E7 \ Top block of joystick position display y-axis
+Row22_Block20_7 = &7427 \ Second block of joystick position display y-axis
+Row23_Block20_7 = &7567 \ Third block of joystick position display y-axis
+Row24_Block20_7 = &76A7 \ Fourth block of joystick position display y-axis
+                        \ Right-middle block of joystick position display x-axis
+Row25_Block20_7 = &77E7 \ Fifth block of joystick position display y-axis
+Row26_Block20_7 = &7927 \ Sixth block of joystick position display y-axis
+Row27_Block20_7 = &7A67 \ Bottom block of joystick position display y-axis
 
-Row24_Block18_7 = &7697 \ Left block of joystick position display
-Row24_Block19_7 = &769F \ Left-middle block of joystick position display
-Row24_Block21_7 = &76AF \ Right block of joystick position display
+Row24_Block18_7 = &7697 \ Left block of joystick position display x-axis
+Row24_Block19_7 = &769F \ Left-middle block of joystick position display x-axis
+Row24_Block21_7 = &76AF \ Right block of joystick position display x-axis
 
 Row23_Block12_4 = &7524 \ Left block of artificial horizon
 Row23_Block13_2 = &752A \ Middle block of artificial horizon
@@ -394,7 +410,7 @@ ORG CODE%
  CPX #&98
  ROR A
  EOR #&40
- LDX L0077
+ LDX W
  LDY L0081
  BEQ L1143
 
@@ -418,9 +434,9 @@ ORG CODE%
  LDA L4900,Y
  BPL L1162
 
- LDA L0076
+ LDA V
  EOR #&C0
- STA L0076
+ STA V
  LDA L0084
  BEQ L1198
 
@@ -465,10 +481,10 @@ ORG CODE%
  LDA L0085
  BNE L1180
 
- LDA L0076
+ LDA V
  EOR #&C0
- STA L0076
- LDA L0077
+ STA V
+ LDA W
  STA R
  LDA L0078
  STA S
@@ -476,14 +492,14 @@ ORG CODE%
 .L1198
 
  LDA #4
- BIT L0076
+ BIT V
  BMI L11A0
 
  LDA #&9B
 
 .L11A0
 
- STA L0077
+ STA W
  LDA #0
  BVS L11A8
 
@@ -497,9 +513,9 @@ ORG CODE%
 .L11AD
 
  LSR L007A
- ROR L0074
+ ROR T
  LSR L007B
- ROR L0075
+ ROR U
 
 .L11B5
 
@@ -508,24 +524,24 @@ ORG CODE%
  BNE L11AD
 
  LDA #&FF
- CMP L0074
+ CMP T
  BNE L11C5
 
- LSR L0074
- LSR L0075
+ LSR T
+ LSR U
 
 .L11C5
 
- CMP L0075
+ CMP U
  BNE L11CD
 
- LSR L0074
- LSR L0075
+ LSR T
+ LSR U
 
 .L11CD
 
- INC L0074
- INC L0075
+ INC T
+ INC U
  LDA L0CC3
  BMI L11E5
 
@@ -558,17 +574,17 @@ ORG CODE%
 
  LDA R
  STA L3C00,X
- LDA L0077
+ LDA W
  STA L3C60,X
  LDA S
  STA L3CC0,X
  LDA L0078
  STA L3D20,X
- LDA L0074
+ LDA T
  STA L3D80,X
- LDA L0075
+ LDA U
  STA L0100,X
- LDA L0076
+ LDA V
  STA L48A0,X
 
 \ ******************************************************************************
@@ -602,15 +618,15 @@ ORG CODE%
  LDA L4F28,X
  ADC L4820,Y
  STA P+1
- LDA L0075
- CMP L0074
+ LDA U
+ CMP T
  BCC L1239
 
  JMP L138C
 
 .L1239
 
- BIT L0076
+ BIT V
  BMI L1252
 
  LDA #5
@@ -642,7 +658,7 @@ ORG CODE%
 
 .L1265
 
- BIT L0076
+ BIT V
  BVS L1287
 
  LDA #&98
@@ -682,16 +698,16 @@ ORG CODE%
  TAY
  LDA #&FF
  SEC
- SBC L0074
+ SBC T
  STA L0082
  CLC
  ADC #1
  STA L0083
- LDA L0076
+ LDA V
  AND #3
  BEQ L12C4
 
- LDA L0075
+ LDA U
  CMP #2
  BCC L12C4
 
@@ -708,7 +724,7 @@ ORG CODE%
  LSR A
  STA L0081
  LDA L0083
- BIT L0076
+ BIT V
  BMI L12E5
 
  CPX #1
@@ -753,7 +769,7 @@ ORG CODE%
 .L12F8
 
  LDX #0
- ADC L0075
+ ADC U
  BCC L1303
 
  JSR L135F
@@ -765,7 +781,7 @@ ORG CODE%
 .L1303
 
  INX
- ADC L0075
+ ADC U
  BCC L130D
 
  JSR L135F
@@ -777,7 +793,7 @@ ORG CODE%
 .L130D
 
  INX
- ADC L0075
+ ADC U
  BCC L1317
 
  JSR L135F
@@ -789,7 +805,7 @@ ORG CODE%
 .L1317
 
  INX
- ADC L0075
+ ADC U
 
 .L131A
 
@@ -934,7 +950,7 @@ ORG CODE%
 
 .L138C
 
- BIT L0076
+ BIT V
  BVS L13AA
 
  LDA #&98
@@ -964,12 +980,12 @@ ORG CODE%
 
 .L13C2
 
- BIT L0076
+ BIT V
  BMI L13D5
 
  LDA #&1D
  STA L1421+1
- LDA L0077
+ LDA W
  CLC
  ADC #1
  STA L007A
@@ -979,7 +995,7 @@ ORG CODE%
 
  LDA #&3F
  STA L1421+1
- LDA L0077
+ LDA W
  SEC
  SBC #1
  STA L007A
@@ -992,16 +1008,16 @@ ORG CODE%
  TAY
  LDA #&FF
  SEC
- SBC L0075
+ SBC U
  STA L0082
  CLC
  ADC #1
  STA L0083
- LDA L0076
+ LDA V
  AND #3
  BEQ L1403
 
- LDA L0074
+ LDA T
  CMP #2
  BCC L1403
 
@@ -1043,7 +1059,7 @@ ORG CODE%
                         \ sets 4 pixels to the pixel pattern in A
 
  LDA L0083
- ADC L0074
+ ADC T
 
 .L1421
 
@@ -1146,7 +1162,7 @@ ORG CODE%
 
 .L1482
 
- LDA L0076
+ LDA V
  LSR A
  BCS L1488
 
@@ -1156,20 +1172,20 @@ ORG CODE%
 
  ASL A
  EOR #&C0
- STA L0076
+ STA V
  LDA L0CE0
  STA R
  LDA L0CE1
  STA S
  LDA #4
- BIT L0076
+ BIT V
  BMI L149F
 
  LDA #&9B
 
 .L149F
 
- STA L0077
+ STA W
  LDA #0
  BVS L14A7
 
@@ -1343,9 +1359,9 @@ ORG CODE%
 
  JSR L1778
 
- LDA L0076
+ LDA V
  EOR #&C0
- STA L0076
+ STA V
  JMP L1598
 
 .L1593
@@ -1382,7 +1398,7 @@ ORG CODE%
 .L15A3
 
  LDA L0084
- BIT L0076
+ BIT V
  BPL L15AF
 
  AND #&40
@@ -1414,9 +1430,9 @@ ORG CODE%
 
 .L15C3
 
- LDA L0076
+ LDA V
  ASL A
- EOR L0076
+ EOR V
  BMI L15EB
 
  LDA #0
@@ -1463,9 +1479,9 @@ ORG CODE%
 
 .L160B
 
- LDA L0074
+ LDA T
  CLC
- ADC L0075
+ ADC U
  STA P
  LDA L007A
  ADC L007B
@@ -1488,15 +1504,15 @@ ORG CODE%
 
  BNE L1635
 
- LDA L0074
- CMP L0075
+ LDA T
+ CMP U
  BCC L1649
 
 .L1635
 
- LDA L0076
+ LDA V
  STA L0089
- LDA L0074
+ LDA T
  CLC
  ADC #1
  STA L007F
@@ -1507,10 +1523,10 @@ ORG CODE%
 
 .L1649
 
- LDA L0076
+ LDA V
  ASL A
  STA L0089
- LDA L0075
+ LDA U
  CLC
  ADC #1
  STA L007F
@@ -1528,7 +1544,7 @@ ORG CODE%
 .L1669
 
  LDA #&80
- STA L0077
+ STA W
  LDA #0
  STA L0086
  STA L007C
@@ -1594,10 +1610,10 @@ ORG CODE%
 
 .L16BF
 
- LDA L0077
+ LDA W
  CLC
  ADC L0086
- STA L0077
+ STA W
  LDA L0078
  ADC L007F
  STA L0078
@@ -1626,7 +1642,7 @@ ORG CODE%
 .L16F1
 
  LDA L0078
- ROL L0077
+ ROL W
  ADC #0
  STA L0078
  BCC L16FD
@@ -1709,8 +1725,8 @@ ORG CODE%
  BCS L1775
 
  LDA #1
- ORA L0076
- STA L0076
+ ORA V
+ STA V
  LDA R
  STA L0CE0
  LDA S
@@ -1736,7 +1752,7 @@ ORG CODE%
 
 .L1778
 
- LDA L0077
+ LDA W
  STA R
  LDA L0081
  STA L0082
@@ -1801,18 +1817,18 @@ ORG CODE%
  STA R
  STA L0CE0
  LDA L3C60,X
- STA L0077
+ STA W
  LDA L3CC0,X
  STA S
  STA L0CE1
  LDA L3D20,X
  STA L0078
  LDA L3D80,X
- STA L0074
+ STA T
  LDA L0100,X
- STA L0075
+ STA U
  LDA L48A0,X
- STA L0076
+ STA V
  JSR L1214
 
  JMP L1795
@@ -1901,10 +1917,10 @@ ORG CODE%
 
  LDA L4300,X
  ORA L4500,Y
- STA L0074
+ STA T
  AND #&F0
  ORA L3700,X
- STA L0075
+ STA U
  AND #&0F
  ORA L3800,Y
  TAY
@@ -1912,8 +1928,8 @@ ORG CODE%
  ORA L4300,X
  TAX
  LDA L3A00,X
- STA L0076
- LDX L0074
+ STA V
+ LDX T
  LDA L3A00,X
  CLC
  ADC L3A00,Y
@@ -1921,15 +1937,15 @@ ORG CODE%
  ROR A
  ROR A
  ROR A
- STA L0074
+ STA T
  ROR A
  AND #&F0
  CLC
- ADC L0076
- STA L0076
- LDA L0074
+ ADC V
+ STA V
+ LDA T
  AND #&1F
- LDX L0075
+ LDX U
  ADC L3A00,X
  RTS
 
@@ -1956,7 +1972,7 @@ ORG CODE%
  ROL L0078
  ASL A
  ROL L0078
- STA L0077
+ STA W
  LDX L0078
  JSR L1902
 
@@ -1965,9 +1981,9 @@ ORG CODE%
  LDA L0078
  EOR #&FF
  TAX
- LDA L0077
+ LDA W
  EOR #&FF
- STA L0077
+ STA W
  JSR L1902
 
  STA S
@@ -2062,11 +2078,11 @@ ORG CODE%
  LSR A
  ROR L007A
  LDX L007A
- LDY L0077
+ LDY W
  JSR L1821
 
  LDX L0079
- ASL L0076
+ ASL V
  ROL A
  PHP
  CLC
@@ -2094,28 +2110,28 @@ ORG CODE%
 .L1931
 
  LDX S
- LDY L0076
+ LDY V
  LDA L3800,Y
  ORA L3700,X
  TAY
  AND #&F0
  ORA L4300,X
- STA L0075
+ STA U
  LDX R
  AND #&F0
  ORA L3700,X
  TAX
  LDA L3A00,X
  TAX
- STX L0074
+ STX T
  LDA L3A00,Y
  TAY
  LDA L3700,X
  ORA L3800,Y
  CLC
- LDX L0075
+ LDX U
  ADC L3A00,X
- STA L0077
+ STA W
  LDA L3700,Y
  ADC #0
  STA L0078
@@ -2123,17 +2139,17 @@ ORG CODE%
  BPL L198E
 
  LDX R
- LDA L0076
+ LDA V
  AND #&0F
  ORA L3800,X
  TAY
- LDX L0074
+ LDX T
  LDA L3800,X
  CLC
  ADC L3A00,Y
  BCC L1989
 
- INC L0077
+ INC W
  BNE L1989
 
  INC L0078
@@ -2141,18 +2157,18 @@ ORG CODE%
 .L1989
 
  ASL A
- ROL L0077
+ ROL W
  ROL L0078
 
 .L198E
 
- LDA L0076
+ LDA V
  BPL L199F
 
  LDA #0
  SEC
- SBC L0077
- STA L0077
+ SBC W
+ STA W
  LDA #0
  SBC L0078
  STA L0078
@@ -2213,7 +2229,7 @@ ORG CODE%
  LDA L0080,X
  STA L007A
  AND #&0F
- STA L0076
+ STA V
  BEQ L1A0C
 
  LDA L4260,Y
@@ -2223,9 +2239,9 @@ ORG CODE%
  AND #1
  BEQ L19F2
 
- LDA L0076
+ LDA V
  EOR #&80
- STA L0076
+ STA V
 
 .L19F2
 
@@ -2234,7 +2250,7 @@ ORG CODE%
 
  LDX P+1
  LDY L0086
- LDA L0077
+ LDA W
  CLC
  ADC L0CE0,Y
  STA L0CE0,Y
@@ -2646,7 +2662,7 @@ ORG CODE%
  LDA L0173,X
  STA L4267,X
  LDA #2
- STA L0074
+ STA T
  LDY L0CCB
  LDX L0CCB
 
@@ -2668,7 +2684,7 @@ ORG CODE%
  INY
  INY
  INX
- DEC L0074
+ DEC T
  BPL L1CC3
 
  RTS
@@ -2784,13 +2800,13 @@ ORG CODE%
  JSR L1821
 
  STA L0078
- LDA L0076
+ LDA V
  CLC
 
 .L1D46
 
  ADC #&80
- STA L0077
+ STA W
  BCC L1D4E
 
  INC L0078
@@ -2802,7 +2818,7 @@ ORG CODE%
  JSR L1821
 
  STA L0079
- LDA L0076
+ LDA V
  CLC
  ADC L0078
  STA L0078
@@ -2816,12 +2832,12 @@ ORG CODE%
  LDY L007A
  JSR L1821
 
- STA L0074
- LDA L0076
+ STA T
+ LDA V
  CLC
- ADC L0077
- STA L0077
- LDA L0074
+ ADC W
+ STA W
+ LDA T
  ADC L0078
  RTS
 
@@ -2996,10 +3012,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1E42
+\       Name: UpdateDashboard
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: ??? Update indicator number X
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3009,7 +3025,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1E42
+.UpdateDashboard
 
  STX L0087              \ Set L0087 to the value in X
 
@@ -3028,16 +3044,16 @@ ORG CODE%
                         \ If we get here then X = 0
 
  LDA L0CFB
- STA L0074
+ STA T
  LSR A
  LSR A
  CLC
- ADC L0074
+ ADC T
  ROR A
  LSR A
  LSR A
  CLC
- ADC L0074
+ ADC T
  ROR A
  LSR A
  JMP L209D
@@ -3073,7 +3089,7 @@ ORG CODE%
  ROR R
  STA S
  LDA #0
- STA L0074
+ STA T
  LDA R
  LSR A
  LSR A
@@ -3091,42 +3107,42 @@ ORG CODE%
  STA L4FFF
  LDA S
  LSR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
+ ROR T
  CLC
  ADC S
  ROR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
+ ROR T
  CLC
  ADC S
  ROR A
- ROR L0074
+ ROR T
  CLC
  ADC S
  ROR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
- STA L0075
- LDA L0074
+ ROR T
+ STA U
+ LDA T
  CLC
  ADC L4FFF
  BCC L1ED0
 
- INC L0075
+ INC U
 
 .L1ED0
 
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
  JMP L209D
 
@@ -3153,43 +3169,43 @@ ORG CODE%
                         \ If we get here then X = 4
 
  LDA L0C8A
- STA L0074
+ STA T
  LDA L0C9A
  BPL L1F04
 
  LDA #0
  SEC
- SBC L0074
- STA L0074
+ SBC T
+ STA T
  LDA #0
  SBC L0C9A
 
 .L1F04
 
  LSR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
+ ROR T
  CMP #0
  BEQ L1F15
 
  LDA #&FF
- STA L0074
+ STA T
 
 .L1F15
 
- LDA L0074
+ LDA T
  LSR A
  CLC
- ADC L0074
+ ADC T
  ROR A
  LSR A
  LSR A
  LSR A
  CLC
- ADC L0074
+ ADC T
  ROR A
  LSR A
  CMP #&28
@@ -3202,10 +3218,10 @@ ORG CODE%
  BIT L0C9A
  BPL L1F36
 
- STA L0074
+ STA T
  LDA #0
  SEC
- SBC L0074
+ SBC T
 
 .L1F36
 
@@ -3227,14 +3243,14 @@ ORG CODE%
                         \ If we get here then X = 5
 
  LDA L0C01
- STA L0074
+ STA T
  LDA L0C11
  BPL L1F58
 
  LDA #0
  SEC
- SBC L0074
- STA L0074
+ SBC T
+ STA T
  LDA #0
  SBC L0C11
 
@@ -3242,35 +3258,35 @@ ORG CODE%
 
  BNE L1F60
 
- LDA L0074
+ LDA T
  CMP #&8C
  BCC L1F64
 
 .L1F60
 
  LDA #&8C
- STA L0074
+ STA T
 
 .L1F64
 
  LSR A
  CLC
- ADC L0074
+ ADC T
  ROR A
  LSR A
  LSR A
  CLC
- ADC L0074
+ ADC T
  ROR A
  LSR A
  LSR A
  BIT L0C11
  BMI L1F7D
 
- STA L0074
+ STA T
  LDA #0
  SEC
- SBC L0074
+ SBC T
 
 .L1F7D
 
@@ -3307,18 +3323,18 @@ ORG CODE%
  SBC S
  BPL L1FB2
 
- STA L0074
+ STA T
  LDA #&80
  STA R
  LDA #0
  SEC
- SBC L0074
+ SBC T
 
 .L1FB2
 
  CLC
  ADC #1
- STA L0077
+ STA W
  LDY #3
  JSR L227A
 
@@ -3326,13 +3342,13 @@ ORG CODE%
  SBC L0079
  BPL L1FCE
 
- STA L0074
+ STA T
  LDA #&40
  ORA R
  STA R
  LDA #0
  SEC
- SBC L0074
+ SBC T
 
 .L1FCE
 
@@ -3376,7 +3392,7 @@ ORG CODE%
  LDA #&80
  STA S
  LDA #&50
- STA L0077
+ STA W
  LDA L0C0D
  SEC
  JSR L22F7
@@ -3432,8 +3448,8 @@ ORG CODE%
  LDA #128               \ Set S = 128
  STA S
 
- LDA #125               \ Set L0077 = 125
- STA L0077
+ LDA #125               \ Set W = 125
+ STA W
 
  LDA L0C1F              \ Set (R A) = (L0C1F L0C0F)
  STA R
@@ -3465,17 +3481,17 @@ ORG CODE%
 
  LDY #243               \ Set Y = 243 to use as the value of L4FFC below
 
- LDA #7                 \ Set A = 7 to use as the value of L0075 below
+ LDA #7                 \ Set A = 7 to use as the value of U below
 
 .L207F
 
                         \ If we get here then X is either 1 (if called from
                         \ L1FF5) or 3 (if we fell through from above)
 
- STA L0075              \ Set L0075 = A
+ STA U                  \ Set U = A
 
- LDA #1                 \ Set L0074 = 1
- STA L0074
+ LDA #1                 \ Set T = 1
+ STA T
 
  STY L4FFC              \ Set L4FFC = Y
 
@@ -3523,14 +3539,14 @@ ORG CODE%
  LDA L4FB2,X
  STA L007B
  LDA L4FD2,X
- STA L0074
+ STA T
  LDA L4FDA,X
- STA L0075
+ STA U
  LDA L4FE2,X
- STA L0076
+ STA V
  LDA #&80
  STA L007F
- JSR L21CD
+ JSR DrawLine
 
  LDX L0087
  CPX #7
@@ -3566,18 +3582,18 @@ ORG CODE%
 .L210A
 
  STA L007B
- LDA L0077
- STA L0074
+ LDA W
+ STA T
  STA L4FD2,X
  LDA L0078
- STA L0075
+ STA U
  STA L4FDA,X
  LDA R
- STA L0076
+ STA V
  STA L4FE2,X
  LDA #0
  STA L007F
- JSR L21CD
+ JSR DrawLine
 
  RTS
 
@@ -3604,13 +3620,13 @@ ORG CODE%
  ADC #&4F
  STA L4FFC
  LDA #&D8
- STA L0077
+ STA W
  LDA #0
  STA S
  LDA #3
- STA L0074
+ STA T
  LDA #1
- STA L0075
+ STA U
  JSR L22CC
 
  LDA L4FEC
@@ -3620,13 +3636,13 @@ ORG CODE%
  ADC #&D6
  STA L4FFC
  LDA #&50
- STA L0077
+ STA W
  LDA #&80
  STA S
  LDA #1
- STA L0074
+ STA T
  LDA #5
- STA L0075
+ STA U
  JSR L22CC
 
  RTS
@@ -3721,23 +3737,31 @@ ORG CODE%
 
  CLC
  ADC #1
- STA L0077
+ STA W
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L21CD (Part 1 of 3)
+\       Name: DrawLine (Part 1 of 3)
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Does this draw a line?
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   L007F               ???
+\
+\   T                   ???
+\
+\   U                   ???
+\
+\   V                   ???
 \
 \ ******************************************************************************
 
-.L21CD
+.DrawLine
 
  LDY #3                 \ Set Y = 3 to use as a byte counter in the following
                         \ loop, so it writes four bytes
@@ -3766,30 +3790,30 @@ ORG CODE%
 
  STA L0080              \ Set L0080 = 0
 
- LDA L0074              \ If L0074 < L0075, jump down to L21E8 to skip the
- CMP L0075              \ following two instructions
+ LDA T                  \ If T < U, jump down to L21E8 to skip the
+ CMP U                  \ following two instructions
  BCC L21E8
 
- STA L0086              \ Set L0086 = L0074
+ STA L0086              \ Set L0086 = T
 
  BCS L223B              \ Jump down to L223B (this BCS is effectively a JMP as
                         \ we just passed through a BCC)
 
 .L21E8
 
-                        \ If we get here then L0074 < L0075
+                        \ If we get here then T < U
 
- LDA L0075              \ Set L0086 = L0075
+ LDA U                  \ Set L0086 = U
  STA L0086
 
- STA L0080              \ Set L0080 = L0075
+ STA L0080              \ Set L0080 = U
 
  BCC L223B              \ Jump down to L223B (this BCC is effectively a JMP as
                         \ we got here by following a BCC)
 
 \ ******************************************************************************
 \
-\       Name: L21CD (Part 2 of 3)
+\       Name: DrawLine (Part 2 of 3)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -3804,12 +3828,12 @@ ORG CODE%
 
  LDA L0081
  CLC
- ADC L0075
- CMP L0074
+ ADC U
+ CMP T
  BCC L2205
 
- SBC L0074
- BIT L0076
+ SBC T
+ BIT V
  BVC L2203
 
  DEC L007B
@@ -3822,7 +3846,7 @@ ORG CODE%
 .L2205
 
  STA L0081
- BIT L0076
+ BIT V
  BPL L2210
 
  DEC L007A
@@ -3840,12 +3864,12 @@ ORG CODE%
 
  LDA L0081
  CLC
- ADC L0074
- CMP L0075
+ ADC T
+ CMP U
  BCC L222F
 
- SBC L0075
- BIT L0076
+ SBC U
+ BIT V
  BPL L222D
 
  DEC L007A
@@ -3858,7 +3882,7 @@ ORG CODE%
 .L222F
 
  STA L0081
- BIT L0076
+ BIT V
  BVC L2239
 
  DEC L007B
@@ -3870,7 +3894,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L21CD (Part 3 of 3)
+\       Name: DrawLine (Part 3 of 3)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -3970,7 +3994,7 @@ ORG CODE%
 
 .L2284
 
- STA L0074
+ STA T
  LDA L423B,Y
  EOR L007C
  AND #1
@@ -3978,8 +4002,8 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0074
- STA L0074
+ SBC T
+ STA T
 
 .L2296
 
@@ -3993,7 +4017,7 @@ ORG CODE%
 
 .L22A0
 
- STA L0075
+ STA U
  LDA L423D,Y
  CPY #0
  BNE L22AB
@@ -4007,14 +4031,14 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0075
- STA L0075
+ SBC U
+ STA U
 
 .L22B6
 
  CLC
- LDA L0074
- ADC L0075
+ LDA T
+ ADC U
  BMI L22C3
 
  LSR A
@@ -4047,7 +4071,7 @@ ORG CODE%
 \
 \   Y                   ???
 \
-\   L0077               ???
+\   W               ???
 \
 \ ******************************************************************************
 
@@ -4068,7 +4092,7 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   L0077               ???
+\   W               ???
 \
 \   L4FFC               ???
 \
@@ -4096,7 +4120,7 @@ ORG CODE%
 \
 \   A                   ???
 \
-\   L0077               ???
+\   W               ???
 \
 \   L4FFC               ???
 \
@@ -4110,8 +4134,8 @@ ORG CODE%
 
 .L22D7
 
- CLC                    \ Set A = A + L0077
- ADC L0077
+ CLC                    \ Set A = A + W
+ ADC W
 
  BIT S                  \ If S is negative, jump down to L22E8
  BMI L22E8
@@ -4132,10 +4156,10 @@ ORG CODE%
 
 .L22EF
 
- LDA #0                 \ Set L0076 = 0
- STA L0076
+ LDA #0                 \ Set V = 0
+ STA V
 
- JSR L21CD
+ JSR DrawLine
 
  RTS                    \ Return from the subroutine
 
@@ -4218,7 +4242,7 @@ ORG CODE%
 .L2322
 
  STX L4FFA
- JSR L1E42
+ JSR UpdateDashboard
 
 \ ******************************************************************************
 \
@@ -4245,7 +4269,7 @@ ORG CODE%
 .L2332
 
  STX L4FFB
- JSR L1E42
+ JSR UpdateDashboard
 
  LDA #&77
  STA Row28_Block26_5
@@ -4271,14 +4295,16 @@ ORG CODE%
 .L2340
 
  CLC
- LDA L0CA0,X
+ LDA KeyLoggerLow,X
  BEQ L2372
 
  ADC L0C2D,X
  STA L0C2D,X
- LDA L0CB0,X
+
+ LDA KeyLoggerHigh,X
  STA P
  ADC L0C0C,X
+
  LDY L4F5C,X
  BEQ L235C
 
@@ -4331,12 +4357,12 @@ ORG CODE%
  JSR L46D8
 
  CLC
- LDA L0CA3
+ LDA KeyLoggerLow+3     \ Throttle key
  BEQ L23B2
 
  ADC L0C0F
  TAX
- LDA L0CB3
+ LDA KeyLoggerHigh+3
  ADC L0C1F
  TAY
  BMI L23A3
@@ -4359,8 +4385,9 @@ ORG CODE%
 
  STX L0C0F
  STY L0C1F
+
  LDX #11
- JSR L1E42
+ JSR UpdateDashboard
 
 .L23B2
 
@@ -4437,7 +4464,7 @@ ORG CODE%
 
 .L23F9
 
- LDA L0CA0,X
+ LDA KeyLoggerLow,X
  BNE L2407
 
  STA L0CCE,X
@@ -4816,8 +4843,8 @@ ORG CODE%
 \
 \ Returns:
 \
-\   Z flag              If set (BEQ) then the key is being pressed, clear (BNE)
-\                       if it is not being pressed
+\   Z flag              If set (BEQ) then the key is being pressed, if clear
+\                       (BNE) then it is not being pressed
 \
 \ ******************************************************************************
 
@@ -4825,77 +4852,97 @@ ORG CODE%
 
  LDA #129               \ Call OSBYTE with A = 129, X = key number and Y = &FF
  LDY #&FF               \ to scan the keyboard for the key in X, returning the
- JSR OSBYTE             \ following:
+ JSR OSBYTE             \ following in both X and Y:
                         \
-                        \   * X = Y = 0   if the key is not being pressed
-                        \   * X = Y = &FF if the key is being pressed
+                        \   * 0 = the key is not being pressed
+                        \
+                        \   * &FF = the key is being pressed
 
- CPX #&FF               \ Return an equality in the flags if the key is being
+ CPX #&FF               \ Set the Z flag depending on whether the key is being
                         \ pressed
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L253C
+\       Name: ScanKeyTable
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Keyboard
+\    Summary: Scan the keyboard for keys in the two key tables and update the
+\             key logger
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine updates the key logger, which is stored in KeyLoggerHigh and
+\ KeyLoggerLow. If a key is pressed, then the corresponding 16-bit value in the
+\ key logger is set to the corresponding value from the KeyTable tables, which
+\ are stored in KeyTable1Low/KeyTable1High and KeyTable2Low/KeyTable2High.
 \
 \ ******************************************************************************
 
-.L253C
+.ScanKeyTable
 
- LDA #5
- STA L0076
+ LDA #5                 \ Set V = 5 to act as an offset as we work our way
+ STA V                  \ through the six keys in KeyTable1
 
-.L2540
+.ScanKeyTable_L1
 
- LDY L0076
+ LDY V                  \ Set Y = the offset of the key we are processing
 
- LDX L4F50,Y            \ Scan the keyboard to see if the key in L4F50+Y is
- JSR ScanKeyboard       \ being pressed
+ LDX KeyTable1,Y        \ Scan the keyboard to see if the Y-th key in KeyTable1
+ JSR ScanKeyboard       \ is being pressed
 
- BNE L2555
+ BNE ScanKeyTable2      \ If the key is not being pressed, jump down to
+                        \ ScanKeyTable2 to check the Y-th key in KeyTable1
 
- LDX L0076
- LDY L4F6C,X
- LDA L4F72,X
- JMP L256F
+ LDX V                  \ Set X = the offset of the key we are processing
+ 
+ LDY KeyTable1Low,X     \ Fetch the key logger value for this key press into
+ LDA KeyTable1High,X    \ (A Y)
+ 
+ JMP ScanKeyTable4      \ Jump down to ScanKeyTable4 to store (A Y) in the key
+                        \ logger
 
-.L2555
+.ScanKeyTable2
 
- LDY L0076
+ LDY V                  \ Set Y = the offset of the key we are processing
 
- LDX L4F56,Y            \ Scan the keyboard to see if the key in L4F56+Y is
- JSR ScanKeyboard       \ being pressed
+ LDX KeyTable2,Y        \ Scan the keyboard to see if the Y-th key in KeyTable2
+ JSR ScanKeyboard       \ is being pressed
 
- BNE L256A
+ BNE ScanKeyTable3      \ If the key is not being pressed, jump down to
+                        \ ScanKeyTable3 to store 0 in the key logger
 
- LDX L0076
- LDY L4F60,X
- LDA L4F66,X
- JMP L256F
+ LDX V                  \ Set X = the offset of the key we are processing
 
-.L256A
+ LDY KeyTable2Low,X     \ Fetch the key logger value for this key press into
+ LDA KeyTable2High,X    \ (A Y)
 
- LDA #0
- LDX L0076
- TAY
+ JMP ScanKeyTable4      \ Jump down to ScanKeyTable4 to store (A Y) in the key
+                        \ logger
 
-.L256F
+.ScanKeyTable3
 
- STA L0CB0,X
- TYA
- STA L0CA0,X
- DEC L0076
- BPL L2540
+ LDA #0                 \ Set A = 0
 
- RTS
+ LDX V                  \ Set X = the offset of the key we are processing
+
+ TAY                    \ Set Y = 0, so the key logger value in (A Y) is 0
+
+.ScanKeyTable4
+
+ STA KeyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
+                        \ in the X-th byte of KeyLoggerHigh
+
+ TYA                    \ Store the low byte of the key logger value in (A Y)
+ STA KeyLoggerLow,X     \ in the X-th byte of KeyLoggerLow
+
+ DEC V                  \ Decrement the offset to point to the next key to
+                        \ process
+
+ BPL ScanKeyTable_L1    \ Loop back until we have processed all six key pairs
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -5139,7 +5186,7 @@ ORG CODE%
  JSR TIndicator         \ Update the Theme indicator
 
  LDX #11                \ ???
- JSR L1E42
+ JSR UpdateDashboard
 
  LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
  STA L3692              \ 66 times in the ResetL6 loop
@@ -5214,7 +5261,7 @@ ORG CODE%
 
  JSR Reset              \ Reset most variables to prepare for a new flight
 
- JSR L253C
+ JSR ScanKeyTable       \ Scan for key presses and update the key logger
 
  JSR L233E
 
@@ -5236,7 +5283,7 @@ ORG CODE%
  STA L0CC6
  JSR L2F1C
 
- JSR L253C
+ JSR ScanKeyTable       \ Scan for key presses and update the key logger
 
  LDA L0CF1
  BNE L2701
@@ -5655,11 +5702,11 @@ ORG CODE%
 
  LSR A
  LSR A
- STA L0074
+ STA T
  LDA L007F
  EOR L0CC7
  EOR #&FF
- AND L0074
+ AND T
  BNE L2910
 
 .L2904
@@ -6123,7 +6170,7 @@ ORG CODE%
  LDA L4478,Y
  SBC L0CFD
  STA L4A00,X
- STA L0074
+ STA T
  LDA #0
  SBC L0C6D
  JSR L2BC0
@@ -6137,7 +6184,7 @@ ORG CODE%
  LDA L44A0,Y
  SBC L0CFE
  STA L0B00,X
- STA L0074
+ STA T
  LDA #0
  SBC L0C6E
  JSR L2BC0
@@ -6151,7 +6198,7 @@ ORG CODE%
  LDA L44C8,Y
  SBC L0CFF
  STA L4900,X
- STA L0074
+ STA T
  LDA #0
  SBC L0C6F
  JSR L2BC0
@@ -6225,7 +6272,7 @@ ORG CODE%
  CMP #&FF
  BNE L2BD9
 
- LDA L0074
+ LDA T
  EOR #&FF
  JMP L2BD1
 
@@ -6233,7 +6280,7 @@ ORG CODE%
 
  BNE L2BD9
 
- LDA L0074
+ LDA T
 
 .L2BD1
 
@@ -6621,7 +6668,7 @@ ORG CODE%
  LDA L2E9C
  JSR L2E2F
 
- JSR L21CD
+ JSR DrawLine
 
  LDX L0CE6
  BNE L2D66
@@ -6678,7 +6725,7 @@ ORG CODE%
  LDA L0CFB
  JSR L2E2F
 
- JSR L21CD
+ JSR DrawLine
 
 .L2DAB
 
@@ -6724,7 +6771,7 @@ ORG CODE%
 .L2DCD
 
  LDX #0
- STX L0074
+ STX T
 
 .L2DD1
 
@@ -6742,7 +6789,7 @@ ORG CODE%
 .L2DE5
 
  LDA #1
- STA L0074
+ STA T
 
 .L2DE9
 
@@ -6754,7 +6801,7 @@ ORG CODE%
 
 .L2DF1
 
- LDA L0074
+ LDA T
  BNE L2DCC
 
  LDA #&1C
@@ -6833,7 +6880,7 @@ ORG CODE%
  PLP
  ROR A
  EOR #&C0
- STA L0076
+ STA V
  LDX #2
  LDY #4
  BIT P
@@ -6850,8 +6897,8 @@ ORG CODE%
 
 .L2E5B
 
- STX L0074
- STY L0075
+ STX T
+ STY U
  RTS
 
 \ ******************************************************************************
@@ -7034,25 +7081,25 @@ ORG CODE%
 
 .L2ED3                  \ DLP. in original
 
- STA L0074
+ STA T
 
 .L2ED5
 
- STA L0075
+ STA U
 
 .L2ED7
 
- STA L0076
+ STA V
 
 .L2ED9
 
- DEC L0076
+ DEC V
  BNE L2ED9
 
- DEC L0075
+ DEC U
  BNE L2ED7
 
- DEC L0074
+ DEC T
  BNE L2ED5
 
  RTS
@@ -7253,11 +7300,11 @@ ORG CODE%
 
  TXA
  STA L41E4,Y
- STX L0075
+ STX U
  LDA #&80
  JSR L302C
 
- LDX L0075
+ LDX U
  LDA #1
  STA L4210,X
  BNE L2FB4
@@ -7380,7 +7427,7 @@ ORG CODE%
 .L302C
 
  STA L007C
- STY L0074
+ STY T
  LDX #3
  LDA #&BA
  CPY #&1F
@@ -7410,7 +7457,7 @@ ORG CODE%
  DEX
  BPL L303B
 
- LDY L0074
+ LDY T
  RTS
 
 \ ******************************************************************************
@@ -7505,7 +7552,7 @@ ORG CODE%
 
  LDY P+1
  STA L0CB8,Y
- LDA L0076
+ LDA V
  STA L0CA8,Y
  LDA R
  STA L0CE0,Y
@@ -7610,7 +7657,7 @@ ORG CODE%
  LDA L4400,Y
  CLC
  ADC P+1
- STA L0077,X
+ STA W,X
  LDA L4478,Y
  ADC #5
  STA L007A,X
@@ -7631,7 +7678,7 @@ ORG CODE%
  BEQ L312B
 
  LDA L4400,Y
- STA L0077,X
+ STA W,X
  LDA L4478,Y
  STA L007A,X
  JMP L313A
@@ -7661,13 +7708,13 @@ ORG CODE%
  TAY
  LDA L4400,Y
  SEC
- SBC L0077,X
- STA L0074
+ SBC W,X
+ STA T
  LDA L4478,Y
  SBC L007A,X
  BNE L3180
 
- LDA L0074
+ LDA T
  CMP L0080,X
  BCS L3180
 
@@ -7712,7 +7759,7 @@ ORG CODE%
  LDA L4401,X
  SEC
  SBC L4400,X
- STA L0076
+ STA V
  LDA L4479,X
  SBC L4478,X
  BPL L319F
@@ -7727,7 +7774,7 @@ ORG CODE%
 
  LSR P
  ROR A
- ROR L0076
+ ROR V
  ROR R
  DEY
  BPL L31A1
@@ -7940,7 +7987,7 @@ ORG CODE%
 
 .L3284
 
- STA L0074,X
+ STA T,X
  DEX
  BPL L3284
 
@@ -7962,7 +8009,7 @@ ORG CODE%
  STA L0CE3,X
  LDA L0CB8,X
  ROR A
- ROR L0074,X
+ ROR T,X
  LDY #2
 
 .L32A4
@@ -7970,7 +8017,7 @@ ORG CODE%
  LSR R
  ROR L0CE3,X
  ROR A
- ROR L0074,X
+ ROR T,X
  DEY
  BPL L32A4
 
@@ -7989,9 +8036,9 @@ ORG CODE%
 .L32BE
 
  CLC
- LDA L0077,X
- ADC L0074,X
- STA L0077,X
+ LDA W,X
+ ADC T,X
+ STA W,X
  LDA L0CA8,X
  ADC L0CE0,X
  STA L0CA8,X
@@ -8119,25 +8166,25 @@ ORG CODE%
  LDX #&1E
  LDY #&20
  LDA L4A00,X
- STA L0074
+ STA T
  LDA L0900,X
  ASL A
- ROL L0074
+ ROL T
  SEC
  SBC L091F
  STA L0900,Y
- LDA L0074
+ LDA T
  SBC L4A1F
  STA L4A00,Y
  LDA L0B00,X
- STA L0074
+ STA T
  LDA L0A00,X
  ASL A
- ROL L0074
+ ROL T
  SEC
  SBC L0A1F
  STA L0A00,Y
- LDA L0074
+ LDA T
  SBC L0B1F
  STA L0B00,Y
  STX L007D
@@ -8217,11 +8264,11 @@ ORG CODE%
  LDA #2
  STA L007A
  LDA #1
- STA L0074
- STA L0075
+ STA T
+ STA U
  LDA #0
- STA L0076
- JSR L21CD
+ STA V
+ JSR DrawLine
 
  RTS
 
@@ -9599,7 +9646,7 @@ ORG CODE%
  AND #1
  BEQ L46FE
  LDA #&08
- STA L0CA5
+ STA KeyLoggerLow+5     \ Flaps or fire key
 
 .L46FE
 
@@ -10383,7 +10430,7 @@ ORG CODE%
 
 .L4C45
 
- STA L0074
+ STA T
  LSR A
  LSR A
  LSR A
@@ -10392,7 +10439,7 @@ ORG CODE%
  ADC #&30
  JSR OSWRCH
 
- LDA L0074
+ LDA T
  AND #&0F
  CLC
  ADC #&30
@@ -10415,7 +10462,7 @@ ORG CODE%
 
 .L4C5C
 
- STY L0074
+ STY T
 
 .L4C5E
 
@@ -10423,7 +10470,7 @@ ORG CODE%
  JSR OSWRCH
 
  INX
- CPX L0074
+ CPX T
  BNE L4C5E
 
  RTS
@@ -10531,7 +10578,7 @@ ORG CODE%
  LDX L368E
  LDY L367A,X
  LDA L3675,X
- STA L0075
+ STA U
  LDX #2
  CPX L368D
  BCS L4CCF
@@ -10555,7 +10602,7 @@ ORG CODE%
  LDX #&A8
  JSR L4B25
 
- STY L0074
+ STY T
  LDY #2
 
 .L4CE0
@@ -10583,12 +10630,12 @@ ORG CODE%
  DEY
  BPL L4CE0
 
- LDY L0074
+ LDY T
  LDX #&A8
  JSR L4B00
 
  DEY
- CPY L0075
+ CPY U
  BCS L4CD7
 
  DEC L368F
@@ -11192,36 +11239,189 @@ ORG CODE%
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &01, &01, &01, &01, &01, &01, &01, &01
 
-.L4F50
+\ ******************************************************************************
+\
+\       Name: KeyTable1
+\       Type: Variable
+\   Category: Keyboard
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Keys in this table are scanned for first. If pressed, the corresponding value
+\ in the key logger is set to the 16-bit value, with the high byte coming from
+\ KeyTable1High and the low byte from KeyTable1Low.
+\
+\ If the key in KeyTable1 is not being pressed, we then check the corresponding
+\ key in KeyTable2. This contains the other key in this key pair, which is
+\ normally the opposite key, e.g. up vs down, left vs right and so on.
+\
+\ ******************************************************************************
 
- EQUB &A9, &BE, &AE, &DE, &CA, &BC      \ Flight keys
-                                        \ L, A, S, W, U, F
-.L4F56
+.KeyTable1
 
- EQUB &99, &A8, &CD, &DD, &9B, &FF      \ Also flight keys
-                                        \ <, ;, D, E, B, SHIFT
+ EQUB &A9               \ L         Elevator (stick forwards, dive)
+ EQUB &BE               \ A         Left rudder
+ EQUB &AE               \ S         Aileron (joystick left, bank left)
+ EQUB &DE               \ W         Decrease throttle
+ EQUB &CA               \ U         Undercarriage up/down
+ EQUB &BC               \ F         Flaps on/off
+
+\ ******************************************************************************
+\
+\       Name: KeyTable2
+\       Type: Variable
+\   Category: Keyboard
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Keys in this table are scanned only if the corresponding key in KeyTable1 is
+\ not being pressed. If pressed, the corresponding value in the key logger is
+\ set to the 16-bit value, with the high byte coming from KeyTable2High and the
+\ low byte from KeyTable2Low.
+\
+\ ******************************************************************************
+
+.KeyTable2
+
+ EQUB &99               \ <         Elevator (stick backwards, ascend)
+ EQUB &A8               \ +         Right rudder
+ EQUB &CD               \ D         Aileron (joystick right, bank right)
+ EQUB &DD               \ E         Increase throttle
+ EQUB &9B               \ B         Brakes on/off
+ EQUB &FF               \ SHIFT     Fire
+
+\ ******************************************************************************
+\
+\       Name: L4F5C
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L4F5C
 
  EQUB &00, &00, &00, &00
 
-.L4F60
+\ ******************************************************************************
+\
+\       Name: KeyTable2Low
+\       Type: Variable
+\   Category: Keyboard
+\    Summary: Key logger value (low byte) for key presses in KeyTable2
+\
+\ ------------------------------------------------------------------------------
+\
+\ When a key in KeyTable2 is pressed (and assuming the corresponding key in
+\ KeyTable1 is not being pressed), the low byte of the key logger for this key
+\ pair is set to the value in this table.
+\
+\ ******************************************************************************
 
- EQUB &01, &01, &01, &0F, &07, &08
+.KeyTable2Low
 
-.L4F66
+ EQUB &01               \ <         Elevator (stick backwards, ascend)
+ EQUB &01               \ +         Right rudder
+ EQUB &01               \ D         Aileron (joystick right, bank right)
+ EQUB &0F               \ E         Increase throttle
+ EQUB &07               \ B         Brakes on/off
+ EQUB &08               \ SHIFT     Fire
 
- EQUB &01, &01, &01, &00, &00, &00
+\ ******************************************************************************
+\
+\       Name: KeyTable2High
+\       Type: Variable
+\   Category: Keyboard
+\    Summary: Key logger value (high byte) for key presses in KeyTable2
+\
+\ ------------------------------------------------------------------------------
+\
+\ When a key in KeyTable2 is pressed (and assuming the corresponding key in
+\ KeyTable1 is not being pressed), the high byte of the key logger for this key
+\ pair is set to the value in this table.
+\
+\ ******************************************************************************
 
-.L4F6C
+.KeyTable2High
 
- EQUB &01, &01, &01, &F1, &04, &05
+ EQUB &01               \ <         Elevator (stick backwards, ascend)
+ EQUB &01               \ +         Right rudder
+ EQUB &01               \ D         Aileron (joystick right, bank right)
+ EQUB &00               \ E         Increase throttle
+ EQUB &00               \ B         Brakes on/off
+ EQUB &00               \ SHIFT     Fire
 
-.L4F72
+\ ******************************************************************************
+\
+\       Name: KeyTable1Low
+\       Type: Variable
+\   Category: Keyboard
+\    Summary: Key logger value (low byte) for key presses in KeyTable1
+\
+\ ------------------------------------------------------------------------------
+\
+\ When a key in KeyTable1 is pressed (and assuming the corresponding key in
+\ KeyTable1 is not being pressed), the low byte of the key logger for this key
+\ pair is set to the value in this table.
+\
+\ ******************************************************************************
 
- EQUB &FF, &FF, &FF, &FF, &00, &00, &10, &00
- EQUB &F3, &FF, &06, &00, &03, &00
+.KeyTable1Low
 
+ EQUB &01               \ L         Elevator (stick forwards, dive)
+ EQUB &01               \ A         Left rudder
+ EQUB &01               \ S         Aileron (joystick left, bank left)
+ EQUB &F1               \ W         Decrease throttle
+ EQUB &04               \ U         Undercarriage up/down
+ EQUB &05               \ F         Flaps on/off
+
+\ ******************************************************************************
+\
+\       Name: KeyTable1High
+\       Type: Variable
+\   Category: Keyboard
+\    Summary: Key logger value (high byte) for key presses in KeyTable1
+\
+\ ------------------------------------------------------------------------------
+\
+\ When a key in KeyTable1 is pressed (and assuming the corresponding key in
+\ KeyTable1 is not being pressed), the high byte of the key logger for this key
+\ pair is set to the value in this table.
+\
+\ ******************************************************************************
+
+.KeyTable1High
+
+ EQUB &FF               \ L         Elevator (stick forwards, dive)
+ EQUB &FF               \ A         Left rudder
+ EQUB &FF               \ S         Aileron (joystick left, bank left)
+ EQUB &FF               \ W         Decrease throttle
+ EQUB &00               \ U         Undercarriage up/down
+ EQUB &00               \ F         Flaps on/off
+
+\ ******************************************************************************
+\
+\       Name: L4F78
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L4F78
+
+ EQUB &10, &00, &F3, &FF, &06, &00, &03, &00
+ 
 .L4F80
 
  EQUB &D4, &C9, &CC, &B0
@@ -11318,7 +11518,7 @@ ORG CODE%
 
 .L4FFF
 
- EQUB &4C
+ EQUB &4C           \ Related to indicator X = 3, involved in 2
 
 \ ******************************************************************************
 \
@@ -11555,14 +11755,14 @@ ORG CODE%
  STX L0C9C
  TXA
  ROR A
- STA L0076
+ STA V
  LDA L0C13
  AND #&80
  ORA P
  STA P+1
  TXA
  SEC
- SBC L0076
+ SBC V
  STA L09FC
  TXA
  SBC P+1
@@ -11710,7 +11910,7 @@ ORG CODE%
  LDA #0
  STA R
  LDA L0C83,X
- STA L0076
+ STA V
  LDA L0C93,X
  BPL L520B
 
@@ -11718,13 +11918,13 @@ ORG CODE%
 
 .L520B
 
- ASL L0076
+ ASL V
  ROL A
  ROL R
  PHA
  LDA L0C8C,X
  CLC
- ADC L0076
+ ADC V
  STA L0C8C,X
  PLA
  ADC L0C89,X
@@ -12001,8 +12201,8 @@ ORG CODE%
 
  SEC
  LDA #0
- SBC L0077
- STA L0077
+ SBC W
+ STA W
  LDA L0078
  SBC #0
  STA L0078
@@ -12026,7 +12226,7 @@ ORG CODE%
 
 .L53A5
 
- ASL L0077
+ ASL W
  ROL A
  ROL L0079
  DEY
@@ -12047,7 +12247,7 @@ ORG CODE%
  LDA L0C55
  BMI L5407
 
- STA L0077
+ STA W
  STA L0C57
  LDA #0
  STA L0078
@@ -12063,7 +12263,7 @@ ORG CODE%
 .L53E7
 
  ASL A
- ROL L0077
+ ROL W
  ROL L0078
  DEX
  BPL L53E7
@@ -12077,7 +12277,7 @@ ORG CODE%
 .L53F6
 
  CLC
- LDA L0077
+ LDA W
  ADC L0C40
  STA L0C40
  LDA L0078
@@ -12157,8 +12357,8 @@ ORG CODE%
 
  LSR R
  ROR L0078
- ROR L0077
- ROR L0076
+ ROR W
+ ROR V
  INY
  BNE L5445
 
@@ -12166,8 +12366,8 @@ ORG CODE%
 
 .L5452
 
- ASL L0076
- ROL L0077
+ ASL V
+ ROL W
  ROL L0078
  DEY
  BNE L5452
@@ -12176,9 +12376,9 @@ ORG CODE%
 
  LDA L0078
  STA L0C70,X
- LDA L0077
+ LDA W
  STA L0C60,X
- LDA L0076
+ LDA V
  STA L0C20,X
  DEX
  BPL L540A
@@ -12252,15 +12452,15 @@ ORG CODE%
  JSR L1821
 
  STA L0078
- LDA L0076
- STA L0077
+ LDA V
+ STA W
  LDY R
  LDX P
  JSR L1821
 
  CLC
- ADC L0077
- STA L0077
+ ADC W
+ STA W
  LDA #0
  ADC L0078
  STA L0078
@@ -12269,8 +12469,8 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0076
- STA L0076
+ SBC V
+ STA V
 
 \ ******************************************************************************
 \
@@ -12288,8 +12488,8 @@ ORG CODE%
 .L54AC
 
  LDA #0
- SBC L0077
- STA L0077
+ SBC W
+ STA W
  LDA #0
  SBC L0078
  STA L0078
@@ -12333,7 +12533,7 @@ ORG CODE%
  TAY
  SEC
  LDA L0C43,Y
- SBC L0077
+ SBC W
  STA L0C06,X
  LDA L0C53,Y
  SBC L0078
@@ -12374,7 +12574,7 @@ ORG CODE%
  LDA L0C0C,X
  BEQ L552F
 
- LDY L0CA0,X
+ LDY KeyLoggerLow,X
  BNE L551B
 
  TAY
@@ -12404,7 +12604,7 @@ ORG CODE%
 
 .L5525
 
- EOR L0CB0,X
+ EOR KeyLoggerHigh,X
  BPL L552F
 
 .L552A
@@ -12441,7 +12641,7 @@ ORG CODE%
 .L554F
 
  STA L0C5A,X
- LDA L0077
+ LDA W
  STA L0C4A,X
  DEX
  BEQ L552F
@@ -12558,7 +12758,7 @@ ORG CODE%
  DEX
  BPL L5603
 
- STA L0077
+ STA W
  LDY L0C1F
  STY R
  LDA L0C0F
@@ -12586,7 +12786,7 @@ ORG CODE%
 .L562B
 
  SEC
- SBC L0077
+ SBC W
  TAX
  LDA R
  SBC L0078
@@ -12856,11 +13056,11 @@ ORG CODE%
  JSR L54AC
 
  LDA #0
- STA L0074
+ STA T
  LDA L0078
  BPL L5779
 
- DEC L0074
+ DEC T
 
 .L5779
 
@@ -12868,14 +13068,14 @@ ORG CODE%
 
 .L577B
 
- LSR L0074
+ LSR T
  ROR A
- ROR L0077
+ ROR W
  DEX
  BPL L577B
 
  STA L0C12
- LDA L0077
+ LDA W
  STA L0C02
  LDX #&EC
  JSR L57F6
@@ -12958,7 +13158,7 @@ ORG CODE%
  DEY
  BPL L57C4
 
- STA L0077
+ STA W
  PLP
  BCC L57D2
 
@@ -12966,7 +13166,7 @@ ORG CODE%
 
 .L57D2
 
- LDA L0077
+ LDA W
  CLC
  ADC L0C00,X
  STA L0C00,X
@@ -13001,7 +13201,7 @@ ORG CODE%
  JSR L5474
 
  TAY
- LDX L0077
+ LDX W
  RTS
 
 \ ******************************************************************************
@@ -13353,13 +13553,13 @@ ORG &0D00
  LDY L007B
  LDA L4500,X
  ORA L3700,Y
- STA L0074
+ STA T
  AND #&F0
  ORA L4300,Y
- STA L0075
+ STA U
  AND #&0F
  ORA L3800,X
- STA L0076
+ STA V
  AND #&F0
  ORA L3700,Y
  TAY
@@ -13369,14 +13569,14 @@ ORG &0D00
  TAX
  LDA L3A00,X
  CLC
- LDX L0076
+ LDX V
  ADC L3A00,X
  STA P
- LDX L0074
+ LDX T
  LDA L3A00,X
  ADC #1
  STA P+1
- LDX L0075
+ LDX U
  LDA L3A00,X
  ADC L3A00,Y
  TAX
@@ -13467,7 +13667,7 @@ ORG &0D00
  LDA L0084
  ADC #1
  ROR A
- STA L0077
+ STA W
  LSR A
  BIT L007C
  BVS L0F2F
@@ -13480,7 +13680,7 @@ ORG &0D00
  BPL L0F34
 
  CLC
- ADC L0077
+ ADC W
 
 .L0F34
 
@@ -13525,21 +13725,21 @@ ORG &0D00
  STA L0087
  CMP #&0D
  TXA
- STY L0074
+ STY T
  BCC L0F66
 
 .L0F5B
 
- ASL L0074
+ ASL T
  ROL A
  BCC L0F5B
 
- LDY L0074
+ LDY T
  RTS
 
 .L0F63
 
- ASL L0074
+ ASL T
  ROL A
 
 .L0F66
@@ -13548,7 +13748,7 @@ ORG &0D00
  BEQ L0F63
 
  TAY
- LDX L0074
+ LDX T
  LDA L3700,X
  ORA L3800,Y
  LDY L3800,X
@@ -13633,7 +13833,7 @@ ORG &0D00
  STA L0082
  STA L0083
  LDA #7
- STA L0074
+ STA T
  LDA L0086
  SEC
  SBC L0085
@@ -13680,7 +13880,7 @@ ORG &0D00
 
 .L0FE2
 
- INC L0074
+ INC T
 
 .L0FE4
 
@@ -13696,7 +13896,7 @@ ORG &0D00
 
 .L0FEC
 
- CPY L0074
+ CPY T
  BCS L0FEA
 
 .L0FF0
@@ -13713,7 +13913,7 @@ ORG &0D00
 
 .L0FF8
 
- CPX L0074
+ CPX T
  BCS L0FF6
 
 .L0FFC
@@ -13876,7 +14076,7 @@ ORG &0D00
 
 .L1081
 
- STA L0076
+ STA V
  LDA #0
  STA L0084
  STA L0085
@@ -13891,10 +14091,10 @@ ORG &0D00
  LDA L0B00,X
  STA L0083
  LDA L0900,Y
- STA L0077
+ STA W
  SEC
  SBC R
- STA L0074
+ STA T
  LDA L4A00,Y
  STA L0081
  SBC L0082
@@ -13902,12 +14102,12 @@ ORG &0D00
  BPL L10C9
 
  LDA #&80
- ORA L0076
- STA L0076
+ ORA V
+ STA V
  LDA #0
  SEC
- SBC L0074
- STA L0074
+ SBC T
+ STA T
  LDA #0
  SBC L007A
  STA L007A
@@ -13918,7 +14118,7 @@ ORG &0D00
  STA L0078
  SEC
  SBC S
- STA L0075
+ STA U
  LDA L0B00,Y
  STA L0079
  SBC L0083
@@ -13926,13 +14126,13 @@ ORG &0D00
  BPL L10F1
 
  LDA #&40
- ORA L0076
- STA L0076
+ ORA V
+ STA V
 
  LDA #0
  SEC
- SBC L0075
- STA L0075
+ SBC U
+ STA U
  LDA #0
  SBC L007B
  STA L007B
