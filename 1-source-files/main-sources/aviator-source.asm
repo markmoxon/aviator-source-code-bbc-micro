@@ -253,7 +253,7 @@ L0CEE = &0CEE           \ Set to 10 in Reset, related to indicator X = 2
 L0CEF = &0CEF           \ Set to 92 in Reset
 
 L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
-                        \ UIndicator
+                        \ IndicatorU
 
 L0CF1 = &0CF1           \ ? FRFLAG in original
 
@@ -3016,10 +3016,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateDashboard
+\       Name: UpdateIndicator (Part 1 of 15)
 \       Type: Subroutine
-\   Category: 
-\    Summary: ??? Update indicator number X
+\   Category: Dashboard
+\    Summary: Update a single indicator on the dashboard
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3027,17 +3027,33 @@ ORG CODE%
 \
 \   X                   Indicator number:
 \
-\                         * 1 = thrust or rudder
+\                         * 0 = 
 \
-\                         * 8 or 10 = joystick position display
+\                         * 1 =
 \
-\                         * 9 = rudder or thrust
+\                         * 2 = 
 \
-\                       (11 in Reset, value in L4FFA is passed sometimes)
+\                         * 3 = 
+\
+\                         * 4 = 
+\
+\                         * 5 = 
+\
+\                         * 6 = 
+\
+\                         * 7 = 
+\
+\                         * 8 = joystick position display (x-coordinate?)
+\
+\                         * 9 = rudder
+\
+\                         * 10 = joystick position display (y-coordinate?)
+\
+\                         * 11 = thrust
 \
 \ ******************************************************************************
 
-.UpdateDashboard
+.UpdateIndicator
 
  STX WW                 \ Set WW to the value in X
 
@@ -3050,6 +3066,19 @@ ORG CODE%
  BEQ L1E7B              \ If X = 2, jump down to L1E7B
 
  JMP L1EE5              \ X > 2, so jump down to L1EE5
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 2 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 0
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L1E51
 
@@ -3078,6 +3107,19 @@ ORG CODE%
 
  JMP L209D              \ Jump to L209D to update the dial
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 3 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 1
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L1E66
 
                         \ If we get here then X = 1
@@ -3095,6 +3137,19 @@ ORG CODE%
  ROL A
 
  JMP L209D              \ Jump to L209D to update the dial
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 4 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 2
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L1E7B
 
@@ -3169,12 +3224,38 @@ ORG CODE%
  ROR A
  JMP L209D
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 5 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 3
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L1EDF
 
                         \ If we get here then X = 3
 
  LDA L4FFF
  JMP L209D
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 6 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Jump logic
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L1EE5
 
@@ -3186,6 +3267,19 @@ ORG CODE%
  BEQ L1EEE              \ If X = 4, jump down to L1EEE
 
  JMP L1F39              \ X > 4, so jump down to L1F39
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 7 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 4
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L1EEE
 
@@ -3250,6 +3344,19 @@ ORG CODE%
 
  JMP L209D
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 8 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Jump logic
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L1F39
 
                         \ If we get here then X > 4
@@ -3260,6 +3367,19 @@ ORG CODE%
  BEQ L1F80              \ If X = 6, jump down to L1F80
 
  JMP L1FE4              \ X > 6, so jump down to L1FE4
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 9 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 5
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L1F42
 
@@ -3315,12 +3435,38 @@ ORG CODE%
 
  JMP L209D
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 10 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 6
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L1F80
 
                         \ If we get here then X = 6
 
  LDA L0C9C
  JMP L209D
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 11 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 7
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L1F86
 
@@ -3388,6 +3534,19 @@ ORG CODE%
  STA H
  JMP L20B8
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 12 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Jump logic
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L1FE4
 
                         \ If we get here then X > 6
@@ -3407,6 +3566,19 @@ ORG CODE%
 
  RTS
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 13 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 9
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L1FF5
 
                         \ If we get here then X = 9
@@ -3424,6 +3596,19 @@ ORG CODE%
  LDY #&A3
  LDA #&0B
  BNE L207F              \ Do line drawing
+
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 14 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicators 8 and 10
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L200E
 
@@ -3468,6 +3653,19 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
+\ ******************************************************************************
+\
+\       Name: UpdateIndicator (Part 15 of 15)
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Calculations for indicator 11
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L2058
 
                         \ If we get here then X = 11
@@ -3510,14 +3708,28 @@ ORG CODE%
 
  LDA #7                 \ Set A = 7 to use as the value of U below
 
+\ ******************************************************************************
+\
+\       Name: L207F
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Draw indicator 9 or 11
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L207F
 
-                        \ If we get here then X is either 9 (called from
-                        \ L1FF5 with X = 1) or 3 (we fell through from above
-                        \ with X = 3)
-                        
-                        \ Draws a vertical line, length A
-                        \ For thrust and rudder?
+                        \ If we get here then the indicator is either:
+                        \
+                        \   * 9 (called from L1FF5 with X = 1)
+                        \
+                        \   * 11 (we fell through from above with X = 3)
+                        \
+                        \ so we draw a vertical line of height A
 
  STA U                  \ Set U = A, so the line is A pixels tall
 
@@ -3541,11 +3753,25 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
+\ ******************************************************************************
+\
+\       Name: L209D
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: Draw indicator 0 to 6
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The value to show on the indicator
+\
+\
+\ ******************************************************************************
+
 .L209D
 
-                        \ Called for X = 0 to 6
-
- CLC
+ CLC                    \ Fetch scale of dial?
  ADC L4FBA,X
  CMP L4FC2,X
  BCS L20AB
@@ -3565,23 +3791,39 @@ ORG CODE%
  STA H
  JSR L216E
 
+\ ******************************************************************************
+\
+\       Name: L20B8
+\       Type: Subroutine
+\   Category: 
+\    Summary: Draw indicator 0 to 7
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L20B8
 
-                        \ Called for X = 7
+                        \ Called for X = 7, fall through for X = 0-6
 
- LDA L4FAA,X
+ LDA L4FAA,X            \ Dial centre?
  STA I
  LDA L4FB2,X
  STA J
+
  LDA L4FD2,X
  STA T
  LDA L4FDA,X
  STA U
+
  LDA L4FE2,X
  STA V
+
  LDA #&80
  STA N
- JSR DrawLine
+ JSR DrawLine           \ Erase dial hand
 
  LDX WW
  CPX #7
@@ -3628,7 +3870,7 @@ ORG CODE%
  STA L4FE2,X
  LDA #0
  STA N
- JSR DrawLine
+ JSR DrawLine           \ Draw new hand
 
  RTS
 
@@ -3637,7 +3879,7 @@ ORG CODE%
 \       Name: DrawJoystickCross
 \       Type: Subroutine
 \   Category: 
-\    Summary: Draw a cross on the dashboard
+\    Summary: Draw a cross in the joystick position display (indicator 8 or 10)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3685,7 +3927,9 @@ ORG CODE%
  LDA #1                 \ Set U = 1, so the line is 1 pixel high
  STA U
 
- JSR DrawOrthoLine
+ JSR DrawOrthoLine      \ Draw the horizontal part of the cross, starting from
+                        \ (79 + x, 216 + y) and drawing to the right for three
+                        \ pixels
 
                         \ Now we draw the 5-pixel vertical line down from
                         \ (80 + x, 214 + y)
@@ -3710,7 +3954,8 @@ ORG CODE%
  LDA #5                 \ Set U = 5, so we draw a vertical 5-pixel line
  STA U
 
- JSR DrawOrthoLine
+ JSR DrawOrthoLine      \ Draw the vertical part of the cross, starting from
+                        \ (80 + x, 214 + y) and drawing down for five pixels
 
  RTS                    \ Return from the subroutine
 
@@ -3719,7 +3964,7 @@ ORG CODE%
 \       Name: L216E
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Calculation for indicators 0 to 6
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3811,8 +4056,8 @@ ORG CODE%
 \
 \       Name: DrawLine (Part 1 of 3)
 \       Type: Subroutine
-\   Category: 
-\    Summary: Does this draw a line?
+\   Category: Drawing lines
+\    Summary: Draw a line
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3847,7 +4092,7 @@ ORG CODE%
  LDA #%00010001         \ Set A = %00010001, the pixel pattern for pixel 0 in
                         \ white
 
-.DrawLine_L1
+.dlinL1
 
  STA RR,Y               \ Set the Y-th byte of RR to A
 
@@ -3855,7 +4100,7 @@ ORG CODE%
 
  DEY                    \ Decrement the byte counter
 
- BPL DrawLine_L1        \ Loop back until we have updated RR to RR+3 as
+ BPL dlinL1             \ Loop back until we have updated RR to RR+3 as
                         \ follows:
                         \
                         \   RR   = %10001000 = pixel 3 in white
@@ -3868,18 +4113,18 @@ ORG CODE%
 
  STA PP                 \ Set PP = 0
 
- LDA T                  \ If T < U, jump down to DrawLine1 to skip the
+ LDA T                  \ If T < U, jump down to dlin1 to skip the
  CMP U                  \ following two instructions
- BCC DrawLine1
+ BCC dlin1
 
                         \ If we get here then T >= U, steep vertical slope
 
  STA VV                 \ Set VV = T, so we step along the y-axis
 
- BCS DrawLine10         \ Jump down to DrawLine10 (this BCS is effectively a JMP
-                        \ as we just passed through a BCC)
+ BCS dlin10             \ Jump down to dlin10 (this BCS is effectively a JMP as
+                        \ we just passed through a BCC)
 
-.DrawLine1
+.dlin1
 
                         \ If we get here then T < U, shallow horizontal slope
 
@@ -3888,14 +4133,14 @@ ORG CODE%
 
  STA PP                 \ Set PP = U
 
- BCC DrawLine10         \ Jump down to DrawLine10 (this BCC is effectively a JMP
-                        \ as we got here by following a BCC)
+ BCC dlin10             \ Jump down to dlin10 (this BCC is effectively a JMP as
+                        \ we got here by following a BCC)
 
 \ ******************************************************************************
 \
 \       Name: DrawLine (Part 2 of 3)
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -3904,77 +4149,77 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.DrawLine2
+.dlin2
 
  LDA QQ
  CLC
  ADC U
  CMP T
- BCC DrawLine4
+ BCC dlin4
 
  SBC T
  BIT V
- BVC DrawLine3
+ BVC dlin3
 
  DEC J
- BVS DrawLine4
+ BVS dlin4
 
-.DrawLine3
+.dlin3
 
  INC J
 
-.DrawLine4
+.dlin4
 
  STA QQ
 
  BIT V
- BPL DrawLine5
+ BPL dlin5
 
  DEC I
- JMP DrawLine10
+ JMP dlin10
 
-.DrawLine5
+.dlin5
 
  INC I
- JMP DrawLine10
+ JMP dlin10
 
-.DrawLine6
+.dlin6
 
  LDA PP
- BEQ DrawLine2
+ BEQ dlin2
 
- LDA QQ                 \ If QQ + T < U, jump to DrawLine8 with A = QQ + T
+ LDA QQ                 \ If QQ + T < U, jump to dlin8 with A = QQ + T
  CLC
  ADC T
  CMP U
- BCC DrawLine8
+ BCC dlin8
 
  SBC U                  \ Set A = QQ + T - U
 
- BIT V                  \ If bit 7 of V is clear, jump to DrawLine7
- BPL DrawLine7
+ BIT V                  \ If bit 7 of V is clear, jump to dlin7
+ BPL dlin7
 
  DEC I                  \ By now, QQ + T >= U, V bit 7 is set, so decrement I
 
- JMP DrawLine8
+ JMP dlin8
 
-.DrawLine7
+.dlin7
 
  INC I                  \ By now, QQ + T >= U, V bit 7 is clear, so increment I
 
-.DrawLine8
+.dlin8
 
  STA QQ                 \ Update QQ to the value in A (i.e. QQ + T or
                         \ QQ + T - U
 
- BIT V                  \ If bit 6 of V is clear, jump to DrawLine9
- BVC DrawLine9
+ BIT V                  \ If bit 6 of V is clear, jump to dlin9
+ BVC dlin9
 
  DEC J                  \ V bit 6 is set, so decrement J
 
- BVS DrawLine10
+ BVS dlin10
 
-.DrawLine9
+.dlin9
 
  INC J                  \ V bit 6 is clear, so increment J
 
@@ -3982,12 +4227,12 @@ ORG CODE%
 \
 \       Name: DrawLine (Part 3 of 3)
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ******************************************************************************
 
-.DrawLine10
+.dlin10
 
  LDA I                  \ Set X = I / 4
  LSR A                  \
@@ -4018,24 +4263,24 @@ ORG CODE%
  AND #%00000011
  TAX
 
- BIT N                  \ If N is negative, jump to DrawLine11 to skip the
- BMI DrawLine11         \ following three instructions
+ BIT N                  \ If N is negative, jump to dlin11 to skip the
+ BMI dlin11             \ following three instructions
 
  LDA RR,X               \ Fetch the X-th byte of RR
 
  ORA (P),Y              \ OR it with the Y-th byte of P(1 0)
 
- JMP DrawLine12         \ Jump to DrawLine12 to skip the following three
+ JMP dlin12             \ Jump to dlin12 to skip the following three
                         \ instructions
 
-.DrawLine11
+.dlin11
 
  LDA RR,X               \ Fetch the X-th byte of RR and invert all its bits
  EOR #%11111111
 
  AND (P),Y              \ AND it with the Y-th byte of P(1 0)
 
-.DrawLine12
+.dlin12
 
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -4044,7 +4289,7 @@ ORG CODE%
                         \ horizontal slopes) or the y-axis (for steep vertical
                         \ slopes)
 
- BNE DrawLine6          \ If VV is non-zero, jump up to DrawLine6
+ BNE dlin6              \ If VV is non-zero, jump up to dlin6
 
  RTS                    \ Return from the subroutine
 
@@ -4053,7 +4298,7 @@ ORG CODE%
 \       Name: L227A
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Calculations for indicator 7
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4176,8 +4421,8 @@ ORG CODE%
 
  LDA H                  \ Set A = H
 
- JMP DrawOrthoLine1     \ Jump to DrawOrthoLine1 to draw the orthogonal line and
-                        \ skip the code for the EraseOrthoLine entry point
+ JMP dort1              \ Jump to dort1 to draw the orthogonal line and skip the
+                        \ code for the EraseOrthoLine entry point
 
 .EraseOrthoLine
 
@@ -4186,13 +4431,13 @@ ORG CODE%
 
  LDA G                  \ Set A = G
 
-.DrawOrthoLine1
+.dort1
 
  CLC                    \ Set A = A + W
  ADC W
 
- BIT S                  \ If bit 7 of S is set, jump down to DrawOrthoLine2
- BMI DrawOrthoLine2
+ BIT S                  \ If bit 7 of S is set, jump down to dort2
+ BMI dort2
 
  STA J                  \ Set J = A
 
@@ -4201,9 +4446,9 @@ ORG CODE%
 
                         \ We now have (I, J) = (JoyC, A + W)
 
- JMP DrawOrthoLine3     \ Jump down to DrawOrthoLine3
+ JMP dort3              \ Jump down to dort3
 
-.DrawOrthoLine2
+.dort2
 
  STA I                  \ Set I = A
 
@@ -4212,12 +4457,13 @@ ORG CODE%
 
                         \ We now have (I, J) = (A + W, JoyC)
 
-.DrawOrthoLine3
+.dort3
 
  LDA #0                 \ Set V = 0 so the line is drawn in a positive direction
  STA V                  \ for both axes
 
- JSR DrawLine           \ Call DrawLine to draw a line from (I, J)
+ JSR DrawLine           \ Call DrawLine to draw a line from (I, J) and with
+                        \ dimensions T and U
 
  RTS                    \ Return from the subroutine
 
@@ -4226,7 +4472,7 @@ ORG CODE%
 \       Name: L22F7
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Calculations for indicators 8, 9 and 10
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4277,61 +4523,58 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2318
+\       Name: UpdateDashboard
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Dashboard
+\    Summary: Update two indicators on the dashboard, one from 0-6, one from
+\             7-11, cycling through them with each subsequent call
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Other entry points:
+\
+\   UpdateDash7To11     Update the next indicator in the range 7 to 11
 \
 \ ******************************************************************************
 
-.L2318
+.UpdateDashboard
 
- LDX L4FFA
- INX
- CPX #7
- BCC L2322
+ LDX Indicator0To6      \ Increment the indicator number to point to the next
+ INX                    \ indicator within the range 0 to 6
 
- LDX #0
+ CPX #7                 \ If X < 7, skip the following instruction
+ BCC udas1
 
-.L2322
+ LDX #0                 \ Set X = 0, so X steps through the range 0 to 6 with
+                        \ each subsequent call to UpdateDashboard
 
- STX L4FFA
- JSR UpdateDashboard
+.udas1
 
-\ ******************************************************************************
-\
-\       Name: L2328
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+ STX Indicator0To6      \ Store the updated indicator number
 
-.L2328
+ JSR UpdateIndicator    \ Update indicator X (0 to 6)
 
- LDX L4FFB
- INX
- CPX #&0B
- BCC L2332
+.UpdateDash7To11
 
- LDX #7
+ LDX Indicator7To11     \ Increment the indicator number to point to the next
+ INX                    \ indicator within the range 7 to 11
 
-.L2332
+ CPX #11                \ If X < 11, skip the following instruction
+ BCC udas2
 
- STX L4FFB
- JSR UpdateDashboard
+ LDX #7                 \ Set X = 7, so X steps through the range 7 to 11 with
+                        \ each subsequent call to UpdateDashboard
 
- LDA #&77
- STA Row28_Block26_5
- RTS
+.udas2
+
+ STX Indicator7To11     \ Store the updated indicator number
+
+ JSR UpdateIndicator    \ Update indicator X (7 to 11)
+
+ LDA #%01110111         \ Redraw the small horizontal line in the centre of the
+ STA Row28_Block26_5    \ slip and turn indicator ("L R")
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4445,7 +4688,7 @@ ORG CODE%
  STY L0C1F
 
  LDX #11
- JSR UpdateDashboard
+ JSR UpdateIndicator
 
 .L23B2
 
@@ -4456,13 +4699,13 @@ ORG CODE%
 
  BMI L23C1
 
- JSR UIndicator
+ JSR IndicatorU
 
  JMP L23C4
 
 .L23C1
 
- JSR BIndicator
+ JSR IndicatorB
 
 .L23C4
 
@@ -4473,7 +4716,7 @@ ORG CODE%
 
  BMI L23D3
 
- JSR FIndicator
+ JSR IndicatorF
 
  JMP L23D6
 
@@ -4501,9 +4744,10 @@ ORG CODE%
 
  JSR L5000
 
- JSR L2318
+ JSR UpdateDashboard    \ Update the next two indicators in the ranges 0 to 6
+                        \ and 7 to 11
 
- JSR L2328
+ JSR UpdateDash7To11    \ Update the next indicator in the range 7 to 11
 
  RTS
 
@@ -4557,19 +4801,19 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UIndicator
+\       Name: IndicatorU
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update the undercarriage indicator ("U") and related variables
 \
 \ ******************************************************************************
 
-.UIndicator
+.IndicatorU
 
  LDA L4F85              \ Set A = L4F85
 
  LDY Undercarriage      \ If Undercarriage is non-zero then the undercarriage is
- BNE UIndicator1        \ down, so jump to UIndicator1
+ BNE indu1              \ down, so jump to indu1
 
                         \ If we get here then the undercarriage is up
 
@@ -4582,15 +4826,15 @@ ORG CODE%
                         \ white, to act as the centre of the undercarriage
                         \ indicator when turned off
 
- BNE UIndicator2        \ Jump to UIndicator2 to update the indicator (this
-                        \ BNE is effectively a JMP as Y is never zero)
+ BNE indu2              \ Jump to indu2 to update the indicator (this BNE is
+                        \ effectively a JMP as Y is never zero)
 
-.UIndicator1
+.indu1
 
                         \ If we get here then the undercarriage is down
 
- LDY L0CC5              \ If L0CC5 <> 0, jump to UIndicator3 to set the
- BNE UIndicator3        \ undercarriage to up and return from the subroutine
+ LDY L0CC5              \ If L0CC5 <> 0, jump to indu3 to set the undercarriage
+ BNE indu3              \ to up and return from the subroutine
 
  CLC                    \ Set A = A + 10
  ADC #10
@@ -4601,7 +4845,7 @@ ORG CODE%
                         \ white, to act as the centre of the undercarriage
                         \ indicator when turned on
 
-.UIndicator2
+.indu2
 
  STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 10 or
                         \ reduced by 10 for undercarriage down/up) ???
@@ -4614,18 +4858,18 @@ ORG CODE%
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the undercarriage indicator
 
-.UIndicatorL1
+.induL1
 
  STA Row30_Block32_2,X  \ Update pixel row X of the undercarriage indicator to
                         \ the pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL UIndicatorL1       \ Loop back to update the next row of the indicator
+ BPL induL1             \ Loop back to update the next row of the indicator
 
  RTS                    \ Return from the subroutine
 
-.UIndicator3
+.indu3
 
  LDA #0                 \ Set Undercarriage = 0 to set the undercarriage to up
  STA Undercarriage
@@ -4634,19 +4878,25 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: FIndicator
+\       Name: IndicatorF
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update the flaps indicator ("F") and and related variables
 \
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   IndicatorF_RTS      Contains an RTS
+\
 \ ******************************************************************************
 
-.FIndicator
+.IndicatorF
 
  LDA L4F85              \ Set A = L4F85
  
  LDY Flaps              \ If Flaps is non-zero then the flaps are on, so jump
- BNE FIndicator1        \ to FIndicator1
+ BNE indf1              \ to indf1
 
                         \ If we get here then the flaps are off
 
@@ -4659,10 +4909,10 @@ ORG CODE%
                         \ act as the centre of the flaps indicator when turned
                         \ off
 
- BNE FIndicator2        \ Jump to FIndicator2 to update the indicator (this
-                        \ BNE is effectively a JMP as Y is never zero)
+ BNE indf2              \ Jump to indf2 to update the indicator (this BNE is
+                        \ effectively a JMP as Y is never zero)
 
-.FIndicator1
+.indf1
 
                         \ If we get here then the flaps are on
 
@@ -4675,7 +4925,7 @@ ORG CODE%
                         \ white, to act as the centre of the flaps indicator
                         \ when turned on
 
-.FIndicator2
+.indf2
 
  STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 200 or
                         \ reduced by 200 for flaps on/off) ???
@@ -4688,16 +4938,16 @@ ORG CODE%
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the flaps indicator
 
-.FIndicator_L1
+.indfL1
 
  STA Row30_Block35_2,X  \ Update pixel row X of the flaps indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL FIndicator_L1      \ Loop back to update the next row of the indicator
+ BPL indfL1             \ Loop back to update the next row of the indicator
 
-.FIndicator_RTS
+.IndicatorF_RTS
 
  RTS                    \ Return from the subroutine
 
@@ -4718,7 +4968,7 @@ ORG CODE%
 
  LDA L0CF1
  ORA L368F
- BNE FIndicator_RTS
+ BNE IndicatorF_RTS
 
  LDX #&E4
  JSR L4B4A
@@ -4808,81 +5058,77 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: BIndicator
+\       Name: IndicatorB
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update the brakes indicator ("B")
 \
 \ ******************************************************************************
 
-.BIndicator
+.IndicatorB
 
  LDA #%01110111         \ Set A to a four-pixel block with pixels 0, 1 and 2 in
                         \ white, to act as the centre of the brakes indicator
                         \ when turned on
 
  LDX Brakes             \ If Brakes is non-zero then the brakes are on, so
- BNE BIndicator1        \ jump to BIndicator1
+ BNE indb1              \ jump to indb1
 
  LDA #%01010101         \ Set A to a four-pixel block with pixels 0 and 2 in
                         \ white, to act as the centre of the brakes indicator
                         \ when turned off
 
-.BIndicator1
+.indb1
 
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the brakes indicator
 
-.BIndicator2
+.indb2
 
  STA Row30_Block37_2,X  \ Update pixel row X of the brakes indicator to the
                         \ pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL BIndicator2        \ Loop back to update the next row of the indicator
+ BPL indb2              \ Loop back to update the next row of the indicator
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: TIndicator
+\       Name: IndicatorT
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update the Theme indicator ("T")
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
-.TIndicator
+.IndicatorT
 
  LDA #%01110111         \ Set A to a four-pixel block with pixels 0, 1 and 2 in
                         \ white, to act as the centre of the Theme indicator
                         \ when turned on
 
  LDX Theme              \ If Theme is positive then the Theme is enabled, so
- BPL TIndicator1        \ jump to TIndicator1
+ BPL indt1              \ jump to indt1
 
  LDA #%01010101         \ Set A to a four-pixel block with pixels 0 and 2 in
                         \ white, to act as the centre of the Theme indicator
                         \ when turned off
 
-.TIndicator1
+.indt1
 
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the Theme indicator
 
-.TIndicator_L1
+.indtL1
 
  STA Row30_Block0_2,X   \ Update pixel row X of the Theme indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL TIndicator_L1      \ Loop back to update the next row of the indicator
+ BPL indtL1             \ Loop back to update the next row of the indicator
 
  RTS                    \ Return from the subroutine
 
@@ -4890,8 +5136,8 @@ ORG CODE%
 \
 \       Name: ScanKeyboard
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Keyboard
+\    Summary: Scan the keyboard for a specific key
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4943,43 +5189,41 @@ ORG CODE%
  LDA #5                 \ Set V = 5 to act as an offset as we work our way
  STA V                  \ through the six keys in KeyTable1
 
-.ScanKeyTable_L1
+.sktbL1
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
  LDX KeyTable1,Y        \ Scan the keyboard to see if the Y-th key in KeyTable1
  JSR ScanKeyboard       \ is being pressed
 
- BNE ScanKeyTable2      \ If the key is not being pressed, jump down to
-                        \ ScanKeyTable2 to check the Y-th key in KeyTable1
+ BNE sktb1              \ If the key is not being pressed, jump down to sktb1 to
+                        \ check the Y-th key in KeyTable1
 
  LDX V                  \ Set X = the offset of the key we are processing
  
  LDY KeyTable1Low,X     \ Fetch the key logger value for this key press into
  LDA KeyTable1High,X    \ (A Y)
  
- JMP ScanKeyTable4      \ Jump down to ScanKeyTable4 to store (A Y) in the key
-                        \ logger
+ JMP sktb3              \ Jump down to sktb3 to store (A Y) in the key logger
 
-.ScanKeyTable2
+.sktb1
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
  LDX KeyTable2,Y        \ Scan the keyboard to see if the Y-th key in KeyTable2
  JSR ScanKeyboard       \ is being pressed
 
- BNE ScanKeyTable3      \ If the key is not being pressed, jump down to
-                        \ ScanKeyTable3 to store 0 in the key logger
+ BNE sktb2              \ If the key is not being pressed, jump down to sktb2 to
+                        \ store 0 in the key logger
 
  LDX V                  \ Set X = the offset of the key we are processing
 
  LDY KeyTable2Low,X     \ Fetch the key logger value for this key press into
  LDA KeyTable2High,X    \ (A Y)
 
- JMP ScanKeyTable4      \ Jump down to ScanKeyTable4 to store (A Y) in the key
-                        \ logger
+ JMP sktb3              \ Jump down to sktb3 to store (A Y) in the key logger
 
-.ScanKeyTable3
+.sktb2
 
  LDA #0                 \ Set A = 0
 
@@ -4987,7 +5231,7 @@ ORG CODE%
 
  TAY                    \ Set Y = 0, so the key logger value in (A Y) is 0
 
-.ScanKeyTable4
+.sktb3
 
  STA KeyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
                         \ in the X-th byte of KeyLoggerHigh
@@ -4998,7 +5242,7 @@ ORG CODE%
  DEC V                  \ Decrement the offset to point to the next key to
                         \ process
 
- BPL ScanKeyTable_L1    \ Loop back until we have processed all six key pairs
+ BPL sktbL1             \ Loop back until we have processed all six key pairs
 
  RTS                    \ Return from the subroutine
 
@@ -5118,7 +5362,7 @@ ORG CODE%
  LDX #0                 \ Set A = 0 to use as our zero value
 
  TXA                    \ Set X = 0 to use as a counter for zeroing 256 bytes in
-                        \ the ResetL1 loop
+                        \ the reseL1 loop
 
  STA L4202              \ Set L4202 = 0
 
@@ -5132,7 +5376,7 @@ ORG CODE%
 
  STA L369D              \ Set L369D = 0
 
-.ResetL1
+.reseL1
 
                         \ This loop zeroes &0400 to &04FF
 
@@ -5140,16 +5384,16 @@ ORG CODE%
 
  DEX                    \ Decrement the byte counter
 
- BNE ResetL1            \ Loop back until we have zeroed &0400 to &04FF
+ BNE reseL1             \ Loop back until we have zeroed &0400 to &04FF
 
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
-                        \ in the ResetL2 loop
+                        \ in the reseL2 loop
 
  STA L05C8              \ Set L05C8 = 0
 
  STA L4206              \ Set L4206 = 0
 
-.ResetL2
+.reseL2
 
                         \ This loop zeroes &0C00 to &0CFE, which resets all of
                         \ the variables in the &0C00 workspace
@@ -5158,12 +5402,12 @@ ORG CODE%
 
  DEX                    \ Decrement the byte counter
 
- BNE ResetL2            \ Loop back until we have zeroed &0C00 to &0CFE
+ BNE reseL2             \ Loop back until we have zeroed &0C00 to &0CFE
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
-                        \ the ResetL3 loop
+                        \ the reseL3 loop
 
-.ResetL3
+.reseL3
 
                         \ This loop zeroes 8 bytes at L4210
 
@@ -5171,7 +5415,7 @@ ORG CODE%
 
  DEX                    \ Decrement the byte counter
 
- BPL ResetL3            \ Loop back until we have zeroed L4210 to L4210+7
+ BPL reseL3             \ Loop back until we have zeroed L4210 to L4210+7
 
  LDA #72                \ Set L0CFF = 72
  STA L0CFF
@@ -5200,7 +5444,7 @@ ORG CODE%
 
  STA L0CE8              \ Set L0CE8 = 1
 
- JSR UIndicator         \ Update the undercarriage indicator
+ JSR IndicatorU         \ Update the undercarriage indicator
 
  LDA #1                 \ Set L0CC5 = 1
  STA L0CC5
@@ -5214,11 +5458,11 @@ ORG CODE%
  STA L0CD0              \ Set L0CD0 = 255
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
-                        \ the ResetL4 loop
+                        \ the reseL4 loop
 
  STX L0CFA              \ Set L0CFA = 7
 
-.ResetL4
+.reseL4
 
                         \ This loop zeroes 8 bytes at L4208
 
@@ -5226,12 +5470,12 @@ ORG CODE%
 
  DEX                    \ Decrement the byte counter
 
- BPL ResetL4            \ Loop back until we have zeroed L4208 to L4208+7
+ BPL reseL4             \ Loop back until we have zeroed L4208 to L4208+7
 
  LDX #2                 \ Set X = 2 to use as a counter for zeroing 3 bytes in
-                        \ the ResetL5 loop
+                        \ the reseL5 loop
 
-.ResetL5
+.reseL5
 
                         \ This loop zeroes L4203, L4203 and L4204
 
@@ -5239,24 +5483,24 @@ ORG CODE%
 
  DEX                    \ Decrement the byte counter
 
- BPL ResetL5            \ Loop back until we have zeroed L4203 to L4203+2
+ BPL reseL5             \ Loop back until we have zeroed L4203 to L4203+2
 
- JSR TIndicator         \ Update the Theme indicator
+ JSR IndicatorT         \ Update the Theme indicator
 
  LDX #11                \ ???
- JSR UpdateDashboard
+ JSR UpdateIndicator
 
  LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
- STA L3692              \ 66 times in the ResetL6 loop
+ STA L3692              \ 66 times in the reseL6 loop
 
-.ResetL6
+.reseL6
 
  DEC L3692              \ Decrement the counter in L3692
 
  JSR L33A1              \ ???
 
  LDA L3692              \ Loop back until L3692 = 0
- BNE ResetL6
+ BNE reseL6
 
                         \ Fall through into Reset2 to ???
 
@@ -5310,10 +5554,10 @@ ORG CODE%
 
  STA L369E              \ Set L369E = 0 ???
 
- LDA #14                \ Call SetEnvelope with A = 14 to set up the second
- JSR SetEnvelope        \ sound envelope
+ LDA #14                \ Call DefineEnvelope with A = 14 to set up the second
+ JSR DefineEnvelope     \ sound envelope
 
-.MainLoopL1
+.mnlpL1
 
  JSR ClearCanopy        \ Clear the canopy view, leaving the canopy edges alone
 
@@ -5325,9 +5569,9 @@ ORG CODE%
 
  JSR L2BDC
 
- JSR FIndicator         \ Update the flaps indicator
+ JSR IndicatorF         \ Update the flaps indicator
 
- JSR BIndicator         \ Update the brakes indicator
+ JSR IndicatorB         \ Update the brakes indicator
 
  LDA #%01000000         \ Set the 6522 User VIA auxiliary control register
  STA VIA+&6B            \ (SHEILA &6B) to %01000000 to disable the shift
@@ -5404,7 +5648,7 @@ ORG CODE%
 
  DEC L0CD9
  LDA #6
- JSR L4D87
+ JSR MakeSound
 
 .L272C
 
@@ -5498,7 +5742,7 @@ ORG CODE%
 
  JSR L4D92
 
- JMP MainLoopL1
+ JMP mnlpL1
 
 .L27AF
 
@@ -5515,7 +5759,7 @@ ORG CODE%
 
  LDA #8
  STA Theme
- JSR TIndicator
+ JSR IndicatorT
 
 .L27C8
 
@@ -6904,7 +7148,7 @@ ORG CODE%
  INX
  INX
  TXS
- JMP MainLoopL1
+ JMP mnlpL1
 
 \ ******************************************************************************
 \
@@ -7072,20 +7316,20 @@ ORG CODE%
 
  STA S                  \ Store the value we want to store into S
 
-.FillCanopyRows1
+.fcrw1
 
  LDY #0                 \ Set a byte counter in Y
 
  LDA S                  \ Fetch the value of A that we stored in S above
 
-.FillCanopyRowsL1
+.fcrwL1
 
  STA (P),Y              \ Set the Y-th byte of P(1 0) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
- BNE FillCanopyRowsL1   \ Loop back until we have set 256 bytes, starting at
+ BNE fcrwL1             \ Loop back until we have set 256 bytes, starting at
                         \ P(1 0), to the value in A
 
  LDY #47                \ Set a byte counter in Y for 47 bytes
@@ -7095,14 +7339,14 @@ ORG CODE%
                         \ so it points to the next byte to fill after the 256
                         \ bytes we just did
 
-.FillCanopyRowsL2
+.fcrwL2
 
  STA (P),Y              \ Set the Y-th byte of P(1 0) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
- BPL FillCanopyRowsL2   \ Loop back until we have set 47 bytes, starting at
+ BPL fcrwL2             \ Loop back until we have set 47 bytes, starting at
                         \ P(1 0), to the value in A
 
  LDA P                  \ Set P(1 0) = P(1 0) + 64
@@ -7110,7 +7354,7 @@ ORG CODE%
  ADC #64                \ starting with the low bytes
  STA P
 
- BCC FillCanopyRows2    \ If the above addition didn't overflow, skip the next
+ BCC fcrw2              \ If the above addition didn't overflow, skip the next
                         \ instruction
 
  INC P+1                \ The above addition overflowed, so increment the high
@@ -7119,11 +7363,11 @@ ORG CODE%
                         \ So now P(1 0) is 320 greater than at the start, so it
                         \ points to the next character row in screen memory
 
-.FillCanopyRows2
+.fcrw2
 
  DEC R                  \ Decrement the row counter in R
 
- BNE FillCanopyRows1    \ Loop back until we have updated R rows
+ BNE fcrw1              \ Loop back until we have updated R rows
 
  RTS                    \ Return from the subroutine
 
@@ -8372,7 +8616,7 @@ ORG CODE%
 .L33DB
 
  CLC
- ADC L4EB2
+ ADC Sounds+10          \ Byte #3 of sound #1 (low byte of amplitude)
  BMI L33E3
 
  BNE L33ED
@@ -8382,8 +8626,8 @@ ORG CODE%
  CMP #&F1
  BCC L33ED
 
- STA L4EB2
- INC L4EE4
+ STA Sounds+10          \ Byte #3 of sound #1 (low byte of amplitude)
+ INC Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
 
 .L33ED
 
@@ -8412,7 +8656,7 @@ ORG CODE%
 
  LDA #0
  STA Flaps
- JSR FIndicator
+ JSR IndicatorF
 
 .L33FF
 
@@ -10360,7 +10604,7 @@ ORG CODE%
  JSR L4BD4
 
  LDA #3
- JSR L4D87
+ JSR MakeSound
 
  RTS
 
@@ -10559,7 +10803,7 @@ ORG CODE%
  JSR L4DB5
 
  LDA #5
- JSR L4D87
+ JSR MakeSound
 
  LDX #&FF
  JSR FillCanopy
@@ -10582,7 +10826,7 @@ ORG CODE%
  ADC #6
  TAX
  TXS
- JMP MainLoopL1
+ JMP mnlpL1
 
 \ ******************************************************************************
 \
@@ -10638,7 +10882,7 @@ ORG CODE%
  BEQ L4D19
 
  LDA #2
- JSR L4D87
+ JSR MakeSound
 
  LDX L368E
  LDY L367A,X
@@ -10845,27 +11089,36 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L4D87
+\       Name: MakeSound
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Sound
+\    Summary: Make a sound
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The sound number from the Sounds table (0 to 7)
 \
 \ ******************************************************************************
 
-.L4D87
+.MakeSound
 
- ASL A
- ASL A
- ASL A
- CLC
- ADC #&A8
- TAX
- LDA #7
- BNE SetEnvelope1
+ ASL A                  \ Set A = A * 8
+ ASL A                  \
+ ASL A                  \ so we can use it as an index into the Sounds table,
+                        \ which has 8 bytes per entry
+
+ CLC                    \ Set (Y X) = Sounds + A
+ ADC #LO(Sounds)        \
+ TAX                    \ starting with the low byte in X
+
+ LDA #7                 \ Set A = 7 for the OSWORD command to make a sound
+
+ BNE SoundEnvelope      \ Jump to SoundEnvelope to set up Y and apply the OSWORD
+                        \ command to the (Y X) block, which makes the relevant
+                        \ sound (this BNE is effectively a JMP as A is never
+                        \ zero)
 
 \ ******************************************************************************
 \
@@ -10900,10 +11153,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: SetEnvelope
+\       Name: DefineEnvelope
 \       Type: Subroutine
 \   Category: Sound
-\    Summary: Set up the sound envelope defined in Envelopes
+\    Summary: Define a sound envelope
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10917,27 +11170,54 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.SetEnvelope
+.DefineEnvelope
 
  CLC                    \ Set (Y X) = Envelopes + A
  ADC #LO(Envelopes)     \
  TAX                    \ starting with the low byte
 
- LDA #8                 \ Set A = 8 for the OSWORD command below
+ LDA #8                 \ Set A = 8 for the OSWORD command to define an envelope
 
-.SetEnvelope1
+                        \ Fall through into SoundEnvelope to set up Y and apply
+                        \ the OSWORD command to the (Y X) block, which defines
+                        \ the relevant sound envelope
 
- LDY #HI(Envelopes)     \ Set (Y X) = Envelopes + A
-                        \
-                        \ and now the high byte
+\ ******************************************************************************
+\
+\       Name: SoundEnvelope
+\       Type: Subroutine
+\   Category: Sound
+\    Summary: Either make a sound or set up an envelope
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The offset of the sound envelope data in Envelopes:
+\
+\                         * A = 0 for the first envelope definition
+\
+\                         * A = 14 for the first envelope definition
+\
+\   X                   The low byte of the address of the OSWORD block
+\
+\   C flag              The outcome of the addition of the low bytes of (Y X)
+\
+\ ******************************************************************************
 
- BCC SetEnvelope2       \ If the above addition didn't overflow, skip the next
-                        \ instruction
+.SoundEnvelope
+
+ LDY #HI(Envelopes)     \ Set y to the high byte of the Envelopes block address,
+                        \ so (Y X) now points to the relevant envelope or sound
+                        \ data block
+
+ BCC senv1              \ If the addition we did before calling SoundEnvelope
+                        \ didn't overflow, skip the next instruction
 
  INY                    \ The above addition overflowed, so increment the high
                         \ byte of (Y X) to point to the next page in memory
 
-.SetEnvelope2
+.senv1
 
  JSR OSWORD             \ Call OSWORD with A = 8 to set up the sound envelope at
                         \ location (Y X)
@@ -10964,7 +11244,7 @@ ORG CODE%
  BNE L4DC2
 
  LDA #0
- JSR L4D87
+ JSR MakeSound
 
 \ ******************************************************************************
 \
@@ -10982,7 +11262,7 @@ ORG CODE%
 .L4DBC
 
  LDA #&FF
- STA L4EE4
+ STA Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
  RTS
 
 \ ******************************************************************************
@@ -11038,19 +11318,19 @@ ORG CODE%
  LDA K
  CLC
  ADC #&50
- CMP L4EE4
+ CMP Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
  BEQ L4E0F
 
- STA L4EE4
+ STA Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
 
- LDA #0                 \ Call SetEnvelope with A = 0 to set up the first
- JSR SetEnvelope        \ sound envelope
+ LDA #0                 \ Call DefineEnvelope with A = 0 to set up the first
+ JSR DefineEnvelope     \ sound envelope
 
  LDA #7
- JSR L4D87
+ JSR MakeSound
 
  LDA #1
- JSR L4D87
+ JSR MakeSound
 
 .L4E0F
 
@@ -11187,12 +11467,12 @@ ORG CODE%
 \
 \       Name: Envelopes
 \       Type: Variable
-\   Category: 
+\   Category: Sound
 \    Summary: Data for two sound Envelopes
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ There are two sound envelopes defined in Aviator.
 \
 \ ******************************************************************************
 
@@ -11204,35 +11484,54 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L4EA8
+\       Name: Sounds
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Sound
+\    Summary: OSWORD blocks for making the various game sounds
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Sound data. To make a sound, the MakeSound passes the bytes in this table to
+\ OSWORD 7. These bytes are the OSWORD equivalents of the parameters passed to
+\ the SOUND keyword in BASIC. The parameters have these meanings:
+\
+\   channel/flush, amplitude (or envelope number if 1-4), pitch, duration
+\
+\ where each value consists of two bytes, with the low byte first and the high
+\ byte second.
+\
+\ For the channel/flush parameter, the first byte is the channel while the
+\ second is the flush control (where a flush control of 0 queues the sound,
+\ while a flush control of 1 makes the sound instantly). When written in
+\ hexadecimal, the first figure gives the flush control, while the second is
+\ the channel (so &13 indicates flush control = 1 and channel = 3).
+\
+\ So when we call MakeSound with A = 5 to make sound #5, this is what the
+\ routine effectively does:
+\
+\   SOUND &10, -13,   4,  12
+\
+\ which makes a sound with flush control 1 on channel 0, and with amplitude -13,
+\ pitch 4 and duration 12. Meanwhile, sound #2 is like this:
+\
+\   SOUND &13, 2, 220, 2
+\
+\ which makes a sound with flush control 1 on channel 3, using envelope 2,
+\ and with pitch 220 and duration 2. The two sound envelopes (1 and 2) are set
+\ up by the DefineEnvelope routine.
 \
 \ ******************************************************************************
 
-.L4EA8
+.Sounds
 
- EQUB &10, &00, &00, &00, &00, &00, &00, &00
- EQUB &10, &00
-
-.L4EB2
-
- EQUB &FB, &FF, &03, &00, &FF, &00, &13, &00
- EQUB &02, &00, &DC, &00, &02, &00, &13, &00
- EQUB &F1, &FF, &78, &00, &07, &00, &13, &00
- EQUB &F4, &FF, &00, &00, &01, &00, &10, &00
- EQUB &F3, &FF, &04, &00, &0C, &00, &13, &00
- EQUB &02, &00, &3C, &00, &02, &00, &11, &00
- EQUB &01, &00
-
-.L4EE4
-
- EQUB &FF, &00, &FF, &00
+ EQUB &10, &00, &00, &00, &00, &00, &00, &00    \ #0 = &10,   0,   0,   0
+ EQUB &10, &00, &FB, &FF, &03, &00, &FF, &00    \ #1 = &10,  -5,   3, 255
+ EQUB &13, &00, &02, &00, &DC, &00, &02, &00    \ #2 = &13,   2, 220,   2
+ EQUB &13, &00, &F1, &FF, &78, &00, &07, &00    \ #3 = &13, -15, 120,   7
+ EQUB &13, &00, &F4, &FF, &00, &00, &01, &00    \ #4 = &13, -12,   0,   1
+ EQUB &10, &00, &F3, &FF, &04, &00, &0C, &00    \ #5 = &10, -13,   4,  12
+ EQUB &13, &00, &02, &00, &3C, &00, &02, &00    \ #6 = &13,   2,  60,   2
+ EQUB &11, &00, &01, &00, &FF, &00, &FF, &00    \ #7 = &11,   1, 255, 255
 
 \ ******************************************************************************
 \
@@ -11573,11 +11872,11 @@ ORG CODE%
  EQUB &4D, &0D, &0C, &08, &15, &20
  EQUB &20, &20, &20, &20, &20, &4C
 
-.L4FFA
+.Indicator0To6
 
  EQUB &44
 
-.L4FFB
+.Indicator7To11
 
  EQUB &59
 
@@ -12219,7 +12518,7 @@ ORG CODE%
  BNE L5347
 
  LDA #4
- JSR L4D87
+ JSR MakeSound
 
  LDA #&27
  BNE L5349
@@ -12404,7 +12703,7 @@ ORG CODE%
  BCC L5434
 
  LDA #3
- JSR L4D87
+ JSR MakeSound
 
  LDX #4
 
@@ -13115,7 +13414,7 @@ ORG CODE%
 .L575A
 
  LDA #&1A
- JSR L4D87
+ JSR MakeSound
 
  JSR L4DBC
 
@@ -14248,14 +14547,14 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: Screen
+\       Name: SetupScreen
 \       Type: Subroutine
 \   Category: Start and end
 \    Summary: Set up the screen mode and load the dashboard image
 \
 \ ******************************************************************************
 
-.Screen
+.SetupScreen
 
  LDA #22                \ Switch to screen mode 5 with the following VDU
  JSR OSWRCH             \ command:
@@ -14266,7 +14565,7 @@ ORG &0B00
                         \ cursor, whose bytes are in the variable at Cursor, so
                         \ set up a counter in Y
 
-.ScreenL1
+.sscrL1
 
  LDA Cursor,Y           \ Write the Y-th value from Cursor
  JSR OSWRCH
@@ -14274,7 +14573,7 @@ ORG &0B00
  INY                    \ Increment the loop counter
 
  CPY #10                \ Loop back to write the next character until we have
- BNE ScreenL1           \ written all 10, in other words:
+ BNE sscrL1             \ written all 10, in other words:
                         \
                         \   VDU 23, 0, 10, 23, 0, 0, 0, 0, 0, 0
 
@@ -14286,41 +14585,41 @@ ORG &0B00
  JSR OSWRCH
 
  LDY #0                 \ We now want to print the "Please wait" message in
-                        \ variable Wait, so set up a counter in Y
+                        \ variable PleaseWait, so set up a counter in Y
 
-.ScreenL2
+.sscrL2
 
- LDA Wait,Y             \ Print the Y-th character from Wait
+ LDA PleaseWait,Y       \ Print the Y-th character from PleaseWait
  JSR OSWRCH
 
  INY                    \ Increment the loop counter
 
  CPY #11                \ Loop back to print the next character until we have
- BNE ScreenL2           \ printed all 11 ("Please wait")
+ BNE sscrL2             \ printed all 11 ("Please wait")
 
- LDX #LO(DASHBD)        \ Set (Y X) to point to DASHBD ("L.DASHBD 7100")
- LDY #HI(DASHBD)
+ LDX #LO(LoadDashboard) \ Set (Y X) to point to LoadDashboard ("L.DASHBD 7100")
+ LDY #HI(LoadDashboard)
 
- JSR OSCLI              \ Call OSCLI to run the OS command in DASHBD, which
-                        \ loads the dashboard image into the screen
+ JSR OSCLI              \ Call OSCLI to run the OS command in LoadDashboard,
+                        \ which loads the dashboard image into the screen
 
  LDA #129               \ Call OSBYTE with A = 129, X = &FF and Y = 0 to scan
  LDX #&FF               \ the keyboard for &FF centiseconds (2.56 seconds)
  LDY #0
  JSR OSBYTE
 
- JMP Setup              \ Jump down to Setup to continue the setup process
+ JMP DrawCanopy         \ Jump down to DrawCanopy to continue the setup process
 
 \ ******************************************************************************
 \
-\       Name: DASHBD
+\       Name: LoadDashboard
 \       Type: Variable
 \   Category: Start and end
-\    Summary: The OS command string for loading the dashboard image in DASHBD
+\    Summary: The OS command string for loading the dashboard image
 \
 \ ******************************************************************************
 
-.DASHBD
+.LoadDashboard
 
  EQUS "L.DASHBD 7100"   \ This is short for "*LOAD DASHBD 7100"
  EQUB 13
@@ -14344,21 +14643,21 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: Wait
+\       Name: PleaseWait
 \       Type: Variable
 \   Category: Start and end
 \    Summary: The "Please wait" message shown when the game loads
 \
 \ ******************************************************************************
 
-.Wait
+.PleaseWait
 
  EQUS "Please wait"
  EQUB 13
 
 \ ******************************************************************************
 \
-\       Name: Setup
+\       Name: DrawCanopy
 \       Type: Subroutine
 \   Category: Start and end
 \    Summary: Move code around, clear the edges of the canopy view, draw the
@@ -14366,7 +14665,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Setup
+.DrawCanopy
 
  LDA #140               \ Call OSBYTE with A = 140 to select the tape filing
  JSR OSBYTE             \ system (i.e. do a *TAPE command)
@@ -14390,7 +14689,7 @@ ORG &0B00
                         \ &0B00 to &57FF, followed by screen memory at &5800 to
                         \ &7FFF
 
-.SetupL1
+.dcanL1
 
  LDA &0400,Y            \ Copy the Y-th byte of &0400 to the Y-th byte of &0D00
  STA &0D00,Y
@@ -14406,7 +14705,7 @@ ORG &0B00
 
  DEY                    \ Decrement the loop counter
 
- BNE SetupL1            \ Loop back until we have copied a whole page of bytes
+ BNE dcanL1             \ Loop back until we have copied a whole page of bytes
 
  NOP                    \ Presumably this contained some kind of copy protection
  NOP                    \ or decryption code that has been replaced by NOPs in
@@ -14494,27 +14793,27 @@ ORG &0B00
 
  LDX #3                 \ Move the graphics cursor to (3, 96)
  LDY #96
- JSR Move
+ JSR VduMove
 
  LDX #3                 \ Draw a line to (3, 239)
  LDY #239
- JSR Draw
+ JSR VduDraw
 
  LDX #156               \ Move the graphics cursor to (156, 96)
  LDY #96
- JSR Move
+ JSR VduMove
 
  LDX #156               \ Draw a line to (156, 239)
  LDY #239
- JSR Draw
+ JSR VduDraw
 
  LDX #8                 \ Move the graphics cursor to (8, 248)
  LDY #248
- JSR Move
+ JSR VduMove
 
  LDX #151               \ Draw a line to (151, 248)
  LDY #248
- JSR Draw
+ JSR VduDraw
 
                         \ We now draw the square rivets around the edge of the
                         \ canopy view, starting with the three rivets up each
@@ -14523,13 +14822,13 @@ ORG &0B00
  LDY #121               \ Set Y = 121 so the first rivets are drawn at height
                         \ 121, i.e. at (0, 121) and (158, 121)
 
-.SetupL2
+.dcanL2
 
  LDX #0                 \ Draw a square rivet at (0, Y)
- JSR Rivet
+ JSR DrawRivet
 
  LDX #158               \ Draw a square rivet at (158, Y)
- JSR Rivet
+ JSR DrawRivet
 
  TYA                    \ Set Y = Y + 48
  CLC                    \
@@ -14537,7 +14836,7 @@ ORG &0B00
  TAY
 
  CPY #9                 \ Loop back to draw the next rivet until Y = 9, at which
- BNE SetupL2            \ point Y has wrapped round off the top of the screen
+ BNE dcanL2             \ point Y has wrapped round off the top of the screen
                         \ back to the bottom and we will have drawn three rivets
                         \ up each side of the canopy view
 
@@ -14547,9 +14846,9 @@ ORG &0B00
  LDY #255               \ Set X and Y so the first rivet is at (19, 255)
  LDX #19
 
-.SetupL3
+.dcanL3
 
- JSR Rivet              \ Draw a square rivet at (X, Y)
+ JSR DrawRivet          \ Draw a square rivet at (X, Y)
 
  TXA                    \ Set X = X + 24
  CLC                    \
@@ -14557,17 +14856,17 @@ ORG &0B00
  TAX                    \ right
 
  CPX #163               \ Loop back to draw the next rivet until X = 163, at
- BNE SetupL3            \ which point we will have drawn six rivets along the
+ BNE dcanL3             \ which point we will have drawn six rivets along the
                         \ top of the canopy view
 
- JMP MainLoop           \ Jump to MainLoop to start the game         
+ JMP MainLoop           \ Jump to MainLoop to start the game
 
 \ ******************************************************************************
 \
-\       Name: Point
+\       Name: VduPoint
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Draw a point on-screen
+\    Summary: Draw a point on-screen using the standard VDU routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14579,20 +14878,20 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Point
+.VduPoint
 
  LDA #69                \ Set A = 69 so the following VDU 25 command plots a
                         \ point at an absolute position on-screen
 
- BNE Plot               \ Jump to Plot to do the move (this BNE is effectively a
-                        \ JMP as A is never zero
+ BNE VduPlot            \ Jump to VduPlot to do the move (this BNE is
+                        \ effectively a JMP as A is never zero
 
 \ ******************************************************************************
 \
-\       Name: Move
+\       Name: VduMove
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Move the graphics cursor to a point on-screen
+\    Summary: Move the graphics cursor using the standard VDU routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14604,20 +14903,20 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Move
+.VduMove
 
  LDA #4                 \ Set A = 4 so the following VDU 25 command moves the
                         \ graphics cursor an absolute position on-screen
 
- BNE Plot               \ Jump to Plot to do the move (this BNE is effectively a
-                        \ JMP as A is never zero
+ BNE VduPlot            \ Jump to VduPlot to do the move (this BNE is
+                        \ effectively a JMP as A is never zero
 
 \ ******************************************************************************
 \
-\       Name: Draw
+\       Name: VduDraw
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Draw a line from the graphics cursor to a point on-screen
+\    Summary: Draw a line using the standard VDU routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14629,17 +14928,17 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Draw
+.VduDraw
 
  LDA #5                 \ Set A = 5 to denote "draw line absolute in the current
                         \ graphics foreground colour"
 
 \ ******************************************************************************
 \
-\       Name: Plot
+\       Name: VduPlot
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Perform a plot command
+\    Summary: Perform a plot command the standard VDU routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14659,13 +14958,13 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Plot
+.VduPlot
 
  PHA                    \ Store the value of A on the stack, so we can retrieve
                         \ it after the call to OSWRCH
 
  LDA #25                \ Start a VDU 25 command, which is the equivalent of a
- JSR OSWRCH             \ Plot command in BBC BASIC, and which has the following
+ JSR OSWRCH             \ PLOT command in BBC BASIC, and which has the following
                         \ format:
                         \
                         \   VDU 25, K, X; Y;
@@ -14720,7 +15019,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: Rivet
+\       Name: DrawRivet
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Draw a square rivet (2 pixels across, 4 pixels high)
@@ -14735,30 +15034,30 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Rivet
+.DrawRivet
 
- JSR Point              \ Draw a point at (X, Y)
+ JSR VduPoint           \ Draw a point at (X, Y)
 
  DEY                    \ Draw a point at (X, Y - 1)
- JSR Point
+ JSR VduPoint
 
  DEY                    \ Draw a point at (X, Y - 2)
- JSR Point
+ JSR VduPoint
 
  DEY                    \ Draw a point at (X, Y - 3)
- JSR Point
+ JSR VduPoint
 
  INX                    \ Draw a point at (X + 1, Y - 3)
- JSR Point
+ JSR VduPoint
 
  INY                    \ Draw a point at (X + 1, Y - 2)
- JSR Point
+ JSR VduPoint
 
  INY                    \ Draw a point at (X + 1, Y - 1)
- JSR Point
+ JSR VduPoint
 
  INY                    \ Draw a point at (X + 1, Y)
- JSR Point
+ JSR VduPoint
 
  DEX                    \ Restore X to its original value
 
@@ -14797,7 +15096,7 @@ ORG &0B00
 
  STY S                  \ Store the width of each character row in S
 
-.ClearRowsL1
+.clrwL1
 
  LDA #0                 \ We are about to zero a block of memory, so set A = 0
                         \ so we can use it as our overwrite value
@@ -14805,14 +15104,14 @@ ORG &0B00
  LDY S                  \ Fetch the width of each character row, which we stored
                         \ in S above
 
-.ClearRowsL2
+.clrwL2
 
  STA (P),Y              \ Zero the Y-th byte of the page at P(1 0), which sets 4
                         \ pixels to black
 
  DEY                    \ Decrement the byte pointer
 
- BNE ClearRowsL2        \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
+ BNE clrwL2             \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
 
  LDA P                  \ Set P(1 0) = P(1 0) + 320
  CLC                    \
@@ -14825,35 +15124,39 @@ ORG &0B00
 
  DEC R                  \ Decrement the row counter in R
 
- BNE ClearRowsL1        \ Loop back until we have zeroed R rows
+ BNE clrwL1             \ Loop back until we have zeroed R rows
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L0CA2
+\       Name: Unused block
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00
+ SKIP 30                \ These bytes appear to be unused
+
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+
+ SKIP 32
 
 COPYBLOCK L0B00, P%, from5C00
 
@@ -14898,9 +15201,9 @@ ORG &5E00
                         \ so we set up a byte counter in Y
                         \
                         \ Note that the &5800-&5BFF block gets copied again in
-                        \ the Setup routine, so it ends up at &0D00-&10FF
+                        \ the DrawCanopy routine, so it ends up at &0D00-&10FF
 
-.EntryL1
+.entrL1    
 
  LDA &5800,Y            \ Copy the Y-th byte of &5800 to the Y-th byte of &0400
  STA &0400,Y
@@ -14922,7 +15225,7 @@ ORG &5E00
 
  DEY                    \ Decrement the loop counter
 
- BNE EntryL1            \ Loop back until we have copied a whole page of bytes
+ BNE entrL1             \ Loop back until we have copied a whole page of bytes
 
  NOP                    \ Presumably this contained some kind of copy protection
  NOP                    \ or decryption code that has been replaced by NOPs in
@@ -14932,8 +15235,8 @@ ORG &5E00
  NOP
  NOP
 
- JMP Screen             \ Jump to the Screen routine that just moved to &0B00
-                        \ to set up the screen and continue the setup process
+ JMP SetupScreen        \ Jump to the routine that we just moved to &0B00 to
+                        \ set up the screen and continue the setup process
 
 \ ******************************************************************************
 \
