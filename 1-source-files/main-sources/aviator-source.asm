@@ -108,9 +108,13 @@ L0C05 = &0C05
 L0C06 = &0C06
 L0C08 = &0C08
 L0C09 = &0C09
-L0C0C = &0C0C           \ Related to indicator X = 8 or 10
+
+L0C0C = &0C0C           \ Joystick y position, see indicator X = 8 or 10
+
 L0C0D = &0C0D           \ Related to indicator X = 9
-L0C0E = &0C0E           \ Related to indicator X = 8 or 10
+
+L0C0E = &0C0E           \ Joystick x position, see indicator X = 8 or 10
+
 L0C0F = &0C0F           \ Related to indicator X = 11
 L0C10 = &0C10
 L0C11 = &0C11           \ Related to indicator X = 5
@@ -3021,7 +3025,15 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   X                   ??? (11 in Reset, value in L4FFA is passed sometimes)
+\   X                   Indicator number:
+\
+\                         * 1 = thrust or rudder
+\
+\                         * 8 or 10 = joystick position display
+\
+\                         * 9 = rudder or thrust
+\
+\                       (11 in Reset, value in L4FFA is passed sometimes)
 \
 \ ******************************************************************************
 
@@ -3043,38 +3055,46 @@ ORG CODE%
 
                         \ If we get here then X = 0
 
- LDA L0CFB
- STA T
- LSR A
- LSR A
+ LDA L0CFB              \ Set A = L0CFB to show on the dial
+
+ STA T                  
+
+ LSR A                  \ A = (A / 4 + A) / 2
+ LSR A                  \   = 0.625 * A
  CLC
  ADC T
  ROR A
- LSR A
- LSR A
- CLC
+
+ LSR A                  \ A = 0.625 * A
+ LSR A                  \   = 0.625 * 0.625 * A
+ CLC                    \   = 0.390625 * A
  ADC T
  ROR A
- LSR A
- JMP L209D
+
+ LSR A                  \ A = A / 2
+                        \   = 0.1953125 * A
+                        \
+                        \ i.e. range 0 to 255 to range 0 to 50
+
+ JMP L209D              \ Jump to L209D to update the dial
 
 .L1E66
 
                         \ If we get here then X = 1
 
- LDA L0C15
- BPL L1E70
-
+ LDA L0C15              \ If (L0C15 L0C05) is negative, set A = 0 and jump to
+ BPL L1E70              \ L209D to update the dial
  LDA #0
  JMP L209D
 
 .L1E70
 
- LDA L0C05
+ LDA L0C05              \ Set A = (L0C15 L0C05) / 128
  ASL A
  LDA L0C15
  ROL A
- JMP L209D
+
+ JMP L209D              \ Jump to L209D to update the dial
 
 .L1E7B
 
@@ -3104,7 +3124,9 @@ ORG CODE%
  ADC R
  ROR A
  LSR A
+
  STA L4FFF
+
  LDA S
  LSR A
  ROR T
@@ -3127,6 +3149,7 @@ ORG CODE%
  LSR A
  ROR T
  STA U
+
  LDA T
  CLC
  ADC L4FFF
@@ -3400,46 +3423,50 @@ ORG CODE%
  STA H
  LDY #&A3
  LDA #&0B
- BNE L207F
+ BNE L207F              \ Do line drawing
 
 .L200E
 
                         \ If we get here then X = 8 or 10
 
- LDA #&80
- JSR L2129
+ LDA #128               \ Redraw the existing cross on the joystick position
+ JSR DrawJoystickCross  \ display to remove it
 
- LDA #&22
+ LDA #%00100010         \ Redraw the joystick position display's x-axis
  STA Row24_Block18_7
  STA Row24_Block21_7
- LDA #&44
+ LDA #%01000100
  STA Row24_Block19_7
- LDA #&99
+
+ LDA #%10011001         \ Redraw the joystick position display's y-axis
  STA Row24_Block20_7
- LDA #&88
+ LDA #%10001000
  STA Row21_Block20_7
  STA Row22_Block20_7
  STA Row23_Block20_7
  STA Row25_Block20_7
  STA Row26_Block20_7
  STA Row27_Block20_7
+
  LDA L0C0E
  SEC
  JSR L22F7
+ 
+ STA JoyXC              \ Set JoyXC = A
 
- STA L4FEC
  LDA L0C0C
  CLC
  JSR L22F7
 
- EOR #&FF
+ EOR #&FF               \ Set JoyYC = -A
  CLC
  ADC #1
- STA L4FEA
- LDA #0
- JSR L2129
+ STA JoyYC
 
- RTS
+ LDA #0                 \ Draw a new cross on the joystick position display
+ JSR DrawJoystickCross
+
+ RTS                    \ Return from the subroutine
 
 .L2058
 
@@ -3479,38 +3506,44 @@ ORG CODE%
 
  LDX #3                 \ Set X = 3
 
- LDY #243               \ Set Y = 243 to use as the value of L4FFC below
+ LDY #243               \ Set Y = 243 to use as the value of JoyC below
 
  LDA #7                 \ Set A = 7 to use as the value of U below
 
 .L207F
 
-                        \ If we get here then X is either 1 (if called from
-                        \ L1FF5) or 3 (if we fell through from above)
+                        \ If we get here then X is either 9 (called from
+                        \ L1FF5 with X = 1) or 3 (we fell through from above
+                        \ with X = 3)
+                        
+                        \ Draws a vertical line, length A
+                        \ For thrust and rudder?
 
- STA U                  \ Set U = A
+ STA U                  \ Set U = A, so the line is A pixels tall
 
- LDA #1                 \ Set T = 1
+ LDA #1                 \ Set T = 1, so the line is 1 pixel wide
  STA T
 
- STY L4FFC              \ Set L4FFC = Y
+ STY JoyC               \ Set JoyC = Y
 
- LDA L4FEA,X            \ Set G = the X-th byte of L4FEA
+ LDA JoyYC,X            \ Set G = the X-th byte of JoyYC (for the erase)
  STA G
 
- LDA H                  \ Set the X-th byte of L4FEA = H
- STA L4FEA,X
+ LDA H                  \ Set the X-th byte of JoyYC = H (for the draw)
+ STA JoyYC,X
 
- JSR L22D1
+ JSR EraseOrthoLine     \ Erase line
 
  LDA #0                 \ Set N = 0
  STA N
 
- JSR L22CC
+ JSR DrawOrthoLine      \ Draw line
 
  RTS                    \ Return from the subroutine
 
 .L209D
+
+                        \ Called for X = 0 to 6
 
  CLC
  ADC L4FBA,X
@@ -3533,6 +3566,8 @@ ORG CODE%
  JSR L216E
 
 .L20B8
+
+                        \ Called for X = 7
 
  LDA L4FAA,X
  STA I
@@ -3599,53 +3634,85 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2129
+\       Name: DrawJoystickCross
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Draw a cross on the dashboard
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine draws a cross, relative to a centre point of (80, 216), and with
+\ a 3-pixel horizontal bar and a 5-pixel vertical bar.
+\
+\ Arguments:
+\
+\   A                   Drawing mode:
+\
+\                         * 0 = Draw (using OR logic)
+\
+\                         * 128 = Erase (using EOR logic)
+\
+\   JoyXC               The current joystick x-coordinate
+\
+\   JoyYC               The current joystick y-coordinate
 \
 \ ******************************************************************************
 
-.L2129
+.DrawJoystickCross
 
- STA N
- LDA L4FEA
+ STA N                  \ Store the drawing mode in N
+
+                        \ First we draw the 3-pixel horizontal line right from
+                        \ (79 + x, 216 + y)
+
+ LDA JoyYC              \ Set H = JoyYC
  STA H
- LDA L4FEC
- CLC
- ADC #&4F
- STA L4FFC
- LDA #&D8
- STA W
- LDA #0
- STA S
- LDA #3
- STA T
- LDA #1
- STA U
- JSR L22CC
 
- LDA L4FEC
+ LDA JoyXC              \ Set JoyC = JoyXC + 79
+ CLC                    \
+ ADC #79                \ to get the x-coordinate of the left end of the
+ STA JoyC               \ horizontal line at 79 + x
+
+ LDA #216               \ Set W = 216, the y-coordinate of the centre point, so
+ STA W                  \ we draw the line from a y-coordinate of 216 + y
+
+ LDA #0                 \ Set S = 0, to denote that JoyC is the x-coordinate, so
+ STA S                  \ we draw the line from point (JoyC, H + W)
+
+ LDA #3                 \ Set T = 3, so we draw a horizontal 3-pixel line
+ STA T
+
+ LDA #1                 \ Set U = 1, so the line is 1 pixel high
+ STA U
+
+ JSR DrawOrthoLine
+
+                        \ Now we draw the 5-pixel vertical line down from
+                        \ (80 + x, 214 + y)
+
+ LDA JoyXC              \ Set H = JoyXC
  STA H
- LDA L4FEA
- CLC
- ADC #&D6
- STA L4FFC
- LDA #&50
- STA W
- LDA #&80
- STA S
- LDA #1
- STA T
- LDA #5
- STA U
- JSR L22CC
 
- RTS
+ LDA JoyYC              \ Set JoyC = JoyYC + 214
+ CLC                    \
+ ADC #214               \ to get the y-coordinate of the top end of the vertical
+ STA JoyC               \ line at 214 + y
+
+ LDA #80                \ Set W = 80, the x-coordinate of the centre point, so
+ STA W                  \ we draw the line from an x-coordinate of 80 + x
+
+ LDA #128               \ Set S = 128, to denote that JoyC is the y-coordinate,
+ STA S                  \ so we draw the line from point (H + W, JoyC)
+
+ LDA #1                 \ Set T = 1, so the line is 1 pixel wide
+ STA T
+
+ LDA #5                 \ Set U = 5, so we draw a vertical 5-pixel line
+ STA U
+
+ JSR DrawOrthoLine
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -3751,13 +3818,24 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   N                   ???
+\   I                   Start point x-coordinate
 \
-\   T                   ???
+\   J                   Start point y-coordinate
 \
-\   U                   ???
+\   N                   Drawing mode:
 \
-\   V                   ???
+\                         * 0 = Draw (using OR logic)
+\
+\                         * 128 = Erase (using EOR logic)
+\
+\   T                   ??? Delta y-coordinate for line
+\                       Horizontal width/length of line
+\
+\   U                   ??? Delta x-coordinate for line
+\                       Vertical width/length of line
+\
+\   V                   Bits 6 and 7 affect sign of x,y delta increments,
+\                       direction of drawing?
 \
 \ ******************************************************************************
 
@@ -3769,7 +3847,7 @@ ORG CODE%
  LDA #%00010001         \ Set A = %00010001, the pixel pattern for pixel 0 in
                         \ white
 
-.L21D1
+.DrawLine_L1
 
  STA RR,Y               \ Set the Y-th byte of RR to A
 
@@ -3777,7 +3855,7 @@ ORG CODE%
 
  DEY                    \ Decrement the byte counter
 
- BPL L21D1              \ Loop back until we have updated RR to RR+3 as
+ BPL DrawLine_L1        \ Loop back until we have updated RR to RR+3 as
                         \ follows:
                         \
                         \   RR   = %10001000 = pixel 3 in white
@@ -3790,26 +3868,28 @@ ORG CODE%
 
  STA PP                 \ Set PP = 0
 
- LDA T                  \ If T < U, jump down to L21E8 to skip the
+ LDA T                  \ If T < U, jump down to DrawLine1 to skip the
  CMP U                  \ following two instructions
- BCC L21E8
+ BCC DrawLine1
 
- STA VV                 \ Set VV = T
+                        \ If we get here then T >= U, steep vertical slope
 
- BCS L223B              \ Jump down to L223B (this BCS is effectively a JMP as
-                        \ we just passed through a BCC)
+ STA VV                 \ Set VV = T, so we step along the y-axis
 
-.L21E8
+ BCS DrawLine10         \ Jump down to DrawLine10 (this BCS is effectively a JMP
+                        \ as we just passed through a BCC)
 
-                        \ If we get here then T < U
+.DrawLine1
 
- LDA U                  \ Set VV = U
+                        \ If we get here then T < U, shallow horizontal slope
+
+ LDA U                  \ Set VV = U, so we step along the x-axis
  STA VV
 
  STA PP                 \ Set PP = U
 
- BCC L223B              \ Jump down to L223B (this BCC is effectively a JMP as
-                        \ we got here by following a BCC)
+ BCC DrawLine10         \ Jump down to DrawLine10 (this BCC is effectively a JMP
+                        \ as we got here by following a BCC)
 
 \ ******************************************************************************
 \
@@ -3824,73 +3904,79 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L21F0
+.DrawLine2
 
  LDA QQ
  CLC
  ADC U
  CMP T
- BCC L2205
+ BCC DrawLine4
 
  SBC T
  BIT V
- BVC L2203
+ BVC DrawLine3
 
  DEC J
- BVS L2205
+ BVS DrawLine4
 
-.L2203
+.DrawLine3
 
  INC J
 
-.L2205
+.DrawLine4
 
  STA QQ
+
  BIT V
- BPL L2210
+ BPL DrawLine5
 
  DEC I
- JMP L223B
+ JMP DrawLine10
 
-.L2210
+.DrawLine5
 
  INC I
- JMP L223B
+ JMP DrawLine10
 
-.L2215
+.DrawLine6
 
  LDA PP
- BEQ L21F0
+ BEQ DrawLine2
 
- LDA QQ
+ LDA QQ                 \ If QQ + T < U, jump to DrawLine8 with A = QQ + T
  CLC
  ADC T
  CMP U
- BCC L222F
+ BCC DrawLine8
 
- SBC U
- BIT V
- BPL L222D
+ SBC U                  \ Set A = QQ + T - U
 
- DEC I
- JMP L222F
+ BIT V                  \ If bit 7 of V is clear, jump to DrawLine7
+ BPL DrawLine7
 
-.L222D
+ DEC I                  \ By now, QQ + T >= U, V bit 7 is set, so decrement I
 
- INC I
+ JMP DrawLine8
 
-.L222F
+.DrawLine7
 
- STA QQ
- BIT V
- BVC L2239
+ INC I                  \ By now, QQ + T >= U, V bit 7 is clear, so increment I
 
- DEC J
- BVS L223B
+.DrawLine8
 
-.L2239
+ STA QQ                 \ Update QQ to the value in A (i.e. QQ + T or
+                        \ QQ + T - U
 
- INC J
+ BIT V                  \ If bit 6 of V is clear, jump to DrawLine9
+ BVC DrawLine9
+
+ DEC J                  \ V bit 6 is set, so decrement J
+
+ BVS DrawLine10
+
+.DrawLine9
+
+ INC J                  \ V bit 6 is clear, so increment J
 
 \ ******************************************************************************
 \
@@ -3899,19 +3985,9 @@ ORG CODE%
 \   Category: 
 \    Summary: 
 \
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   I               The x-coordinate of ???
-\
-\   J               The y-coordinate of ???
-\
-\   RR to RR+3      Pixel pattern table
-\
 \ ******************************************************************************
 
-.L223B
+.DrawLine10
 
  LDA I                  \ Set X = I / 4
  LSR A                  \
@@ -3942,30 +4018,33 @@ ORG CODE%
  AND #%00000011
  TAX
 
- BIT N                  \ If N is negative, jump to L226D to skip the
- BMI L226D              \ following three instructions
+ BIT N                  \ If N is negative, jump to DrawLine11 to skip the
+ BMI DrawLine11         \ following three instructions
 
  LDA RR,X               \ Fetch the X-th byte of RR
 
  ORA (P),Y              \ OR it with the Y-th byte of P(1 0)
 
- JMP L2273              \ Jump to L2273 to skip the following three instructions
+ JMP DrawLine12         \ Jump to DrawLine12 to skip the following three
+                        \ instructions
 
-.L226D
+.DrawLine11
 
  LDA RR,X               \ Fetch the X-th byte of RR and invert all its bits
  EOR #%11111111
 
  AND (P),Y              \ AND it with the Y-th byte of P(1 0)
 
-.L2273
+.DrawLine12
 
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
- DEC VV                 \ Decrement VV
+ DEC VV                 \ Decrement VV to step along the x-axis (for shallow
+                        \ horizontal slopes) or the y-axis (for steep vertical
+                        \ slopes)
 
- BNE L2215              \ If VV is non-zero, jump up to L2215
+ BNE DrawLine6          \ If VV is non-zero, jump up to DrawLine6
 
  RTS                    \ Return from the subroutine
 
@@ -4060,106 +4139,85 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L22CC
+\       Name: DrawOrthoLine
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Draw an orthogonal line (i.e. vertical or horizontal)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   Y                   ???
+\   S                   Defines the starting coordinate for the line:
 \
-\   W               ???
+\                         * 0 = (JoyC, H + W)
+\
+\                         * 128 = (H + W, JoyC)
+\
+\   H + W               Coordinate of the start of the line (it doesn't matter
+\                       how this value is split between H and W as only the sum
+\                       is used)
+\
+\   JoyC                Coordinate of the start of the line
+\
+\   T                   Horizontal width/length of line
+\
+\   U                   Vertical width/length of line
+\
+\ Other entry points:
+\
+\   EraseOrthoLine      Use the value of G instead of H (so the coordinate is
+\                       G + W) and use EOR Logic to draw the line (which will
+\                       erase it if it is already on-screen)
 \
 \ ******************************************************************************
 
-.L22CC
+.DrawOrthoLine
 
  LDA H                  \ Set A = H
 
- JMP L22D7              \ Jump to L22D7
+ JMP DrawOrthoLine1     \ Jump to DrawOrthoLine1 to draw the orthogonal line and
+                        \ skip the code for the EraseOrthoLine entry point
 
-\ ******************************************************************************
-\
-\       Name: L22D1
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   W               ???
-\
-\   L4FFC               ???
-\
-\ ******************************************************************************
+.EraseOrthoLine
 
-.L22D1
-
- LDA #128               \ Set N = 128
- STA N
+ LDA #128               \ Set N = 128 so the line is drawn with EOR logic, which
+ STA N                  \ erases the line if it is already on-screen
 
  LDA G                  \ Set A = G
 
-                        \ Fall througn into L22D7
-
-\ ******************************************************************************
-\
-\       Name: L22D7
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   A                   ???
-\
-\   W               ???
-\
-\   L4FFC               ???
-\
-\ Returns:
-\
-\   I
-\
-\   J
-\
-\ ******************************************************************************
-
-.L22D7
+.DrawOrthoLine1
 
  CLC                    \ Set A = A + W
  ADC W
 
- BIT S                  \ If S is negative, jump down to L22E8
- BMI L22E8
+ BIT S                  \ If bit 7 of S is set, jump down to DrawOrthoLine2
+ BMI DrawOrthoLine2
 
  STA J                  \ Set J = A
 
- LDA L4FFC              \ Set I = L4FFC
+ LDA JoyC               \ Set I = JoyC
  STA I
 
- JMP L22EF              \ Jump down to L22EF
+                        \ We now have (I, J) = (JoyC, A + W)
 
-.L22E8
+ JMP DrawOrthoLine3     \ Jump down to DrawOrthoLine3
+
+.DrawOrthoLine2
 
  STA I                  \ Set I = A
 
- LDA L4FFC              \ Set J = L4FFC
+ LDA JoyC               \ Set J = JoyC
  STA J
 
-.L22EF
+                        \ We now have (I, J) = (A + W, JoyC)
 
- LDA #0                 \ Set V = 0
- STA V
+.DrawOrthoLine3
 
- JSR DrawLine
+ LDA #0                 \ Set V = 0 so the line is drawn in a positive direction
+ STA V                  \ for both axes
+
+ JSR DrawLine           \ Call DrawLine to draw a line from (I, J)
 
  RTS                    \ Return from the subroutine
 
@@ -11504,11 +11562,11 @@ ORG CODE%
 
  EQUB &02, &02, &00, &00, &00, &00, &00, &00
 
-.L4FEA
+.JoyYC
 
  EQUB &00, &00
 
-.L4FEC
+.JoyXC
 
  EQUB &00, &00
 
@@ -11523,7 +11581,7 @@ ORG CODE%
 
  EQUB &59
 
-.L4FFC
+.JoyC
 
  EQUB &23, &31, &3A
 
