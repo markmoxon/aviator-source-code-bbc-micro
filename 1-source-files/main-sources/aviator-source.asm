@@ -45,7 +45,7 @@ TT = &0084
 UU = &0085
 VV = &0086
 WW = &0087
-GG = &0088           \ PP in original
+GG = &0088              \ PP in original
 HH = &0089
 II = &008A
 JJ = &008B
@@ -68,13 +68,13 @@ L0173 = &0173
 L0174 = &0174
 L0175 = &0175
 
-L0400 = &0400               \ Whole page zeroed in Reset
+L0400 = &0400           \ Whole page zeroed in Reset
 L04D8 = &04D8
 L04D9 = &04D9
 L04EC = $04EC
 
 L0500 = &0500
-L05C8 = $05C8               \ Zeroed in Reset
+L05C8 = $05C8           \ Zeroed in Reset
 
 L0600 = $0600
 
@@ -83,7 +83,7 @@ L075F = $075F
 L07E4 = $07E4
 L07FC = $07FC
 
-L0900 = &0900               \ Set to 80 in Reset, Reset2
+L0900 = &0900           \ Set to 80 in Reset, Reset2
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
@@ -104,7 +104,11 @@ L0C00 = &0C00
 L0C01 = &0C01           \ Related to indicator X = 5
 L0C02 = &0C02
 L0C03 = &0C03
-L0C05 = &0C05
+
+AirspeedLo = &0C05      \ Air speed (low byte)
+                        \
+                        \ Related to indicator X = 1
+
 L0C06 = &0C06
 L0C08 = &0C08
 L0C09 = &0C09
@@ -120,7 +124,11 @@ L0C10 = &0C10
 L0C11 = &0C11           \ Related to indicator X = 5
 L0C12 = &0C12
 L0C13 = &0C13
-L0C15 = &0C15           \ Related to indicator X = 1
+
+AirspeedHi = &0C15      \ Air speed (high byte)
+                        \
+                        \ Related to indicator X = 1
+
 L0C16 = &0C16
 L0C18 = &0C18
 L0C19 = &0C19
@@ -177,7 +185,7 @@ L0C99 = &0C99
 L0C9A = &0C9A           \ Related to indicator X = 4
 L0C9C = &0C9C           \ Related to indicator X = 6
 
-\ Populated with values from KeyTable1Low or KeyTable2Low when key is pressed
+\ Populated with values from KeyTable1Lo or KeyTable2Lo when key is pressed
 KeyLoggerLow = &0CA0    \ L or < (elevator dive/pitch)      =   1 or  1
                         \ A or + (rudder yaw left/right)    =   1 or  1
                         \ S or D (aileron bank left/right)  =   1 or  1
@@ -187,7 +195,7 @@ KeyLoggerLow = &0CA0    \ L or < (elevator dive/pitch)      =   1 or  1
 
 L0CA8 = &0CA8
 
-\ Populated with values from KeyTable1High or KeyTable2High when key is pressed
+\ Populated with values from KeyTable1Hi or KeyTable2Hi when key is pressed
 KeyLoggerHigh = &0CB0   \ L or < (elevator dive/pitch)      = -1 or 1
                         \ A or + (rudder yaw left/right)    = -1 or 1
                         \ S or D (aileron bank left/right)  = -1 or 1
@@ -249,7 +257,14 @@ L0CE9 = &0CE9
 L0CEA = &0CEA
 L0CEC = &0CEC
 L0CED = &0CED           \ Set to 229 in Reset
-L0CEE = &0CEE           \ Set to 10 in Reset, related to indicator X = 2
+
+AltitudeLo = &0CEE      \ Altitude (high byte)
+                        \
+                        \ Stored as the altitude in feet x 4
+                        \
+                        \ Shown on indicator 2
+                        \ Set to 10 in Reset
+
 L0CEF = &0CEF           \ Set to 92 in Reset
 
 L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
@@ -282,10 +297,26 @@ L0CF7 = &0CF7
 L0CF8 = &0CF8           \ Set to 10 in Reset
 L0CF9 = &0CF9
 L0CFA = &0CFA           \ Set to 7 in Reset
-L0CFB = &0CFB           \ Related to indicator X = 0
+
+Compass = &0CFB         \ Compass direction
+                        \
+                        \   * 0 = North
+                        \   * 64 = East
+                        \   * 128 = South
+                        \   * 192 = West
+                        \
+                        \ Shown on indicator 0
+
 L0CFC = &0CFC
 L0CFD = &0CFD           \ Set to 198 in Reset
-L0CFE = &0CFE           \ Related to indicator X = 2
+
+AltitudeHi = &0CFE      \ Altitude (high byte)
+                        \
+                        \ Stored as the altitude in feet x 4
+                        \
+                        \ Shown on indicator 2
+                        \ Set to 0 in Reset
+
 L0CFF = &0CFF           \ Set to 72 in Reset
 
 \ Screen address variables
@@ -3027,13 +3058,15 @@ ORG CODE%
 \
 \   X                   Indicator number:
 \
-\                         * 0 = 
+\                         * 0 = Compass
 \
-\                         * 1 =
+\                         * 1 = Airspeed indicator
 \
-\                         * 2 = 
+\                         * 2 = Altimeter
+\                               Small "hour" hand, whole dial = 10,000 feet
 \
-\                         * 3 = 
+\                         * 3 = Altimeter
+\                               Large "minute" hand, whole dial = 1,000 feet
 \
 \                         * 4 = 
 \
@@ -3043,13 +3076,11 @@ ORG CODE%
 \
 \                         * 7 = 
 \
-\                         * 8 = joystick position display (x-coordinate?)
+\                         * 8 or 10 = Joystick position display
 \
-\                         * 9 = rudder
+\                         * 9 = Rudder
 \
-\                         * 10 = joystick position display (y-coordinate?)
-\
-\                         * 11 = thrust
+\                         * 11 = Thrust
 \
 \ ******************************************************************************
 
@@ -3072,7 +3103,7 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 2 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 0
+\    Summary: Calculations for the compass (indicator 0)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3084,26 +3115,43 @@ ORG CODE%
 
                         \ If we get here then X = 0
 
- LDA L0CFB              \ Set A = L0CFB to show on the dial
+ LDA Compass            \ Set T = Compass
+ STA T
 
- STA T                  
+                        \ We now calculate A = T * n with a hardcoded n, using
+                        \ unrolled shift-and-add multiplication
 
- LSR A                  \ A = (A / 4 + A) / 2
- LSR A                  \   = 0.625 * A
- CLC
+\LDA T                  \ We can drop this instruction as A is already = T
+
+ LSR A                  \ Bit 0 of n is 0
+
+ LSR A                  \ Bit 1 of n is 0
+
+ CLC                    \ Bit 2 of n is 1
  ADC T
  ROR A
 
- LSR A                  \ A = 0.625 * A
- LSR A                  \   = 0.625 * 0.625 * A
- CLC                    \   = 0.390625 * A
+ LSR A                  \ Bit 3 of n is 0
+
+ LSR A                  \ Bit 4 of n is 0
+
+ CLC                    \ Bit 5 of n is 1
  ADC T
  ROR A
 
- LSR A                  \ A = A / 2
-                        \   = 0.1953125 * A
+ LSR A                  \ Bit 6 of n is 0
+
+                        \ Bit 7 of n is 0 and the final right shift is missing
+
+                        \ From the above, n = %00100100 (36), so we just
+                        \ calculated:
                         \
-                        \ i.e. range 0 to 255 to range 0 to 50
+                        \   A = (T * n / 256) << 1
+                        \     = (T * 36 / 256) << 1
+                        \     = T * 72 / 256
+                        \
+                        \ which takes the compass heading in the range 0 to 255
+                        \ and reduces it to the range 0 to 73
 
  JMP L209D              \ Jump to L209D to update the dial
 
@@ -3112,7 +3160,7 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 3 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 1
+\    Summary: Calculations for the airspeed indicator (indicator 1)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3124,16 +3172,16 @@ ORG CODE%
 
                         \ If we get here then X = 1
 
- LDA L0C15              \ If (L0C15 L0C05) is negative, set A = 0 and jump to
- BPL L1E70              \ L209D to update the dial
- LDA #0
+ LDA AirspeedHi         \ If the high byte of the airspeed in AirspeedHi is
+ BPL L1E70              \ negative, set A = 0 and jump to L209D to show a zero
+ LDA #0                 \ value on the airspeed indicator
  JMP L209D
 
 .L1E70
 
- LDA L0C05              \ Set A = (L0C15 L0C05) / 128
- ASL A
- LDA L0C15
+ LDA AirspeedLo         \ Set A = (AirspeedHi AirspeedLo) / 128
+ ASL A                  \
+ LDA AirspeedHi         \ ??? (indicator shows 50-400 mph)
  ROL A
 
  JMP L209D              \ Jump to L209D to update the dial
@@ -3143,11 +3191,13 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 4 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 2
+\    Summary: Calculations for the altimeter's small "hour" hand (indicator 2)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Reduces the altitude in (AltitudeHi AltitudeLo) from a range of 0 to 10,000
+\ feet down to a range of 0 to 254, which is the value for the small hand on the
+\ altimeter.
 \
 \ ******************************************************************************
 
@@ -3155,81 +3205,162 @@ ORG CODE%
 
                         \ If we get here then X = 2
 
- LDA L0CEE
+ LDA AltitudeLo         \ Set (A R) = (AltitudeHi AltitudeLo)
  STA R
- LDA L0CFE
- LSR A
- ROR R
- LSR A
- ROR R
- STA S
- LDA #0
+ LDA AltitudeHi
+
+ LSR A                  \ Set (S R) = (A R) / 4
+ ROR R                  \           = (AltitudeHi AltitudeLo) / 4
+ LSR A                  \           = altitude
+ ROR R                  \
+ STA S                  \ so (S R) is the altitude in feet, as the value stored
+                        \ in (AltitudeHi AltitudeLo) is the actual altitude x 4
+
+ LDA #0                 \ Set T = 0
  STA T
- LDA R
- LSR A
- LSR A
- CLC
- ADC R
- ROR A
- LSR A
- CLC
- ADC R
- ROR A
- CLC
- ADC R
- ROR A
- LSR A
 
- STA L4FFF
+                        \ We now calculate A = R * n with a hardcoded n, using
+                        \ unrolled shift-and-add multiplication
 
- LDA S
- LSR A
+ LDA R                  \ Set A = R
+
+ LSR A                  \ Bit 0 of n is 0
+
+ LSR A                  \ Bit 1 of n is 0
+
+ CLC                    \ Bit 2 of n is 1
+ ADC R
+ ROR A
+
+ LSR A                  \ Bit 3 of n is 0
+
+ CLC                    \ Bit 4 of n is 1
+ ADC R
+ ROR A
+
+ CLC                    \ Bit 5 of n is 1
+ ADC R
+ ROR A
+
+ LSR A                  \ Bit 6 of n is 0
+
+                        \ Bit 7 of n is 0 and the final right shift is missing
+
+                        \ From the above, n = %000110100 (52), so we just
+                        \ calculated:
+                        \
+                        \   A = (R * n / 256) << 1
+                        \     = (R * 52 / 256) << 1
+                        \     = R * 104 / 256
+                        \
+                        \ which is the low byte of the altitude in (S R),
+                        \ reduced to a range of 0 to 104 to represent the whole
+                        \ dial's range of 0 to 1,000 feet
+
+ STA AltitudeMinutes    \ Store the result in AltitudeMinutes, so we can draw
+                        \ the altimeter's minute hand in indicator 3
+
+                        \ We now calculate A = S * n with a hardcoded n, using
+                        \ unrolled shift-and-add multiplication and keeping the
+                        \ overspill from the result
+
+ LDA S                  \ Set A = S
+
+ LSR A                  \ Bit 0 of n is 0
  ROR T
- LSR A
+
+ LSR A                  \ Bit 1 of n is 0
  ROR T
- CLC
+
+ CLC                    \ Bit 2 of n is 1
  ADC S
  ROR A
  ROR T
- LSR A
+
+ LSR A                  \ Bit 3 of n is 0
  ROR T
- CLC
+
+ CLC                    \ Bit 4 of n is 1
  ADC S
  ROR A
  ROR T
- CLC
+
+ CLC                    \ Bit 5 of n is 1
  ADC S
  ROR A
  ROR T
- LSR A
+
+ LSR A                  \ Bit 6 of n is 0
  ROR T
- STA U
 
- LDA T
- CLC
- ADC L4FFF
- BCC L1ED0
+                        \ Bit 7 of n is 0 and the final right shift is missing
 
- INC U
+                        \ From the above, n = %00110100 (52), so we just
+                        \ calculated:
+                        \
+                        \   A = (S * n / 256) << 1
+                        \     = (S * 52 / 256) << 1
+                        \     = S * 104 / 256
+                        \
+                        \ and T contains the overspill from the result
+                        
+ STA U                  \ Set U = S * 104 / 256
+                        \ 
+                        \ so we get:
+                        \
+                        \   (U 0) = S * 104
+                        \         = (S 0) / 256 * 104
+                        \
+                        \ so:
+                        \
+                        \   (U AltitudeMinutes) = (U 0) + AltitudeMinutes
+                        \                       = (S 0) / 256 * 104 + R * 104 / 256
+                        \                       = (S*104 R*104) / 256
+
+ LDA T                  \ Set (U A) = (U AltitudeMinutes) + (0 T)
+ CLC                    \
+ ADC AltitudeMinutes    \ by adding the low bytes
+
+ BCC L1ED0              \ And, if the addition overflowed, incrementing the high
+ INC U                  \ byte in U
+
+                        \ So we have just calculated:
+                        \
+                        \   (U A) = (U AltitudeMinutes) + (0 T)
+                        \
+                        \ and we already know that:
+                        \
+                        \   U = S * 104 / 256
+                        \   AltitudeMinutes = R * 104 / 256
+                        \
+                        \ so plugging these into the above, we get:
+                        \
+                        \   (U A) = (U AltitudeMinutes) + (0 T)
+                        \         = (S*104 R*104) / 256 + (0 T)
+                        \         = (S R) * 104 / 256
 
 .L1ED0
 
- LSR U
- ROR A
- LSR U
- ROR A
- LSR U
- ROR A
- LSR U
- ROR A
- JMP L209D
+ LSR U                  \ Set (U A) = (U A) / 16
+ ROR A                  \           = ((S R) * 104 / 256) / 16
+ LSR U                  \           = (S R) * 6.5 / 256
+ ROR A                  \
+ LSR U                  \ The maximum altitude that the altimeter can show is
+ ROR A                  \ 10,000 feet (after which it just wraps around), so the
+ LSR U                  \ final result of all these calculations is the altitude
+ ROR A                  \ in (S R) reduced from a range of 0 to 10,000 to a
+                        \ range of 0 to 254, as:
+                        \
+                        \   10000 * 6.5 / 256 = 254
+
+ JMP L209D              \ Jump to L209D to update the dial
 
 \ ******************************************************************************
 \
 \       Name: UpdateIndicator (Part 5 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 3
+\    Summary: Calculations for the altimeter's "minute" hand (indicator 3)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3241,8 +3372,10 @@ ORG CODE%
 
                         \ If we get here then X = 3
 
- LDA L4FFF
- JMP L209D
+ LDA AltitudeMinutes    \ Fetch the value of the altimeter's minute hand that we
+                        \ calculated in part 4
+
+ JMP L209D              \ Jump to L209D to update the dial
 
 \ ******************************************************************************
 \
@@ -3771,7 +3904,12 @@ ORG CODE%
 
 .L209D
 
- CLC                    \ Fetch scale of dial?
+                        \ X = 0: Compass gets here with A = 0 to 73
+                        \ X = 1: 
+                        \ X = 2: Altimeter hour hand gets here with A = 0 to 254
+                        \ X = 3: Altimeter minute hand gets here with A = 0 to 104
+
+ CLC                    \ Apply max/min scale to dial value in A
  ADC L4FBA,X
  CMP L4FC2,X
  BCS L20AB
@@ -3789,6 +3927,7 @@ ORG CODE%
 .L20B3
 
  STA H
+
  JSR L216E
 
 \ ******************************************************************************
@@ -4783,9 +4922,9 @@ ORG CODE%
  LDA L0CCE,Y
  BNE L2404
 
- LDA L0CEE,Y
+ LDA AltitudeLo,Y
  EOR #1
- STA L0CEE,Y
+ STA AltitudeLo,Y
  LDA #1
  STA L0CCE,Y
  CPY #7
@@ -4973,7 +5112,7 @@ ORG CODE%
  LDX #&E4
  JSR L4B4A
 
- LDA L0C15
+ LDA AirspeedHi
  CLC
  ADC #&C8
  STA L07E4
@@ -5180,7 +5319,7 @@ ORG CODE%
 \ This routine updates the key logger, which is stored in KeyLoggerHigh and
 \ KeyLoggerLow. If a key is pressed, then the corresponding 16-bit value in the
 \ key logger is set to the corresponding value from the KeyTable tables, which
-\ are stored in KeyTable1Low/KeyTable1High and KeyTable2Low/KeyTable2High.
+\ are stored in KeyTable1Lo/KeyTable1Hi and KeyTable2Lo/KeyTable2Hi.
 \
 \ ******************************************************************************
 
@@ -5201,8 +5340,8 @@ ORG CODE%
 
  LDX V                  \ Set X = the offset of the key we are processing
  
- LDY KeyTable1Low,X     \ Fetch the key logger value for this key press into
- LDA KeyTable1High,X    \ (A Y)
+ LDY KeyTable1Lo,X      \ Fetch the key logger value for this key press into
+ LDA KeyTable1Hi,X      \ (A Y)
  
  JMP sktb3              \ Jump down to sktb3 to store (A Y) in the key logger
 
@@ -5218,8 +5357,8 @@ ORG CODE%
 
  LDX V                  \ Set X = the offset of the key we are processing
 
- LDY KeyTable2Low,X     \ Fetch the key logger value for this key press into
- LDA KeyTable2High,X    \ (A Y)
+ LDY KeyTable2Lo,X      \ Fetch the key logger value for this key press into
+ LDA KeyTable2Hi,X      \ (A Y)
 
  JMP sktb3              \ Jump down to sktb3 to store (A Y) in the key logger
 
@@ -5429,8 +5568,8 @@ ORG CODE%
  LDA #229               \ Set L0CED = 229
  STA L0CED
 
- LDA #10                \ Set L0CEE = 10
- STA L0CEE
+ LDA #10                \ Set AltitudeLo = 10
+ STA AltitudeLo
 
  STA L0CF8              \ Set L0CF8 = 10
 
@@ -6484,10 +6623,10 @@ ORG CODE%
 
  SEC
  LDA L4428,Y
- SBC L0CEE
+ SBC AltitudeLo
  STA L0A00,X
  LDA L44A0,Y
- SBC L0CFE
+ SBC AltitudeHi
  STA L0B00,X
  STA T
  LDA #0
@@ -7027,7 +7166,7 @@ ORG CODE%
  STA L368A,X
  LDA #0
  STA N
- LDA L0CFB
+ LDA Compass
  JSR L2E2F
 
  JSR DrawLine
@@ -11296,7 +11435,7 @@ ORG CODE%
  BPL L4DD1
 
  CLC
- ADC L0C15
+ ADC AirspeedHi
  STA K
  LDA #&32
  SEC
@@ -11618,7 +11757,7 @@ ORG CODE%
 \
 \ Keys in this table are scanned for first. If pressed, the corresponding value
 \ in the key logger is set to the 16-bit value, with the high byte coming from
-\ KeyTable1High and the low byte from KeyTable1Low.
+\ KeyTable1Hi and the low byte from KeyTable1Lo.
 \
 \ If the key in KeyTable1 is not being pressed, we then check the corresponding
 \ key in KeyTable2. This contains the other key in this key pair, which is
@@ -11646,8 +11785,8 @@ ORG CODE%
 \
 \ Keys in this table are scanned only if the corresponding key in KeyTable1 is
 \ not being pressed. If pressed, the corresponding value in the key logger is
-\ set to the 16-bit value, with the high byte coming from KeyTable2High and the
-\ low byte from KeyTable2Low.
+\ set to the 16-bit value, with the high byte coming from KeyTable2Hi and the
+\ low byte from KeyTable2Lo.
 \
 \ ******************************************************************************
 
@@ -11679,7 +11818,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: KeyTable2Low
+\       Name: KeyTable2Lo
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (low byte) for key presses in KeyTable2
@@ -11692,7 +11831,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.KeyTable2Low
+.KeyTable2Lo
 
  EQUB &01               \ <         Elevator (stick backwards, ascend)
  EQUB &01               \ +         Right rudder
@@ -11703,7 +11842,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: KeyTable2High
+\       Name: KeyTable2Hi
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (high byte) for key presses in KeyTable2
@@ -11716,7 +11855,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.KeyTable2High
+.KeyTable2Hi
 
  EQUB &01               \ <         Elevator (stick backwards, ascend)
  EQUB &01               \ +         Right rudder
@@ -11727,7 +11866,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: KeyTable1Low
+\       Name: KeyTable1Lo
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (low byte) for key presses in KeyTable1
@@ -11740,7 +11879,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.KeyTable1Low
+.KeyTable1Lo
 
  EQUB &01               \ L         Elevator (stick forwards, dive)
  EQUB &01               \ A         Left rudder
@@ -11751,7 +11890,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: KeyTable1High
+\       Name: KeyTable1Hi
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (high byte) for key presses in KeyTable1
@@ -11764,7 +11903,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.KeyTable1High
+.KeyTable1Hi
 
  EQUB &FF               \ L         Elevator (stick forwards, dive)
  EQUB &FF               \ A         Left rudder
@@ -11882,11 +12021,17 @@ ORG CODE%
 
 .JoyC
 
- EQUB &23, &31, &3A
+ EQUB &23               \ Temporary variable, used to store one of the
+                        \ coordinates when drawing the cross on the joystick
+                        \ position display
 
-.L4FFF
+ EQUB &31, &3A
 
- EQUB &4C           \ Related to indicator X = 3, involved in 2
+.AltitudeMinutes
+
+ EQUB &4C               \ The value of the altimeter's large "minute" hand,
+                        \ in the range 0 to 104 to match the 1,000 feet range
+                        \ of the large hand
 
 \ ******************************************************************************
 \
@@ -12001,12 +12146,12 @@ ORG CODE%
 
  LDX #0
  LDY #0
- LDA L0C15
+ LDA AirspeedHi
  BMI L50B1
 
  BNE L50AB
 
- LDA L0C05
+ LDA AirspeedLo
  CMP #&14
  BCC L50B1
 
@@ -12074,12 +12219,12 @@ ORG CODE%
 
 .L50F7
 
- LDX L0C15
+ LDX AirspeedHi
  BMI L5113
 
  BNE L5115
 
- LDX L0C05
+ LDX AirspeedLo
  BEQ L5123
 
  CPX #&0B
@@ -12363,9 +12508,9 @@ ORG CODE%
 
 .L5278
 
- LDA L0CFB,X
+ LDA Compass,X
  EOR #&80
- STA L0CFB,X
+ STA Compass,X
  DEX
  BPL L5278
 
@@ -12473,28 +12618,28 @@ ORG CODE%
  CMP #&27
  BNE L5307
 
- LDA L0C15
+ LDA AirspeedHi
  CMP #&0B
  BCC L533A
 
 .L5307
 
  LDA J
- CMP L0C15
+ CMP AirspeedHi
  BCC L5347
 
  BNE L5317
 
  LDA I
- CMP L0C05
+ CMP AirspeedLo
  BCC L5347
 
 .L5317
 
- LDA L0CFE
+ LDA AltitudeHi
  BNE L5323
 
- LDA L0CEE
+ LDA AltitudeLo
  CMP #&14
  BCC L533A
 
@@ -13092,7 +13237,7 @@ ORG CODE%
  LDA L0C77
  SBC L0C74
  STA L0BFC
- LDA L0C15
+ LDA AirspeedHi
  BMI L55F3
 
  PHA
@@ -13116,7 +13261,7 @@ ORG CODE%
 
  STA H
  STA G
- LDA L0C05
+ LDA AirspeedLo
  LDX #3
 
 .L5603
@@ -13259,7 +13404,7 @@ ORG CODE%
 
 .L568F
 
- LDA L0CFE
+ LDA AltitudeHi
  BMI L56A3
 
  BEQ L56A8
@@ -13283,13 +13428,13 @@ ORG CODE%
 .L56A8
 
  LDA L0CF0
- CMP L0CEE
+ CMP AltitudeLo
  BCC L569D
 
  LDX L
  BEQ L5701
 
- STA L0CEE
+ STA AltitudeLo
  LDX L0C9A
  BPL L56C1
 
@@ -13349,11 +13494,11 @@ ORG CODE%
 .L5701
 
  SEC
- SBC L0CEE
+ SBC AltitudeLo
  LSR A
  CLC
  ADC L0CF0
- STA L0CEE
+ STA AltitudeLo
  LDA L0C9A
  BPL L5720
 
@@ -13467,7 +13612,7 @@ ORG CODE%
  CMP #&0C
  BCS L57B2
 
- LDA L0CEE
+ LDA AltitudeLo
  CMP L0CF0
  BNE L57B2
 
@@ -13493,7 +13638,7 @@ ORG CODE%
 
 .L57B3
 
- LDA L0C15
+ LDA AirspeedHi
  BMI L57E3
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
@@ -13569,7 +13714,7 @@ ORG CODE%
 
  STY P+1
  STX P
- LDA L0CFE
+ LDA AltitudeHi
  EOR #&FF
  STA R
  JSR L5474
