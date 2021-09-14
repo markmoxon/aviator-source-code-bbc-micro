@@ -101,11 +101,24 @@ L0BFD = &0BFD
 L0BFF = &0BFF
 
 L0C00 = &0C00
-L0C01 = &0C01           \ Related to indicator X = 5
+
+TurnLo = &0C01          \ Turn rate (low byte)
+                        \
+                        \ Stored as 35 * the turn rate in 180 degrees per minute
+                        \ 
+                        \ Related to indicator X = 5
+
 L0C02 = &0C02
 L0C03 = &0C03
 
 AirspeedLo = &0C05      \ Air speed (low byte)
+                        \
+                        \ 100 mph is stored as 9.25 * 256 = 2368
+                        \
+                        \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
+                        \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
+                        \ so 100 mph =   1 * 2368 = 2368 = (9 64)
+                        \ so 400 mph =   4 * 2368 = 9472 = (37 00)
                         \
                         \ Related to indicator X = 1
 
@@ -121,11 +134,24 @@ L0C0E = &0C0E           \ Joystick x position, see indicator X = 8 or 10
 
 L0C0F = &0C0F           \ Related to indicator X = 11
 L0C10 = &0C10
-L0C11 = &0C11           \ Related to indicator X = 5
+
+TurnHi = &0C11          \ Turn rate (low byte)
+                        \
+                        \ Stored as 35 * the turn rate in 180 degrees per minute
+                        \
+                        \ Related to indicator X = 5
+
 L0C12 = &0C12
 L0C13 = &0C13
 
 AirspeedHi = &0C15      \ Air speed (high byte)
+                        \
+                        \ 100 mph is stored as 9.25 * 256 = 2368
+                        \
+                        \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
+                        \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
+                        \ so 100 mph =   1 * 2368 = 2368 = (9 64)
+                        \ so 400 mph =   4 * 2368 = 9472 = (37 00)
                         \
                         \ Related to indicator X = 1
 
@@ -174,7 +200,16 @@ L0C83 = &0C83
 L0C84 = &0C84
 L0C86 = &0C86
 L0C89 = &0C89
-L0C8A = &0C8A           \ Related to indicator X = 4
+
+VerticalSpeedLo = &0C8A \ Vertical speed
+                        \
+                        \ Stored as 128/425 * vertical speed in feet per minute, so:
+                        \
+                        \ 1000 feet per minute is stored as 128/425 * 1000 = 301
+                        \ 4000 feet per minute is stored as 128/425 * 4000 = 1205
+                        \
+                        \ Related to indicator X = 4
+
 L0C8C = &0C8C
 L0C90 = &0C90
 L0C92 = &0C92
@@ -182,7 +217,11 @@ L0C93 = &0C93
 L0C94 = &0C94
 L0C96 = &0C96
 L0C99 = &0C99
-L0C9A = &0C9A           \ Related to indicator X = 4
+
+VerticalSpeedHi = &0C9A \ Vertical speed
+                        \
+                        \ Related to indicator X = 4
+
 L0C9C = &0C9C           \ Related to indicator X = 6
 
 \ Populated with values from KeyTable1Lo or KeyTable2Lo when key is pressed
@@ -3068,19 +3107,21 @@ ORG CODE%
 \                         * 3 = Altimeter
 \                               Large "minute" hand, whole dial = 1,000 feet
 \
-\                         * 4 = 
+\                         * 4 = Vertical speed indicator
 \
-\                         * 5 = 
+\                         * 5 = Turn indicator
+\                               Bottom part of the slip and turn indicator
 \
-\                         * 6 = 
+\                         * 6 = Slip indicator
+\                               Top part of the slip and turn indicator
 \
-\                         * 7 = 
+\                         * 7 = Artificial horizon
 \
 \                         * 8 or 10 = Joystick position display
 \
-\                         * 9 = Rudder
+\                         * 9 = Rudder indicator
 \
-\                         * 11 = Thrust
+\                         * 11 = Thrust indicator
 \
 \ ******************************************************************************
 
@@ -3108,9 +3149,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the compass heading from Compass, which is in the range 0
-\ to 255, and reduces it to the range 0 to 73 before passing it to the
-\ indicator-drawing routine to update the on-screen compass.
+\ This section takes the compass heading from Compass and reduces it to the
+\ range 0 to 73, before passing it to the DrawIndicatorHand to update the
+\ on-screen compass.
 \
 \ ******************************************************************************
 
@@ -3121,8 +3162,8 @@ ORG CODE%
  LDA Compass            \ Set T = Compass
  STA T
 
-                        \ We now calculate A = T * n with a hardcoded n, using
-                        \ unrolled shift-and-add multiplication
+                        \ We now calculate A = T * n / 256 with a hardcoded n,
+                        \ using unrolled shift-and-add multiplication
 
 \LDA T                  \ We can drop this instruction as A is already = T
 
@@ -3169,7 +3210,13 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the airspeed from (AirspeedHi AirspeedLo) and reduces it to
+\ match the scale of the indicator, which is represented by a value of 9 (for
+\ 50 mph) to 74 (for 400 mph). The airspeed value can be outside these limits,
+\ but this shows the scale factor.
+\
+\ It then passes this value to the DrawIndicatorHand to update the on-screen
+\ airspeed indicator.
 \
 \ ******************************************************************************
 
@@ -3186,10 +3233,29 @@ ORG CODE%
 
 .uind3
 
- LDA AirspeedLo         \ Set A = (AirspeedHi AirspeedLo) / 128
+ LDA AirspeedLo         \ Set A = (AirspeedHi AirspeedLo) * 2 / 256
  ASL A                  \
- LDA AirspeedHi         \ ??? (indicator shows 50-400 mph)
- ROL A
+ LDA AirspeedHi         \ The IndicatorBase for this indicator is 48 and the
+ ROL A                  \ IndicatorMin/Max range shown on the dial is 57 to 122,
+                        \ which represents 50 to 400 mph (according to the game
+                        \ manual)
+                        \
+                        \ So after this scaling, a result in A of 9 represents
+                        \ 50 mph (as 48 + 9 = 57), and a result in A of 74
+                        \ represents 400 mph (as 48 + 74 = 122), for example
+                        \
+                        \ These values correspond to the following 16-bit values
+                        \ of (AirspeedHi AirspeedLo):
+                        \
+                        \   * If A = 9, then Airspeed = (00000100 10100000),
+                        \     which is 1184, or 50 mph
+                        \
+                        \   * If A = 74, then Airspeed = (00100101 00000000),
+                        \     which is 9472, or 400 mph
+                        \
+                        \ The plane can go faster or slower than in these
+                        \ examples, but the dial only shows speeds between 50mph
+                        \ and 400 mph, so higher or lower speeds will be clipped
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
                         \ the indicator on-screen, returning from the subroutine
@@ -3204,15 +3270,13 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the 16-bit altitude from (AltitudeHi AltitudeLo), which is
-\ in the range 0 to 10,000 feet, and reduces it to the range 0 to 254 before
-\ passing to the indicator-drawing routine to update the small hand on the
-\ on-screen altimeter.
+\ This section takes the altitude from (AltitudeHi AltitudeLo) and reduces it to
+\ the range 0 to 254, before passing it to the DrawIndicatorHand to update the
+\ small hand of the on-screen altimeter.
 \
-\ It also sets AltitudeMinutes to the low byte of the altitude, reduced from the
-\ range 0 to 255 to a range of 0 to 104, so it can be used in part 5 to update
-\ the large hand on the on-screen altimeter, which is in the range 0 to 1,000
-\ feet.
+\ It also sets AltitudeMinutes to the low byte of the altitude, reduced to the
+\ range 0 to 104, so it can be used in part 5 to update the large hand of the
+\ on-screen altimeter.
 \
 \ ******************************************************************************
 
@@ -3234,8 +3298,8 @@ ORG CODE%
  LDA #0                 \ Set T = 0
  STA T
 
-                        \ We now calculate A = R * n with a hardcoded n, using
-                        \ unrolled shift-and-add multiplication
+                        \ We now calculate A = R * n /256 with a hardcoded n,
+                        \ using unrolled shift-and-add multiplication
 
  LDA R                  \ Set A = R
 
@@ -3275,9 +3339,9 @@ ORG CODE%
  STA AltitudeMinutes    \ Store the result in AltitudeMinutes, so we can draw
                         \ the altimeter's minute hand in indicator 3
 
-                        \ We now calculate A = S * n with a hardcoded n, using
-                        \ unrolled shift-and-add multiplication and keeping the
-                        \ overspill from the result
+                        \ We now calculate A = S * n / 256 with a hardcoded n,
+                        \ using unrolled shift-and-add multiplication and keeping
+                        \ the overspill from the result
 
  LDA S                  \ Set A = S
 
@@ -3408,11 +3472,13 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 7 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 4
+\    Summary: Calculations for the vertical speed indicator (indicator 4)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the vertical speed from (VerticalSpeedHi VerticalSpeedLo)
+\ and reduces it to the range -40 to +40, before passing it to the
+\ DrawIndicatorHand to update the on-screen vertical speed indicator.
 \
 \ ******************************************************************************
 
@@ -3420,60 +3486,121 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 4
 
- LDA L0C8A
- STA T
- LDA L0C9A
- BPL uind9
+ LDA VerticalSpeedLo    \ Set (A T) = (VerticalSpeedHi VerticalSpeedLo)
+ STA T                  \           = VerticalSpeed
+ LDA VerticalSpeedHi
 
- LDA #0
- SEC
- SBC T
- STA T
- LDA #0
- SBC L0C9A
+ BPL uind9              \ If the vertical speed is positive, jump down to uind9
+
+ LDA #0                 \ The vertical speed is negative, so we make it positive
+ SEC                    \ by calculating:
+ SBC T                  \
+ STA T                  \   (A T) = (0 0) - (A T)
+                        \
+                        \ starting with the low bytes
+
+ LDA #0                 \ And then the high bytes
+ SBC VerticalSpeedHi
 
 .uind9
 
- LSR A
- ROR T
- LSR A
- ROR T
- LSR A
- ROR T
- CMP #0
- BEQ uind10
+                        \ By this point, (A T) = |VerticalSpeed|
 
- LDA #&FF
- STA T
+ LSR A                  \ Set (A T) = (A T) / 8
+ ROR T                  \           = |VerticalSpeed| / 8
+ LSR A
+ ROR T
+ LSR A
+ ROR T
+
+ CMP #0                 \ If A = 0, so (A T) = (0 T) = T, so jump to uind10 to
+ BEQ uind10             \ skip the following as T contains the correct value of
+                        \ |VerticalSpeed| / 8
+
+ LDA #255               \ A is non-zero, which means that (A T) > 255, so set
+ STA T                  \ T = 255 so that T has a maximum value of 255
 
 .uind10
 
- LDA T
- LSR A
- CLC
- ADC T
- ROR A
- LSR A
- LSR A
- LSR A
- CLC
- ADC T
- ROR A
- LSR A
- CMP #&28
- BCC uind11
+                        \ At this point, T contains |VerticalSpeed| / 8, capped
+                        \ to a maximum value of 255
 
- LDA #&28
+                        \ We now calculate A = T * n / 256 with a hardcoded n,
+                        \ using unrolled shift-and-add multiplication
+
+ LDA T                  \ Set A = T
+
+ LSR A                  \ Bit 0 of n is 0
+
+ CLC                    \ Bit 1 of n is 1
+ ADC T
+ ROR A
+
+ LSR A                  \ Bit 2 of n is 0
+
+ LSR A                  \ Bit 3 of n is 0
+
+ LSR A                  \ Bit 4 of n is 0
+
+ CLC                    \ Bit 5 of n is 1
+ ADC T
+ ROR A
+
+ LSR A                  \ Bit 6 of n is 0
+
+                        \ Bit 7 of n is 0 and the final right shift is missing
+
+                        \ From the above, n = %00100010 (34), so we just
+                        \ calculated:
+                        \
+                        \   A = (T * n / 256) << 1
+                        \     = (T * 34 / 256) << 1
+                        \     = T * 68 / 256
+                        \
+                        \ which takes |VerticalSpeed| / 8 in the range 0 to 255
+                        \ and reduces it to the range 0 to 68
+
+
+ CMP #40                \ If A < 40, jump to uind11 to skip the following
+ BCC uind11             \ instruction
+
+ LDA #40                \ Set A = 40, so A has a maximum of 40 and is now in the
+                        \ range 0 to 40
 
 .uind11
 
- BIT L0C9A
- BPL uind12
+ BIT VerticalSpeedHi    \ If the high byte in VerticalSpeedHi is positive (and
+ BPL uind12             \ therefore so is the vertical speed), jump to uind12 to
+                        \ skip the following
 
- STA T
- LDA #0
- SEC
+ STA T                  \ Negate the value in A by calculating:
+ LDA #0                 \
+ SEC                    \   A = 0 - A
  SBC T
+
+                        \ So by now, A is in the range -40 to +40
+                        \
+                        \ In terms of the original value of VerticalSpeed, this
+                        \ means that:
+                        \
+                        \   VerticalSpeed / 8 * (68 / 256) = A
+                        \
+                        \ so:
+                        \
+                        \   VerticalSpeed = A * (256 / 68) * 8
+                        \                 = A * 2048 / 68
+                        \
+                        \ If A is 40 then this shows as a vertical speed of
+                        \ 4000 feet per minute on the indicator, so if v is the
+                        \ vertical speed in feet per minute, A = v / 100, and:
+                        \
+                        \   VerticalSpeed = A * 2048 / 68
+                        \                 = (v / 100) * 2048 / 68
+                        \                 = v * 2048 / 6800
+                        \                 = v * 128 / 425
+                        \
+                        \ so VerticalSpeed is stored as 128 / 425 * the vertical
+                        \ speed in feet per minute
 
 .uind12
 
@@ -3507,11 +3634,14 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 9 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 5
+\    Summary: Calculations for the turn indicator (indicator 5), the bottom part
+\             of the slip and turn indicator
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the turn rate from (TurnHi TurnLo) and reduces it to the
+\ range -19 to +19, before passing it to the DrawIndicatorHand to update the
+\ bottom part of the on-screen slip and turn indicator.
 \
 \ ******************************************************************************
 
@@ -3519,53 +3649,98 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 5
 
- LDA L0C01
- STA T
- LDA L0C11
- BPL uind15
+ LDA TurnLo             \ Set (A T) = (TurnHi TurnLo)
+ STA T                  \           = Turn
+ LDA TurnHi
 
- LDA #0
- SEC
- SBC T
- STA T
- LDA #0
- SBC L0C11
+ BPL uind15             \ If the turn rate is positive, jump down to uind9
+
+ LDA #0                 \ The turn rate is negative, so we make it positive
+ SEC                    \ by calculating:
+ SBC T                  \
+ STA T                  \   (A T) = (0 0) - (A T)
+                        \
+                        \ starting with the low bytes
+
+ LDA #0                 \ And then the high bytes
+ SBC TurnHi
 
 .uind15
 
- BNE uind16
+                        \ By this point, (A T) = |Turn|
 
- LDA T
- CMP #&8C
- BCC uind17
+ BNE uind16             \ If the high byte in A is non-zero, this means that
+                        \ (A T) > 255, so skip the following three instructions
+                        \ to set A to the maximum value of 140
+
+ LDA T                  \ A is 0, so set A = T, so A now contains the correct
+                        \ value of |Turn|
+
+ CMP #140               \ If T < 140, jump to uind17 to skip the following two
+ BCC uind17             \ instructions
 
 .uind16
 
- LDA #&8C
+ LDA #140               \ Set T = 140, so T is always a maximum value of 140
  STA T
 
 .uind17
 
- LSR A
- CLC
- ADC T
- ROR A
- LSR A
- LSR A
- CLC
- ADC T
- ROR A
- LSR A
- LSR A
- BIT L0C11
- BMI uind18
+                        \ At this point, T contains |Turn|, capped to a maximum
+                        \ value of 140
 
- STA T
- LDA #0
- SEC
+                        \ We now calculate A = T * n / 256 with a hardcoded n,
+                        \ using unrolled shift-and-add multiplication
+
+\LDA T                  \ We can drop this instruction as A is already = T
+
+ LSR A                  \ Bit 0 of n is 0
+
+ CLC                    \ Bit 1 of n is 1
+ ADC T
+ ROR A
+
+ LSR A                  \ Bit 2 of n is 0
+
+ LSR A                  \ Bit 3 of n is 0
+
+ CLC                    \ Bit 4 of n is 1
+ ADC T
+ ROR A
+
+ LSR A                  \ Bit 5 of n is 0
+
+ LSR A                  \ Bit 6 of n is 0
+
+                        \ Bit 7 of n is 0 and the final right shift is missing
+
+                        \ From the above, n = %00010010 (18), so we just
+                        \ calculated:
+                        \
+                        \   A = (T * n / 256) << 1
+                        \     = (T * 18 / 256) << 1
+                        \     = T * 36 / 256
+                        \
+                        \ which takes |Turn| in the range 0 to 140 and reduces
+                        \ it to the range 0 to 19
+
+ BIT TurnHi             \ If the high byte in TurnHi is negative (and therefore
+ BMI uind18             \ so is the turn rate), jump to uind18 to skip the
+                        \ following
+
+ STA T                  \ Negate the value in A by calculating:
+ LDA #0                 \
+ SEC                    \   A = 0 - A
  SBC T
 
 .uind18
+
+                        \ So by now, A is in the range -19 to +19
+                        \
+                        \ The maximum turn rate shown on the indicator is
+                        \ 4 x 180 degrees per minute, which is shown when
+                        \ T = 140, so Turn is stored as around 35 * the turn
+                        \ rate, as 140 / 4 = 35
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
                         \ the indicator on-screen, returning from the subroutine
@@ -3576,7 +3751,8 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 10 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 6
+\    Summary: Calculations for the slip indicator (indicator 6), the top part of
+\             the slip and turn indicator
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3599,7 +3775,7 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 11 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 7
+\    Summary: Calculations for the artificial horizon (indicator 7)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3671,6 +3847,7 @@ ORG CODE%
  CLC
  ADC #&E3
  STA H
+
  JMP DrawIndicatorLine
 
 \ ******************************************************************************
@@ -3709,7 +3886,7 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 13 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 9
+\    Summary: Calculations for the rudder indicator (indicator 9)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3740,7 +3917,7 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 14 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicators 8 and 10
+\    Summary: Calculations for the joystick position display (indicator 8 or 10)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3797,7 +3974,7 @@ ORG CODE%
 \       Name: UpdateIndicator (Part 15 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Calculations for indicator 11
+\    Summary: Calculations for the thrust indicator (indicator 11)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3924,16 +4101,24 @@ ORG CODE%
 
 .DrawIndicatorHand
 
-                        \ X = 0: Compass gets here with A = 0 to 73
-                        \ X = 1: Airspeed indicator
-                        \ X = 2: Altimeter hour hand gets here with A = 0 to 254
-                        \ X = 3: Altimeter minute hand gets here with A = 0 to 104
-                        \ X = 4: 
-                        \ X = 5: 
-                        \ X = 6: 
+                        \ X = 0: Compass: A = 0 to 73
+                        \ X = 1: Airspeed: A = 9 to 74
+                        \ X = 2: Altimeter hour hand: A = 0 to 254
+                        \ X = 3: Altimeter minute hand: A = 0 to 104
+                        \ X = 4: Vertical speed: A = -40 to +40
+                        \ X = 5: Turn: A = -19 to +19
+                        \ X = 6: Slip: 
 
  CLC                    \ Set A = A + the X-th byte of IndicatorBase
  ADC IndicatorBase,X
+
+                        \ X = 0: Compass +0: A = 0 to 73
+                        \ X = 1: Airspeed +48: A = 57 to 122
+                        \ X = 2: Altimeter hour hand +0: A = 0 to 254
+                        \ X = 3: Altimeter minute hand +0: A = 0 to 104
+                        \ X = 4: Vertical speed +67: A = 27 to 107
+                        \ X = 5: Turn +53: A = 34 to 72
+                        \ X = 6: Slip +106: 
 
  CMP IndicatorMin,X     \ If A < the X-th byte of IndicatorMin, set A to it
  BCS L20AB
@@ -10547,17 +10732,17 @@ ORG CODE%
 
 .L4B00
 
- LDA L0C00,X
+ LDA &0C00,X
  STA L0900,Y
- LDA L0C01,X
+ LDA &0C01,X
  STA L0A00,Y
- LDA L0C02,X
+ LDA &0C02,X
  STA L0700,Y
- LDA L0C10,X
+ LDA &0C10,X
  STA L4A00,Y
- LDA L0C11,X
+ LDA &0C11,X
  STA L0B00,Y
- LDA L0C12,X
+ LDA &0C12,X
  STA L4900,Y
  RTS
 
@@ -10577,17 +10762,17 @@ ORG CODE%
 .L4B25
 
  LDA L0900,Y
- STA L0C00,X
+ STA &0C00,X
  LDA L0A00,Y
- STA L0C01,X
+ STA &0C01,X
  LDA L0700,Y
- STA L0C02,X
+ STA &0C02,X
  LDA L4A00,Y
- STA L0C10,X
+ STA &0C10,X
  LDA L0B00,Y
- STA L0C11,X
+ STA &0C11,X
  LDA L4900,Y
- STA L0C12,X
+ STA &0C12,X
  RTS
 
 \ ******************************************************************************
@@ -12025,37 +12210,37 @@ ORG CODE%
 
 .IndicatorBase
 
- EQUB 0                 \ Base value for indicator 0
- EQUB 48                \ Base value for indicator 1
- EQUB 0                 \ Base value for indicator 2
- EQUB 0                 \ Base value for indicator 3
- EQUB 67                \ Base value for indicator 4
- EQUB 53                \ Base value for indicator 5
- EQUB 106               \ Base value for indicator 6
+ EQUB 0                 \ Base value for indicator 0 (compass)
+ EQUB 48                \ Base value for indicator 1 (airspeed)
+ EQUB 0                 \ Base value for indicator 2 (altimeter small)
+ EQUB 0                 \ Base value for indicator 3 (altimeter large)
+ EQUB 67                \ Base value for indicator 4 (vertical speed)
+ EQUB 53                \ Base value for indicator 5 (turn)
+ EQUB 106               \ Base value for indicator 6 (slip)
 
  EQUB &4C
 
 .IndicatorMin
 
- EQUB 0                 \ Minimum value shown on indicator 0
- EQUB 57                \ Minimum value shown on indicator 1
- EQUB 0                 \ Minimum value shown on indicator 2
- EQUB 0                 \ Minimum value shown on indicator 3
- EQUB 30                \ Minimum value shown on indicator 4
- EQUB 33                \ Minimum value shown on indicator 5
- EQUB 91                \ Minimum value shown on indicator 6
+ EQUB 0                 \ Minimum value shown on indicator 0 (compass)
+ EQUB 57                \ Minimum value shown on indicator 1 (airspeed)
+ EQUB 0                 \ Minimum value shown on indicator 2 (altimeter small)
+ EQUB 0                 \ Minimum value shown on indicator 3 (altimeter large)
+ EQUB 30                \ Minimum value shown on indicator 4 (vertical speed)
+ EQUB 33                \ Minimum value shown on indicator 5 (turn)
+ EQUB 91                \ Minimum value shown on indicator 6 (slip)
 
  EQUB &F4
 
 .IndicatorMax
 
- EQUB 255               \ Maximum value shown on indicator 0
- EQUB 122               \ Maximum value shown on indicator 1
- EQUB 255               \ Maximum value shown on indicator 2
- EQUB 255               \ Maximum value shown on indicator 3
- EQUB 104               \ Maximum value shown on indicator 4
- EQUB 72                \ Maximum value shown on indicator 5
- EQUB 120               \ Maximum value shown on indicator 6
+ EQUB 255               \ Maximum value shown on indicator 0 (compass)
+ EQUB 122               \ Maximum value shown on indicator 1 (airspeed)
+ EQUB 255               \ Maximum value shown on indicator 2 (altimeter small)
+ EQUB 255               \ Maximum value shown on indicator 3 (altimeter large)
+ EQUB 104               \ Maximum value shown on indicator 4 (vertical speed)
+ EQUB 72                \ Maximum value shown on indicator 5 (turn)
+ EQUB 120               \ Maximum value shown on indicator 6 (slip)
 
  EQUB &4C
 
@@ -12247,18 +12432,18 @@ ORG CODE%
 
 .L50B1
 
- STY L0C01
+ STY TurnLo
  TXA
  LDX #1
 
 .L50B7
 
- ASL L0C01
+ ASL TurnLo
  ROL A
  DEX
  BPL L50B7
 
- STA L0C11
+ STA TurnHi
  LDX #&82
  JSR L57F6
 
@@ -12732,7 +12917,7 @@ ORG CODE%
  CMP #&27
  BEQ L533A
 
- LDA L0C11
+ LDA TurnHi
  ASL A
  LDY #4
  LDX #2
@@ -13518,7 +13703,7 @@ ORG CODE%
  BEQ L5701
 
  STA AltitudeLo
- LDX L0C9A
+ LDX VerticalSpeedHi
  BPL L56C1
 
  LDX #&8A
@@ -13582,23 +13767,23 @@ ORG CODE%
  CLC
  ADC L0CF0
  STA AltitudeLo
- LDA L0C9A
+ LDA VerticalSpeedHi
  BPL L5720
 
  SEC
  LDA #0
- SBC L0C8A
- STA L0C8A
+ SBC VerticalSpeedLo
+ STA VerticalSpeedLo
  LDA #0
- SBC L0C9A
+ SBC VerticalSpeedHi
 
 .L5720
 
- STA L0C9A
+ STA VerticalSpeedHi
  LSR A
  BNE L573D
 
- LDA L0C8A
+ LDA VerticalSpeedLo
  ROR A
  STA R
  LDX Undercarriage
@@ -13630,7 +13815,7 @@ ORG CODE%
  BCC L575A
 
  LDA R
- STA L0C8A
+ STA VerticalSpeedLo
  LDX Undercarriage
  BEQ L575A
 
