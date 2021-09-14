@@ -3088,15 +3088,16 @@ ORG CODE%
 
  STX WW                 \ Set WW to the value in X
 
- CPX #0                 \ If X = 0, jump down to L1E51
- BEQ L1E51
+ CPX #0                 \ If X = 0, jump down to uind1 to update indicator 0
+ BEQ uind1
 
- CPX #2                 \ If X < 2 (i.e. X = 1), jump down to L1E66
- BCC L1E66
+ CPX #2                 \ If X < 2 (i.e. X = 1), jump down to uind2 to update
+ BCC uind2              \ indicator 1
 
- BEQ L1E7B              \ If X = 2, jump down to L1E7B
+ BEQ uind4              \ If X = 2, jump down to uind4 to update indicator 2
 
- JMP L1EE5              \ X > 2, so jump down to L1EE5
+ JMP uind7              \ X > 2, so jump down to uind7 to check for more values
+                        \ of X
 
 \ ******************************************************************************
 \
@@ -3107,13 +3108,15 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the compass heading from Compass, which is in the range 0
+\ to 255, and reduces it to the range 0 to 73 before passing it to the
+\ indicator-drawing routine to update the on-screen compass.
 \
 \ ******************************************************************************
 
-.L1E51
+.uind1
 
-                        \ If we get here then X = 0
+                        \ If we get here then the indicator number in X is 0
 
  LDA Compass            \ Set T = Compass
  STA T
@@ -3153,7 +3156,9 @@ ORG CODE%
                         \ which takes the compass heading in the range 0 to 255
                         \ and reduces it to the range 0 to 73
 
- JMP L209D              \ Jump to L209D to update the dial
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -3168,23 +3173,27 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1E66
+.uind2
 
-                        \ If we get here then X = 1
+                        \ If we get here then the indicator number in X is 1
 
  LDA AirspeedHi         \ If the high byte of the airspeed in AirspeedHi is
- BPL L1E70              \ negative, set A = 0 and jump to L209D to show a zero
- LDA #0                 \ value on the airspeed indicator
- JMP L209D
+ BPL uind3              \ positive, jump down to uind3 to skip the following
 
-.L1E70
+ LDA #0                 \ The airspeed is negative, so set A to 0 and jump to
+ JMP DrawIndicatorHand  \ DrawIndicatorHand to zero the indicator on-screen,
+                        \ returning from the subroutine using a tail call
+
+.uind3
 
  LDA AirspeedLo         \ Set A = (AirspeedHi AirspeedLo) / 128
  ASL A                  \
  LDA AirspeedHi         \ ??? (indicator shows 50-400 mph)
  ROL A
 
- JMP L209D              \ Jump to L209D to update the dial
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -3195,15 +3204,21 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Reduces the altitude in (AltitudeHi AltitudeLo) from a range of 0 to 10,000
-\ feet down to a range of 0 to 254, which is the value for the small hand on the
-\ altimeter.
+\ This section takes the 16-bit altitude from (AltitudeHi AltitudeLo), which is
+\ in the range 0 to 10,000 feet, and reduces it to the range 0 to 254 before
+\ passing to the indicator-drawing routine to update the small hand on the
+\ on-screen altimeter.
+\
+\ It also sets AltitudeMinutes to the low byte of the altitude, reduced from the
+\ range 0 to 255 to a range of 0 to 104, so it can be used in part 5 to update
+\ the large hand on the on-screen altimeter, which is in the range 0 to 1,000
+\ feet.
 \
 \ ******************************************************************************
 
-.L1E7B
+.uind4
 
-                        \ If we get here then X = 2
+                        \ If we get here then the indicator number in X is 2
 
  LDA AltitudeLo         \ Set (A R) = (AltitudeHi AltitudeLo)
  STA R
@@ -3305,23 +3320,12 @@ ORG CODE%
                         \ and T contains the overspill from the result
                         
  STA U                  \ Set U = S * 104 / 256
-                        \ 
-                        \ so we get:
-                        \
-                        \   (U 0) = S * 104
-                        \         = (S 0) / 256 * 104
-                        \
-                        \ so:
-                        \
-                        \   (U AltitudeMinutes) = (U 0) + AltitudeMinutes
-                        \                       = (S 0) / 256 * 104 + R * 104 / 256
-                        \                       = (S*104 R*104) / 256
 
  LDA T                  \ Set (U A) = (U AltitudeMinutes) + (0 T)
  CLC                    \
  ADC AltitudeMinutes    \ by adding the low bytes
 
- BCC L1ED0              \ And, if the addition overflowed, incrementing the high
+ BCC uind5              \ And, if the addition overflowed, incrementing the high
  INC U                  \ byte in U
 
                         \ So we have just calculated:
@@ -3331,6 +3335,7 @@ ORG CODE%
                         \ and we already know that:
                         \
                         \   U = S * 104 / 256
+                        \
                         \   AltitudeMinutes = R * 104 / 256
                         \
                         \ so plugging these into the above, we get:
@@ -3339,7 +3344,7 @@ ORG CODE%
                         \         = (S*104 R*104) / 256 + (0 T)
                         \         = (S R) * 104 / 256
 
-.L1ED0
+.uind5
 
  LSR U                  \ Set (U A) = (U A) / 16
  ROR A                  \           = ((S R) * 104 / 256) / 16
@@ -3347,13 +3352,15 @@ ORG CODE%
  ROR A                  \
  LSR U                  \ The maximum altitude that the altimeter can show is
  ROR A                  \ 10,000 feet (after which it just wraps around), so the
- LSR U                  \ final result of all these calculations is the altitude
- ROR A                  \ in (S R) reduced from a range of 0 to 10,000 to a
-                        \ range of 0 to 254, as:
+ LSR U                  \ final result of all these calculations is that the
+ ROR A                  \ altitude in (S R) is reduced from a range of 0 to
+                        \ 10,000 to a range of 0 to 254, as:
                         \
                         \   10000 * 6.5 / 256 = 254
 
- JMP L209D              \ Jump to L209D to update the dial
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -3362,44 +3369,39 @@ ORG CODE%
 \   Category: Dashboard
 \    Summary: Calculations for the altimeter's "minute" hand (indicator 3)
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
-.L1EDF
+.uind6
 
-                        \ If we get here then X = 3
+                        \ If we get here then the indicator number in X is 3
 
  LDA AltitudeMinutes    \ Fetch the value of the altimeter's minute hand that we
                         \ calculated in part 4
 
- JMP L209D              \ Jump to L209D to update the dial
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
 \       Name: UpdateIndicator (Part 6 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Jump logic
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Logic for checking which indicator to update
 \
 \ ******************************************************************************
 
-.L1EE5
+.uind7
 
                         \ If we get here then X > 2
 
- CPX #4                 \ If X < 4 (i.e. X = 3), jump up to L1EDF
- BCC L1EDF
+ CPX #4                 \ If X < 4 (i.e. X = 3), jump up to uind6 to update
+ BCC uind6              \ indicator 3
 
- BEQ L1EEE              \ If X = 4, jump down to L1EEE
+ BEQ uind8              \ If X = 4, jump down to uind8 to update indicator 4
 
- JMP L1F39              \ X > 4, so jump down to L1F39
+ JMP uind13             \ X > 4, so jump down to uind13 to check for more values
+                        \ of X
 
 \ ******************************************************************************
 \
@@ -3414,14 +3416,14 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1EEE
+.uind8
 
-                        \ If we get here then X = 4
+                        \ If we get here then the indicator number in X is 4
 
  LDA L0C8A
  STA T
  LDA L0C9A
- BPL L1F04
+ BPL uind9
 
  LDA #0
  SEC
@@ -3430,7 +3432,7 @@ ORG CODE%
  LDA #0
  SBC L0C9A
 
-.L1F04
+.uind9
 
  LSR A
  ROR T
@@ -3439,12 +3441,12 @@ ORG CODE%
  LSR A
  ROR T
  CMP #0
- BEQ L1F15
+ BEQ uind10
 
  LDA #&FF
  STA T
 
-.L1F15
+.uind10
 
  LDA T
  LSR A
@@ -3459,47 +3461,46 @@ ORG CODE%
  ROR A
  LSR A
  CMP #&28
- BCC L1F2A
+ BCC uind11
 
  LDA #&28
 
-.L1F2A
+.uind11
 
  BIT L0C9A
- BPL L1F36
+ BPL uind12
 
  STA T
  LDA #0
  SEC
  SBC T
 
-.L1F36
+.uind12
 
- JMP L209D
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
 \       Name: UpdateIndicator (Part 8 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Jump logic
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Logic for checking which indicator to update
 \
 \ ******************************************************************************
 
-.L1F39
+.uind13
 
                         \ If we get here then X > 4
 
- CPX #6                 \ If X < 6 (i.e. X = 5), jump down to L1F42
- BCC L1F42
+ CPX #6                 \ If X < 6 (i.e. X = 5), jump down to uind14 to update
+ BCC uind14             \ indicator 5
 
- BEQ L1F80              \ If X = 6, jump down to L1F80
+ BEQ uind19             \ If X = 6, jump down to uind19 to update indicator 6
 
- JMP L1FE4              \ X > 6, so jump down to L1FE4
+ JMP uind23             \ X > 6, so jump down to uind23 to check for more values
+                        \ of X
 
 \ ******************************************************************************
 \
@@ -3514,14 +3515,14 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1F42
+.uind14
 
-                        \ If we get here then X = 5
+                        \ If we get here then the indicator number in X is 5
 
  LDA L0C01
  STA T
  LDA L0C11
- BPL L1F58
+ BPL uind15
 
  LDA #0
  SEC
@@ -3530,20 +3531,20 @@ ORG CODE%
  LDA #0
  SBC L0C11
 
-.L1F58
+.uind15
 
- BNE L1F60
+ BNE uind16
 
  LDA T
  CMP #&8C
- BCC L1F64
+ BCC uind17
 
-.L1F60
+.uind16
 
  LDA #&8C
  STA T
 
-.L1F64
+.uind17
 
  LSR A
  CLC
@@ -3557,16 +3558,18 @@ ORG CODE%
  LSR A
  LSR A
  BIT L0C11
- BMI L1F7D
+ BMI uind18
 
  STA T
  LDA #0
  SEC
  SBC T
 
-.L1F7D
+.uind18
 
- JMP L209D
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -3581,12 +3584,15 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1F80
+.uind19
 
-                        \ If we get here then X = 6
+                        \ If we get here then the indicator number in X is 6
 
  LDA L0C9C
- JMP L209D
+
+ JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
+                        \ the indicator on-screen, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -3601,9 +3607,9 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1F86
+.uind20
 
-                        \ If we get here then X = 7
+                        \ If we get here then the indicator number in X is 7
 
  LDY #0
  STY K
@@ -3623,7 +3629,7 @@ ORG CODE%
 
  SEC
  SBC S
- BPL L1FB2
+ BPL uind21
 
  STA T
  LDA #&80
@@ -3632,7 +3638,7 @@ ORG CODE%
  SEC
  SBC T
 
-.L1FB2
+.uind21
 
  CLC
  ADC #1
@@ -3642,7 +3648,7 @@ ORG CODE%
 
  SEC
  SBC H
- BPL L1FCE
+ BPL uind22
 
  STA T
  LDA #&40
@@ -3652,7 +3658,7 @@ ORG CODE%
  SEC
  SBC T
 
-.L1FCE
+.uind22
 
  CLC
  ADC #1
@@ -3665,39 +3671,38 @@ ORG CODE%
  CLC
  ADC #&E3
  STA H
- JMP L20B8
+ JMP DrawIndicatorLine
 
 \ ******************************************************************************
 \
 \       Name: UpdateIndicator (Part 12 of 15)
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Jump logic
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Logic for checking which indicator to update
 \
 \ ******************************************************************************
 
-.L1FE4
+.uind23
 
                         \ If we get here then X > 6
 
- CPX #7                 \ If X = 7, jump up to L1F86
- BEQ L1F86
+ CPX #7                 \ If X = 7, jump up to uind20 to update indicator 7
+ BEQ uind20
 
- CPX #9                 \ If X < 9 (i.e. X = 8), jump down to L200E
- BCC L200E
+ CPX #9                 \ If X < 9 (i.e. X = 8), jump down to uind25 to update
+ BCC uind25             \ indicator 8
 
- BEQ L1FF5              \ If X = 9, jump down to L1FF5
+ BEQ uind24             \ If X = 9, jump down to uind24 to update indicator 9
 
- CPX #11                \ If X < 11 (i.e. X = 10), jump down to L200E
- BCC L200E
+ CPX #11                \ If X < 11 (i.e. X = 10), jump down to uind25 to update
+ BCC uind25             \ indicator 10
 
- BEQ L2058              \ If X = 11, jump down to L2058
+ BEQ uind26             \ If X = 11, jump down to uind26 to update indicator 11
 
- RTS
+                        \ If we get here then X > 11, which should not happen,
+                        \ but if it does, we simply do nothing
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -3712,9 +3717,9 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1FF5
+.uind24
 
-                        \ If we get here then X = 9
+                        \ If we get here then the indicator number in X is 9
 
  LDX #1
  LDA #&80
@@ -3728,7 +3733,7 @@ ORG CODE%
  STA H
  LDY #&A3
  LDA #&0B
- BNE L207F              \ Do line drawing
+ BNE DrawIndicatorBar   \ Do line drawing
 
 \ ******************************************************************************
 \
@@ -3743,9 +3748,10 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L200E
+.uind25
 
-                        \ If we get here then X = 8 or 10
+                        \ If we get here then the indicator number in X is 8 or
+                        \ 10
 
  LDA #128               \ Redraw the existing cross on the joystick position
  JSR DrawJoystickCross  \ display to remove it
@@ -3799,12 +3805,14 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L2058
+.uind26
 
-                        \ If we get here then X = 11
+                        \ If we get here then the indicator number in X is 11
 
- LDA #128               \ Set S = 128
- STA S
+ LDA #128               \ Set S = 128, to denote that when we fall through into
+ STA S                  \ DrawIndicatorBar below, JC is the y-coordinate, so
+                        \ we draw the indicator's vertical bar from point
+                        \ (H + W, JC)
 
  LDA #125               \ Set W = 125
  STA W
@@ -3816,14 +3824,14 @@ ORG CODE%
  LDX #3                 \ Set X = 3 to act as a shift counter in the following
                         \ loop
 
-.L206A
+.uind27
 
  LSR R                  \ Set (R A) = (R A) / 2
  ROR A
 
  DEX                    \ Decrement the shift counter
 
- BPL L206A              \ Loop back until we have shifted right by 4 places, so
+ BPL uind27             \ Loop back until we have shifted right by 4 places, so
                         \ we now have:
                         \
                         \   (R A) = (R A) / 8
@@ -3837,39 +3845,49 @@ ORG CODE%
 
  LDX #3                 \ Set X = 3
 
- LDY #243               \ Set Y = 243 to use as the value of JoyC below
+ LDY #243               \ Set Y = 243 to use as the y-coordinate of the top of
+                        \ the vertical bar
 
- LDA #7                 \ Set A = 7 to use as the value of U below
+ LDA #7                 \ Set A = 7 to set the height of the vertical bar at 7
+                        \ pixels
+
+                        \ Fall through into DrawIndicatorBar to update indicator
+                        \ 11 by drawing a vertical bar of height 7 pixels with
+                        \ the top at (125 + H, 243)
 
 \ ******************************************************************************
 \
-\       Name: L207F
+\       Name: DrawIndicatorBar
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Draw indicator 9 or 11
+\    Summary: Draw a vertical bar on indicator 9 or 11
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The height of the vertical bar in pixels
+\
+\   Y                   The y-coordinate of the top of the bar
 \
 \ ******************************************************************************
 
-.L207F
+.DrawIndicatorBar
 
                         \ If we get here then the indicator is either:
                         \
-                        \   * 9 (called from L1FF5 with X = 1)
+                        \   * 9 (called from uind24 with X = 1)
                         \
                         \   * 11 (we fell through from above with X = 3)
                         \
-                        \ so we draw a vertical line of height A
+                        \ so we draw a vertical bar of height A
 
  STA U                  \ Set U = A, so the line is A pixels tall
 
  LDA #1                 \ Set T = 1, so the line is 1 pixel wide
  STA T
 
- STY JoyC               \ Set JoyC = Y
+ STY JC                 \ Set JC = Y, the y-coordinate of the top of the bar
 
  LDA JoyYC,X            \ Set G = the X-th byte of JoyYC (for the erase)
  STA G
@@ -3888,10 +3906,11 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L209D
+\       Name: DrawIndicatorHand
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Draw indicator 0 to 6
+\    Summary: Apply min and max limits to an indicator value and draw a hand
+\             on the indicator
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3899,30 +3918,37 @@ ORG CODE%
 \
 \   A                   The value to show on the indicator
 \
+\   X                   The indicator number (0-6)
 \
 \ ******************************************************************************
 
-.L209D
+.DrawIndicatorHand
 
                         \ X = 0: Compass gets here with A = 0 to 73
-                        \ X = 1: 
+                        \ X = 1: Airspeed indicator
                         \ X = 2: Altimeter hour hand gets here with A = 0 to 254
                         \ X = 3: Altimeter minute hand gets here with A = 0 to 104
+                        \ X = 4: 
+                        \ X = 5: 
+                        \ X = 6: 
 
- CLC                    \ Apply max/min scale to dial value in A
- ADC L4FBA,X
- CMP L4FC2,X
+ CLC                    \ Set A = A + the X-th byte of IndicatorBase
+ ADC IndicatorBase,X
+
+ CMP IndicatorMin,X     \ If A < the X-th byte of IndicatorMin, set A to it
  BCS L20AB
 
- LDA L4FC2,X
+ LDA IndicatorMin,X
  BCC L20B3
 
 .L20AB
 
- CMP L4FCA,X
+                        \ If we get here then A >= the X-th byte of IndicatorMin
+
+ CMP IndicatorMax,X     \ If A >= the X-th byte of IndicatorMax, set A to it
  BCC L20B3
 
- LDA L4FCA,X
+ LDA IndicatorMax,X
 
 .L20B3
 
@@ -3930,20 +3956,30 @@ ORG CODE%
 
  JSR L216E
 
+                        \ Fall through into DrawIndicatorLine to draw the hand
+                        \ on the indicator
+
 \ ******************************************************************************
 \
-\       Name: L20B8
+\       Name: DrawIndicatorLine
 \       Type: Subroutine
 \   Category: 
-\    Summary: Draw indicator 0 to 7
+\    Summary: Draw a line on indicator 0 to 7, i.e. a dial hand or artificial
+\             horizon
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The value to show on the indicator
+\
+\   X                   The indicator number (0-7)
+\
+\   WW                  The indicator number (0-7)
 \
 \ ******************************************************************************
 
-.L20B8
+.DrawIndicatorLine
 
                         \ Called for X = 7, fall through for X = 0-6
 
@@ -4049,16 +4085,16 @@ ORG CODE%
  LDA JoyYC              \ Set H = JoyYC
  STA H
 
- LDA JoyXC              \ Set JoyC = JoyXC + 79
+ LDA JoyXC              \ Set JC = JoyXC + 79
  CLC                    \
  ADC #79                \ to get the x-coordinate of the left end of the
- STA JoyC               \ horizontal line at 79 + x
+ STA JC                 \ horizontal line at 79 + x
 
  LDA #216               \ Set W = 216, the y-coordinate of the centre point, so
  STA W                  \ we draw the line from a y-coordinate of 216 + y
 
- LDA #0                 \ Set S = 0, to denote that JoyC is the x-coordinate, so
- STA S                  \ we draw the line from point (JoyC, H + W)
+ LDA #0                 \ Set S = 0, to denote that JC is the x-coordinate, so
+ STA S                  \ we draw the line from point (JC, H + W)
 
  LDA #3                 \ Set T = 3, so we draw a horizontal 3-pixel line
  STA T
@@ -4076,16 +4112,16 @@ ORG CODE%
  LDA JoyXC              \ Set H = JoyXC
  STA H
 
- LDA JoyYC              \ Set JoyC = JoyYC + 214
+ LDA JoyYC              \ Set JC = JoyYC + 214
  CLC                    \
  ADC #214               \ to get the y-coordinate of the top end of the vertical
- STA JoyC               \ line at 214 + y
+ STA JC                 \ line at 214 + y
 
  LDA #80                \ Set W = 80, the x-coordinate of the centre point, so
  STA W                  \ we draw the line from an x-coordinate of 80 + x
 
- LDA #128               \ Set S = 128, to denote that JoyC is the y-coordinate,
- STA S                  \ so we draw the line from point (H + W, JoyC)
+ LDA #128               \ Set S = 128, to denote that JC is the y-coordinate,
+ STA S                  \ so we draw the line from point (H + W, JC)
 
  LDA #1                 \ Set T = 1, so the line is 1 pixel wide
  STA T
@@ -4213,10 +4249,10 @@ ORG CODE%
 \                         * 128 = Erase (using EOR logic)
 \
 \   T                   ??? Delta y-coordinate for line
-\                       Horizontal width/length of line
+\                       Horizontal width/length of line when V = 0
 \
 \   U                   ??? Delta x-coordinate for line
-\                       Vertical width/length of line
+\                       Vertical width/length of line when V = 0
 \
 \   V                   Bits 6 and 7 affect sign of x,y delta increments,
 \                       direction of drawing?
@@ -4252,22 +4288,22 @@ ORG CODE%
 
  STA PP                 \ Set PP = 0
 
- LDA T                  \ If T < U, jump down to dlin1 to skip the
- CMP U                  \ following two instructions
+ LDA T                  \ If T < U, jump down to dlin1 to skip the following
+ CMP U                  \ two instructions
  BCC dlin1
 
-                        \ If we get here then T >= U, steep vertical slope
+                        \ If we get here then T >= U, shallow horizontal slope
 
- STA VV                 \ Set VV = T, so we step along the y-axis
+ STA VV                 \ Set VV = T, the length of the longer axis
 
  BCS dlin10             \ Jump down to dlin10 (this BCS is effectively a JMP as
                         \ we just passed through a BCC)
 
 .dlin1
 
-                        \ If we get here then T < U, shallow horizontal slope
+                        \ If we get here then T < U, steep vertical slope
 
- LDA U                  \ Set VV = U, so we step along the x-axis
+ LDA U                  \ Set VV = U, the length of the longer axis
  STA VV
 
  STA PP                 \ Set PP = U
@@ -4424,9 +4460,7 @@ ORG CODE%
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
- DEC VV                 \ Decrement VV to step along the x-axis (for shallow
-                        \ horizontal slopes) or the y-axis (for steep vertical
-                        \ slopes)
+ DEC VV                 \ Decrement VV to step along the longer axis
 
  BNE dlin6              \ If VV is non-zero, jump up to dlin6
 
@@ -4534,15 +4568,15 @@ ORG CODE%
 \
 \   S                   Defines the starting coordinate for the line:
 \
-\                         * 0 = (JoyC, H + W)
+\                         * 0 = (JC, H + W)
 \
-\                         * 128 = (H + W, JoyC)
+\                         * 128 = (H + W, JC)
 \
 \   H + W               Coordinate of the start of the line (it doesn't matter
 \                       how this value is split between H and W as only the sum
 \                       is used)
 \
-\   JoyC                Coordinate of the start of the line
+\   JC                  Coordinate of the start of the line
 \
 \   T                   Horizontal width/length of line
 \
@@ -4580,10 +4614,10 @@ ORG CODE%
 
  STA J                  \ Set J = A
 
- LDA JoyC               \ Set I = JoyC
+ LDA JC                 \ Set I = JC
  STA I
 
-                        \ We now have (I, J) = (JoyC, A + W)
+                        \ We now have (I, J) = (JC, A + W)
 
  JMP dort3              \ Jump down to dort3
 
@@ -4591,10 +4625,10 @@ ORG CODE%
 
  STA I                  \ Set I = A
 
- LDA JoyC               \ Set J = JoyC
+ LDA JC                 \ Set J = JC
  STA J
 
-                        \ We now have (I, J) = (A + W, JoyC)
+                        \ We now have (I, J) = (A + W, JC)
 
 .dort3
 
@@ -4669,6 +4703,19 @@ ORG CODE%
 \             7-11, cycling through them with each subsequent call
 \
 \ ------------------------------------------------------------------------------
+\
+\ Each call to this routine updates two indicators, one from the range 0 to 6,
+\ and the other from 7 to 11, with subsequent calls working their way through
+\ the ranges in order (so the first call updates indicators 0 and 7, the second
+\ call updates indicators 1 and 8, and so on). When we reach the end of a range,
+\ we wrap round to the start again.
+\
+\ Note that the joystick position display has two numbers, 8 and 10, so it gets
+\ updated at twice the rate of the other indicators.
+\
+\ Also, because the first group covers seven indicators (0 to 6) and the second
+\ group covers five (7 to 11), the indicators in the second group are updated
+\ more frequently than those in the first group.
 \
 \ Other entry points:
 \
@@ -11563,8 +11610,8 @@ ORG CODE%
 
  BNE L4E85              \ If TAB is not being pressed, jump to L4E85
 
- LDA Joystick           \ If Joystick is non-zero, jump to L4E8A to return from the
- BNE L4E8A              \ subroutine
+ LDA Joystick           \ If Joystick is non-zero, jump to L4E8A to return from
+ BNE L4E8A              \ the subroutine
 
  LDA Row29_Block20_4    \ Toggle the joystick indicator pixel above the middle
  EOR #%10001000         \ of the rudder indicator
@@ -11976,17 +12023,41 @@ ORG CODE%
 
  EQUB &B8, &E9, &BC, &BC, &E8, &BA, &BA, &58
 
-.L4FBA
+.IndicatorBase
 
- EQUB &00, &30, &00, &00, &43, &35, &6A, &4C
+ EQUB 0                 \ Base value for indicator 0
+ EQUB 48                \ Base value for indicator 1
+ EQUB 0                 \ Base value for indicator 2
+ EQUB 0                 \ Base value for indicator 3
+ EQUB 67                \ Base value for indicator 4
+ EQUB 53                \ Base value for indicator 5
+ EQUB 106               \ Base value for indicator 6
 
-.L4FC2
+ EQUB &4C
 
- EQUB &00, &39, &00, &00, &1E, &21, &5B, &F4
+.IndicatorMin
 
-.L4FCA
+ EQUB 0                 \ Minimum value shown on indicator 0
+ EQUB 57                \ Minimum value shown on indicator 1
+ EQUB 0                 \ Minimum value shown on indicator 2
+ EQUB 0                 \ Minimum value shown on indicator 3
+ EQUB 30                \ Minimum value shown on indicator 4
+ EQUB 33                \ Minimum value shown on indicator 5
+ EQUB 91                \ Minimum value shown on indicator 6
 
- EQUB &FF, &7A, &FF, &FF, &68, &48, &78, &4C
+ EQUB &F4
+
+.IndicatorMax
+
+ EQUB 255               \ Maximum value shown on indicator 0
+ EQUB 122               \ Maximum value shown on indicator 1
+ EQUB 255               \ Maximum value shown on indicator 2
+ EQUB 255               \ Maximum value shown on indicator 3
+ EQUB 104               \ Maximum value shown on indicator 4
+ EQUB 72                \ Maximum value shown on indicator 5
+ EQUB 120               \ Maximum value shown on indicator 6
+
+ EQUB &4C
 
 .L4FD2
 
@@ -12002,28 +12073,40 @@ ORG CODE%
 
 .JoyYC
 
- EQUB &00, &00
+ EQUB &00               \ Temporary storage, typically used for storing
+                        \ x-coordinates when drawing indicators
+ 
+ EQUB &00               \ The y-coordinate of the top of the current vertical
+                        \ bar for indicator 9, so we can erase it
 
 .JoyXC
 
- EQUB &00, &00
+ EQUB &00               \ Temporary storage, typically used for storing
+                        \ y-coordinates when drawing indicators
+
+ EQUB &00               \ The y-coordinate of the top of the current vertical
+                        \ bar for indicator 11, so we can erase it
 
  EQUB &4D, &0D, &0C, &08, &15, &20
  EQUB &20, &20, &20, &20, &20, &4C
 
 .Indicator0To6
 
- EQUB &44
+ EQUB &44               \ The first indicator counter, which cycles through
+                        \ indicators 0 to 6, and is used to denote the first
+                        \ indicator that gets refreshed in UpdateDashboard
 
 .Indicator7To11
 
- EQUB &59
+ EQUB &59               \ The first indicator counter, which cycles through
+                        \ indicators 7 to 10, and is used to denote the second
+                        \ indicator that gets refreshed in UpdateDashboard
 
-.JoyC
+.JC
 
- EQUB &23               \ Temporary variable, used to store one of the
-                        \ coordinates when drawing the cross on the joystick
-                        \ position display
+ EQUB &23               \ Temporary storage, typically used to store coordinates
+                        \ when drawing the crosses on the joystick position
+                        \ display
 
  EQUB &31, &3A
 
