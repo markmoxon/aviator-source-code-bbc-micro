@@ -203,10 +203,11 @@ L0C89 = &0C89
 
 VerticalSpeedLo = &0C8A \ Vertical speed
                         \
-                        \ Stored as 128/425 * vertical speed in feet per minute, so:
+                        \ Stored as 128/425 * vertical speed in feet per minute,
+                        \ so:
                         \
-                        \ 1000 feet per minute is stored as 128/425 * 1000 = 301
-                        \ 4000 feet per minute is stored as 128/425 * 4000 = 1205
+                        \ 1000 feet/minute is stored as 128/425 * 1000 = 301
+                        \ 4000 feet/minute is stored as 128/425 * 4000 = 1205
                         \
                         \ Related to indicator X = 4
 
@@ -222,10 +223,16 @@ VerticalSpeedHi = &0C9A \ Vertical speed
                         \
                         \ Related to indicator X = 4
 
-L0C9C = &0C9C           \ Related to indicator X = 6
+Slip = &0C9C            \ Slip rate
+                        \
+                        \ Related to indicator X = 6
 
-\ Populated with values from KeyTable1Lo or KeyTable2Lo when key is pressed
-KeyLoggerLow = &0CA0    \ L or < (elevator dive/pitch)      =   1 or  1
+KeyLoggerLow = &0CA0    \ Key logger (low value)
+                        \
+                        \ Populated with values from KeyTable1Lo or KeyTable2Lo
+                        \ when key is pressed:
+                        \
+                        \ L or < (elevator dive/pitch)      =   1 or  1
                         \ A or + (rudder yaw left/right)    =   1 or  1
                         \ S or D (aileron bank left/right)  =   1 or  1
                         \ W or E (throttle down/up)         = -15 or 15
@@ -234,8 +241,12 @@ KeyLoggerLow = &0CA0    \ L or < (elevator dive/pitch)      =   1 or  1
 
 L0CA8 = &0CA8
 
-\ Populated with values from KeyTable1Hi or KeyTable2Hi when key is pressed
-KeyLoggerHigh = &0CB0   \ L or < (elevator dive/pitch)      = -1 or 1
+KeyLoggerHigh = &0CB0   \ Key logger (high value)
+                        \
+                        \ Populated with values from KeyTable1Hi or KeyTable2Hi
+                        \ when key is pressed:
+                        \
+                        \ L or < (elevator dive/pitch)      = -1 or 1
                         \ A or + (rudder yaw left/right)    = -1 or 1
                         \ S or D (aileron bank left/right)  = -1 or 1
                         \ W or E (throttle down/up)         = -1 or 0
@@ -358,11 +369,11 @@ AltitudeHi = &0CFE      \ Altitude (high byte)
 
 L0CFF = &0CFF           \ Set to 72 in Reset
 
-\ Screen address variables
-\ Row1_Block2_3 = Row 1, block 2, byte 3
-\ All count from zero
+                        \ Screen address variables
+                        \ Row1_Block2_3 = Row 1, block 2, byte 3
+                        \ All count from zero
 
-\ Canopy screen addresses (rows 0 to 19)
+                        \ Canopy screen addresses (rows 0 to 19)
 
 Row1_Block0_0 = &5940   \ First block on second row
 Row1_Block1_0 = &5948   \ Second block on second row
@@ -373,7 +384,7 @@ Row6_Block20_0 = &6020  \ Top of gun sight?
 Row7_Block20_0 = &6160  \ Middle of gun sight?
 Row8_Block11_0 = &6258  \ Left end of horizontal bar in gun sight?
 
-\ Dashboard screen addresses (rows 20 to 31)
+                        \ Dashboard screen addresses (rows 20 to 31)
 
 Row21_Block20_7 = &72E7 \ Top block of joystick position display y-axis
 Row22_Block20_7 = &7427 \ Second block of joystick position display y-axis
@@ -399,7 +410,7 @@ Row25_Block35_7 = &785F \ Right-middle block of radar horizontal middle line
 Row26_Block35_0 = &7998 \ Block containing bottom bit of centre cross in radar
 Row26_Block35_1 = &7999 \ Block containing bottom bit of centre cross in radar
 
-Row28_Block26_5 = &7BD5 \ Centre block of slip and turn indicator
+Row28_Block26_5 = &7BD5 \ Centre block of slip-and-turn indicator
 
 Row29_Block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
 
@@ -3110,10 +3121,10 @@ ORG CODE%
 \                         * 4 = Vertical speed indicator
 \
 \                         * 5 = Turn indicator
-\                               Bottom part of the slip and turn indicator
+\                               Bottom part of the slip-and-turn indicator
 \
 \                         * 6 = Slip indicator
-\                               Top part of the slip and turn indicator
+\                               Top part of the slip-and-turn indicator
 \
 \                         * 7 = Artificial horizon
 \
@@ -3187,6 +3198,8 @@ ORG CODE%
 
                         \ Bit 7 of n is 0 and the final right shift is missing
 
+                        \ So by now, A is in the range 0 to 73 - here's why:
+                        \
                         \ From the above, n = %00100100 (36), so we just
                         \ calculated:
                         \
@@ -3235,8 +3248,14 @@ ORG CODE%
 
  LDA AirspeedLo         \ Set A = (AirspeedHi AirspeedLo) * 2 / 256
  ASL A                  \
- LDA AirspeedHi         \ The IndicatorBase for this indicator is 48 and the
- ROL A                  \ IndicatorMin/Max range shown on the dial is 57 to 122,
+ LDA AirspeedHi
+ ROL A
+
+                        \ So by now, A matches the range of the airspeed
+                        \ indicator - here's why:
+                        \
+                        \ The IndicatorBase for this indicator is 48 and the
+                        \ IndicatorMin/Max range shown on the dial is 57 to 122,
                         \ which represents 50 to 400 mph (according to the game
                         \ manual)
                         \
@@ -3340,8 +3359,8 @@ ORG CODE%
                         \ the altimeter's minute hand in indicator 3
 
                         \ We now calculate A = S * n / 256 with a hardcoded n,
-                        \ using unrolled shift-and-add multiplication and keeping
-                        \ the overspill from the result
+                        \ using unrolled shift-and-add multiplication and
+                        \ keeping the overspill from the result
 
  LDA S                  \ Set A = S
 
@@ -3414,13 +3433,22 @@ ORG CODE%
  ROR A                  \           = ((S R) * 104 / 256) / 16
  LSR U                  \           = (S R) * 6.5 / 256
  ROR A                  \
- LSR U                  \ The maximum altitude that the altimeter can show is
- ROR A                  \ 10,000 feet (after which it just wraps around), so the
- LSR U                  \ final result of all these calculations is that the
- ROR A                  \ altitude in (S R) is reduced from a range of 0 to
-                        \ 10,000 to a range of 0 to 254, as:
+ LSR U
+ ROR A
+ LSR U
+ ROR A
+ 
+                        \ So by now, A is in the range 0 to 254 - here's why:
+                        \
+                        \ The maximum altitude that the altimeter can show is
+                        \ 10,000 feet (after which it just wraps around), so the
+                        \ final result of all these calculations is that the
+                        \ altitude in (S R) has been reduced from a range of 0
+                        \ to 10,000 to a range of 0 to 254 in (U A), as:
                         \
                         \   10000 * 6.5 / 256 = 254
+                        \
+                        \ and that value is in A alone, as (U A) < 255, so U = 0
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
                         \ the indicator on-screen, returning from the subroutine
@@ -3635,13 +3663,13 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Calculations for the turn indicator (indicator 5), the bottom part
-\             of the slip and turn indicator
+\             of the slip-and-turn indicator
 \
 \ ------------------------------------------------------------------------------
 \
 \ This section takes the turn rate from (TurnHi TurnLo) and reduces it to the
 \ range -19 to +19, before passing it to the DrawIndicatorHand to update the
-\ bottom part of the on-screen slip and turn indicator.
+\ bottom part of the on-screen slip-and-turn indicator.
 \
 \ ******************************************************************************
 
@@ -3752,11 +3780,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Calculations for the slip indicator (indicator 6), the top part of
-\             the slip and turn indicator
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\             the slip-and-turn indicator
 \
 \ ******************************************************************************
 
@@ -3764,7 +3788,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 6
 
- LDA L0C9C
+ LDA Slip               \ Set A = Slip
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
                         \ the indicator on-screen, returning from the subroutine
@@ -3899,17 +3923,23 @@ ORG CODE%
                         \ If we get here then the indicator number in X is 9
 
  LDX #1
- LDA #&80
+
+ LDA #128
  STA S
+
  LDA #&50
  STA W
+
  LDA L0C0D
+
  SEC
  JSR L22F7
 
  STA H
+
  LDY #&A3
  LDA #&0B
+
  BNE DrawIndicatorBar   \ Do line drawing
 
 \ ******************************************************************************
@@ -3950,12 +3980,14 @@ ORG CODE%
  STA Row27_Block20_7
 
  LDA L0C0E
+
  SEC
  JSR L22F7
  
  STA JoyXC              \ Set JoyXC = A
 
  LDA L0C0C
+
  CLC
  JSR L22F7
 
@@ -4020,7 +4052,8 @@ ORG CODE%
  LSR A
  STA H
 
- LDX #3                 \ Set X = 3
+ LDX #3                 \ Set X = 3 so the current value of the indicator gets
+                        \ stored in JoyYC+3 in DrawIndicatorBar
 
  LDY #243               \ Set Y = 243 to use as the y-coordinate of the top of
                         \ the vertical bar
@@ -4037,7 +4070,7 @@ ORG CODE%
 \       Name: DrawIndicatorBar
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Draw a vertical bar on indicator 9 or 11
+\    Summary: Draw a vertical bar on indicator 9 (rudder) or 11 (thrust)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4045,19 +4078,18 @@ ORG CODE%
 \
 \   A                   The height of the vertical bar in pixels
 \
+\   X                   The offset from JoyYC where we store the indicator
+\                       value, so it can be erased when the bar needs to move:
+\
+\                         * 1 = rudder indicator (indicator 9)
+\
+\                         * 3 = thrust indicator (indicator 11)
+\
 \   Y                   The y-coordinate of the top of the bar
 \
 \ ******************************************************************************
 
 .DrawIndicatorBar
-
-                        \ If we get here then the indicator is either:
-                        \
-                        \   * 9 (called from uind24 with X = 1)
-                        \
-                        \   * 11 (we fell through from above with X = 3)
-                        \
-                        \ so we draw a vertical bar of height A
 
  STA U                  \ Set U = A, so the line is A pixels tall
 
@@ -4066,18 +4098,19 @@ ORG CODE%
 
  STY JC                 \ Set JC = Y, the y-coordinate of the top of the bar
 
- LDA JoyYC,X            \ Set G = the X-th byte of JoyYC (for the erase)
- STA G
+ LDA JoyYC,X            \ Set G = the X-th byte of JoyYC, which contains the
+ STA G                  \ x-coordinate of the current bar, so we can erase it
 
- LDA H                  \ Set the X-th byte of JoyYC = H (for the draw)
- STA JoyYC,X
+ LDA H                  \ Store H in the X-th byte of JoyYC, so the next time we
+ STA JoyYC,X            \ call this routine, we can use this to erase the bar
+                        \ we are about to draw
 
- JSR EraseOrthoLine     \ Erase line
+ JSR EraseOrthoLine     \ Erase the current vertical bar at x-coordinate G
 
- LDA #0                 \ Set N = 0
- STA N
+ LDA #0                 \ Set N = 0 to switch the drawing mode to OR logic, so
+ STA N                  \ the bar gets drawn on-screen
 
- JSR DrawOrthoLine      \ Draw line
+ JSR DrawOrthoLine      \ Draw a new vertical bar at x-coordinate H
 
  RTS                    \ Return from the subroutine
 
@@ -4101,54 +4134,75 @@ ORG CODE%
 
 .DrawIndicatorHand
 
-                        \ X = 0: Compass: A = 0 to 73
-                        \ X = 1: Airspeed: A = 9 to 74
-                        \ X = 2: Altimeter hour hand: A = 0 to 254
-                        \ X = 3: Altimeter minute hand: A = 0 to 104
-                        \ X = 4: Vertical speed: A = -40 to +40
-                        \ X = 5: Turn: A = -19 to +19
-                        \ X = 6: Slip: 
+                        \ When we get here, the values of A are set as follows:
+                        \
+                        \   * X = 0: Compass                A =   0 to  73
+                        \   * X = 1: Airspeed               A =   9 to  74
+                        \   * X = 2: Altimeter small hand   A =   0 to 254
+                        \   * X = 3: Altimeter large hand   A =   0 to 104
+                        \   * X = 4: Vertical speed         A = -40 to  40
+                        \   * X = 5: Turn                   A = -19 to  19
+                        \   * X = 6: Slip                   A =  ?? to  ??
 
  CLC                    \ Set A = A + the X-th byte of IndicatorBase
- ADC IndicatorBase,X
+ ADC IndicatorBase,X    \
+                        \ This adds the relevant indicator's base value from the
+                        \ IndicatorBase table to give the following:
+                        \
+                        \   * Compass                 +0    A =  0 to  73
+                        \   * Airspeed               +48    A = 57 to 122
+                        \   * Altimeter small hand    +0    A =  0 to 254
+                        \   * Altimeter large hand    +0    A =  0 to 104
+                        \   * Vertical speed         +67    A = 27 to 107
+                        \   * Turn                   +53    A = 34 to  72
+                        \   * Slip                  +106    A = ?? to  ??
 
-                        \ X = 0: Compass +0: A = 0 to 73
-                        \ X = 1: Airspeed +48: A = 57 to 122
-                        \ X = 2: Altimeter hour hand +0: A = 0 to 254
-                        \ X = 3: Altimeter minute hand +0: A = 0 to 104
-                        \ X = 4: Vertical speed +67: A = 27 to 107
-                        \ X = 5: Turn +53: A = 34 to 72
-                        \ X = 6: Slip +106: 
+ CMP IndicatorMin,X     \ If A >= the X-th byte of IndicatorMin, jump to dinh1
+ BCS dinh1              \ to skip the following
 
- CMP IndicatorMin,X     \ If A < the X-th byte of IndicatorMin, set A to it
- BCS L20AB
+ LDA IndicatorMin,X     \ Set A to the X-th byte of IndicatorMin, so A is at
+                        \ least the relevant value in IndicatorMin
 
- LDA IndicatorMin,X
- BCC L20B3
+ BCC dinh2              \ Jump to dinh2 to skip the following, as we don't need
+                        \ to check the maximum limit (this BCC is effectively a
+                        \ JMP as we passed through the BCS above)
 
-.L20AB
+.dinh1
 
                         \ If we get here then A >= the X-th byte of IndicatorMin
 
- CMP IndicatorMax,X     \ If A >= the X-th byte of IndicatorMax, set A to it
- BCC L20B3
+ CMP IndicatorMax,X     \ If A >= the X-th byte of IndicatorMax, jump to dinh2
+ BCC dinh2              \ to skip the following
 
- LDA IndicatorMax,X
+ LDA IndicatorMax,X     \ Set A to the X-th byte of IndicatorMax, so A is no
+                        \ more than the relevant value in IndicatorMax
 
-.L20B3
+.dinh2
 
- STA H
+                        \ A is now clipped to this indicator's range as given in
+                        \ the IndicatorMin and IndicatorMax tables, so the final
+                        \ ranges are:
+                        \
+                        \   * Compass                 +0    A =  0 to 255
+                        \   * Airspeed               +48    A = 57 to 122
+                        \   * Altimeter small hand    +0    A =  0 to 255
+                        \   * Altimeter large hand    +0    A =  0 to 255
+                        \   * Vertical speed         +67    A = 30 to 104
+                        \   * Turn                   +53    A = 33 to  72
+                        \   * Slip                  +106    A = 91 to 120
 
- JSR L216E
+ STA H                  \ Store the clipped indicator value in H
+
+ JSR L216E              \ ??? Calculate hand coordinates, populate G, W, R etc.
 
                         \ Fall through into DrawIndicatorLine to draw the hand
-                        \ on the indicator
+                        \ on the indicator for value H
 
 \ ******************************************************************************
 \
 \       Name: DrawIndicatorLine
 \       Type: Subroutine
-\   Category: 
+\   Category: Dashboard
 \    Summary: Draw a line on indicator 0 to 7, i.e. a dial hand or artificial
 \             horizon
 \
@@ -4156,7 +4210,7 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   A                   The value to show on the indicator
+\   ???                 The value to show on the indicator as a dial hand
 \
 \   X                   The indicator number (0-7)
 \
@@ -4166,70 +4220,89 @@ ORG CODE%
 
 .DrawIndicatorLine
 
-                        \ Called for X = 7, fall through for X = 0-6
-
  LDA L4FAA,X            \ Dial centre?
  STA I
+
  LDA L4FB2,X
  STA J
 
- LDA L4FD2,X
+ LDA L4FD2,X            \ Values for existing hand
  STA T
+
  LDA L4FDA,X
  STA U
 
  LDA L4FE2,X
  STA V
 
- LDA #&80
+ LDA #128
  STA N
+
  JSR DrawLine           \ Erase dial hand
 
  LDX WW
  CPX #7
- BNE L2102
+ BNE dinl1
 
- LDA #&FF
+ LDA #&FF               \ Indicator 7
+
  LDY #2
 
-.L20E2
+.dinlL1
 
  STA Row23_Block13_2,Y
- LDA #&44
- DEY
- BPL L20E2
 
- LDA #&33
+ LDA #&44
+
+ DEY
+
+ BPL dinlL1
+
+ LDA #%00110011
  STA Row23_Block12_4
- LDA #&88
+
+ LDA #%10001000
  STA Row23_Block14_4
+
  LDA S
  STA I
+
  STA L4FAA,X
+
  LDA H
  STA L4FB2,X
- BNE L210A
 
-.L2102
+ BNE dinl2
 
- LDA L4FAA,X
+.dinl1
+
+ LDA L4FAA,X            \ Indicators 0-6
  STA I
+
  LDA L4FB2,X
 
-.L210A
+.dinl2
 
  STA J
+
  LDA W
  STA T
+
  STA L4FD2,X
+
  LDA G
  STA U
+
  STA L4FDA,X
+
  LDA R
  STA V
+
  STA L4FE2,X
+
  LDA #0
  STA N
+
  JSR DrawLine           \ Draw new hand
 
  RTS
@@ -4328,7 +4401,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The value to show on the indicator as a dial hand
 \
 \ ******************************************************************************
 
@@ -4767,11 +4842,17 @@ ORG CODE%
 \
 \   U                   Vertical width/length of line
 \
+\   N                   Drawing mode:
+\
+\                         * 0 = Draw (using OR logic)
+\
+\                         * 128 = Erase (using EOR logic)
+\
 \ Other entry points:
 \
 \   EraseOrthoLine      Use the value of G instead of H (so the coordinate is
-\                       G + W) and use EOR Logic to draw the line (which will
-\                       erase it if it is already on-screen)
+\                       G + W) and always use EOR Logic to draw the line (which
+\                       will erase it if it is already on-screen)
 \
 \ ******************************************************************************
 
@@ -4943,7 +5024,7 @@ ORG CODE%
  JSR UpdateIndicator    \ Update indicator X (7 to 11)
 
  LDA #%01110111         \ Redraw the small horizontal line in the centre of the
- STA Row28_Block26_5    \ slip and turn indicator ("L R")
+ STA Row28_Block26_5    \ slip-and-turn indicator
 
  RTS                    \ Return from the subroutine
 
@@ -5858,7 +5939,7 @@ ORG CODE%
 
  JSR IndicatorT         \ Update the Theme indicator
 
- LDX #11                \ ???
+ LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
 
  LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
@@ -12259,18 +12340,20 @@ ORG CODE%
 .JoyYC
 
  EQUB &00               \ Temporary storage, typically used for storing
-                        \ x-coordinates when drawing indicators
+                        \ y-coordinates when drawing indicators
  
  EQUB &00               \ The y-coordinate of the top of the current vertical
-                        \ bar for indicator 9, so we can erase it
+                        \ bar for indicator 9 (rudder), so we can erase it when
+                        \ required
 
 .JoyXC
 
  EQUB &00               \ Temporary storage, typically used for storing
-                        \ y-coordinates when drawing indicators
+                        \ x-coordinates when drawing indicators
 
  EQUB &00               \ The y-coordinate of the top of the current vertical
-                        \ bar for indicator 11, so we can erase it
+                        \ bar for indicator 11 (thrust), so we can erase it when
+                        \ requird
 
  EQUB &4D, &0D, &0C, &08, &15, &20
  EQUB &20, &20, &20, &20, &20, &4C
@@ -12404,7 +12487,7 @@ ORG CODE%
  ASL A
  LDA #0
  SBC L4AFC
- STA L0C9C
+ STA Slip
  LDA L
  BNE L5099
 
@@ -12533,7 +12616,7 @@ ORG CODE%
  LSR A
  STA P
  LDX #0
- STX L0C9C
+ STX Slip
  TXA
  ROR A
  STA V
