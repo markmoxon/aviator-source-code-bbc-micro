@@ -106,7 +106,7 @@ TurnLo = &0C01          \ Turn rate (low byte)
                         \
                         \ Stored as 35 * the turn rate in 180 degrees per minute
                         \ 
-                        \ Related to indicator X = 5
+                        \ Shown on indicator 5
 
 L0C02 = &0C02
 L0C03 = &0C03
@@ -120,26 +120,36 @@ AirspeedLo = &0C05      \ Air speed (low byte)
                         \ so 100 mph =   1 * 2368 = 2368 = (9 64)
                         \ so 400 mph =   4 * 2368 = 9472 = (37 00)
                         \
-                        \ Related to indicator X = 1
+                        \ Shown on indicator 1
 
 L0C06 = &0C06
 L0C08 = &0C08
 L0C09 = &0C09
 
-L0C0C = &0C0C           \ Joystick y position, see indicator X = 8 or 10
+JoystickY = &0C0C       \ Joystick y-coordinate
+                        \
+                        \ Shown on indicator 8 or 10
 
-L0C0D = &0C0D           \ Related to indicator X = 9
+Rudder = &0C0D          \ Rudder position
+                        \
+                        \ Shown on indicator 9
 
-L0C0E = &0C0E           \ Joystick x position, see indicator X = 8 or 10
+JoystickX = &0C0E       \ Joystick x-coordinate
+                        \
+                        \ Shown on indicator 8 or 10
 
-L0C0F = &0C0F           \ Related to indicator X = 11
+ThrustLo = &0C0F        \ Thrust (low byte)
+                        \
+                        \ Thrust is in the range 0 to 1280
+                        \
+                        \ Shown on indicator 11
 L0C10 = &0C10
 
 TurnHi = &0C11          \ Turn rate (low byte)
                         \
                         \ Stored as 35 * the turn rate in 180 degrees per minute
                         \
-                        \ Related to indicator X = 5
+                        \ Shown on indicator 5
 
 L0C12 = &0C12
 L0C13 = &0C13
@@ -153,12 +163,18 @@ AirspeedHi = &0C15      \ Air speed (high byte)
                         \ so 100 mph =   1 * 2368 = 2368 = (9 64)
                         \ so 400 mph =   4 * 2368 = 9472 = (37 00)
                         \
-                        \ Related to indicator X = 1
+                        \ Shown on indicator 1
 
 L0C16 = &0C16
 L0C18 = &0C18
 L0C19 = &0C19
-L0C1F = &0C1F           \ Related to indicator X = 11
+
+ThrustHi = &0C1F        \ Thrust (high byte)
+                        \
+                        \ Thrust is in the range 0 to 1280
+                        \
+                        \ Shown on indicator 11
+
 L0C20 = &0C20
 L0C26 = &0C26
 L0C2A = &0C2A
@@ -209,7 +225,7 @@ VerticalSpeedLo = &0C8A \ Vertical speed
                         \ 1000 feet/minute is stored as 128/425 * 1000 = 301
                         \ 4000 feet/minute is stored as 128/425 * 4000 = 1205
                         \
-                        \ Related to indicator X = 4
+                        \ Shown on indicator 4
 
 L0C8C = &0C8C
 L0C90 = &0C90
@@ -221,11 +237,11 @@ L0C99 = &0C99
 
 VerticalSpeedHi = &0C9A \ Vertical speed
                         \
-                        \ Related to indicator X = 4
+                        \ Shown on indicator 4
 
 Slip = &0C9C            \ Slip rate
                         \
-                        \ Related to indicator X = 6
+                        \ Shown on indicator 6
 
 KeyLoggerLow = &0CA0    \ Key logger (low value)
                         \
@@ -3811,20 +3827,28 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 7
 
- LDY #0
- STY K
- STY R
+ LDY #0                 \ Set Y = 0
+
+ STY K                  \ Set K = 0
+
+ STY R                  \ Set R = 0
+
  JSR L227A
 
  CLC
  STA S
- LDY #3
+
+ LDY #3                 \ Set Y = 3
+
  JSR L227A
 
  STA H
+
  LDY #0
- LDA #1
+
+ LDA #1                 \ Set K = 1
  STA K
+
  JSR L227A
 
  SEC
@@ -3843,7 +3867,9 @@ ORG CODE%
  CLC
  ADC #1
  STA W
+
  LDY #3
+
  JSR L227A
 
  SEC
@@ -3914,7 +3940,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the rudder position from Rudder and reduces it to the
+\ range -8 to +8, before passing it to DrawIndicatorBar to update the rudder
+\ indicator.
 \
 \ ******************************************************************************
 
@@ -3922,25 +3950,39 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 9
 
- LDX #1
+ LDX #1                 \ Set X = 1 so the current value of the indicator gets
+                        \ stored in JoyYC+1 in DrawIndicatorBar
 
- LDA #128
- STA S
+ LDA #128               \ Set S = 128, to denote that when we fall through into
+ STA S                  \ DrawIndicatorBar below, JC is the y-coordinate, so
+                        \ we draw the indicator's vertical bar from point
+                        \ (H + W, JC)
 
- LDA #&50
- STA W
+ LDA #80                \ Set W = 80 to use as the centre y-coordinate for the
+ STA W                  \ rudder indicator (i.e. the centre bar)
 
- LDA L0C0D
+ LDA Rudder             \ Set A = Rudder
 
- SEC
- JSR L22F7
+ SEC                    \ Set the C flag so the following call to ScaleSigned
+                        \ divides the rudder value by 16
 
- STA H
+ JSR ScaleSigned        \ Scale the value in A down by a factor of 16, retaining
+                        \ the sign and being sensitive to small values
 
- LDY #&A3
- LDA #&0B
+ STA H                  \ Store the scaled value in H, which has now been
+                        \ reduced from the range -128 to 127 down to -8 to +8,
+                        \ to use as the x-coordinate offset from the centre of
+                        \ the indicator in DrawIndicatorBar
 
- BNE DrawIndicatorBar   \ Do line drawing
+ LDY #163               \ Set Y = 163 to use as the y-coordinate of the top of
+                        \ the vertical bar
+
+ LDA #11                \ Set A = 11 to set the height of the vertical bar at 11
+                        \ pixels
+
+ BNE DrawIndicatorBar   \ Jump to DrawIndicatorBar to update indicator 9 by
+                        \ drawing a vertical bar of height 11 pixels with
+                        \ the top at (80 + H, 163)
 
 \ ******************************************************************************
 \
@@ -3951,7 +3993,14 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the joystick position from (JoystickX, JoystickY) and
+\ reduces it to -8 to +8 (for the x-coordinate) and the -32 to +32 (for the
+\ y-coordinate), before passing it to the DrawJoystickCross to update the cross
+\ in the joystick position display. The x-coordinate is reduced more because the
+\ joystick position display is taller than it is wide.
+\
+\ Note that this indicator has two IDs, 8 and 10, so that it gets updated twice
+\ as often by UpdateDashboard.
 \
 \ ******************************************************************************
 
@@ -3961,16 +4010,16 @@ ORG CODE%
                         \ 10
 
  LDA #128               \ Redraw the existing cross on the joystick position
- JSR DrawJoystickCross  \ display to remove it
+ JSR DrawJoystickCross  \ display using EOR logic, which removes it
 
- LDA #%00100010         \ Redraw the joystick position display's x-axis
- STA Row24_Block18_7
+ LDA #%00100010         \ Redraw the joystick position display's x-axis, in case
+ STA Row24_Block18_7    \ the old cross was overwriting the axis
  STA Row24_Block21_7
  LDA #%01000100
  STA Row24_Block19_7
 
- LDA #%10011001         \ Redraw the joystick position display's y-axis
- STA Row24_Block20_7
+ LDA #%10011001         \ Redraw the joystick position display's y-axis, in case
+ STA Row24_Block20_7    \ the old cross was overwriting the axis
  LDA #%10001000
  STA Row21_Block20_7
  STA Row22_Block20_7
@@ -3979,22 +4028,38 @@ ORG CODE%
  STA Row26_Block20_7
  STA Row27_Block20_7
 
- LDA L0C0E
+ LDA JoystickX          \ Set A = JoystickX, the x-coordinate of the joystick
 
- SEC
- JSR L22F7
+ SEC                    \ Set the C flag so the following call to ScaleSigned
+                        \ divides the joystick x-coordinate by 16 
+
+ JSR ScaleSigned        \ Scale the value in A down by a factor of 16, retaining
+                        \ the sign and being sensitive to small values
  
- STA JoyXC              \ Set JoyXC = A
+ STA JoyXC              \ Store the scaled value of A in JoyXC, so we can pass
+                        \ it to DrawJoystickCross below to draw the new cross,
+                        \ but also so we can erase this cross when we need to
+                        \ update the indicator in the future
 
- LDA L0C0C
+ LDA JoystickY          \ Set A = JoystickY, the y-coordinate of the joystick
 
- CLC
- JSR L22F7
+ CLC                    \ Clear the C flag so the following call to ScaleSigned
+                        \ divides the joystick y-coordinate by 4
 
- EOR #&FF               \ Set JoyYC = -A
- CLC
- ADC #1
- STA JoyYC
+ JSR ScaleSigned        \ Scale the value in A down by a factor of 4, retaining
+                        \ the sign and being sensitive to small values
+
+ EOR #&FF               \ Set A = -A using two's complement
+ CLC                    \
+ ADC #1                 \ This flips the sign of the y-coordinate, because the
+                        \ joystick value will be high when we pull up, but this
+                        \ corresponds to moving the stick down, which should be
+                        \ shown lower down the indicator
+
+ STA JoyYC              \ Store the scaled value of A in JoyYC, so we can pass
+                        \ it to DrawJoystickCross below to draw the new cross,
+                        \ but also so we can erase this cross when we need to
+                        \ update the indicator in the future
 
  LDA #0                 \ Draw a new cross on the joystick position display
  JSR DrawJoystickCross
@@ -4010,7 +4075,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This section takes the thrust from (ThrustHi ThrustLo) and reduces it to the
+\ range 0 to 60, before falling througn into DrawIndicatorBar to update the
+\ rudder indicator.
 \
 \ ******************************************************************************
 
@@ -4023,20 +4090,21 @@ ORG CODE%
                         \ we draw the indicator's vertical bar from point
                         \ (H + W, JC)
 
- LDA #125               \ Set W = 125
- STA W
+ LDA #125               \ Set W = 125 to use as the centre y-coordinate for the
+ STA W                  \ thrust indicator (i.e. the left end of the bar, as we
+                        \ are only showing positive thrust values)
 
- LDA L0C1F              \ Set (R A) = (L0C1F L0C0F)
- STA R
- LDA L0C0F
+ LDA ThrustHi           \ Set (R A) = (ThrustHi ThrustLo)
+ STA R                  \           = Thrust
+ LDA ThrustLo
 
  LDX #3                 \ Set X = 3 to act as a shift counter in the following
-                        \ loop
+                        \ loop, where we right shift (R A) four times
 
 .uind27
 
  LSR R                  \ Set (R A) = (R A) / 2
- ROR A
+ ROR A                  \           = Thrust / 2
 
  DEX                    \ Decrement the shift counter
 
@@ -4044,13 +4112,23 @@ ORG CODE%
                         \ we now have:
                         \
                         \   (R A) = (R A) / 8
+                        \         = Thrust / 8
+                        \
+                        \ We now ignore the high byte in R, so presumably it is
+                        \ zero
 
- STA R                  \ Set H = (A / 2 + A) / 4
- LSR A
- ADC R
- LSR A
- LSR A
- STA H
+ STA R                  \ Set A = A + A / 2
+ LSR A                  \       = 1.5 * A
+ ADC R                  \       = 1.5 * (Thrust / 8), rounded up
+                        \       = Thrust * 3 / 16
+
+ LSR A                  \ Set A = A / 4
+ LSR A                  \       = Thrust * 3 / 64
+
+ STA H                  \ Store the scaled value in H, which has now been
+                        \ reduced from the range 0 to 1280 down to 0 to 60,
+                        \ to use as the x-coordinate offset from the left end of
+                        \ the indicator in DrawIndicatorBar
 
  LDX #3                 \ Set X = 3 so the current value of the indicator gets
                         \ stored in JoyYC+3 in DrawIndicatorBar
@@ -4078,12 +4156,23 @@ ORG CODE%
 \
 \   A                   The height of the vertical bar in pixels
 \
+\   S                   Defines the starting coordinate for the line:
+\
+\                         * 0 = (JC, H + W)
+\
+\                         * 128 = (H + W, JC)
+\
+\                       As all the vertical bar indicators are horizontal in
+\                       Aviator, only the second option is used
+\
 \   X                   The offset from JoyYC where we store the indicator
 \                       value, so it can be erased when the bar needs to move:
 \
 \                         * 1 = rudder indicator (indicator 9)
 \
 \                         * 3 = thrust indicator (indicator 11)
+\
+\   W                   The x-coordinate of the centre point of the indicator
 \
 \   Y                   The y-coordinate of the top of the bar
 \
@@ -4735,7 +4824,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   K                   ???
+\
+\   Y                   ???
 \
 \ ******************************************************************************
 
@@ -4908,57 +5001,119 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L22F7
+\       Name: ScaleSigned
 \       Type: Subroutine
-\   Category: 
-\    Summary: Calculations for indicators 8, 9 and 10
+\   Category: Dashboard
+\    Summary: Scale an indicator value by 4 or 16, retaining the sign and adding
+\             sensitivity for smaller values
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine is used to scale the values for the following indicators:
+\
+\   * The joystick position display (indicator 8 or 10), where the x-coordinate
+\     is scaled by 16 and the y-coordinate by 4, as the display is taller than
+\     it is wide
+\
+\   * Rudder (indicator 9), which is divided by 16
+\
+\ When scaling down by a factor of 16, some smaller values scale to 1 instead of
+\ 0 (specifically, 4 to 7), and in all cases the final scaling is rounded up, so
+\ this routine shows small deviations on the rudder and joystick indicators that
+\ otherwise wouldn't register.
+\
+\ Arguments:
+\
+\   A                   The value to scale
+\
+\   C flag              Determines the scale factor:
+\
+\                         * C flag set = divide A by 16
+\
+\                         * C flag clear = divide A by 4
 \
 \ ******************************************************************************
 
-.L22F7
+.ScaleSigned
 
- PHP
- BPL L22FF
+ PHP                    \ Store the flags on the stack, so we can check later
+                        \ what their values were on entry
 
- EOR #&FF
+ BPL scsi1              \ If A is positive, jump to scsi1 to skip the following
+                        \ three instructions
+
+ EOR #&FF               \ Set A = -A using two's complement, so A is positive
  CLC
  ADC #1
 
-.L22FF
+.scsi1
 
- LSR A
- PLP
- PHP
- BCC L230C
+                        \ By this point, A = |A|
 
- LSR A
- CMP #1
- BNE L230B
+ LSR A                  \ Set A = |A| / 2
 
- LDA #2
+ PLP                    \ Restore the flags from the stack, leaving them on the
+ PHP                    \ stack for later
 
-.L230B
+ BCC scsi3              \ If the C flag is clear, jump to scsi3 so we only
+                        \ divide the original value by 4
 
- LSR A
+                        \ If we get here then the C flag was set on entry, so we
+                        \ want to divide A by 16 using four shifts in total
 
-.L230C
+ LSR A                  \ Set A = A / 2
+                        \       = |A| / 4
 
- LSR A
- ADC #0
- PLP
- BPL L2317
+ CMP #1                 \ If A <> 1, skip the following instruction
+ BNE scsi2
 
- EOR #&FF
- CLC
- ADC #1
+ LDA #2                 \ A = 1 (so the original |A| was in the range 4 to 7),
+                        \ so set A = 2, which will give us an end result of 1
+                        \
+                        \ In other words, this scales smaller values to 1 that
+                        \ would otherwise scale to 0, like this:
+                        \
+                        \   * 0 to 3 scale down to 0
+                        \   * 4 to 23 scale down to 1
+                        \   * 24 to 39 scale down to 2
+                        \   * 40 to 55 scale down to 3
+                        \
+                        \ and so on
 
-.L2317
+.scsi2
 
- RTS
+ LSR A                  \ Set A = A / 2
+                        \       = |A| / 8
+
+.scsi3
+
+ LSR A                  \ Set A = A / 2
+                        \
+                        \ so this is:
+                        \
+                        \   * |A| / 16 if the C flag was set on entry
+                        \   * |A| / 4  if the C flag was clear on entry
+
+ ADC #0                 \ Increment A if the value of A before the LSR was odd
+                        \ (so the result of the last division gets rounded up)
+                        \
+                        \ This works because the LSR will set the C flag if bit
+                        \ 0 of A was set before the shift, so A gets bumped up
+                        \ by 1 by the ADC
+
+ PLP                    \ Restore the flags from the stack
+
+ BPL scsi4              \ If the N flag is clear, then the result already has
+                        \ the correct sign (positive), so jump to scsi4 to
+                        \ return from the subroutine
+
+ EOR #&FF               \ Set A = -A using two's complement, so A is now
+ CLC                    \ negative and the sign matches the original value of A
+ ADC #1                 \ on entry into the subroutine
+
+.scsi4
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -5056,7 +5211,7 @@ ORG CODE%
 
  LDA KeyLoggerHigh,X
  STA P
- ADC L0C0C,X
+ ADC JoystickY,X
 
  LDY L4F5C,X
  BEQ L235C
@@ -5100,7 +5255,7 @@ ORG CODE%
 
 .L237F
 
- STA L0C0C,X
+ STA JoystickY,X
 
 .L2382
 
@@ -5113,10 +5268,10 @@ ORG CODE%
  LDA KeyLoggerLow+3     \ Throttle key
  BEQ L23B2
 
- ADC L0C0F
+ ADC ThrustLo
  TAX
  LDA KeyLoggerHigh+3
- ADC L0C1F
+ ADC ThrustHi
  TAY
  BMI L23A3
 
@@ -5136,8 +5291,8 @@ ORG CODE%
 
 .L23A7
 
- STX L0C0F
- STY L0C1F
+ STX ThrustLo
+ STY ThrustHi
 
  LDX #11
  JSR UpdateIndicator
@@ -10394,7 +10549,7 @@ ORG CODE%
 
  LDX #1
  JSR L25CA
- STA L0C0E
+ STA JoystickX
 
  LDX #2
  JSR $25CA
@@ -11735,9 +11890,9 @@ ORG CODE%
  LDA L0CE9
  BEQ L4E0F
 
- LDA L0C1F
+ LDA ThrustHi
  STA K
- LDA L0C0F
+ LDA ThrustLo
  LDY #3
 
 .L4DD1
@@ -12508,7 +12663,7 @@ ORG CODE%
 
 .L50AB
 
- LDY L0C0D
+ LDY Rudder
  BPL L50B1
 
  DEX
@@ -12680,9 +12835,9 @@ ORG CODE%
  LDA L0CE9
  BEQ L51D6
 
- LDA L0C1F
+ LDA ThrustHi
  STA R
- LDA L0C0F
+ LDA ThrustLo
  LDX #3
 
 .L51AD
@@ -13435,7 +13590,7 @@ ORG CODE%
 
 .L5502
 
- LDA L0C0C,X
+ LDA JoystickY,X
  BEQ L552F
 
  LDY KeyLoggerLow,X
@@ -13477,11 +13632,11 @@ ORG CODE%
 
 .L552C
 
- STA L0C0C,X
+ STA JoystickY,X
 
 .L552F
 
- LDA L0C0C,X
+ LDA JoystickY,X
  BPL L5539
 
  EOR #&FF
@@ -13496,7 +13651,7 @@ ORG CODE%
  JSR L546E
 
  LDX VV
- LDY L0C0C,X
+ LDY JoystickY,X
  BPL L554F
 
  SEC
@@ -13623,9 +13778,9 @@ ORG CODE%
  BPL L5603
 
  STA W
- LDY L0C1F
+ LDY ThrustHi
  STY R
- LDA L0C0F
+ LDA ThrustLo
  LDX L
  BEQ L562B
 
