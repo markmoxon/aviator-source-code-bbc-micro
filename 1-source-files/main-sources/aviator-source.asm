@@ -713,11 +713,11 @@ ORG CODE%
  LSR A
  TAY
  CLC
- LDA L4F00,X
- ADC L4800,Y
+ LDA XLookupLo,X
+ ADC YLookupLo,Y
  STA P
- LDA L4F28,X
- ADC L4820,Y
+ LDA XLookupHi,X
+ ADC YLookupHi,Y
  STA P+1
  LDA U
  CMP T
@@ -3833,14 +3833,14 @@ ORG CODE%
 
  STY R                  \ Set R = 0
 
- JSR L227A
+ JSR L227A              \ With K = 0, Y = 0
 
  CLC
  STA S
 
  LDY #3                 \ Set Y = 3
 
- JSR L227A
+ JSR L227A              \ With K = 0, Y = 3
 
  STA H
 
@@ -3849,13 +3849,14 @@ ORG CODE%
  LDA #1                 \ Set K = 1
  STA K
 
- JSR L227A
+ JSR L227A              \ With K = 1, Y = 0
 
  SEC
  SBC S
  BPL uind21
 
  STA T
+
  LDA #&80
  STA R
  LDA #0
@@ -3870,7 +3871,7 @@ ORG CODE%
 
  LDY #3
 
- JSR L227A
+ JSR L227A              \ With K = 1, Y = 3
 
  SEC
  SBC H
@@ -3889,10 +3890,12 @@ ORG CODE%
  CLC
  ADC #1
  STA G
+
  LDA S
  CLC
  ADC #&35
  STA S
+
  LDA H
  CLC
  ADC #&E3
@@ -4282,7 +4285,7 @@ ORG CODE%
 
  STA H                  \ Store the clipped indicator value in H
 
- JSR L216E              \ ??? Calculate hand coordinates, populate G, W, R etc.
+ JSR L216E              \ ??? Calculate hand coordinates, populate S, H, W, G, R
 
                         \ Fall through into DrawIndicatorLine to draw the hand
                         \ on the indicator for value H
@@ -4299,7 +4302,7 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   ???                 The value to show on the indicator as a dial hand
+\   S, H, W, G, R       The line vector values for drawing the hand
 \
 \   X                   The indicator number (0-7)
 \
@@ -4309,31 +4312,35 @@ ORG CODE%
 
 .DrawIndicatorLine
 
- LDA L4FAA,X            \ Dial centre?
+ LDA IndicatorLineI,X   \ Set I = x-coordinate of starting point of current hand
  STA I
 
- LDA L4FB2,X
+ LDA IndicatorLineJ,X   \ Set J = y-coordinate of starting point of current hand
  STA J
 
- LDA L4FD2,X            \ Values for existing hand
+ LDA IndicatorLineT,X
  STA T
 
- LDA L4FDA,X
+ LDA IndicatorLineU,X
  STA U
 
- LDA L4FE2,X
+ LDA IndicatorLineV,X
  STA V
 
  LDA #128
  STA N
 
- JSR DrawLine           \ Erase dial hand
+ JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
+                        \ direction V
 
  LDX WW
  CPX #7
  BNE dinl1
 
- LDA #&FF               \ Indicator 7
+                        \ If we get here this is the artificial horizon
+                        \ (indicator 7)
+
+ LDA #&FF
 
  LDY #2
 
@@ -4356,19 +4363,19 @@ ORG CODE%
  LDA S
  STA I
 
- STA L4FAA,X
+ STA IndicatorLineI,X
 
  LDA H
- STA L4FB2,X
+ STA IndicatorLineJ,X
 
  BNE dinl2
 
 .dinl1
 
- LDA L4FAA,X            \ Indicators 0-6
+ LDA IndicatorLineI,X            \ Indicators 0-6
  STA I
 
- LDA L4FB2,X
+ LDA IndicatorLineJ,X
 
 .dinl2
 
@@ -4377,22 +4384,23 @@ ORG CODE%
  LDA W
  STA T
 
- STA L4FD2,X
+ STA IndicatorLineT,X
 
  LDA G
  STA U
 
- STA L4FDA,X
+ STA IndicatorLineU,X
 
  LDA R
  STA V
 
- STA L4FE2,X
+ STA IndicatorLineV,X
 
  LDA #0
  STA N
 
- JSR DrawLine           \ Draw new hand
+ JSR DrawVectorLine     \ Draw a line from (I, J) as a vector (T, U) with
+                        \ direction V
 
  RTS
 
@@ -4494,6 +4502,10 @@ ORG CODE%
 \
 \   A                   The value to show on the indicator as a dial hand
 \
+\ Returns:
+\
+\   S, H, W, G, R       The line vector values for drawing the hand
+\
 \ ******************************************************************************
 
 .L216E
@@ -4578,18 +4590,22 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawLine (Part 1 of 3)
+\       Name: DrawVectorLine (Part 1 of 3)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line
 \
 \ ------------------------------------------------------------------------------
 \
+\ Draw/erase a line from (I, J) as a vector (T, U) with direction V.
+\
 \ Arguments:
 \
 \   I                   Start point x-coordinate
 \
-\   J                   Start point y-coordinate
+\   J                   Start point y-coordinate, relative to the top of the
+\                       dashboard at screen y-coordinate 160 (so this will be a
+\                       negative value when updating the dashboard)
 \
 \   N                   Drawing mode:
 \
@@ -4597,18 +4613,21 @@ ORG CODE%
 \
 \                         * 128 = Erase (using EOR logic)
 \
-\   T                   ??? Delta y-coordinate for line
+\   T                   Magnitude of x-coordinate of line's vector |x-delta|
 \                       Horizontal width/length of line when V = 0
 \
-\   U                   ??? Delta x-coordinate for line
+\   U                   Magnitude of y-coordinate of line's vector |y-delta|
 \                       Vertical width/length of line when V = 0
 \
-\   V                   Bits 6 and 7 affect sign of x,y delta increments,
-\                       direction of drawing?
+\   V                   Direction of vector (T, U):
+\
+\                         * Bit 7 is the direction of the the x-delta
+\
+\                         * Bit 6 is the direction of the the y-delta
 \
 \ ******************************************************************************
 
-.DrawLine
+.DrawVectorLine
 
  LDY #3                 \ Set Y = 3 to use as a byte counter in the following
                         \ loop, so it writes four bytes
@@ -4662,7 +4681,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawLine (Part 2 of 3)
+\       Name: DrawVectorLine (Part 2 of 3)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: 
@@ -4718,7 +4737,7 @@ ORG CODE%
  CMP U
  BCC dlin8
 
- SBC U                  \ Set A = QQ + T - U
+ SBC U                  \ Set A = QQ + T - U (A is positive)
 
  BIT V                  \ If bit 7 of V is clear, jump to dlin7
  BPL dlin7
@@ -4749,7 +4768,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawLine (Part 3 of 3)
+\       Name: DrawVectorLine (Part 3 of 3)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: 
@@ -4761,48 +4780,64 @@ ORG CODE%
  LDA I                  \ Set X = I / 4
  LSR A                  \
  LSR A                  \ so X is the number of the character block containing
- TAX                    \ pixel (I, J)
+ TAX                    \ pixel (I, J), as each character block is 4 pixels wide
 
  LDA J                  \ Set Y = J / 8
  LSR A                  \
  LSR A                  \ so Y is the number of the character row containing
- LSR A                  \ pixel (I, J)
+ LSR A                  \ pixel (I, J), as each character row is 8 pixels high
  TAY
 
- LDA L4800,Y            \ Set P = Y-th byte of L4800 + X-th byte of L4F00
- CLC
- ADC L4F00,X
+ LDA YLookupLo,Y        \ Set P = Y-th byte of YLookupLo
+ CLC                    \         + X-th byte of XLookupLo
+ ADC XLookupLo,X        \       = LO(screen address) + LO(X * 8)
  STA P
 
- LDA L4820,Y            \ Set P+1 = Y-th byte of L4820 + X-th byte of L4F28
- ADC L4F28,X
- STA P+1
+ LDA YLookupHi,Y        \ Set P+1 = Y-th byte of YLookupHi
+ ADC XLookupHi,X        \           + X-th byte of XLookupHi
+ STA P+1                \         = HI(screen address) + HI(X * 8)
+
+                        \ So P(1 0) is the screen address of (I, J) pixel, out
+                        \ by 8 bytes for each row above or below the top of the
+                        \ dashboard
 
  LDA #159               \ Set Y = 159 - J
- SEC
- SBC J
- TAY
+ SEC                    \
+ SBC J                  \ so Y is the number of pixels that (I, J) is above
+ TAY                    \ (+ve) or below (-ve) the top of the dashboard
 
  LDA I                  \ Set X = bits 0 and 1 of I
- AND #%00000011
- TAX
+ AND #%00000011         \       = I mod 4
+ TAX                    \       = pixel number within the 4-pixel byte
 
- BIT N                  \ If N is negative, jump to dlin11 to skip the
- BMI dlin11             \ following three instructions
+ BIT N                  \ If bit 7 of N is set, jump to dlin11 to erase the line
+ BMI dlin11             \ with EOR logic instead of drawing it with OR logic
 
- LDA RR,X               \ Fetch the X-th byte of RR
+ LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
+                        \ the X-th pixel set to white
 
- ORA (P),Y              \ OR it with the Y-th byte of P(1 0)
+ ORA (P),Y              \ OR it with P(1 0) + Y, which is the screen address of
+                        \ pixel (I, J)
+                        \
+                        \ This will keep all pixels the same except the X-th
+                        \ pixel, which is set to white
 
  JMP dlin12             \ Jump to dlin12 to skip the following three
                         \ instructions
 
 .dlin11
 
- LDA RR,X               \ Fetch the X-th byte of RR and invert all its bits
- EOR #%11111111
+ LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
+                        \ the X-th pixel set to white
 
- AND (P),Y              \ AND it with the Y-th byte of P(1 0)
+ EOR #%11111111         \ Invert all the bits, so A is now a pixel byte that is
+                        \ all white except for the X-th pixel, which is black
+
+ AND (P),Y              \ AND it with P(1 0) + Y, which is the screen address of
+                        \ pixel (I, J)
+
+                        \ This will keep all pixels the same except the X-th
+                        \ pixel, which is set to black
 
 .dlin12
 
@@ -4826,87 +4861,102 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   K                   ???
+\   K                   0 or 1
 \
-\   Y                   ???
+\   Y                   0 or 3
+\
+\ 0, 0: T = L427B/4, If bit 0 of L423B = 1, Set T =-T
+\       U = L427D/4, If bit 0 of L423D = 0, set U = -U
+\       Return T + U / 8 = L427B + L427D / 4
 \
 \ ******************************************************************************
 
 .L227A
 
- LDA L427B,Y
- LSR A
- LSR A
- CPY #0
- BNE L2284
+ LDA L427B,Y            \ Set A = L427B (Y = 0) or L427E (Y = 3)
 
+ LSR A                  \ Set A = A / 4
+ LSR A
+
+ CPY #0                 \ If Y = 3, halve A again, so A = A / 8
+ BNE L2284
  LSR A
 
 .L2284
 
- STA T
- LDA L423B,Y
- EOR K
- AND #1
- BEQ L2296
+ STA T                  \ Set T = A, so T = A / 4 or A / 8
 
- LDA #0
+ LDA L423B,Y            \ Set A = L423B (Y = 0) or L423E (Y = 3)
+
+ EOR K                  \ If K = 1, flip bit 0 of A
+
+ AND #1                 \ If bit 0 of A is zero, jump to L2296 to skip the
+ BEQ L2296              \ following
+
+ LDA #0                 \ Set T = 0 - T
  SEC
  SBC T
  STA T
 
 .L2296
 
- LDA L427D,Y
- LSR A
- LSR A
- CPY #0
- BNE L22A0
+ LDA L427D,Y            \ Set A = L427D (Y = 0) or L427F (Y = 3)
 
+ LSR A                  \ Set A = A / 4
+ LSR A
+
+ CPY #0                 \ If Y = 3, halve A again, so A = A / 8
+ BNE L22A0
  LSR A
 
 .L22A0
 
- STA U
- LDA L423D,Y
- CPY #0
- BNE L22AB
+ STA U                  \ Set U = A, so U = A / 4 or A / 8
 
+ LDA L423D,Y            \ Set A = L423D (Y = 0) or L423F (Y = 3)
+
+ CPY #0                 \ If Y = 0, flip bit 0 of A
+ BNE L22AB
  EOR #1
 
 .L22AB
 
- AND #1
- BEQ L22B6
+ AND #1                 \ If bit 0 of A is zero, jump to L22B6 to skip the
+ BEQ L22B6              \ following
 
- LDA #0
+ LDA #0                 \ Set U = 0 - U
  SEC
  SBC U
  STA U
 
 .L22B6
 
- CLC
+ CLC                    \ A = T + U
  LDA T
  ADC U
+
  BMI L22C3
 
+ LSR A                  \ A = A / 8
  LSR A
  LSR A
- LSR A
- ADC #0
- RTS
+
+ ADC #0                 \ Round up the A/8 division
+
+ RTS                    \ Return from the subroutine
 
 .L22C3
 
- SEC
+ SEC                    \ A = A / 8 + with bits 5-7 set
  ROR A
  SEC
  ROR A
  SEC
  ROR A
- ADC #0
- RTS
+
+ ADC #0                 \ Round up the A/8 division
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4994,8 +5044,8 @@ ORG CODE%
  LDA #0                 \ Set V = 0 so the line is drawn in a positive direction
  STA V                  \ for both axes
 
- JSR DrawLine           \ Call DrawLine to draw a line from (I, J) and with
-                        \ dimensions T and U
+ JSR DrawVectorLine     \ Draw/erase a line from (I, J) as a vector (T, U) with
+                        \ direction V
 
  RTS                    \ Return from the subroutine
 
@@ -7580,7 +7630,8 @@ ORG CODE%
  LDA L2E9C
  JSR L2E2F
 
- JSR DrawLine
+ JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
+                        \ direction V
 
  LDX L0CE6
  BNE L2D66
@@ -7637,7 +7688,8 @@ ORG CODE%
  LDA Compass
  JSR L2E2F
 
- JSR DrawLine
+ JSR DrawVectorLine     \ Draw a line from (I, J) as a vector (T, U) with
+                        \ direction V
 
 .L2DAB
 
@@ -9184,7 +9236,9 @@ ORG CODE%
  STA U
  LDA #0
  STA V
- JSR DrawLine
+
+ JSR DrawVectorLine     \ Draw/erase a line from (I, J) as a vector (T, U) with
+                        \ direction V
 
  RTS
 
@@ -10620,7 +10674,15 @@ ORG CODE%
  EQUB &27, &E7, &9F, &5F, &17, &D7, &97, &4F
  EQUB &0F, &CF, &8F, &47, &07, &C7, &87, &47
 
-.L4800                  \ Screen y-coordinate lookup table for a diagonal, low byte
+.YLookupLo
+
+                        \ Screen y-coordinate lookup table, low byte
+                        \
+                        \ We add Y to this to get the screen address, where Y is
+                        \ the pixel offset from the top of the dashboard, so the
+                        \ addresses in the table are out by +8 bytes for each
+                        \ row above the top of the dashboard, and -8 bytes for
+                        \ each row below
 
  EQUB &28, &F0, &B8, &80, &48, &10, &D8, &A0
  EQUB &68, &30, &F8, &C0, &88, &50, &18, &E0
@@ -10629,7 +10691,9 @@ ORG CODE%
  EQUB &C8, &90, &58, &20
  EQUB &E8, &B0, &78, &40, &08, &D0, &98, &60
 
-.L4820                  \ Screen y-coordinate lookup table for a diagonal, low byte
+.YLookupHi
+
+                       \ Screen y-coordinate lookup table, low byte
 
  EQUB &6F, &6D, &6C, &6B, &6A, &69, &67, &66
  EQUB &65, &64, &62, &61, &60, &5F, &5E, &5C
@@ -12185,7 +12249,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L4F00
+\       Name: XLookupLo
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -12196,8 +12260,11 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L4F00                  \ Screen x-coordinate lookup table, low byte
+.XLookupLo
+
+                        \ Screen x-coordinate lookup table, low byte
                         \ Multiples of 8 in 16-bit number
+                        \ so XLookupLo,X = LO(X * 8)
 
  EQUB &00, &08, &10, &18, &20, &28, &30, &38
  EQUB &40, &48, &50, &58, &60, &68, &70, &78
@@ -12205,8 +12272,11 @@ ORG CODE%
  EQUB &C0, &C8, &D0, &D8, &E0, &E8, &F0, &F8
  EQUB &00, &08, &10, &18, &20, &28, &30, &38
 
-.L4F28                  \ Screen x-coordinate lookup table, low byte
+.XLookupHi
+
+                        \ Screen x-coordinate lookup table, high byte
                         \ Multiples of 8 in 16-bit number
+                        \ so XLookupHi,X = HI(X * 8)
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -12301,12 +12371,12 @@ ORG CODE%
 
 .KeyTable2Lo
 
- EQUB &01               \ <         Elevator (stick backwards, ascend)
- EQUB &01               \ +         Right rudder
- EQUB &01               \ D         Aileron (joystick right, bank right)
- EQUB &0F               \ E         Increase throttle
- EQUB &07               \ B         Brakes on/off
- EQUB &08               \ SHIFT     Fire
+ EQUB 1                 \ <         Elevator (stick backwards, ascend)
+ EQUB 1                 \ +         Right rudder
+ EQUB 1                 \ D         Aileron (joystick right, bank right)
+ EQUB 15                \ E         Increase throttle
+ EQUB 7                 \ B         Brakes on/off
+ EQUB 8                 \ SHIFT     Fire
 
 \ ******************************************************************************
 \
@@ -12325,12 +12395,12 @@ ORG CODE%
 
 .KeyTable2Hi
 
- EQUB &01               \ <         Elevator (stick backwards, ascend)
- EQUB &01               \ +         Right rudder
- EQUB &01               \ D         Aileron (joystick right, bank right)
- EQUB &00               \ E         Increase throttle
- EQUB &00               \ B         Brakes on/off
- EQUB &00               \ SHIFT     Fire
+ EQUB 1                 \ <         Elevator (stick backwards, ascend)
+ EQUB 1                 \ +         Right rudder
+ EQUB 1                 \ D         Aileron (joystick right, bank right)
+ EQUB 0                 \ E         Increase throttle
+ EQUB 0                 \ B         Brakes on/off
+ EQUB 0                 \ SHIFT     Fire
 
 \ ******************************************************************************
 \
@@ -12349,12 +12419,12 @@ ORG CODE%
 
 .KeyTable1Lo
 
- EQUB &01               \ L         Elevator (stick forwards, dive)
- EQUB &01               \ A         Left rudder
- EQUB &01               \ S         Aileron (joystick left, bank left)
- EQUB &F1               \ W         Decrease throttle
- EQUB &04               \ U         Undercarriage up/down
- EQUB &05               \ F         Flaps on/off
+ EQUB 1                 \ L         Elevator (stick forwards, dive)
+ EQUB 1                 \ A         Left rudder
+ EQUB 1                 \ S         Aileron (joystick left, bank left)
+ EQUB 241               \ W         Decrease throttle
+ EQUB 4                 \ U         Undercarriage up/down
+ EQUB 5                 \ F         Flaps on/off
 
 \ ******************************************************************************
 \
@@ -12373,12 +12443,12 @@ ORG CODE%
 
 .KeyTable1Hi
 
- EQUB &FF               \ L         Elevator (stick forwards, dive)
- EQUB &FF               \ A         Left rudder
- EQUB &FF               \ S         Aileron (joystick left, bank left)
- EQUB &FF               \ W         Decrease throttle
- EQUB &00               \ U         Undercarriage up/down
- EQUB &00               \ F         Flaps on/off
+ EQUB 255               \ L         Elevator (stick forwards, dive)
+ EQUB 255               \ A         Left rudder
+ EQUB 255               \ S         Aileron (joystick left, bank left)
+ EQUB 255               \ W         Decrease throttle
+ EQUB 0                 \ U         Undercarriage up/down
+ EQUB 0                 \ F         Flaps on/off
 
 \ ******************************************************************************
 \
@@ -12426,23 +12496,54 @@ ORG CODE%
 
 .L4F92
 
- EQUB &12, &16, &10, &1A, &16, &1A, &1A, &41
+ EQUB &12, &16, &10, &1A, &16, &1A, &1A, &41  \ Constant for indicators 0-6, see L216E
 
 .L4F9A
 
- EQUB &07, &09, &05, &0A, &08, &09, &09, &0D
+ EQUB &07, &09, &05, &0A, &08, &09, &09, &0D  \ Constant for indicators 0-6, see L216E
 
 .L4FA2
 
- EQUB &0C, &0A, &0A, &0E, &0C, &0E, &0E, &20
+ EQUB &0C, &0A, &0A, &0E, &0C, &0E, &0E, &20  \ Constant for indicators 0-6, see L216E
 
-.L4FAA
+.IndicatorLineI
 
- EQUB &36, &15, &16, &16, &6A, &6A, &6A, &54
+                        \ Storage for the x-coordinate of the starting point of
+                        \ of the current hand on indicators 0-7, so we can erase
+                        \ it again (this value matches the value of I passed to
+                        \ DrawVectorLine)
 
-.L4FB2
+ EQUB 54                \ Start x-coordinate for indicator 0 (compass)
+ EQUB 21                \ Start x-coordinate for indicator 1 (airspeed)
+ EQUB 22                \ Start x-coordinate for indicator 2 (altimeter small)
+ EQUB 22                \ Start x-coordinate for indicator 3 (altimeter large)
+ EQUB 106               \ Start x-coordinate for indicator 4 (vertical speed)
+ EQUB 106               \ Start x-coordinate for indicator 5 (turn)
+ EQUB 106               \ Start x-coordinate for indicator 6 (slip)
+ EQUB 84                \ Start x-coordinate for indicator 7 (horizon)
 
- EQUB &B8, &E9, &BC, &BC, &E8, &BA, &BA, &58
+.IndicatorLineJ
+
+                        \ Storage for the y-coordinate of the starting point of
+                        \ of the current hand on indicators 0-6, so we can erase
+                        \ it again (this value matches the value of J passed to
+                        \ DrawVectorLine and is relative to the top of the
+                        \ dashboard at screen y-coordinate 160)
+
+ EQUB -72               \ Start y-coordinate for indicator 0 (compass)
+ EQUB -23               \ Start y-coordinate for indicator 1 (airspeed)
+ EQUB -68               \ Start y-coordinate for indicator 2 (altimeter small)
+ EQUB -68               \ Start y-coordinate for indicator 3 (altimeter large)
+ EQUB -24               \ Start y-coordinate for indicator 4 (vertical speed)
+ EQUB -70               \ Start y-coordinate for indicator 5 (turn)
+ EQUB -70               \ Start y-coordinate for indicator 6 (slip)
+
+                        \ Storage for the y-coordinate of the starting point of
+                        \ of the current artificial horizon on indicator 7, so
+                        \ we can erase it again (this value matches the value of
+                        \ H passed to DrawVectorLine)
+
+ EQUB 88                \ Start y-coordinate for indicator 7 (horizon) ???
 
 .IndicatorBase
 
@@ -12480,33 +12581,66 @@ ORG CODE%
 
  EQUB &4C
 
-.L4FD2
+.IndicatorLineT
 
- EQUB &02, &02, &02, &02, &02, &02, &02, &02
+                        \ Storage for the x-delta of the current hand on
+                        \ indicators 0-7, so we can erase it again (this value
+                        \ matches the value of T passed to DrawVectorLine)
 
-.L4FDA
+ EQUB 2                 \ Line x-delta for indicator 0 (compass)
+ EQUB 2                 \ Line x-delta for indicator 1 (airspeed)
+ EQUB 2                 \ Line x-delta for indicator 2 (altimeter small)
+ EQUB 2                 \ Line x-delta for indicator 3 (altimeter large)
+ EQUB 2                 \ Line x-delta for indicator 4 (vertical speed)
+ EQUB 2                 \ Line x-delta for indicator 5 (turn)
+ EQUB 2                 \ Line x-delta for indicator 6 (slip)
+ EQUB 2                 \ Line x-delta for indicator 7 (artificial horizon)
 
- EQUB &02, &02, &02, &02, &02, &02, &02, &02
+.IndicatorLineU
 
-.L4FE2
+                        \ Storage for the y-delta of the current hand on
+                        \ indicators 0-7, so we can erase it again (this value
+                        \ matches the value of U passed to DrawVectorLine)
 
- EQUB &02, &02, &00, &00, &00, &00, &00, &00
+ EQUB 2                 \ Line y-delta for indicator 0 (compass)
+ EQUB 2                 \ Line y-delta for indicator 1 (airspeed)
+ EQUB 2                 \ Line y-delta for indicator 2 (altimeter small)
+ EQUB 2                 \ Line y-delta for indicator 3 (altimeter large)
+ EQUB 2                 \ Line y-delta for indicator 4 (vertical speed)
+ EQUB 2                 \ Line y-delta for indicator 5 (turn)
+ EQUB 2                 \ Line y-delta for indicator 6 (slip)
+ EQUB 2                 \ Line y-delta for indicator 7 (artificial horizon)
+
+.IndicatorLineV
+
+                        \ Storage for the direction of the current hand on
+                        \ indicators 0-7, so we can erase it again (this value
+                        \ matches the value of V passed to DrawVectorLine)
+
+ EQUB 2                 \ Direction for indicator 0 (compass)
+ EQUB 2                 \ Direction for indicator 1 (airspeed)
+ EQUB 0                 \ Direction for indicator 2 (altimeter small)
+ EQUB 0                 \ Direction for indicator 3 (altimeter large)
+ EQUB 0                 \ Direction for indicator 4 (vertical speed)
+ EQUB 0                 \ Direction for indicator 5 (turn)
+ EQUB 0                 \ Direction for indicator 6 (slip)
+ EQUB 0                 \ Direction for indicator 7 (artificial horizon)
 
 .JoyYC
 
- EQUB &00               \ Temporary storage, typically used for storing
+ EQUB 0                 \ Temporary storage, typically used for storing
                         \ y-coordinates when drawing indicators
  
- EQUB &00               \ The y-coordinate of the top of the current vertical
+ EQUB 0                 \ The y-coordinate of the top of the current vertical
                         \ bar for indicator 9 (rudder), so we can erase it when
                         \ required
 
 .JoyXC
 
- EQUB &00               \ Temporary storage, typically used for storing
+ EQUB 0                 \ Temporary storage, typically used for storing
                         \ x-coordinates when drawing indicators
 
- EQUB &00               \ The y-coordinate of the top of the current vertical
+ EQUB 0                 \ The y-coordinate of the top of the current vertical
                         \ bar for indicator 11 (thrust), so we can erase it when
                         \ requird
 
