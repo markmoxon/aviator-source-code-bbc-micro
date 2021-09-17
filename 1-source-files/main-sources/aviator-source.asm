@@ -444,11 +444,631 @@ OSWORD = &FFF1          \ The address for the OSWORD routine
 OSWRCH = &FFEE          \ The address for the OSWRCH routine
 OSCLI = &FFF7           \ The address for the OSCLI routine
 
-CODE% = &1100
+CODE% = &1100           \ The start address of the main code block (though note
+                        \ that code is moved to &0D00-&1100 before the main game
+                        \ is run, so this doesn't represent the start of the
+                        \ main game code in memory)
+
+ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L1100
+\       Name: SetupScreen
+\       Type: Subroutine
+\   Category: Start and end
+\    Summary: Set up the screen mode and load the dashboard image
+\
+\ ******************************************************************************
+
+.SetupScreen
+
+ LDA #22                \ Switch to screen mode 5 with the following VDU
+ JSR OSWRCH             \ command:
+ LDA #5                 \
+ JSR OSWRCH             \   VDU 22, 5
+
+ LDY #0                 \ We now want to write the VDU command to disable the
+                        \ cursor, whose bytes are in the variable at Cursor, so
+                        \ set up a counter in Y
+
+.sscrL1
+
+ LDA Cursor,Y           \ Write the Y-th value from Cursor
+ JSR OSWRCH
+
+ INY                    \ Increment the loop counter
+
+ CPY #10                \ Loop back to write the next character until we have
+ BNE sscrL1             \ written all 10, in other words:
+                        \
+                        \   VDU 23, 0, 10, 23, 0, 0, 0, 0, 0, 0
+
+ LDA #31                \ Move the text cursor to column 4, row 10 with the
+ JSR OSWRCH             \ following VDU command:
+ LDA #4                 \
+ JSR OSWRCH             \   VDU 31, 4, 10
+ LDA #10
+ JSR OSWRCH
+
+ LDY #0                 \ We now want to print the "Please wait" message in
+                        \ variable PleaseWait, so set up a counter in Y
+
+.sscrL2
+
+ LDA PleaseWait,Y       \ Print the Y-th character from PleaseWait
+ JSR OSWRCH
+
+ INY                    \ Increment the loop counter
+
+ CPY #11                \ Loop back to print the next character until we have
+ BNE sscrL2             \ printed all 11 ("Please wait")
+
+ LDX #LO(LoadDashboard) \ Set (Y X) to point to LoadDashboard ("L.DASHBD 7100")
+ LDY #HI(LoadDashboard)
+
+ JSR OSCLI              \ Call OSCLI to run the OS command in LoadDashboard,
+                        \ which loads the dashboard image into the screen
+
+ LDA #129               \ Call OSBYTE with A = 129, X = &FF and Y = 0 to scan
+ LDX #&FF               \ the keyboard for &FF centiseconds (2.56 seconds)
+ LDY #0
+ JSR OSBYTE
+
+ JMP DrawCanopy         \ Jump down to DrawCanopy to continue the setup process
+
+\ ******************************************************************************
+\
+\       Name: LoadDashboard
+\       Type: Variable
+\   Category: Start and end
+\    Summary: The OS command string for loading the dashboard image
+\
+\ ******************************************************************************
+
+.LoadDashboard
+
+ EQUS "L.DASHBD 7100"   \ This is short for "*LOAD DASHBD 7100"
+ EQUB 13
+
+\ ******************************************************************************
+\
+\       Name: Cursor
+\       Type: Variable
+\   Category: Start and end
+\    Summary: The VDU command for disabling the cursor
+\
+\ ******************************************************************************
+
+.Cursor
+
+ EQUB 23, 0, 10, 23     \ Set 6845 register R10 = 23
+ EQUB 0, 0, 0           \
+ EQUB 0, 0, 0           \ This is the "cursor start" register, so this sets the
+                        \ cursor start line at 23, effectively disabling the
+                        \ cursor
+
+\ ******************************************************************************
+\
+\       Name: PleaseWait
+\       Type: Variable
+\   Category: Start and end
+\    Summary: The "Please wait" message shown when the game loads
+\
+\ ******************************************************************************
+
+.PleaseWait
+
+ EQUS "Please wait"
+ EQUB 13
+
+\ ******************************************************************************
+\
+\       Name: DrawCanopy
+\       Type: Subroutine
+\   Category: Start and end
+\    Summary: Move code around, clear the edges of the canopy view, draw the
+\             canopy edges and rivets, and jump to the main code
+\
+\ ******************************************************************************
+
+.DrawCanopy
+
+ LDA #140               \ Call OSBYTE with A = 140 to select the tape filing
+ JSR OSBYTE             \ system (i.e. do a *TAPE command)
+
+ LDY #0                 \ We now copy the following block in memory:
+                        \
+                        \   * &0400-&07FF is copied to &0D00-&10FF
+                        \
+                        \ so we set up a byte counter in Y
+                        \
+                        \ Note that this is the same block that was copied from
+                        \ &5800-&5BFF in the Entry routine, so in all we end up
+                        \ moving code as follows:
+                        \
+                        \   * &5800-&5BFF is copied to &0400-&07FF
+                        \                      then to &0D00-&10FF
+                        \   * &5C00-&5DFF is copied to &0B00-&0CFF
+                        \
+                        \ As the rest of the main code file runs from &1100 to
+                        \ &57FF, this gives us a continuous block of code from
+                        \ &0B00 to &57FF, followed by screen memory at &5800 to
+                        \ &7FFF
+
+.dcanL1
+
+ LDA &0400,Y            \ Copy the Y-th byte of &0400 to the Y-th byte of &0D00
+ STA &0D00,Y
+
+ LDA &0500,Y            \ Copy the Y-th byte of &0500 to the Y-th byte of &0E00
+ STA &0E00,Y
+
+ LDA &0600,Y            \ Copy the Y-th byte of &0600 to the Y-th byte of &0F00
+ STA &0F00,Y
+
+ LDA &0700,Y            \ Copy the Y-th byte of &0700 to the Y-th byte of &1000
+ STA &1000,Y
+
+ DEY                    \ Decrement the loop counter
+
+ BNE dcanL1             \ Loop back until we have copied a whole page of bytes
+
+ NOP                    \ Presumably this contained some kind of copy protection
+ NOP                    \ or decryption code that has been replaced by NOPs in
+ NOP                    \ this unprotected version of the game
+ NOP
+
+                        \ The following two calls to ClearRows clear the first
+                        \ two character rows on-screen
+
+ LDA #&58               \ Set P(1 0) = &5800, so the call to ClearRows starts
+ STA P+1                \ clearing from the start of the first character row
+ LDA #0                 \ (i.e. row 0)
+ STA P
+
+ LDA #2                 \ Set R = 2, so we clear 2 character rows
+ STA R
+
+ LDY #0                 \ Set Y = 0, so we clear 256 bytes per row, or 32 of the
+                        \ 40 character blocks in each screen row (128 pixels)
+
+ JSR ClearRows          \ Call ClearRows to clear the first 256 bytes of the
+                        \ first two character rows on-screen, which blanks out
+                        \ the first 32 character blocks (blocks 0 to 31) of the
+                        \ top two character rows (rows 0 and 1)
+
+ LDA #&58               \ Set P(1 0) = &58FF, so the call to ClearRows starts
+ STA P+1                \ clearingfrom character block 32 in the first character
+ LDA #&FF               \ row on-screen
+ STA P
+
+ LDA #2                 \ Set R = 2, so we clear 2 character rows
+ STA R
+
+ LDY #64                \ Set Y = 64, so we clear 64 bytes per row, or 8 of the
+                        \ 40 character blocks in each screen row (32 pixels)
+
+ JSR ClearRows          \ Call ClearRows to clear the last 64 bytes of the first
+                        \ two character rows on-screen, which blanks out the
+                        \ last 8 character blocks (blocks 32 to 39) of the top
+                        \ two character rows (rows 0 and 1)
+
+                        \ The following two calls to ClearRows clear a
+                        \ 4-pixel-wide column on the left and right edges of the
+                        \ screen
+
+ LDA #&5A               \ Set P(1 0) = &5A7F, so the call to ClearRows starts
+ STA P+1                \ clearing from the start of the third character row
+ LDA #&7F               \ (i.e. row 2)
+ STA P
+
+ LDA #18                \ Set R = 18, so we clear 18 character rows
+ STA R
+
+ LDY #8                 \ Set Y = 8, so we clear 8 bytes per row, or 1 of the
+                        \ 40 character blocks in each screen row (4 pixels)
+
+ JSR ClearRows          \ Call ClearRows to clear the first byte of character
+                        \ rows 2 to 20, which blanks out the first character
+                        \ block (block 0) on all 18 rows, i.e. the first four
+                        \ pixels
+
+ LDA #&5B               \ Set P(1 0) = &5BB7, so the call to ClearRows starts
+ STA P+1                \ clearing from the start of the last character block
+ LDA #&B7               \ on the third character row (i.e. row 2)
+ STA P
+
+ LDA #18                \ Set R = 18, so we clear 18 character rows
+ STA R
+
+ LDY #8                 \ Set Y = 8, so we clear 8 bytes per row, or 1 of the
+                        \ 40 character blocks in each screen row (4 pixels)
+
+ JSR ClearRows          \ Call ClearRows to clear the last byte of character
+                        \ rows 2 to 20, which blanks out the last character
+                        \ block (block 39) on all 18 rows, i.e. the last four
+                        \ pixels
+
+                        \ We now draw the edges of the canopy view, starting
+                        \ with the left edge, then the right edge, and then the
+                        \ horizontal line along the top (so this does not
+                        \ include the bottom edge, which has already been
+                        \ displayed as part of the dashboard image, and it also
+                        \ doesn't include the diagonal top corners, which are
+                        \ drawn by the main game code)
+
+ LDX #3                 \ Move the graphics cursor to (3, 96)
+ LDY #96
+ JSR VduMove
+
+ LDX #3                 \ Draw a line to (3, 239)
+ LDY #239
+ JSR VduDraw
+
+ LDX #156               \ Move the graphics cursor to (156, 96)
+ LDY #96
+ JSR VduMove
+
+ LDX #156               \ Draw a line to (156, 239)
+ LDY #239
+ JSR VduDraw
+
+ LDX #8                 \ Move the graphics cursor to (8, 248)
+ LDY #248
+ JSR VduMove
+
+ LDX #151               \ Draw a line to (151, 248)
+ LDY #248
+ JSR VduDraw
+
+                        \ We now draw the square rivets around the edge of the
+                        \ canopy view, starting with the three rivets up each
+                        \ side of the screen
+
+ LDY #121               \ Set Y = 121 so the first rivets are drawn at height
+                        \ 121, i.e. at (0, 121) and (158, 121)
+
+.dcanL2
+
+ LDX #0                 \ Draw a square rivet at (0, Y)
+ JSR DrawRivet
+
+ LDX #158               \ Draw a square rivet at (158, Y)
+ JSR DrawRivet
+
+ TYA                    \ Set Y = Y + 48
+ CLC                    \
+ ADC #48                \ so the next rivet we draw will be 48 pixels higher
+ TAY
+
+ CPY #9                 \ Loop back to draw the next rivet until Y = 9, at which
+ BNE dcanL2             \ point Y has wrapped round off the top of the screen
+                        \ back to the bottom and we will have drawn three rivets
+                        \ up each side of the canopy view
+
+                        \ Finally, we draw the six square rivets along the top
+                        \ of the canopy view
+
+ LDY #255               \ Set X and Y so the first rivet is at (19, 255)
+ LDX #19
+
+.dcanL3
+
+ JSR DrawRivet          \ Draw a square rivet at (X, Y)
+
+ TXA                    \ Set X = X + 24
+ CLC                    \
+ ADC #24                \ so the next rivet we draw will be 24 pixels to the
+ TAX                    \ right
+
+ CPX #163               \ Loop back to draw the next rivet until X = 163, at
+ BNE dcanL3             \ which point we will have drawn six rivets along the
+                        \ top of the canopy view
+
+ JMP MainLoop           \ Jump to MainLoop to start the game
+
+\ ******************************************************************************
+\
+\       Name: VduPoint
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Draw a point on-screen using the standard VDU routines
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The x-coordinate of the point (0-159)
+\
+\   Y                   The y-coordinate of the point (0-255)
+\
+\ ******************************************************************************
+
+.VduPoint
+
+ LDA #69                \ Set A = 69 so the following VDU 25 command plots a
+                        \ point at an absolute position on-screen
+
+ BNE VduPlot            \ Jump to VduPlot to do the move (this BNE is
+                        \ effectively a JMP as A is never zero
+
+\ ******************************************************************************
+\
+\       Name: VduMove
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Move the graphics cursor using the standard VDU routines
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The x-coordinate to move the graphics cursor to (0-159)
+\
+\   Y                   The y-coordinate to move the graphics cursor to (0-255)
+\
+\ ******************************************************************************
+
+.VduMove
+
+ LDA #4                 \ Set A = 4 so the following VDU 25 command moves the
+                        \ graphics cursor an absolute position on-screen
+
+ BNE VduPlot            \ Jump to VduPlot to do the move (this BNE is
+                        \ effectively a JMP as A is never zero
+
+\ ******************************************************************************
+\
+\       Name: VduDraw
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Draw a line using the standard VDU routines
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The x-coordinate of the end of the line (0-159)
+\
+\   Y                   The y-coordinate of the end of the line (0-255)
+\
+\ ******************************************************************************
+
+.VduDraw
+
+ LDA #5                 \ Set A = 5 to denote "draw line absolute in the current
+                        \ graphics foreground colour"
+
+\ ******************************************************************************
+\
+\       Name: VduPlot
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Perform a plot command the standard VDU routines
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The type of plot command:
+\
+\                         * 4 = Move cursor to coordinate
+\
+\                         * 5 = Draw line from cursor to coordinate
+\
+\                         * 69 = Draw point at coordinate
+\
+\   X                   The x-coordinate for the plot command (0-159)
+\
+\   Y                   The y-coordinate for the plot command (0-255)
+\
+\ ******************************************************************************
+
+.VduPlot
+
+ PHA                    \ Store the value of A on the stack, so we can retrieve
+                        \ it after the call to OSWRCH
+
+ LDA #25                \ Start a VDU 25 command, which is the equivalent of a
+ JSR OSWRCH             \ PLOT command in BBC BASIC, and which has the following
+                        \ format:
+                        \
+                        \   VDU 25, K, X; Y;
+                        \
+                        \ where K is the plotting mode (i.e. move or draw) and
+                        \ X and Y are the relevant coordinates as 16-bit numbers
+
+ PLA                    \ Retrieve the value of A that we stored on the stack
+
+ JSR OSWRCH             \ Write the K parameter of the VDU command, i.e. the
+                        \ type of plot command
+
+ LDA #0                 \ Set P = 0
+ STA P
+
+ TXA                    \ Set A = X, so now (P A) contains the x-coordinate as a
+                        \ 16-bit number
+
+ ASL A                  \ Set (P A) = (P A) * 8
+ ROL P                  \           = x-coordinate * 8
+ ASL A                  \
+ ROL P                  \ This gives the screen location of the x-coordinate in
+ ASL A                  \ terms of VDU coordinates, where the screen is always
+ ROL P                  \ 1280 pixels wide, which is 8 times the number of
+                        \ pixels in 160-pixel-wide mode 5 (i.e. 8 * 160 = 1280)
+
+ JSR OSWRCH             \ Write (P A), writing the low byte in A first
+
+ LDA P                  \ And then the high byte in P
+ JSR OSWRCH
+
+ LDA #0                 \ Set P = 0
+ STA P
+
+ TYA                    \ Set A = Y, so now (P A) contains the y-coordinate as a
+                        \ 16-bit number
+
+ ASL A                  \ Set (P A) = (P A) * 4
+ ROL P                  \           = y-coordinate * 4
+ ASL A                  \
+ ROL P                  \ This gives the screen location of the y-coordinate in
+                        \ terms of VDU coordinates, where the screen is always
+                        \ 1024 pixels high, which is 4 times the number of
+                        \ pixels in 256-pixel-high mode 5 (i.e. 4 * 256 = 1024)
+
+ JSR OSWRCH             \ Write (P A), writing the low byte in A first
+
+ LDA P                  \ And then the high byte in P
+ JSR OSWRCH
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: DrawRivet
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Draw a square rivet (2 pixels across, 4 pixels high)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The x-coordinate of the top-left corner of the rivet
+\
+\   Y                   The y-coordinate of the top-left corner of the rivet
+\
+\ ******************************************************************************
+
+.DrawRivet
+
+ JSR VduPoint           \ Draw a point at (X, Y)
+
+ DEY                    \ Draw a point at (X, Y - 1)
+ JSR VduPoint
+
+ DEY                    \ Draw a point at (X, Y - 2)
+ JSR VduPoint
+
+ DEY                    \ Draw a point at (X, Y - 3)
+ JSR VduPoint
+
+ INX                    \ Draw a point at (X + 1, Y - 3)
+ JSR VduPoint
+
+ INY                    \ Draw a point at (X + 1, Y - 2)
+ JSR VduPoint
+
+ INY                    \ Draw a point at (X + 1, Y - 1)
+ JSR VduPoint
+
+ INY                    \ Draw a point at (X + 1, Y)
+ JSR VduPoint
+
+ DEX                    \ Restore X to its original value
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: ClearRows
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Clear the specified number of rows on-screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine zeroes a block of Y bytes on R screen rows, starting from screen
+\ address P(1 0) on the first row.
+\
+\ A value of Y = 0 will zero 256 bytes.
+\
+\ In other words, P(1 0) represents the top-left pixel to blank, Y represents
+\ the width of the area to blank (with a value of 8 per character block), and R
+\ contains the number of rows to blank.
+\
+\ Arguments:
+\
+\   Y                   The width of each character row to zero (in bytes),
+\                       0 indicates 256 bytes
+\
+\   P(1 0)              The screen address to start zeroing from
+\
+\   R                   The number of character rows to zero
+\
+\ ******************************************************************************
+
+.ClearRows
+
+ STY S                  \ Store the width of each character row in S
+
+.clrwL1
+
+ LDA #0                 \ We are about to zero a block of memory, so set A = 0
+                        \ so we can use it as our overwrite value
+
+ LDY S                  \ Fetch the width of each character row, which we stored
+                        \ in S above
+
+.clrwL2
+
+ STA (P),Y              \ Zero the Y-th byte of the page at P(1 0), which sets 4
+                        \ pixels to black
+
+ DEY                    \ Decrement the byte pointer
+
+ BNE clrwL2             \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
+
+ LDA P                  \ Set P(1 0) = P(1 0) + 320
+ CLC                    \
+ ADC #LO(320)           \ starting with the low bytes
+ STA P
+
+ LDA P+1                \ And then the high bytes
+ ADC #HI(320)
+ STA P+1
+
+ DEC R                  \ Decrement the row counter in R
+
+ BNE clrwL1             \ Loop back until we have zeroed R rows
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: Unused block
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
+ SKIP 30                \ These bytes appear to be unused
+
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+
+ SKIP 32
+
+ EQUB &40
+
+\ ******************************************************************************
+\
+\       Name: L0D01
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -459,12 +1079,889 @@ CODE% = &1100
 \
 \ ******************************************************************************
 
-ORG CODE%
+.L0D01
 
-.L1100
+ LDX GG
+ LDA #0
+ STA N
+ LDA #&10
+ STA R
+ LDA L0400,X
+ TAY
+ AND #1
+ BEQ L0D14
+
+ RTS
+
+.L0D14
+
+ TYA
+ ORA #1
+ STA L0400,X
+ LDA L4900,X
+ BMI L0D37
+
+ STA P+1
+ BEQ L0D2B
+
+ LDA L0700,X
+ STA P
+ JMP L0D46
+
+.L0D2B
+
+ LDA L0700,X
+ BNE L0D32
+
+ LDA #1
+
+.L0D32
+
+ STA P
+ JMP L0D46
+
+.L0D37
+
+ LDA #0
+ SEC
+ SBC L0700,X
+ STA P
+ LDA #0
+ SBC L4900,X
+ STA P+1
+
+.L0D46
+
+ LDA L4A00,X
+ BMI L0D55
+
+ STA QQ
+ LDA L0900,X
+ STA PP
+ JMP L0D6A
+
+.L0D55
+
+ LDA #0
+ SEC
+ SBC L0900,X
+ STA PP
+ LDA #0
+ SBC L4A00,X
+ STA QQ
+ LDA N
+ ORA #8
+ STA N
+
+.L0D6A
+
+ LDA L0B00,X
+ BMI L0D7C
+
+ STA SS
+ LDA L0A00,X
+ ASL A
+ ROL SS
+ STA RR
+ JMP L0D94
+
+.L0D7C
+
+ LDA #0
+ SEC
+ SBC L0A00,X
+ STA RR
+ LDA #0
+ SBC L0B00,X
+ ASL RR
+ ROL A
+ STA SS
+ LDA N
+ ORA #4
+ STA N
+
+.L0D94
+
+ LDA QQ
+ CMP P+1
+ BCC L0DA8
+
+ BNE L0DA2
+
+ LDA PP
+ CMP P
+ BCC L0DA8
+
+.L0DA2
+
+ LDA #&20
+ ORA N
+ STA N
+
+.L0DA8
+
+ LDA SS
+ CMP P+1
+ BCC L0DBC
+
+ BNE L0DB6
+
+ LDA RR
+ CMP P
+ BCC L0DBC
+
+.L0DB6
+
+ LDA N
+ ORA #&10
+ STA N
+
+.L0DBC
+
+ LDY P
+ LDX P+1
+ JSR L0F48
+
+ TAX
+ LDA L3900,X
+ STA TT
+ LDA L4700,X
+ AND #&F8
+ STA S
+ STY K
+ LDA WW
+ STA UU
+ LDY PP
+
+ LDX QQ
+ JSR L0E69
+
+ LDA P+1
+ STA QQ
+ LDA P
+ STA PP
+ LDA WW
+ STA VV
+ LDY RR
+ LDX SS
+ JSR L0E69
+
+ JSR L0FA7
+
+ LDX GG
+ LDA L4900,X
+ BMI L0E02
+
+ LDA L4A00,X
+ BPL L0E19
+
+.L0DFF
+
+ JMP L0E07
+
+.L0E02
+
+ LDA L4A00,X
+ BMI L0E19
+
+.L0E07
+
+ LDA #&50
+ SEC
+ SBC QQ
+ STA L0900,X
+ LDA #0
+ SBC SS
+ STA L4A00,X
+ JMP L0E28
+
+.L0E19
+
+ LDA #&50
+ CLC
+ ADC QQ
+ STA L0900,X
+ LDA #0
+ ADC SS
+ STA L4A00,X
+
+.L0E28
+
+ LDX GG
+ LDA L4900,X
+ BMI L0E37
+
+ LDA L0B00,X
+ BPL L0E4E
+
+ JMP L0E3C
+
+.L0E37
+
+ LDA L0B00,X
+ BMI L0E4E
+
+.L0E3C
+
+ LDA #&60
+ SEC
+
+.L0E3F
+
+ SBC P+1
+ STA L0A00,X
+ LDA #0
+ SBC RR
+ STA L0B00,X
+ JMP L0E5D
+
+.L0E4E
+
+ LDA #&60
+ CLC
+ ADC P+1
+ STA L0A00,X
+ LDA #0
+ ADC RR
+ STA L0B00,X
+
+.L0E5D
+
+ LDA L0400,X
+ ORA N
+ STA L0400,X
+ RTS
+
+ JSR L0F48
+
+\ ******************************************************************************
+\
+\       Name: L0E69
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0E69
+
+ JSR L0F48
+
+ STA J
+ STY I
+ LDX TT
+ LDY J
+ LDA L4500,X
+ ORA L3700,Y
+ STA T
+ AND #&F0
+ ORA L4300,Y
+ STA U
+ AND #&0F
+ ORA L3800,X
+ STA V
+ AND #&F0
+ ORA L3700,Y
+ TAY
+ LDX S
+ AND #&0F
+ ORA L4500,X
+ TAX
+ LDA L3A00,X
+ CLC
+ LDX V
+ ADC L3A00,X
+ STA P
+ LDX T
+ LDA L3A00,X
+ ADC #1
+ STA P+1
+ LDX U
+ LDA L3A00,X
+ ADC L3A00,Y
+ TAX
+ LDY #0
+ BCC L0EBB
+
+ LDY #&10
+
+.L0EBB
+
+ LDA L3800,X
+ ADC P
+ BCC L0EC3
+
+ INY
+
+.L0EC3
+
+ ADC J
+ BCC L0EC8
+
+ INY
+
+.L0EC8
+
+ ADC S
+ STA P
+ TYA
+ ADC L3700,X
+ ADC P+1
+ BCC L0EDB
+
+ CLC
+ ADC TT
+ SEC
+ JMP L0EDD
+
+.L0EDB
+
+ ADC TT
+
+.L0EDD
+
+ ROR A
+ ROR P
+ STA P+1
+ LDA I
+ BEQ L0F16
+
+ AND #&F0
+ LDX TT
+ ORA L3700,X
+ TAY
+ AND #&F0
+ ORA L4300,X
+ TAX
+ LDA L3A00,X
+ TAX
+ CLC
+ LDA L3800,X
+ ADC I
+
+.L0EFE
+
+ LDA L3A00,Y
+ ADC L3700,X
+ ROR A
+ CLC
+ ADC P
+ STA P
+ BCC L0F16
+
+ INC P+1
+ BNE L0F16
+
+ LDA #&FF
+ STA P+1
+ STA P
+
+.L0F16
+
+ LDA K
+ AND #&C0
+ BEQ L0F47
+
+ STA K
+ CLC
+ LDA TT
+ ADC #1
+ ROR A
+ STA W
+ LSR A
+ BIT K
+ BVS L0F2F
+
+ LDA #0
+ BIT K
+
+.L0F2F
+
+ BPL L0F34
+
+ CLC
+ ADC W
+
+.L0F34
+
+ TAY
+ LDX P+1
+ JSR L1821
+
+ STA G
+ LDA P
+ SEC
+ SBC G
+ STA P
+ BCS L0F47
+
+ DEC P+1
+
+.L0F47
+
+ RTS
+
+\ ******************************************************************************
+\
+\       Name: L0F48
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0F48
+
+ BEQ L0F77
+
+ LDA L4700,X
+ AND #7
+ CLC
+ ADC #8
+ STA WW
+ CMP #&0D
+ TXA
+ STY T
+ BCC L0F66
+
+.L0F5B
+
+ ASL T
+ ROL A
+ BCC L0F5B
+
+ LDY T
+ RTS
+
+.L0F63
+
+ ASL T
+ ROL A
+
+.L0F66
+
+ BIT R
+ BEQ L0F63
+
+ TAY
+ LDX T
+ LDA L3700,X
+ ORA L3800,Y
+ LDY L3800,X
+ RTS
+
+\ ******************************************************************************
+\
+\       Name: L0F77
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0F77
+
+ CPY #0
+ BEQ L0F97
+
+ LDA L4700,Y
+ AND #7
+ STA WW
+ CMP #4
+ TYA
+ LDY #0
+ BCC L0F8E
+
+.L0F89
+
+ ASL A
+ BCC L0F89
+
+ RTS
+
+.L0F8D
+
+ ASL A
+
+.L0F8E
+
+ BIT R
+ BEQ L0F8D
+
+ TAX
+ LDA L3800,X
+ RTS
+
+.L0F97
+
+ TSX
+ INX
+ INX
+ TXS
+ LDA #0
+ STA P+1
+ STA P
+ LDX UU
+ DEX
+ STX WW
+ RTS
+
+\ ******************************************************************************
+\
+\       Name: L0FA7
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L0FA7
+
+ LDA #0
+ STA RR
+ STA SS
+ LDA #7
+ STA T
+ LDA VV
+ SEC
+ SBC UU
+ TAX
+ INX
+ LDA WW
+ SEC
+ SBC UU
+ TAY
+ INY
+ CPY #7
+ BCC L0FC6
+
+ JMP L0FCA
+
+.L0FC6
+
+ CPX #7
+ BCC L0FE4
+
+.L0FCA
+
+ LDA VV
+ SEC
+ SBC WW
+ BEQ L0FDA
+
+ BPL L0FDE
+
+ LDA P+1
+ BMI L0FE4
+
+ JMP L0FE2
+
+.L0FDA
+
+ LDA P+1
+ BMI L0FE4
+
+.L0FDE
+
+ LDA QQ
+ BMI L0FE4
+
+.L0FE2
+
+ INC T
+
+.L0FE4
+
+ TYA
+ BMI L0FF0
+
+ JMP L0FEC
+
+.L0FEA
 
  DEX
+ DEY
+
+.L0FEC
+
+ CPY T
+ BCS L0FEA
+
+.L0FF0
+
+ TXA
+ BMI L0FFC
+
+ JMP L0FF8
+
+.L0FF6
+
+ DEX
+ DEY
+
+.L0FF8
+
+ CPX T
+ BCS L0FF6
+
+.L0FFC
+
+ TXA
+ BMI L1017
+
+.L0FFF
+
+ BNE L1006
+ ASL PP
+ JMP L1025
+
+.L1006
+
+ LDA QQ
+
+.L1008
+
+ ASL PP
+ ROL A
+ ROL SS
+ DEX
+ BNE L1008
+
+ STA QQ
+ ASL PP
+ JMP L1025
+
+.L1017
+
+ EOR #&FF
+ CLC
+ ADC #1
+ TAX
+ LDA QQ
+
+.L101F
+
+ LSR A
+ DEX
+ BNE L101F
+
+ STA QQ
+
+.L1025
+
+ BCC L103B
+
+ INC QQ
+ BNE L103B
+
+ INC SS
+ LDA SS
+ CMP #&40
+ BCC L103B
+
+ LDA #&3F
+ STA SS
+ LDA #&FF
+ STA QQ
+
+.L103B
+
+ TYA
+ BMI L1056
+
+ BNE L1045
+
+ ASL P
+ JMP L1064
+
+.L1045
+
+ LDA P+1
+
+.L1047
+
+ ASL P
+ ROL A
+ ROL RR
+ DEY
+ BNE L1047
+
+ STA P+1
+ ASL P
+ JMP L1064
+
+.L1056
+
+ EOR #&FF
+ CLC
+ ADC #1
+ TAY
+ LDA P+1
+
+.L105E
+
+ LSR A
+ DEY
+ BNE L105E
+
+ STA P+1
+
+.L1064
+
+ BCC L107A
+
+ INC P+1
+ BNE L107A
+
+ INC RR
+ LDA RR
+ CMP #&40
+ BCC L107A
+
+ LDA #&3F
+ STA RR
+ LDA #&FF
+ STA P+1
+
+.L107A
+
+ RTS
+
+\ ******************************************************************************
+\
+\       Name: L107B
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L107B
+
+ LDA #2
+ BNE L1081
+
+\ ******************************************************************************
+\
+\       Name: L107F
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.L107F
+
+ LDA #0
+
+.L1081
+
+ STA V
+ LDA #0
+ STA TT
+ STA UU
+ LDX L
+ LDY M
+ LDA L0900,X
+ STA R
+ LDA L4A00,X
+ STA RR
+ LDA L0A00,X
+ STA S
+ LDA L0B00,X
+ STA SS
+ LDA L0900,Y
+ STA W
  SEC
+ SBC R
+ STA T
+ LDA L4A00,Y
+ STA QQ
+ SBC RR
+ STA I
+ BPL L10C9
+
+ LDA #&80
+ ORA V
+ STA V
+ LDA #0
+ SEC
+ SBC T
+ STA T
+ LDA #0
+ SBC I
+ STA I
+
+.L10C9
+
+ LDA L0A00,Y
+ STA G
+ SEC
+ SBC S
+ STA U
+ LDA L0B00,Y
+ STA H
+ SBC SS
+ STA J
+ BPL L10F1
+
+ LDA #&40
+ ORA V
+ STA V
+
+ LDA #0
+ SEC
+ SBC U
+ STA U
+ LDA #0
+ SBC J
+ STA J
+
+.L10F1
+
+ LDA #0
+ LDX S
+ LDY SS
+ BEQ L1101
+
+ PHP
+ LDX #0
+ PLP
+ CLC
+ BMI L1102
+
+ DEX
+
+.L1101
+
+ SEC
+
+.L1102
+
  ROR A
  CPX #&98
  ROR A
@@ -14387,1566 +15884,6 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: from5800
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-ORG &5800
-
-.from5800
-
-ORG &0D00
-
-\ ******************************************************************************
-\
-\       Name: L0D00
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L0D00
-
- RTI
-
-\ ******************************************************************************
-\
-\       Name: L0D01
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L0D01
-
- LDX GG
- LDA #0
- STA N
- LDA #&10
- STA R
- LDA L0400,X
- TAY
- AND #1
- BEQ L0D14
-
- RTS
-
-.L0D14
-
- TYA
- ORA #1
- STA L0400,X
- LDA L4900,X
- BMI L0D37
-
- STA P+1
- BEQ L0D2B
-
- LDA L0700,X
- STA P
- JMP L0D46
-
-.L0D2B
-
- LDA L0700,X
- BNE L0D32
-
- LDA #1
-
-.L0D32
-
- STA P
- JMP L0D46
-
-.L0D37
-
- LDA #0
- SEC
- SBC L0700,X
- STA P
- LDA #0
- SBC L4900,X
- STA P+1
-
-.L0D46
-
- LDA L4A00,X
- BMI L0D55
-
- STA QQ
- LDA L0900,X
- STA PP
- JMP L0D6A
-
-.L0D55
-
- LDA #0
- SEC
- SBC L0900,X
- STA PP
- LDA #0
- SBC L4A00,X
- STA QQ
- LDA N
- ORA #8
- STA N
-
-.L0D6A
-
- LDA L0B00,X
- BMI L0D7C
-
- STA SS
- LDA L0A00,X
- ASL A
- ROL SS
- STA RR
- JMP L0D94
-
-.L0D7C
-
- LDA #0
- SEC
- SBC L0A00,X
- STA RR
- LDA #0
- SBC L0B00,X
- ASL RR
- ROL A
- STA SS
- LDA N
- ORA #4
- STA N
-
-.L0D94
-
- LDA QQ
- CMP P+1
- BCC L0DA8
-
- BNE L0DA2
-
- LDA PP
- CMP P
- BCC L0DA8
-
-.L0DA2
-
- LDA #&20
- ORA N
- STA N
-
-.L0DA8
-
- LDA SS
- CMP P+1
- BCC L0DBC
-
- BNE L0DB6
-
- LDA RR
- CMP P
- BCC L0DBC
-
-.L0DB6
-
- LDA N
- ORA #&10
- STA N
-
-.L0DBC
-
- LDY P
- LDX P+1
- JSR L0F48
-
- TAX
- LDA L3900,X
- STA TT
- LDA L4700,X
- AND #&F8
- STA S
- STY K
- LDA WW
- STA UU
- LDY PP
-
- LDX QQ
- JSR L0E69
-
- LDA P+1
- STA QQ
- LDA P
- STA PP
- LDA WW
- STA VV
- LDY RR
- LDX SS
- JSR L0E69
-
- JSR L0FA7
-
- LDX GG
- LDA L4900,X
- BMI L0E02
-
- LDA L4A00,X
- BPL L0E19
-
-.L0DFF
-
- JMP L0E07
-
-.L0E02
-
- LDA L4A00,X
- BMI L0E19
-
-.L0E07
-
- LDA #&50
- SEC
- SBC QQ
- STA L0900,X
- LDA #0
- SBC SS
- STA L4A00,X
- JMP L0E28
-
-.L0E19
-
- LDA #&50
- CLC
- ADC QQ
- STA L0900,X
- LDA #0
- ADC SS
- STA L4A00,X
-
-.L0E28
-
- LDX GG
- LDA L4900,X
- BMI L0E37
-
- LDA L0B00,X
- BPL L0E4E
-
- JMP L0E3C
-
-.L0E37
-
- LDA L0B00,X
- BMI L0E4E
-
-.L0E3C
-
- LDA #&60
- SEC
-
-.L0E3F
-
- SBC P+1
- STA L0A00,X
- LDA #0
- SBC RR
- STA L0B00,X
- JMP L0E5D
-
-.L0E4E
-
- LDA #&60
- CLC
- ADC P+1
- STA L0A00,X
- LDA #0
- ADC RR
- STA L0B00,X
-
-.L0E5D
-
- LDA L0400,X
- ORA N
- STA L0400,X
- RTS
-
- JSR L0F48
-
-\ ******************************************************************************
-\
-\       Name: L0E69
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L0E69
-
- JSR L0F48
-
- STA J
- STY I
- LDX TT
- LDY J
- LDA L4500,X
- ORA L3700,Y
- STA T
- AND #&F0
- ORA L4300,Y
- STA U
- AND #&0F
- ORA L3800,X
- STA V
- AND #&F0
- ORA L3700,Y
- TAY
- LDX S
- AND #&0F
- ORA L4500,X
- TAX
- LDA L3A00,X
- CLC
- LDX V
- ADC L3A00,X
- STA P
- LDX T
- LDA L3A00,X
- ADC #1
- STA P+1
- LDX U
- LDA L3A00,X
- ADC L3A00,Y
- TAX
- LDY #0
- BCC L0EBB
-
- LDY #&10
-
-.L0EBB
-
- LDA L3800,X
- ADC P
- BCC L0EC3
-
- INY
-
-.L0EC3
-
- ADC J
- BCC L0EC8
-
- INY
-
-.L0EC8
-
- ADC S
- STA P
- TYA
- ADC L3700,X
- ADC P+1
- BCC L0EDB
-
- CLC
- ADC TT
- SEC
- JMP L0EDD
-
-.L0EDB
-
- ADC TT
-
-.L0EDD
-
- ROR A
- ROR P
- STA P+1
- LDA I
- BEQ L0F16
-
- AND #&F0
- LDX TT
- ORA L3700,X
- TAY
- AND #&F0
- ORA L4300,X
- TAX
- LDA L3A00,X
- TAX
- CLC
- LDA L3800,X
- ADC I
-
-.L0EFE
-
- LDA L3A00,Y
- ADC L3700,X
- ROR A
- CLC
- ADC P
- STA P
- BCC L0F16
-
- INC P+1
- BNE L0F16
-
- LDA #&FF
- STA P+1
- STA P
-
-.L0F16
-
- LDA K
- AND #&C0
- BEQ L0F47
-
- STA K
- CLC
- LDA TT
- ADC #1
- ROR A
- STA W
- LSR A
- BIT K
- BVS L0F2F
-
- LDA #0
- BIT K
-
-.L0F2F
-
- BPL L0F34
-
- CLC
- ADC W
-
-.L0F34
-
- TAY
- LDX P+1
- JSR L1821
-
- STA G
- LDA P
- SEC
- SBC G
- STA P
- BCS L0F47
-
- DEC P+1
-
-.L0F47
-
- RTS
-
-\ ******************************************************************************
-\
-\       Name: L0F48
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L0F48
-
- BEQ L0F77
-
- LDA L4700,X
- AND #7
- CLC
- ADC #8
- STA WW
- CMP #&0D
- TXA
- STY T
- BCC L0F66
-
-.L0F5B
-
- ASL T
- ROL A
- BCC L0F5B
-
- LDY T
- RTS
-
-.L0F63
-
- ASL T
- ROL A
-
-.L0F66
-
- BIT R
- BEQ L0F63
-
- TAY
- LDX T
- LDA L3700,X
- ORA L3800,Y
- LDY L3800,X
- RTS
-
-\ ******************************************************************************
-\
-\       Name: L0F77
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L0F77
-
- CPY #0
- BEQ L0F97
-
- LDA L4700,Y
- AND #7
- STA WW
- CMP #4
- TYA
- LDY #0
- BCC L0F8E
-
-.L0F89
-
- ASL A
- BCC L0F89
-
- RTS
-
-.L0F8D
-
- ASL A
-
-.L0F8E
-
- BIT R
- BEQ L0F8D
-
- TAX
- LDA L3800,X
- RTS
-
-.L0F97
-
- TSX
- INX
- INX
- TXS
- LDA #0
- STA P+1
- STA P
- LDX UU
- DEX
- STX WW
- RTS
-
-\ ******************************************************************************
-\
-\       Name: L0FA7
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L0FA7
-
- LDA #0
- STA RR
- STA SS
- LDA #7
- STA T
- LDA VV
- SEC
- SBC UU
- TAX
- INX
- LDA WW
- SEC
- SBC UU
- TAY
- INY
- CPY #7
- BCC L0FC6
-
- JMP L0FCA
-
-.L0FC6
-
- CPX #7
- BCC L0FE4
-
-.L0FCA
-
- LDA VV
- SEC
- SBC WW
- BEQ L0FDA
-
- BPL L0FDE
-
- LDA P+1
- BMI L0FE4
-
- JMP L0FE2
-
-.L0FDA
-
- LDA P+1
- BMI L0FE4
-
-.L0FDE
-
- LDA QQ
- BMI L0FE4
-
-.L0FE2
-
- INC T
-
-.L0FE4
-
- TYA
- BMI L0FF0
-
- JMP L0FEC
-
-.L0FEA
-
- DEX
- DEY
-
-.L0FEC
-
- CPY T
- BCS L0FEA
-
-.L0FF0
-
- TXA
- BMI L0FFC
-
- JMP L0FF8
-
-.L0FF6
-
- DEX
- DEY
-
-.L0FF8
-
- CPX T
- BCS L0FF6
-
-.L0FFC
-
- TXA
- BMI L1017
-
-.L0FFF
-
- BNE L1006
- ASL PP
- JMP L1025
-
-.L1006
-
- LDA QQ
-
-.L1008
-
- ASL PP
- ROL A
- ROL SS
- DEX
- BNE L1008
-
- STA QQ
- ASL PP
- JMP L1025
-
-.L1017
-
- EOR #&FF
- CLC
- ADC #1
- TAX
- LDA QQ
-
-.L101F
-
- LSR A
- DEX
- BNE L101F
-
- STA QQ
-
-.L1025
-
- BCC L103B
-
- INC QQ
- BNE L103B
-
- INC SS
- LDA SS
- CMP #&40
- BCC L103B
-
- LDA #&3F
- STA SS
- LDA #&FF
- STA QQ
-
-.L103B
-
- TYA
- BMI L1056
-
- BNE L1045
-
- ASL P
- JMP L1064
-
-.L1045
-
- LDA P+1
-
-.L1047
-
- ASL P
- ROL A
- ROL RR
- DEY
- BNE L1047
-
- STA P+1
- ASL P
- JMP L1064
-
-.L1056
-
- EOR #&FF
- CLC
- ADC #1
- TAY
- LDA P+1
-
-.L105E
-
- LSR A
- DEY
- BNE L105E
-
- STA P+1
-
-.L1064
-
- BCC L107A
-
- INC P+1
- BNE L107A
-
- INC RR
- LDA RR
- CMP #&40
- BCC L107A
-
- LDA #&3F
- STA RR
- LDA #&FF
- STA P+1
-
-.L107A
-
- RTS
-
-\ ******************************************************************************
-\
-\       Name: L107B
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L107B
-
- LDA #2
- BNE L1081
-
-\ ******************************************************************************
-\
-\       Name: L107F
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L107F
-
- LDA #0
-
-.L1081
-
- STA V
- LDA #0
- STA TT
- STA UU
- LDX L
- LDY M
- LDA L0900,X
- STA R
- LDA L4A00,X
- STA RR
- LDA L0A00,X
- STA S
- LDA L0B00,X
- STA SS
- LDA L0900,Y
- STA W
- SEC
- SBC R
- STA T
- LDA L4A00,Y
- STA QQ
- SBC RR
- STA I
- BPL L10C9
-
- LDA #&80
- ORA V
- STA V
- LDA #0
- SEC
- SBC T
- STA T
- LDA #0
- SBC I
- STA I
-
-.L10C9
-
- LDA L0A00,Y
- STA G
- SEC
- SBC S
- STA U
- LDA L0B00,Y
- STA H
- SBC SS
- STA J
- BPL L10F1
-
- LDA #&40
- ORA V
- STA V
-
- LDA #0
- SEC
- SBC U
- STA U
- LDA #0
- SBC J
- STA J
-
-.L10F1
-
- LDA #0
- LDX S
- LDY SS
- BEQ &1101
-
- PHP
- LDX #0
- PLP
- CLC
- BMI &1102
-
-COPYBLOCK L0D00, P%, from5800
-
-\ ******************************************************************************
-\
-\       Name: from5C00
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-ORG &5C00
-
-.from5C00
-
-ORG &0B00
-
-\ ******************************************************************************
-\
-\       Name: SetupScreen
-\       Type: Subroutine
-\   Category: Start and end
-\    Summary: Set up the screen mode and load the dashboard image
-\
-\ ******************************************************************************
-
-.SetupScreen
-
- LDA #22                \ Switch to screen mode 5 with the following VDU
- JSR OSWRCH             \ command:
- LDA #5                 \
- JSR OSWRCH             \   VDU 22, 5
-
- LDY #0                 \ We now want to write the VDU command to disable the
-                        \ cursor, whose bytes are in the variable at Cursor, so
-                        \ set up a counter in Y
-
-.sscrL1
-
- LDA Cursor,Y           \ Write the Y-th value from Cursor
- JSR OSWRCH
-
- INY                    \ Increment the loop counter
-
- CPY #10                \ Loop back to write the next character until we have
- BNE sscrL1             \ written all 10, in other words:
-                        \
-                        \   VDU 23, 0, 10, 23, 0, 0, 0, 0, 0, 0
-
- LDA #31                \ Move the text cursor to column 4, row 10 with the
- JSR OSWRCH             \ following VDU command:
- LDA #4                 \
- JSR OSWRCH             \   VDU 31, 4, 10
- LDA #10
- JSR OSWRCH
-
- LDY #0                 \ We now want to print the "Please wait" message in
-                        \ variable PleaseWait, so set up a counter in Y
-
-.sscrL2
-
- LDA PleaseWait,Y       \ Print the Y-th character from PleaseWait
- JSR OSWRCH
-
- INY                    \ Increment the loop counter
-
- CPY #11                \ Loop back to print the next character until we have
- BNE sscrL2             \ printed all 11 ("Please wait")
-
- LDX #LO(LoadDashboard) \ Set (Y X) to point to LoadDashboard ("L.DASHBD 7100")
- LDY #HI(LoadDashboard)
-
- JSR OSCLI              \ Call OSCLI to run the OS command in LoadDashboard,
-                        \ which loads the dashboard image into the screen
-
- LDA #129               \ Call OSBYTE with A = 129, X = &FF and Y = 0 to scan
- LDX #&FF               \ the keyboard for &FF centiseconds (2.56 seconds)
- LDY #0
- JSR OSBYTE
-
- JMP DrawCanopy         \ Jump down to DrawCanopy to continue the setup process
-
-\ ******************************************************************************
-\
-\       Name: LoadDashboard
-\       Type: Variable
-\   Category: Start and end
-\    Summary: The OS command string for loading the dashboard image
-\
-\ ******************************************************************************
-
-.LoadDashboard
-
- EQUS "L.DASHBD 7100"   \ This is short for "*LOAD DASHBD 7100"
- EQUB 13
-
-\ ******************************************************************************
-\
-\       Name: Cursor
-\       Type: Variable
-\   Category: Start and end
-\    Summary: The VDU command for disabling the cursor
-\
-\ ******************************************************************************
-
-.Cursor
-
- EQUB 23, 0, 10, 23     \ Set 6845 register R10 = 23
- EQUB 0, 0, 0           \
- EQUB 0, 0, 0           \ This is the "cursor start" register, so this sets the
-                        \ cursor start line at 23, effectively disabling the
-                        \ cursor
-
-\ ******************************************************************************
-\
-\       Name: PleaseWait
-\       Type: Variable
-\   Category: Start and end
-\    Summary: The "Please wait" message shown when the game loads
-\
-\ ******************************************************************************
-
-.PleaseWait
-
- EQUS "Please wait"
- EQUB 13
-
-\ ******************************************************************************
-\
-\       Name: DrawCanopy
-\       Type: Subroutine
-\   Category: Start and end
-\    Summary: Move code around, clear the edges of the canopy view, draw the
-\             canopy edges and rivets, and jump to the main code
-\
-\ ******************************************************************************
-
-.DrawCanopy
-
- LDA #140               \ Call OSBYTE with A = 140 to select the tape filing
- JSR OSBYTE             \ system (i.e. do a *TAPE command)
-
- LDY #0                 \ We now copy the following block in memory:
-                        \
-                        \   * &0400-&07FF is copied to &0D00-&10FF
-                        \
-                        \ so we set up a byte counter in Y
-                        \
-                        \ Note that this is the same block that was copied from
-                        \ &5800-&5BFF in the Entry routine, so in all we end up
-                        \ moving code as follows:
-                        \
-                        \   * &5800-&5BFF is copied to &0400-&07FF
-                        \                      then to &0D00-&10FF
-                        \   * &5C00-&5DFF is copied to &0B00-&0CFF
-                        \
-                        \ As the rest of the main code file runs from &1100 to
-                        \ &57FF, this gives us a continuous block of code from
-                        \ &0B00 to &57FF, followed by screen memory at &5800 to
-                        \ &7FFF
-
-.dcanL1
-
- LDA &0400,Y            \ Copy the Y-th byte of &0400 to the Y-th byte of &0D00
- STA &0D00,Y
-
- LDA &0500,Y            \ Copy the Y-th byte of &0500 to the Y-th byte of &0E00
- STA &0E00,Y
-
- LDA &0600,Y            \ Copy the Y-th byte of &0600 to the Y-th byte of &0F00
- STA &0F00,Y
-
- LDA &0700,Y            \ Copy the Y-th byte of &0700 to the Y-th byte of &1000
- STA &1000,Y
-
- DEY                    \ Decrement the loop counter
-
- BNE dcanL1             \ Loop back until we have copied a whole page of bytes
-
- NOP                    \ Presumably this contained some kind of copy protection
- NOP                    \ or decryption code that has been replaced by NOPs in
- NOP                    \ this unprotected version of the game
- NOP
-
-                        \ The following two calls to ClearRows clear the first
-                        \ two character rows on-screen
-
- LDA #&58               \ Set P(1 0) = &5800, so the call to ClearRows starts
- STA P+1                \ clearing from the start of the first character row
- LDA #0                 \ (i.e. row 0)
- STA P
-
- LDA #2                 \ Set R = 2, so we clear 2 character rows
- STA R
-
- LDY #0                 \ Set Y = 0, so we clear 256 bytes per row, or 32 of the
-                        \ 40 character blocks in each screen row (128 pixels)
-
- JSR ClearRows          \ Call ClearRows to clear the first 256 bytes of the
-                        \ first two character rows on-screen, which blanks out
-                        \ the first 32 character blocks (blocks 0 to 31) of the
-                        \ top two character rows (rows 0 and 1)
-
- LDA #&58               \ Set P(1 0) = &58FF, so the call to ClearRows starts
- STA P+1                \ clearingfrom character block 32 in the first character
- LDA #&FF               \ row on-screen
- STA P
-
- LDA #2                 \ Set R = 2, so we clear 2 character rows
- STA R
-
- LDY #64                \ Set Y = 64, so we clear 64 bytes per row, or 8 of the
-                        \ 40 character blocks in each screen row (32 pixels)
-
- JSR ClearRows          \ Call ClearRows to clear the last 64 bytes of the first
-                        \ two character rows on-screen, which blanks out the
-                        \ last 8 character blocks (blocks 32 to 39) of the top
-                        \ two character rows (rows 0 and 1)
-
-                        \ The following two calls to ClearRows clear a
-                        \ 4-pixel-wide column on the left and right edges of the
-                        \ screen
-
- LDA #&5A               \ Set P(1 0) = &5A7F, so the call to ClearRows starts
- STA P+1                \ clearing from the start of the third character row
- LDA #&7F               \ (i.e. row 2)
- STA P
-
- LDA #18                \ Set R = 18, so we clear 18 character rows
- STA R
-
- LDY #8                 \ Set Y = 8, so we clear 8 bytes per row, or 1 of the
-                        \ 40 character blocks in each screen row (4 pixels)
-
- JSR ClearRows          \ Call ClearRows to clear the first byte of character
-                        \ rows 2 to 20, which blanks out the first character
-                        \ block (block 0) on all 18 rows, i.e. the first four
-                        \ pixels
-
- LDA #&5B               \ Set P(1 0) = &5BB7, so the call to ClearRows starts
- STA P+1                \ clearing from the start of the last character block
- LDA #&B7               \ on the third character row (i.e. row 2)
- STA P
-
- LDA #18                \ Set R = 18, so we clear 18 character rows
- STA R
-
- LDY #8                 \ Set Y = 8, so we clear 8 bytes per row, or 1 of the
-                        \ 40 character blocks in each screen row (4 pixels)
-
- JSR ClearRows          \ Call ClearRows to clear the last byte of character
-                        \ rows 2 to 20, which blanks out the last character
-                        \ block (block 39) on all 18 rows, i.e. the last four
-                        \ pixels
-
-                        \ We now draw the edges of the canopy view, starting
-                        \ with the left edge, then the right edge, and then the
-                        \ horizontal line along the top (so this does not
-                        \ include the bottom edge, which has already been
-                        \ displayed as part of the dashboard image, and it also
-                        \ doesn't include the diagonal top corners, which are
-                        \ drawn by the main game code)
-
- LDX #3                 \ Move the graphics cursor to (3, 96)
- LDY #96
- JSR VduMove
-
- LDX #3                 \ Draw a line to (3, 239)
- LDY #239
- JSR VduDraw
-
- LDX #156               \ Move the graphics cursor to (156, 96)
- LDY #96
- JSR VduMove
-
- LDX #156               \ Draw a line to (156, 239)
- LDY #239
- JSR VduDraw
-
- LDX #8                 \ Move the graphics cursor to (8, 248)
- LDY #248
- JSR VduMove
-
- LDX #151               \ Draw a line to (151, 248)
- LDY #248
- JSR VduDraw
-
-                        \ We now draw the square rivets around the edge of the
-                        \ canopy view, starting with the three rivets up each
-                        \ side of the screen
-
- LDY #121               \ Set Y = 121 so the first rivets are drawn at height
-                        \ 121, i.e. at (0, 121) and (158, 121)
-
-.dcanL2
-
- LDX #0                 \ Draw a square rivet at (0, Y)
- JSR DrawRivet
-
- LDX #158               \ Draw a square rivet at (158, Y)
- JSR DrawRivet
-
- TYA                    \ Set Y = Y + 48
- CLC                    \
- ADC #48                \ so the next rivet we draw will be 48 pixels higher
- TAY
-
- CPY #9                 \ Loop back to draw the next rivet until Y = 9, at which
- BNE dcanL2             \ point Y has wrapped round off the top of the screen
-                        \ back to the bottom and we will have drawn three rivets
-                        \ up each side of the canopy view
-
-                        \ Finally, we draw the six square rivets along the top
-                        \ of the canopy view
-
- LDY #255               \ Set X and Y so the first rivet is at (19, 255)
- LDX #19
-
-.dcanL3
-
- JSR DrawRivet          \ Draw a square rivet at (X, Y)
-
- TXA                    \ Set X = X + 24
- CLC                    \
- ADC #24                \ so the next rivet we draw will be 24 pixels to the
- TAX                    \ right
-
- CPX #163               \ Loop back to draw the next rivet until X = 163, at
- BNE dcanL3             \ which point we will have drawn six rivets along the
-                        \ top of the canopy view
-
- JMP MainLoop           \ Jump to MainLoop to start the game
-
-\ ******************************************************************************
-\
-\       Name: VduPoint
-\       Type: Subroutine
-\   Category: Graphics
-\    Summary: Draw a point on-screen using the standard VDU routines
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   X                   The x-coordinate of the point (0-159)
-\
-\   Y                   The y-coordinate of the point (0-255)
-\
-\ ******************************************************************************
-
-.VduPoint
-
- LDA #69                \ Set A = 69 so the following VDU 25 command plots a
-                        \ point at an absolute position on-screen
-
- BNE VduPlot            \ Jump to VduPlot to do the move (this BNE is
-                        \ effectively a JMP as A is never zero
-
-\ ******************************************************************************
-\
-\       Name: VduMove
-\       Type: Subroutine
-\   Category: Graphics
-\    Summary: Move the graphics cursor using the standard VDU routines
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   X                   The x-coordinate to move the graphics cursor to (0-159)
-\
-\   Y                   The y-coordinate to move the graphics cursor to (0-255)
-\
-\ ******************************************************************************
-
-.VduMove
-
- LDA #4                 \ Set A = 4 so the following VDU 25 command moves the
-                        \ graphics cursor an absolute position on-screen
-
- BNE VduPlot            \ Jump to VduPlot to do the move (this BNE is
-                        \ effectively a JMP as A is never zero
-
-\ ******************************************************************************
-\
-\       Name: VduDraw
-\       Type: Subroutine
-\   Category: Graphics
-\    Summary: Draw a line using the standard VDU routines
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   X                   The x-coordinate of the end of the line (0-159)
-\
-\   Y                   The y-coordinate of the end of the line (0-255)
-\
-\ ******************************************************************************
-
-.VduDraw
-
- LDA #5                 \ Set A = 5 to denote "draw line absolute in the current
-                        \ graphics foreground colour"
-
-\ ******************************************************************************
-\
-\       Name: VduPlot
-\       Type: Subroutine
-\   Category: Graphics
-\    Summary: Perform a plot command the standard VDU routines
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   A                   The type of plot command:
-\
-\                         * 4 = Move cursor to coordinate
-\
-\                         * 5 = Draw line from cursor to coordinate
-\
-\                         * 69 = Draw point at coordinate
-\
-\   X                   The x-coordinate for the plot command (0-159)
-\
-\   Y                   The y-coordinate for the plot command (0-255)
-\
-\ ******************************************************************************
-
-.VduPlot
-
- PHA                    \ Store the value of A on the stack, so we can retrieve
-                        \ it after the call to OSWRCH
-
- LDA #25                \ Start a VDU 25 command, which is the equivalent of a
- JSR OSWRCH             \ PLOT command in BBC BASIC, and which has the following
-                        \ format:
-                        \
-                        \   VDU 25, K, X; Y;
-                        \
-                        \ where K is the plotting mode (i.e. move or draw) and
-                        \ X and Y are the relevant coordinates as 16-bit numbers
-
- PLA                    \ Retrieve the value of A that we stored on the stack
-
- JSR OSWRCH             \ Write the K parameter of the VDU command, i.e. the
-                        \ type of plot command
-
- LDA #0                 \ Set P = 0
- STA P
-
- TXA                    \ Set A = X, so now (P A) contains the x-coordinate as a
-                        \ 16-bit number
-
- ASL A                  \ Set (P A) = (P A) * 8
- ROL P                  \           = x-coordinate * 8
- ASL A                  \
- ROL P                  \ This gives the screen location of the x-coordinate in
- ASL A                  \ terms of VDU coordinates, where the screen is always
- ROL P                  \ 1280 pixels wide, which is 8 times the number of
-                        \ pixels in 160-pixel-wide mode 5 (i.e. 8 * 160 = 1280)
-
- JSR OSWRCH             \ Write (P A), writing the low byte in A first
-
- LDA P                  \ And then the high byte in P
- JSR OSWRCH
-
- LDA #0                 \ Set P = 0
- STA P
-
- TYA                    \ Set A = Y, so now (P A) contains the y-coordinate as a
-                        \ 16-bit number
-
- ASL A                  \ Set (P A) = (P A) * 4
- ROL P                  \           = y-coordinate * 4
- ASL A                  \
- ROL P                  \ This gives the screen location of the y-coordinate in
-                        \ terms of VDU coordinates, where the screen is always
-                        \ 1024 pixels high, which is 4 times the number of
-                        \ pixels in 256-pixel-high mode 5 (i.e. 4 * 256 = 1024)
-
- JSR OSWRCH             \ Write (P A), writing the low byte in A first
-
- LDA P                  \ And then the high byte in P
- JSR OSWRCH
-
- RTS                    \ Return from the subroutine
-
-\ ******************************************************************************
-\
-\       Name: DrawRivet
-\       Type: Subroutine
-\   Category: Graphics
-\    Summary: Draw a square rivet (2 pixels across, 4 pixels high)
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   X                   The x-coordinate of the top-left corner of the rivet
-\
-\   Y                   The y-coordinate of the top-left corner of the rivet
-\
-\ ******************************************************************************
-
-.DrawRivet
-
- JSR VduPoint           \ Draw a point at (X, Y)
-
- DEY                    \ Draw a point at (X, Y - 1)
- JSR VduPoint
-
- DEY                    \ Draw a point at (X, Y - 2)
- JSR VduPoint
-
- DEY                    \ Draw a point at (X, Y - 3)
- JSR VduPoint
-
- INX                    \ Draw a point at (X + 1, Y - 3)
- JSR VduPoint
-
- INY                    \ Draw a point at (X + 1, Y - 2)
- JSR VduPoint
-
- INY                    \ Draw a point at (X + 1, Y - 1)
- JSR VduPoint
-
- INY                    \ Draw a point at (X + 1, Y)
- JSR VduPoint
-
- DEX                    \ Restore X to its original value
-
- RTS                    \ Return from the subroutine
-
-\ ******************************************************************************
-\
-\       Name: ClearRows
-\       Type: Subroutine
-\   Category: Graphics
-\    Summary: Clear the specified number of rows on-screen
-\
-\ ------------------------------------------------------------------------------
-\
-\ This routine zeroes a block of Y bytes on R screen rows, starting from screen
-\ address P(1 0) on the first row.
-\
-\ A value of Y = 0 will zero 256 bytes.
-\
-\ In other words, P(1 0) represents the top-left pixel to blank, Y represents
-\ the width of the area to blank (with a value of 8 per character block), and R
-\ contains the number of rows to blank.
-\
-\ Arguments:
-\
-\   Y                   The width of each character row to zero (in bytes),
-\                       0 indicates 256 bytes
-\
-\   P(1 0)              The screen address to start zeroing from
-\
-\   R                   The number of character rows to zero
-\
-\ ******************************************************************************
-
-.ClearRows
-
- STY S                  \ Store the width of each character row in S
-
-.clrwL1
-
- LDA #0                 \ We are about to zero a block of memory, so set A = 0
-                        \ so we can use it as our overwrite value
-
- LDY S                  \ Fetch the width of each character row, which we stored
-                        \ in S above
-
-.clrwL2
-
- STA (P),Y              \ Zero the Y-th byte of the page at P(1 0), which sets 4
-                        \ pixels to black
-
- DEY                    \ Decrement the byte pointer
-
- BNE clrwL2             \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
-
- LDA P                  \ Set P(1 0) = P(1 0) + 320
- CLC                    \
- ADC #LO(320)           \ starting with the low bytes
- STA P
-
- LDA P+1                \ And then the high bytes
- ADC #HI(320)
- STA P+1
-
- DEC R                  \ Decrement the row counter in R
-
- BNE clrwL1             \ Loop back until we have zeroed R rows
-
- RTS                    \ Return from the subroutine
-
-\ ******************************************************************************
-\
-\       Name: Unused block
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
- SKIP 30                \ These bytes appear to be unused
-
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
-
- SKIP 32
-
-COPYBLOCK L0B00, P%, from5C00
-
-\ ******************************************************************************
-\
 \       Name: Entry
 \       Type: Subroutine
 \   Category: Start and end
@@ -16028,5 +15965,11 @@ ORG &5E00
 \ Save AVIA.bin
 \
 \ ******************************************************************************
+
+\ Code between &0D00 and &1100 starts out at &5800 before being moved
+COPYBLOCK &0D00, &1100, &5800
+
+\ Code between &0B00 and &CFF starts out at &5C00 before being moved
+COPYBLOCK &0B00, &0D00, &5C00
 
 SAVE "3-assembled-output/AVIA.bin", CODE%, P%
