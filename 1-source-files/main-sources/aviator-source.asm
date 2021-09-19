@@ -5772,34 +5772,47 @@ ORG &0B00
                         \ the IndicatorMin and IndicatorMax tables, so the final
                         \ ranges are:
                         \
-                        \   * Compass                 +0    A =  0 to 255
-                        \   * Airspeed               +48    A = 57 to 122
-                        \   * Altimeter small hand    +0    A =  0 to 255
-                        \   * Altimeter large hand    +0    A =  0 to 255
-                        \   * Vertical speed         +67    A = 30 to 104
-                        \   * Turn                   +53    A = 33 to  72
-                        \   * Slip                  +106    A = 91 to 120
+                        \   * Compass                       A =  0 to  73
+                        \   * Airspeed                      A = 57 to 122
+                        \   * Altimeter small hand          A =  0 to 254
+                        \   * Altimeter large hand          A =  0 to 104
+                        \   * Vertical speed                A = 30 to 104
+                        \   * Turn                          A = 33 to  72
+                        \   * Slip                          A = 91 to 120
 
  STA H                  \ Store the clipped indicator value in H
 
- JSR L216E              \ ??? Calculate hand coordinates, populate S, H, W, G, R
+ JSR DialHandVector     \ Calculate the vector for drawing the new dial hand
+                        \ with value A, returning the result in W, G and R
 
-                        \ Fall through into DrawIndicatorLine to draw the hand
-                        \ on the indicator for value H
+                        \ Fall through into DrawIndicatorLine to draw the new
+                        \ hand on the indicator
 
 \ ******************************************************************************
 \
 \       Name: DrawIndicatorLine
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Draw a line on indicator 0 to 7, i.e. a dial hand or artificial
-\             horizon
+\    Summary: Draw a line on indicators 0 to 7, i.e. a dial hand (0-6) or an
+\             artificial horizon (7)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   S, H, W, G, R       The line vector values for drawing the hand
+\   S                   Start point x-coordinate (artificial horizon only)
+\
+\   H                   Start point y-coordinate (artificial horizon only)
+\
+\   W                   Magnitude of x-coordinate of line's vector |x-delta|
+\
+\   G                   Magnitude of y-coordinate of line's vector |y-delta|
+\
+\   R                   Direction of vector (T, U):
+\
+\                         * Bit 7 is the direction of the the x-delta
+\
+\                         * Bit 6 is the direction of the the y-delta
 \
 \   X                   The indicator number (0-7)
 \
@@ -5809,97 +5822,124 @@ ORG &0B00
 
 .DrawIndicatorLine
 
- LDA IndicatorLineI,X   \ Set I = x-coordinate of starting point of current hand
- STA I
+ LDA IndicatorLineI,X   \ Set I = x-coordinate of the starting point of the
+ STA I                  \ current line
 
- LDA IndicatorLineJ,X   \ Set J = y-coordinate of starting point of current hand
- STA J
+ LDA IndicatorLineJ,X   \ Set J = y-coordinate of the starting point of the
+ STA J                  \ current line
 
- LDA IndicatorLineT,X
+ LDA IndicatorLineT,X   \ Set T = x-delta of the current line
  STA T
 
- LDA IndicatorLineU,X
+ LDA IndicatorLineU,X   \ Set U = y-delta of the current line
  STA U
 
- LDA IndicatorLineV,X
+ LDA IndicatorLineV,X   \ Set V = direction of the current line
  STA V
 
- LDA #128
- STA N
+ LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
+ STA N                  \ current line
 
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- LDX WW
+ LDX WW                 \ If this is not indicator 7, jump to dinl1
  CPX #7
  BNE dinl1
 
-                        \ If we get here this is the artificial horizon
+                        \ If we get here then this is the artificial horizon
                         \ (indicator 7)
 
- LDA #&FF
+ LDA #%11111111         \ Set A to the pixel byte for four white pixels, to use
+                        \ for the bottom row of pixels in the centre block of
+                        \ the artificial horizon's centre line
 
- LDY #2
+ LDY #2                 \ We want to redraw the three pixel rows in the centre
+                        \ block of the artificial horizon's centre line, which
+                        \ from bottom to top contain 3 pixels, 1 pixel and 1
+                        \ pixel, so so set a counter in Y for 3 bytes
 
 .dinlL1
 
- STA Row23_Block13_2,Y
+ STA Row23_Block13_2,Y  \ Redraw the Y-th pixel row in the centre block
 
- LDA #&44
+ LDA #%01000100         \ The top two pixel rows of the centre block contain the
+                        \ vertical mark at the centre of the indicator, so set A
+                        \ to the appropriate single-pixel byte
 
- DEY
+ DEY                    \ Decrement the counter to move up to the next pixel row
 
- BPL dinlL1
+ BPL dinlL1             \ Loop back until we have redrawn all three pixel rows in
+                        \ the centre block
 
- LDA #%00110011
- STA Row23_Block12_4
+ LDA #%00110011         \ Redraw the two-pixels at the left end of the
+ STA Row23_Block12_4    \ artificial horizon's centre line
 
- LDA #%10001000
- STA Row23_Block14_4
+ LDA #%10001000         \ Redraw the single pixel at the right end of the
+ STA Row23_Block14_4    \ artificial horizon's centre line
 
- LDA S
- STA I
+ LDA S                  \ Fetch the x-coordinate of the the starting point of
+                        \ the new line from S
 
- STA IndicatorLineI,X
+ STA I                  \ Set I = the x-coordinate of the starting point of the
+                        \ new line to draw
 
- LDA H
- STA IndicatorLineJ,X
+ STA IndicatorLineI,X   \ Store the x-coordinate in IndicatorLineI, so we can
+                        \ use it to erase the line later
 
- BNE dinl2
+ LDA H                  \ Set A = the y-coordinate of the starting point of the
+                        \ new line to draw
+
+ STA IndicatorLineJ,X   \ Store the y-coordinate in IndicatorLineJ, so we can
+                        \ use it to erase the line later
+
+ BNE dinl2              \ Jump to dinl2 to draw the new line (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .dinl1
 
- LDA IndicatorLineI,X            \ Indicators 0-6
- STA I
+                        \ If we get here then this is indicator 0-6, so it's a
+                        \ hand-based dial
 
- LDA IndicatorLineJ,X
+ LDA IndicatorLineI,X   \ Set I = x-coordinate of starting point of hand, which
+ STA I                  \ is a fixed value for hand-based dials
+
+ LDA IndicatorLineJ,X   \ Set J = y-coordinate of starting point of hand, which
+                        \ is a fixed value for hand-based dials
 
 .dinl2
 
- STA J
+ STA J                  \ Store A in J as the y-coordinate of the starting
+                        \ point of the new line to draw
 
- LDA W
- STA T
+ LDA W                  \ Fetch the x-delta of the new line from W
 
- STA IndicatorLineT,X
+ STA T                  \ Set T = the x-delta of the new line
 
- LDA G
- STA U
+ STA IndicatorLineT,X   \ Store the x-delta in IndicatorLineT, so we can use it
+                        \ to erase the line later
 
- STA IndicatorLineU,X
+ LDA G                  \ Fetch the y-delta of the new line from G
 
- LDA R
- STA V
+ STA U                  \ Set U = the y-delta of the new line
 
- STA IndicatorLineV,X
+ STA IndicatorLineU,X   \ Store the y-delta in IndicatorLineU, so we can use it
+                        \ to erase the line later
 
- LDA #0
- STA N
+ LDA R                  \ Fetch the direction of the new line from R
+
+ STA V                  \ Set V = the direction of the new line
+
+ STA IndicatorLineV,X   \ Store the direction in IndicatorLineV, so we can use
+                        \ it to erase the line later
+
+ LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the new
+ STA N                  \ line
 
  JSR DrawVectorLine     \ Draw a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -5988,102 +6028,199 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L216E
+\       Name: DialHandVector
 \       Type: Subroutine
-\   Category: 
-\    Summary: Calculation for indicators 0 to 6
+\   Category: Dashboard
+\    Summary: Vector line calculation for a hand on indicators 0 to 6
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   The value to show on the indicator as a dial hand
+\   A                   The value to show as a hand on the dial indicator
 \
 \ Returns:
 \
-\   S, H, W, G, R       The line vector values for drawing the hand
+\   W                   Magnitude of x-coordinate of line's vector |x-delta|
+\
+\   G                   Magnitude of y-coordinate of line's vector |y-delta|
+\
+\   R                   Direction of vector (T, U):
+\
+\                         * Bit 7 is the direction of the the x-delta
+\
+\                         * Bit 6 is the direction of the the y-delta
+\
+\                       In terms of dials, this means the following:
+\
+\                         * x-delta +ve, y-delta +ve: 12 to 3 o'clock
+\
+\                         * x-delta +ve, y-delta -ve: 3 to 6 o'clock
+\
+\                         * x-delta -ve, y-delta -ve: 6 to 9 o'clock
+\
+\                         * x-delta -ve, y-delta +ve: 9 to 12 o'clock
 \
 \ ******************************************************************************
 
-.L216E
+.DialHandVector
 
- LDY #0
- STY R
- LDY L4F92,X
- INY
- STY K
- SEC
+ LDY #0                 \ Set R = 0, to use as the first guess for the direction
+ STY R                  \ of the hand on the dial (we will change it below if
+                        \ required)
 
-.L2179
+ LDY DialQuadrant,X     \ Set Y = the DialQuadrant value for this indicator,
+                        \ which is the size of a quarter of the dial in terms of
+                        \ the value in A
 
- SBC K
- BCS L2182
+ INY                    \ Set K = Y + 1
+ STY K                  \       = DialQuadrant + 1
+                        \
+                        \ Doing this enables us to subtract this value below,
+                        \ leaving the result in a suitable state for negating
+                        \ using two's complement (see dhvc2)
 
- ADC K
- JMP L21A4
+ SEC                    \ Set the C flag for the subtraction we are about to do
 
-.L2182
+.dhvc1
 
- SBC L4F92,X
- BCS L218D
+ SBC K                  \ Set A = A - K
+                        \       = A - (DialQuadrant + 1)
+                        \
+                        \ so we have subtracted a quadrant's worth of value from
+                        \ the value we want to show in A
 
- LDY #&40
- STY R
- BNE L21A2
+ BCS dhvc2              \ If the subtraction didn't underflow, jump to dhvc2 to
+                        \ skip the following two instructions
 
-.L218D
+                        \ The subtraction underflowed, so we know that the hand
+                        \ is in the first quadrant, i.e 3 to 6 o'clock
 
- SBC K
- BCS L2199
+ ADC K                  \ Reverse the subtraction by adding K to A, so A is now
+                        \ back to its original value
 
- ADC K
- LDY #&C0
- STY R
- BNE L21A4
+ JMP dhvc6              \ Jump down to dhvc5 to calculate the hand's vector,
+                        \ with R set to 0 to indicate that both the x-delta and
+                        \ y-delta for the line are positive
 
-.L2199
+.dhvc2
 
- SBC L4F92,X
- BCS L2179
+ SBC DialQuadrant,X     \ Subtract a second quadrant's worth, so:
+                        \
+                        \   A = A - (DialQuadrant + 1) - DialQuadrant
+                        \     = A - 2 * DialQuadrant - 1
+                        \
+                        \ If we want to negate this value below, then we can do
+                        \ this using two's complement by simply inverting all
+                        \ the bits, as we have already subtracted 1, and we can
+                        \ negate by either inverting-and-adding-1, or by
+                        \ subtracting-1-and-inverting (as they are equivelent)
 
- LDY #&80
- STY R
+ BCS dhvc3              \ If the subtraction didn't underflow, jump to dhvc3 to
+                        \ skip the following three instructions
 
-.L21A2
+                        \ The subtraction underflowed, so we know that the hand
+                        \ is in the second quadrant, i.e 6 to 9 o'clock
 
- EOR #&FF
+ LDY #%01000000         \ Set bit 6 of R to indicate that the x-delta for the
+ STY R                  \ line is positive and the y-delta is negative
 
-.L21A4
+ BNE dhvc5              \ Jump down to dhvc5 to negate A before calculating the
+                        \ hand's vector (this BNE is effectively a JMP as A is
+                        \ never zero)
 
- STA S
- LDA L4F92,X
- SEC
+.dhvc3
+
+ SBC K                  \ Subtract a third quadrant's worth
+
+ BCS dhvc4              \ If the subtraction didn't underflow, jump to dhvc4 to
+                        \ skip the following four instructions
+
+                        \ The subtraction underflowed, so we know that the hand
+                        \ is in the third quadrant on the dial
+
+ ADC K                  \ Reverse the subtraction by adding K to A, so A is now
+                        \ back to its original value
+
+ LDY #%11000000         \ Set bits 7 and 6 of R to indicate that both the
+ STY R                  \ x-delta and y-delta for the line are negative
+
+ BNE dhvc6              \ Jump down to dhvc5 to calculate the hand's vector
+                        \ (this BNE is effectively a JMP as A is never zero)
+
+.dhvc4
+
+ SBC DialQuadrant,X     \ Subtract a fourth quadrant's worth
+
+ BCS dhvc1              \ If the subtraction didn't underflow, jump to dhvc1 to
+                        \ start the subtraction process again, as we have now
+                        \ subtracted a whole dial's worth and need to keep going
+
+                        \ The subtraction underflowed, so we know that the hand
+                        \ is in the fourth quadrant on the dial
+
+ LDY #%10000000         \ Set bit 7 of R to indicate that the x-delta for the
+ STY R                  \ line is negative and the y-delta is positive
+
+.dhvc5
+
+                        \ If we get here then the hand is either in the second
+                        \ or fourth quadrant on the dial
+
+ EOR #&FF               \ Invert the value of A (i.e. negate it) using two's
+                        \ complement, which works because we can negate a number
+                        \ by subtracting 1 and then inverting, and we
+                        \ effectively subtracted 1 in the above by using K
+
+.dhvc6
+
+                        \ By the time we get here, the direction of the new
+                        \ dial hand is in R, the value of A has been reduced to
+                        \ fit into one quadrant on the dial, and it has been
+                        \ negated if the deltas have different signs
+
+ STA S                  \ Store the reduced value of A in S
+
+ LDA DialQuadrant,X     \ Set A = the DialQuadrant value for this indicator,
+                        \ which is the size of a quarter of the dial in terms of
+                        \ the value in A
+
+ SEC                    \ Set A = A - S
  SBC S
- CMP L4FA2,X
- BCC L21B4
 
- LDA L4FA2,X
+ CMP YDeltaMax,X        \ If A < YDeltaMax for this indicator, jump to dhvc7 to
+ BCC dhvc7              \ skip the following instruction
 
-.L21B4
+ LDA YDeltaMax,X        \ Set A = YDeltaMax, so A is never greater than the
+                        \ YDeltaMax value for this indicator
 
- CLC
- ADC #1
- STA G
- LDA S
- CLC
- ADC #1
- LSR A
- CMP L4F9A,X
- BCC L21C7
+.dhvc7
 
- LDA L4F9A,X
+ CLC                    \ Set G = A + 1
+ ADC #1                 \
+ STA G                  \ which is the y-delta for the line
 
-.L21C7
+ LDA S                  \ Fetch the reduced value of A that we stored in S we
+                        \ above
 
- CLC
- ADC #1
- STA W
- RTS
+ CLC                    \ Set A = (A + 1) / 2
+ ADC #1                 \
+ LSR A                  \ because mode 5 pixels are twice as wide as they are
+                        \ high
+
+ CMP XDeltaMax,X        \ If A < XDeltaMax for this indicator, jump to dhvc8 to
+ BCC dhvc8              \ skip the following instruction
+
+ LDA XDeltaMax,X        \ Set A = XDeltaMax, so A is never greater than the
+                        \ XDeltaMax value for this indicator
+
+.dhvc8
+
+ CLC                    \ Set W = A + 1
+ ADC #1                 \
+ STA W                  \ which is the x-delta for the line
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7645,7 +7782,7 @@ ORG &0B00
  JSR UpdateIndicator
 
  LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
- STA L3692              \ 66 times in the reseL6 loop
+ STA L3692              \ 66 times in the following loop
 
 .reseL6
 
@@ -13991,17 +14128,47 @@ ORG &0B00
  EQUB &00, &00, &FF, &8D, &BE, &00, &05
  EQUB &7D, &FF, &50
 
-.L4F92
+.DialQuadrant
 
- EQUB &12, &16, &10, &1A, &16, &1A, &1A, &41  \ Constant for indicators 0-6, see L216E
+                        \ The size of a quadrant in each indicator
 
-.L4F9A
+ EQUB 18                \ Centre value for indicator 0 (compass)
+ EQUB 22                \ Centre value for indicator 1 (airspeed)
+ EQUB 16                \ Centre value for indicator 2 (altimeter small)
+ EQUB 26                \ Centre value for indicator 3 (altimeter large)
+ EQUB 22                \ Centre value for indicator 4 (vertical speed)
+ EQUB 26                \ Centre value for indicator 5 (turn)
+ EQUB 26                \ Centre value for indicator 6 (slip)
 
- EQUB &07, &09, &05, &0A, &08, &09, &09, &0D  \ Constant for indicators 0-6, see L216E
+ EQUB &41
 
-.L4FA2
+.XDeltaMax
 
- EQUB &0C, &0A, &0A, &0E, &0C, &0E, &0E, &20  \ Constant for indicators 0-6, see L216E
+                        \ The maximum x-delta for the hand in each indicator
+
+ EQUB 7                 \ Maximum x-delta for indicator 0 (compass)
+ EQUB 9                 \ Maximum x-delta value for indicator 1 (airspeed)
+ EQUB 5                 \ Maximum x-delta value for indicator 2 (altimeter small)
+ EQUB 10                \ Maximum x-delta value for indicator 3 (altimeter large)
+ EQUB 8                 \ Maximum x-delta value for indicator 4 (vertical speed)
+ EQUB 9                 \ Maximum x-delta value for indicator 5 (turn)
+ EQUB 9                 \ Maximum x-delta value for indicator 6 (slip)
+
+ EQUB &0D
+
+.YDeltaMax
+
+                        \ The maximum y-delta for the hand in each indicator
+
+ EQUB 12                \ Maximum y-delta value for indicator 0 (compass)
+ EQUB 10                \ Maximum y-delta value for indicator 1 (airspeed)
+ EQUB 10                \ Maximum y-delta value for indicator 2 (altimeter small)
+ EQUB 14                \ Maximum y-delta value for indicator 3 (altimeter large)
+ EQUB 12                \ Maximum y-delta value for indicator 4 (vertical speed)
+ EQUB 14                \ Maximum y-delta value for indicator 5 (turn)
+ EQUB 14                \ Maximum y-delta value for indicator 6 (slip)
+
+ EQUB &20
 
 .IndicatorLineI
 
@@ -14080,7 +14247,7 @@ ORG &0B00
 
 .IndicatorLineT
 
-                        \ Storage for the x-delta of the current hand on
+                        \ Storage for the x-delta of the current line on
                         \ indicators 0-7, so we can erase it again (this value
                         \ matches the value of T passed to DrawVectorLine)
 
@@ -14095,7 +14262,7 @@ ORG &0B00
 
 .IndicatorLineU
 
-                        \ Storage for the y-delta of the current hand on
+                        \ Storage for the y-delta of the current line on
                         \ indicators 0-7, so we can erase it again (this value
                         \ matches the value of U passed to DrawVectorLine)
 
@@ -14110,7 +14277,7 @@ ORG &0B00
 
 .IndicatorLineV
 
-                        \ Storage for the direction of the current hand on
+                        \ Storage for the direction of the current line on
                         \ indicators 0-7, so we can erase it again (this value
                         \ matches the value of V passed to DrawVectorLine)
 
