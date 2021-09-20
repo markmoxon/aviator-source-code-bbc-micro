@@ -5814,6 +5814,8 @@ ORG &0B00
 \
 \                         * Bit 6 is the direction of the the y-delta
 \
+\                       Direction is like a clock, so positive is up and right
+\
 \   X                   The indicator number (0-7)
 \
 \   WW                  The indicator number (0-7)
@@ -6035,6 +6037,62 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine performs a calculation to work out the vector for a dial
+\ indicator hand, given a value to show on the dial. It calculates this using a
+\ simple triangle model - there's no trigonometry here.
+\
+\ First, we work out which quadrant of the dial we want to draw the hand in, and
+\ set the direction in R accordingly. We do this by repeatedly subtracting the
+\ range of a single quadrant from the value to show, counting quadrants as we
+\ go, until we go past zero, at which point we now which quadrant we the dial
+\ hand is in.
+\
+\ Then we work out the vector from the centre point of the dial to the end of
+\ the hand, using a simple triangle. Imagine the possible positions of the end
+\ of the dial hand as a vertical diamond shape, like this:
+\
+\                         ^                         ^
+\                       .´ `.                       |`. (x, y)
+\                     .´     `.  r                  |  /.
+\                   .´         `.                   | /  `.
+\                 .´             `.                 |/     `.
+\                <        +        >                +--------> 
+\                 `.             .´          (0, 0)     w
+\                   `.         .´
+\                     `.     .´
+\                       `. .´
+\                         v
+\
+\ It doesn't necessarily look like it in in ASCII, but imagine that the diamond
+\ is a rotated square, so all the angles are right angles.
+\
+\ If the end of our hand is always on the outside of the diamond shape above,
+\ then if we consider the top-right quadrant, the equation of the edge line is
+\ is y = - x + w. So as the hand goes from pointing straight up to pointing to
+\ the right (12 o'clock to 3 o'clock), x goes from 0 to w, y goes from w to 3,
+\ and y = x - w. For the next quadrant down, 3 to 6 o'clock, we can negate y to
+\ get y = -(x - w) = w - x, and we can do a similar sign switch for the other
+\ two quadrants.
+\
+\ So, given an x-coordinate for our hand, we can work out the y-coordinate using
+\ y = x - w or y = w - x, depending on the quadrant. Ans because we chose to set
+\ the origin at the centre of the dial, the x and y-coordinates are effectively
+\ x and y-deltas, which is what we want to generate for use in the vector line
+\ routine at DrawVectorLine.
+\
+\ If we then cap the values of x and y, this has the effect of "blunting" the
+\ corners of the diamond, like this:
+\
+\                     _______
+\                   .´       `.
+\                  |           |
+\                  |     +     |
+\                  |           |
+\                   `._______.´
+\
+\ It turns out that this kind of movement for the end of a dial hand is pretty
+\ good, even though it isn't describing anything like a perfect circle.
+\
 \ Arguments:
 \
 \   A                   The value to show as a hand on the dial indicator
@@ -6051,7 +6109,8 @@ ORG &0B00
 \
 \                         * Bit 6 is the direction of the the y-delta
 \
-\                       In terms of dials, this means the following:
+\                       Direction is like a clock, so positive is up and right,
+\                       so this means the following:
 \
 \                         * x-delta +ve, y-delta +ve: 12 to 3 o'clock
 \
@@ -6175,19 +6234,34 @@ ORG &0B00
 .dhvc6
 
                         \ By the time we get here, the direction of the new
-                        \ dial hand is in R, the value of A has been reduced to
-                        \ fit into one quadrant on the dial, and it has been
-                        \ negated if the deltas have different signs
+                        \ dial hand is in R, the value of A has been reduced
+                        \ into negative territory by repeated subtraction, and
+                        \ it has been switched to be positive if the quadrant is
+                        \ bottom-right or top-left, i.e. 3 to 6 o'clock or
+                        \ 9 to 12 o'clock)
+                        \
+                        \ We now use this value of A as our value of x in the
+                        \ above calculation
 
  STA S                  \ Store the reduced value of A in S
 
+                        \ We now calculate y-delta, where y = w - x or y = x - w
+                        \ depending on the quadrant. We already set the sign of
+                        \ x correctly with the above EOR, so if we calculate
+                        \ y = w - x, it will be correct
+
  LDA DialQuadrant,X     \ Set A = the DialQuadrant value for this indicator,
                         \ which is the size of a quarter of the dial in terms of
-                        \ the value in A
+                        \ the value in A. This is what we use for w in the above
 
  SEC                    \ Set A = A - S
- SBC S
+ SBC S                  \       = w - x
+                        \
+                        \ so A contains our y-delta
 
+                        \ We now cap the y-delta, which has the effect of
+                        \ blunting the points of our diamond
+                        
  CMP YDeltaMax,X        \ If A < YDeltaMax for this indicator, jump to dhvc7 to
  BCC dhvc7              \ skip the following instruction
 
@@ -6197,16 +6271,18 @@ ORG &0B00
 .dhvc7
 
  CLC                    \ Set G = A + 1
- ADC #1                 \
- STA G                  \ which is the y-delta for the line
+ ADC #1                 \       = y-delta + 1
+ STA G                  \
+                        \ so G contains the y-delta, plus 1 to ensure it is
+                        \ non-zero
 
  LDA S                  \ Fetch the reduced value of A that we stored in S we
-                        \ above
+                        \ above, which we know is our x-delta
 
  CLC                    \ Set A = (A + 1) / 2
  ADC #1                 \
  LSR A                  \ because mode 5 pixels are twice as wide as they are
-                        \ high
+                        \ high, so this scales the x-delta to be a pixel value
 
  CMP XDeltaMax,X        \ If A < XDeltaMax for this indicator, jump to dhvc8 to
  BCC dhvc8              \ skip the following instruction
@@ -6217,8 +6293,10 @@ ORG &0B00
 .dhvc8
 
  CLC                    \ Set W = A + 1
- ADC #1                 \
- STA W                  \ which is the x-delta for the line
+ ADC #1                 \       = x-delta + 1
+ STA W                  \
+                        \ so W contains the y-delta, plus 1 to ensure it is
+                        \ non-zero
 
  RTS                    \ Return from the subroutine
 
@@ -6227,11 +6305,17 @@ ORG &0B00
 \       Name: DrawVectorLine (Part 1 of 3)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: Draw a line
+\    Summary: Draw a line: set up pixel bytes and slope variables
 \
 \ ------------------------------------------------------------------------------
 \
 \ Draw/erase a line from (I, J) as a vector (T, U) with direction V.
+\
+\ This routine uses Bresenham's algorithm to draw the line, by working along the
+\ longer axis of the line vector, one pixel at a time, plotting a pixel after
+\ each step. All the while we keep a cumulative tally of fractional pixel counts
+\ along the shorter axis (known as the "slope error"), and move one pixel along
+\ the shorter axis when the tally reaches a multiple of the axis length.
 \
 \ Arguments:
 \
@@ -6258,6 +6342,8 @@ ORG &0B00
 \                         * Bit 7 is the direction of the the x-delta
 \
 \                         * Bit 6 is the direction of the the y-delta
+\
+\                       Direction is like a clock, so positive is up and right
 \
 \ ******************************************************************************
 
@@ -6294,122 +6380,201 @@ ORG &0B00
  CMP U                  \ two instructions
  BCC dlin1
 
-                        \ If we get here then T >= U, shallow horizontal slope
+                        \ If we get here then T >= U, so the line is a shallow
+                        \ horizontal slope
 
  STA VV                 \ Set VV = T, the length of the longer axis
 
- BCS dlin10             \ Jump down to dlin10 (this BCS is effectively a JMP as
-                        \ we just passed through a BCC)
+ BCS dlin10             \ Jump down to dlin10 to start drawing the line (this
+                        \ BCS is effectively a JMP as we just passed through a
+                        \ BCC)
 
 .dlin1
 
-                        \ If we get here then T < U, steep vertical slope
+                        \ If we get here then T < U, so the line is a steep
+                        \ vertical slope
 
  LDA U                  \ Set VV = U, the length of the longer axis
  STA VV
 
  STA PP                 \ Set PP = U
 
- BCC dlin10             \ Jump down to dlin10 (this BCC is effectively a JMP as
-                        \ we got here by following a BCC)
+ BCC dlin10             \ Jump down to dlin10 to start drawing the line (this
+                        \ BCC is effectively a JMP as we got here by taking a
+                        \ BCC)
 
 \ ******************************************************************************
 \
 \       Name: DrawVectorLine (Part 2 of 3)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Calculate the coordinates of the next pixel as we step along the
+\             line by one pixel
 \
 \ ******************************************************************************
 
 .dlin2
 
- LDA QQ
- CLC
- ADC U
- CMP T
- BCC dlin4
+                        \ If we get here then we need to step along the x-axis
 
- SBC T
- BIT V
- BVC dlin3
+ LDA QQ                 \ Set A = QQ + U
+ CLC                    \
+ ADC U                  \ so A contains the cumulative step along the y-axis
+                        \ (the shorter axis)
 
- DEC J
- BVS dlin4
+ CMP T                  \ If A < T, then we haven't yet reached a full step of
+ BCC dlin4              \ length T along the y-axis, so we don't change the
+                        \ y-coordinate and instead jump to dlin4 to do the step
+                        \ along the x-axis by one pixel
+
+                        \ We now need to step along the y-axis by one pixel as
+                        \ the cumulative step has just crossed over into a new
+                        \ multiple of T
+
+ SBC T                  \ Set A = A - T
+                        \
+                        \ so we keep the cumulative step within the bounds of a
+                        \ single byte (as we are only interested in when it
+                        \ crosses the boundary into a new multiple of T)
+
+                        \ We now move one pixel along the y-axis in the
+                        \ direction given in V
+
+ BIT V                  \ If bit 6 of V is clear, jump to dlin3 to step along
+ BVC dlin3              \ the y-axis in a positive direction
+
+ DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
+                        \ J so we move along the y-axis in a negative dirction
+
+ BVS dlin4              \ Jump to dlin4 to do the step along the x-axis by one
+                        \ pixel (this BVS is effectively a JMP as we know the V
+                        \ flag is set)
 
 .dlin3
 
- INC J
+ INC J                  \ Bit 6 of V is clear, so increment the y-coordinate in
+                        \ J so we move along the y-axis in a positive direction
 
 .dlin4
 
- STA QQ
+ STA QQ                 \ Store the updated fractional value in QQ
 
- BIT V
- BPL dlin5
+                        \ We now move one pixel along the x-axis in the
+                        \ direction given in V
 
- DEC I
- JMP dlin10
+ BIT V                  \ If bit 7 of V is clear, jump to dlin5 to step along
+ BPL dlin5              \ the x-axis in a positive direction
+
+ DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
+                        \ I so we move along the x-axis in a negative dirction
+
+ JMP dlin10             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dlin10 to plot the next pixel
 
 .dlin5
 
- INC I
- JMP dlin10
+ INC I                  \ Bit 7 of V is clear, so increment the x-coordinate in
+                        \ I so we move along the x-axis in a positive direction
+
+ JMP dlin10             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dlin10 to plot the next pixel
 
 .dlin6
 
- LDA PP
- BEQ dlin2
+                        \ We jump here when we need to calculate the coordinates
+                        \ of the next pixel in the line when stepping along the
+                        \ longer delta axis one pixel at a time
 
- LDA QQ                 \ If QQ + T < U, jump to dlin8 with A = QQ + T
- CLC
- ADC T
- CMP U
- BCC dlin8
+ LDA PP                 \ If PP = 0 then this is a shallow horizontal line, so
+ BEQ dlin2              \ jump up to dlin2 step along the x-axis
 
- SBC U                  \ Set A = QQ + T - U (A is positive)
+                        \ If we get here then this is a steep vertical line, so
+                        \ we need to step along the y-axis
 
- BIT V                  \ If bit 7 of V is clear, jump to dlin7
- BPL dlin7
+ LDA QQ                 \ Set A = QQ + T
+ CLC                    \
+ ADC T                  \ so A contains the cumulative step along the x-axis
+                        \ (the shorter axis)
 
- DEC I                  \ By now, QQ + T >= U, V bit 7 is set, so decrement I
+ CMP U                  \ If A < U, then we haven't yet reached a full step of
+ BCC dlin8              \ length U along the x-axis, so we don't change the
+                        \ x-coordinate and instead jump to dlin8 to do the step
+                        \ along the y-axis by one pixel
 
- JMP dlin8
+                        \ We now need to step along the x-axis by one pixel as
+                        \ the cumulative step has just crossed over into a new
+                        \ multiple of U
+
+ SBC U                  \ Set A = A - U
+                        \
+                        \ so we keep the cumulative step within the bounds of a
+                        \ single byte (as we are only interested in when it
+                        \ crosses the boundary into a new multiple of U)
+
+                        \ We now move one pixel along the x-axis in the
+                        \ direction given in V
+
+ BIT V                  \ If bit 7 of V is clear, jump to dlin7 to step along
+ BPL dlin7              \ the x-axis in a positive direction
+
+ DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
+                        \ I so we move along the x-axis in a negative dirction
+
+ JMP dlin8              \ Jump to dlin8 to do the step along the y-axis by one
+                        \ pixel
 
 .dlin7
 
- INC I                  \ By now, QQ + T >= U, V bit 7 is clear, so increment I
+ INC I                  \ Bit 7 of V is clear, so increment the x-coordinate in
+                        \ I so we move along the x-axis in a positive direction
 
 .dlin8
 
- STA QQ                 \ Update QQ to the value in A (i.e. QQ + T or
-                        \ QQ + T - U
+ STA QQ                 \ Store the updated fractional value in QQ
 
- BIT V                  \ If bit 6 of V is clear, jump to dlin9
- BVC dlin9
+                        \ We now move one pixel along the y-axis in the
+                        \ direction given in V
 
- DEC J                  \ V bit 6 is set, so decrement J
+ BIT V                  \ If bit 6 of V is clear, jump to dlin9 to step along
+ BVC dlin9              \ the y-axis in a positive direction
 
- BVS dlin10
+ DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
+                        \ J so we move along the y-axis in a negative dirction
+
+ BVS dlin10             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dlin10 to plot the next pixel (this BVS
+                        \ is effectively a JMP as we know the V flag is set)
 
 .dlin9
 
- INC J                  \ V bit 6 is clear, so increment J
+ INC J                  \ Bit 6 of V is clear, so increment the y-coordinate in
+                        \ J so we move along the y-axis in a positive direction
+
+                        \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, we fall through into part 3 to plot that pixel
 
 \ ******************************************************************************
 \
 \       Name: DrawVectorLine (Part 3 of 3)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Plot a pixel at (I, J)
 \
 \ ******************************************************************************
 
 .dlin10
+
+                        \ When we first arrive here:
+                        \
+                        \   * QQ = 0, where we will tally up the fractional part
+                        \          of the move along the shortest axis
+                        \   * RR = pixel byte table
+                        \   * VV = longest side of delta triangle
+                        \   * PP = 0 (shallow horizontal)
+                        \          VV (steep vertical)
+                        \
+                        \ so we now draw a line from (I, J), moving one pixel
+                        \ at a time along the longest side of the delta triangle
 
  LDA I                  \ Set X = I / 4
  LSR A                  \
@@ -6431,9 +6596,9 @@ ORG &0B00
  ADC XLookupHi,X        \           + X-th byte of XLookupHi
  STA P+1                \         = HI(screen address) + HI(X * 8)
 
-                        \ So P(1 0) is the screen address of (I, J) pixel, out
-                        \ by 8 bytes for each row above or below the top of the
-                        \ dashboard
+                        \ So P(1 0) is the screen address of the pixel row
+                        \ containing (I, J), out by 8 bytes for each row above
+                        \ or below the top of the dashboard
 
  LDA #159               \ Set Y = 159 - J
  SEC                    \
@@ -6451,10 +6616,11 @@ ORG &0B00
                         \ the X-th pixel set to white
 
  ORA (P),Y              \ OR it with P(1 0) + Y, which is the screen address of
-                        \ pixel (I, J)
+                        \ the pixel row containing (I, J)
                         \
                         \ This will keep all pixels the same except the X-th
-                        \ pixel, which is set to white
+                        \ pixel, which is set to white, so this will plot a
+                        \ pixel at (I, J) when stored in screen memory
 
  JMP dlin12             \ Jump to dlin12 to skip the following three
                         \ instructions
@@ -6469,18 +6635,21 @@ ORG &0B00
 
  AND (P),Y              \ AND it with P(1 0) + Y, which is the screen address of
                         \ pixel (I, J)
-
+                        \
                         \ This will keep all pixels the same except the X-th
-                        \ pixel, which is set to black
+                        \ pixel, which is set to black, so this will erase the
+                        \ pixel at (I, J) when stored in screen memory
 
 .dlin12
 
- STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
-                        \ sets 4 pixels to the pixel pattern in A
+ STA (P),Y              \ Store the byte in A in sceen memory at P(1 0) + Y,
+                        \ which sets all four pixels to the pixel pattern in A,
+                        \ which either draws or erases the pixel at (I, J)
 
- DEC VV                 \ Decrement VV to step along the longer axis
+ DEC VV                 \ Decrement VV to step one pixel along the longer axis
 
- BNE dlin6              \ If VV is non-zero, jump up to dlin6
+ BNE dlin6              \ If VV is non-zero, jump up to dlin6 to calculate the
+                        \ coordinate of the next pixel in the line
 
  RTS                    \ Return from the subroutine
 
@@ -14130,7 +14299,7 @@ ORG &0B00
 
 .DialQuadrant
 
-                        \ The size of a quadrant in each indicator
+                        \ The value range of a quadrant in each indicator
 
  EQUB 18                \ Centre value for indicator 0 (compass)
  EQUB 22                \ Centre value for indicator 1 (airspeed)
