@@ -4651,7 +4651,8 @@ ORG &0B00
 
 .UpdateIndicator
 
- STX WW                 \ Set WW to the value in X
+ STX WW                 \ Set WW to the value in X, so we can refer to it later
+                        \ if we overwrite the value in X
 
  CPX #0                 \ If X = 0, jump down to uind1 to update indicator 0
  BEQ uind1
@@ -5324,81 +5325,92 @@ ORG &0B00
 
                         \ If we get here then the indicator number in X is 7
 
- LDY #0                 \ Set Y = 0
+ LDY #0                 \ Set Y = 0, to use as an argument to ArtificialHorizon
 
- STY K                  \ Set K = 0
+ STY K                  \ Set K = 0, to use as an argument to ArtificialHorizon
 
- STY R                  \ Set R = 0
+ STY R                  \ Set R = 0, to use as the first guess for the direction
+                        \ of the horizon line (we will change it below if
+                        \ required)
 
- JSR L227A              \ With K = 0, Y = 0
+ JSR ArtificialHorizon  \ With K = 0, Y = 0
 
- CLC
- STA S
+ CLC                    \ Clear the C flag (this appears to have no effect)
+
+ STA S                  \ Set H = S, so this sets the x-coordinate of the line's
+                        \ starting point
 
  LDY #3                 \ Set Y = 3
 
- JSR L227A              \ With K = 0, Y = 3
+ JSR ArtificialHorizon  \ With K = 0, Y = 3
 
- STA H
+ STA H                  \ Set H = A, so this sets the y-coordinate of the line's
+                        \ starting point
 
- LDY #0
+ LDY #0                 \ Set Y = 0, to use as an argument to ArtificialHorizon
 
- LDA #1                 \ Set K = 1
+ LDA #1                 \ Set K = 1, to use as an argument to ArtificialHorizon
  STA K
 
- JSR L227A              \ With K = 1, Y = 0
+ JSR ArtificialHorizon  \ With K = 1, Y = 0
 
- SEC
- SBC S
- BPL uind21
+ SEC                    \ Set A = A - S
+ SBC S                  \       = A - x-coordinate of start
 
- STA T
+ BPL uind21             \ If A is positive, i.e. A >= S, jump to uind21
 
- LDA #&80
- STA R
- LDA #0
+ STA T                  \ A is negative, i.e. A < S, so store A in T
+
+ LDA #%10000000         \ Set bit 7 of R to indicate that the x-delta for the
+ STA R                  \ line is negative and the y-delta is positive
+
+ LDA #0                 \ Set A = A - T
  SEC
  SBC T
 
 .uind21
 
- CLC
- ADC #1
- STA W
+ CLC                    \ Set W = A + 1
+ ADC #1                 \
+ STA W                  \ so this sets the line's x-delta
 
- LDY #3
+ LDY #3                 \ Set Y = 3, to use as an argument to ArtificialHorizon
 
- JSR L227A              \ With K = 1, Y = 3
+ JSR ArtificialHorizon  \ With K = 1, Y = 3
 
- SEC
- SBC H
- BPL uind22
+ SEC                    \ Set A = A - H
+ SBC H                  \       = A - y-coordinate of start
 
- STA T
- LDA #&40
- ORA R
+ BPL uind22             \ If A is positive, i.e. A >= H, jump to uind22
+
+ STA T                  \ A is negative, i.e. A < H, so store A in T
+
+ LDA #&40               \ Set bit 6 of R to indicate that the y-delta is
+ ORA R                  \ negative, making sure to leave bit 7 as it is
  STA R
- LDA #0
+
+ LDA #0                 \ Set A = A - T
  SEC
  SBC T
 
 .uind22
 
- CLC
- ADC #1
- STA G
+ CLC                    \ Set G = A + 1
+ ADC #1                 \
+ STA G                  \ so this sets the line's y-delta
 
- LDA S
- CLC
- ADC #&35
- STA S
+ LDA S                  \ Set S = S + 53
+ CLC                    \
+ ADC #53                \ so the start x-coordinate is moved to be relative to
+ STA S                  \ the centre of the artificial horizon indicator
 
- LDA H
- CLC
- ADC #&E3
- STA H
+ LDA H                  \ Set H = H - 29
+ CLC                    \
+ ADC #227               \ so the start y-coordinate is moved to be relative to
+ STA H                  \ the centre of the artificial horizon indicator
 
- JMP DrawIndicatorLine
+ JMP DrawIndicatorLine  \ Draw the new artificial horizon, returning from the
+                        \ subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -6655,12 +6667,38 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L227A
+\       Name: ArtificialHorizon
 \       Type: Subroutine
-\   Category: 
-\    Summary: Calculations for indicator 7
+\   Category: Dashboard
+\    Summary: Vector line calculation for the artificial horizon on indicator 7
 \
 \ ------------------------------------------------------------------------------
+\
+\ L423B, L423D, L423E, L423F are only used to provide signs in bit 0:
+\   Negative if bit 0 is set, positive if clear
+\
+\ L427B, L427E provide values for T calculations
+\ L427D, L427F provide values for U calculations
+\
+\ Y = 0, K = 0:
+\   T = (L423B L427B) / 4
+\   U = -(L423D L427D) / 4
+\   Return (T + U) / 8 with the sign bits retained = x-coord of start
+\
+\ Y = 0, K = 1:
+\   T = -(L423B L427B) / 4
+\   U = -(L423D L427D) / 4
+\   Return (T + U) / 8 with the sign bits retained = y-coord of start
+\
+\ Y = 3, K = 0:
+\   T = (L423E L427E) / 4
+\   U = -(L423F L427F) / 4
+\   Return (T + U) / 8 with the sign bits retained = x-delta
+\
+\ Y = 3, K = 1:
+\   T = -(L423E L427E) / 4
+\   U = -(L423F L427F) / 4
+\   Return (T + U) / 8 with the sign bits retained = y-delta
 \
 \ Arguments:
 \
@@ -6668,13 +6706,25 @@ ORG &0B00
 \
 \   Y                   0 or 3
 \
-\ 0, 0: T = L427B/4, If bit 0 of L423B = 1, Set T =-T
-\       U = L427D/4, If bit 0 of L423D = 0, set U = -U
-\       Return T + U / 8 = L427B + L427D / 4
+\ Returns:
+\
+\   A                   Depending on the values of K and Y:
+\
+\                         * K = 0, Y = 0: returns the x-coordinate of the
+\                                         artificial horizon's starting point
+\
+\                         * K = 0, Y = 3: returns the y-coordinate of the
+\                                         artificial horizon's starting point
+\
+\                         * K = 1, Y = 0: returns the x-delta of the artificial
+\                                         horizon
+\
+\                         * K = 1, Y = 3: returns the y-delta of the artificial
+\                                         horizon
 \
 \ ******************************************************************************
 
-.L227A
+.ArtificialHorizon
 
  LDA L427B,Y            \ Set A = L427B (Y = 0) or L427E (Y = 3)
 
@@ -6682,10 +6732,10 @@ ORG &0B00
  LSR A
 
  CPY #0                 \ If Y = 3, halve A again, so A = A / 8
- BNE L2284
+ BNE arhi1
  LSR A
 
-.L2284
+.arhi1
 
  STA T                  \ Set T = A, so T = A / 4 or A / 8
 
@@ -6693,15 +6743,15 @@ ORG &0B00
 
  EOR K                  \ If K = 1, flip bit 0 of A
 
- AND #1                 \ If bit 0 of A is zero, jump to L2296 to skip the
- BEQ L2296              \ following
+ AND #1                 \ If bit 0 of A is zero, jump to arhi2 to skip the
+ BEQ arhi2              \ following
 
  LDA #0                 \ Set T = 0 - T
  SEC
  SBC T
  STA T
 
-.L2296
+.arhi2
 
  LDA L427D,Y            \ Set A = L427D (Y = 0) or L427F (Y = 3)
 
@@ -6709,36 +6759,36 @@ ORG &0B00
  LSR A
 
  CPY #0                 \ If Y = 3, halve A again, so A = A / 8
- BNE L22A0
+ BNE arhi3
  LSR A
 
-.L22A0
+.arhi3
 
  STA U                  \ Set U = A, so U = A / 4 or A / 8
 
  LDA L423D,Y            \ Set A = L423D (Y = 0) or L423F (Y = 3)
 
  CPY #0                 \ If Y = 0, flip bit 0 of A
- BNE L22AB
+ BNE arhi4
  EOR #1
 
-.L22AB
+.arhi4
 
- AND #1                 \ If bit 0 of A is zero, jump to L22B6 to skip the
- BEQ L22B6              \ following
+ AND #1                 \ If bit 0 of A is zero, jump to arhi5 to skip the
+ BEQ arhi5              \ following
 
  LDA #0                 \ Set U = 0 - U
  SEC
  SBC U
  STA U
 
-.L22B6
+.arhi5
 
  CLC                    \ A = T + U
  LDA T
  ADC U
 
- BMI L22C3
+ BMI arhi6
 
  LSR A                  \ A = A / 8
  LSR A
@@ -6748,7 +6798,7 @@ ORG &0B00
 
  RTS                    \ Return from the subroutine
 
-.L22C3
+.arhi6
 
  SEC                    \ A = A / 8 + with bits 5-7 set
  ROR A
@@ -6757,7 +6807,7 @@ ORG &0B00
  SEC
  ROR A
 
- ADC #0                 \ Round up the A/8 division
+ ADC #0                 \ Round up the A / 8 division
 
  RTS                    \ Return from the subroutine
 
@@ -11943,15 +11993,27 @@ ORG &0B00
 
 .L423B
 
- EQUB &20, &4C
+ EQUB &20               \ Bit 0 used as sign for L427B in artificial horizon
+                        \ calculations when Y = 0 (x-axis)
+
+ EQUB &4C
 
 .L423D
 
- EQUB &44
+ EQUB &44               \ Bit 0 used as sign for L427D in artificial horizon
+                        \ calculations when Y = 0 (x-axis)
 
 .L423E
 
- EQUB &58, &20, &50, &00
+ EQUB &58               \ Bit 0 used as sign for L427E in artificial horizon
+                        \ calculations when Y = 3 (y-axis)
+
+.L423F
+
+ EQUB &20               \ Bit 0 used as sign for L427F in artificial horizon
+                        \ calculations when Y = 3 (y-axis)
+
+ EQUB &50, &00
 
 .L4242
 
@@ -12069,15 +12131,27 @@ ORG &0B00
 
 .L427B
 
- EQUB &FA, &32
+ EQUB &FA               \ Used as a value in artificial horizon calculations
+                        \ when Y = 0 (x-axis), sign bit is in L423B
+
+ EQUB &32
 
 .L427D
 
- EQUB &0D
+ EQUB &0D               \ Used as a value in artificial horizon calculations
+                        \ when Y = 0 (x-axis), sign bit is in L423D
 
 .L427E
 
- EQUB &34, &F2, &3F, &00
+ EQUB &34               \ Used as a value in artificial horizon calculations
+                        \ when Y = 3 (y-axis), sign bit is in L423E
+
+.L427F
+
+ EQUB &F2               \ Used as a value in artificial horizon calculations
+                        \ when Y = 3 (y-axis), sign bit is in L423F
+
+ EQUB &3F, &00
 
 .L4282
 
