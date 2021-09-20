@@ -5317,7 +5317,11 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Calculations for the artificial horizon's line vector are all performed in
+\ the ArtificialHorizon routine, which calculates the starting coordinates and
+\ deltas for the vector line. This routine simply takes those results, sets the
+\ direction bits for the line, and moves the starting point so the line is
+\ centred on the artificial horizon indicator.
 \
 \ ******************************************************************************
 
@@ -5333,7 +5337,8 @@ ORG &0B00
                         \ of the horizon line (we will change it below if
                         \ required)
 
- JSR ArtificialHorizon  \ With K = 0, Y = 0
+ JSR ArtificialHorizon  \ Call ArtificialHorizon with K = 0, Y = 0 to calculate
+                        \ the x-coordinate of the line's starting point in A
 
  CLC                    \ Clear the C flag (this appears to have no effect)
 
@@ -5342,7 +5347,8 @@ ORG &0B00
 
  LDY #3                 \ Set Y = 3
 
- JSR ArtificialHorizon  \ With K = 0, Y = 3
+ JSR ArtificialHorizon  \ Call ArtificialHorizon with K = 0, Y = 3 to calculate
+                        \ the y-coordinate of the line's starting point in A
 
  STA H                  \ Set H = A, so this sets the y-coordinate of the line's
                         \ starting point
@@ -5352,62 +5358,72 @@ ORG &0B00
  LDA #1                 \ Set K = 1, to use as an argument to ArtificialHorizon
  STA K
 
- JSR ArtificialHorizon  \ With K = 1, Y = 0
+ JSR ArtificialHorizon  \ Call ArtificialHorizon with K = 1, Y = 0 to calculate
+                        \ the x-delta of the line
 
  SEC                    \ Set A = A - S
  SBC S                  \       = A - x-coordinate of start
 
- BPL uind21             \ If A is positive, i.e. A >= S, jump to uind21
+ BPL uind21             \ If A is positive, the sign of the x-delta is correct,
+                        \ so jump to uind21
 
- STA T                  \ A is negative, i.e. A < S, so store A in T
+ STA T                  \ The returned x-delta is negative, so store it in T so
+                        \ we can negate it below
 
  LDA #%10000000         \ Set bit 7 of R to indicate that the x-delta for the
  STA R                  \ line is negative and the y-delta is positive
 
- LDA #0                 \ Set A = A - T
- SEC
- SBC T
+ LDA #0                 \ Set A = 0 - T
+ SEC                    \
+ SBC T                  \ so the x-delta in A is now positive
 
 .uind21
 
  CLC                    \ Set W = A + 1
  ADC #1                 \
- STA W                  \ so this sets the line's x-delta
+ STA W                  \ so this sets the line's x-delta, making sure the line
+                        \ is at least one pixel wide
 
  LDY #3                 \ Set Y = 3, to use as an argument to ArtificialHorizon
 
- JSR ArtificialHorizon  \ With K = 1, Y = 3
+ JSR ArtificialHorizon  \ Call ArtificialHorizon with K = 1, Y = 3 to calculate
+                        \ the y-delta of the line
 
  SEC                    \ Set A = A - H
  SBC H                  \       = A - y-coordinate of start
 
- BPL uind22             \ If A is positive, i.e. A >= H, jump to uind22
+ BPL uind22             \ If A is positive, the sign of the y-delta is correct,
+                        \ so jump to uind22
 
- STA T                  \ A is negative, i.e. A < H, so store A in T
+ STA T                  \ The returned y-delta is negative, so store it in T so
+                        \ we can negate it below
 
- LDA #&40               \ Set bit 6 of R to indicate that the y-delta is
+ LDA #%01000000         \ Set bit 6 of R to indicate that the y-delta is
  ORA R                  \ negative, making sure to leave bit 7 as it is
  STA R
 
  LDA #0                 \ Set A = A - T
- SEC
- SBC T
+ SEC                    \
+ SBC T                  \ so the y-delta in A is now positive
 
 .uind22
 
  CLC                    \ Set G = A + 1
  ADC #1                 \
- STA G                  \ so this sets the line's y-delta
+ STA G                  \ so this sets the line's y-delta, making sure the line
+                        \ is at least 1 pixel tall
 
  LDA S                  \ Set S = S + 53
  CLC                    \
  ADC #53                \ so the start x-coordinate is moved to be relative to
- STA S                  \ the centre of the artificial horizon indicator
+ STA S                  \ the centre of the artificial horizon indicator, which
+                        \ is at (53, 160 + 29)
 
  LDA H                  \ Set H = H - 29
  CLC                    \
  ADC #227               \ so the start y-coordinate is moved to be relative to
- STA H                  \ the centre of the artificial horizon indicator
+ STA H                  \ the centre of the artificial horizon indicator, which
+                        \ is at (53, 160 + 29)
 
  JMP DrawIndicatorLine  \ Draw the new artificial horizon, returning from the
                         \ subroutine using a tail call
@@ -6700,11 +6716,25 @@ ORG &0B00
 \   U = -(L423F L427F) / 4
 \   Return (T + U) / 8 with the sign bits retained = y-delta
 \
+\ The line is returned relative to the origin (0, 0), so that's as if the centre
+\ of the artificial horizon indicator were at (0, 0). This means that the deltas
+\ that are calculated are the equivalent to the end point of the line. The line
+\ itself gets moved to the location of the on-screen indicator in part 11 of
+\ UpdateIndicator.
+\
 \ Arguments:
 \
-\   K                   0 or 1
+\   K                   The axis to calculate:
 \
-\   Y                   0 or 3
+\                         * 0 = x-axis
+\
+\                         * 1 = y-axis
+\
+\   Y                   The value to calculate:
+\
+\                         * 0 = coordinate of starting point
+\
+\                         * 3 = deltas (i.e. coordinates of end point)
 \
 \ Returns:
 \
