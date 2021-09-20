@@ -4617,6 +4617,183 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
+\ This long routine performs calculations for the various indicators on the
+\ dashboard. This typically involves taking the relevant measurement, scaling it
+\ to fit on the relevant indicator, and then preparing a suitable vector line
+\ (for dial hands), orthogonal line (for vertical bar indicators), joystick
+\ cross (for the joystick position display) or artificial horizon line.
+\
+\ A common feature of a number of these calculations is scaling, which is done
+\ by multiplying the measurement by a specific scale factor. Shift-and-add
+\ multiplication is used to do this, but instead of using a generic multiply
+\ routine, the relevant indicators contain hard-coded multiply routines that
+\ have their scale factors backed into the code.
+\
+\ Generally, if we want to calculate A * T / 256, then the traditional approach
+\ if to use a shift-and-add loop like this:
+\
+\   LSR A               \ Set P = A >> 1 and C flag = bit 0 of A
+\   STA P
+\
+\   LDX T               \ Set T1 = T - 1
+\   DEX                 \
+\   STX T1              \ We subtract 1 as the C flag will be set when we want
+\                       \ to do an addition in the loop below
+\
+\                       \ We are now going to work our way through the bits of
+\                       \ P, and do a shift-add for any bits that are set,
+\                       \ keeping the running total in A. We already set up
+\                       \ the first shift at the start of this routine, as
+\                       \ P = |A| >> 1 and C = bit 0 of A, so we now need to set
+\                       \ up a loop to sift through the other 7 bits in P
+\
+\   LDA #0              \ Set A = 0 so we can start building the answer in A
+\
+\   LDX #7              \ Set up a counter in X to count the 7 bits remaining
+\                       \ in P
+\
+\  .MUL4
+\
+\   BCC P%+4            \ If C (i.e. the next bit from P) is set, do the
+\   ADC T1              \ addition for this bit of P:
+\                       \
+\                       \   A = A + T1 + C
+\                       \     = A + T - 1 + 1
+\                       \     = A + T
+\
+\   ROR A               \ As mentioned above, this ROR shifts A right and
+\                       \ catches bit 0 in C - giving another digit for our
+\                       \ result - and the next ROR sticks that bit into the
+\                       \ left end of P while also extracting the next bit of P
+\                       \ for the next addition
+\
+\   ROR P               \ Add the overspill from shifting A to the right onto
+\                       \ the start of P, and shift P right to fetch the next
+\                       \ bit for the calculation
+\
+\   DEX                 \ Decrement the loop counter
+\
+\   BNE MUL4            \ Loop back for the next bit until P has been rotated
+\                       \ all the way
+\
+\   LSR A               \ Rotate (A P) once more to get the final result, as
+\   ROR P               \ we only pushed 7 bits through the above process
+\
+\ You can read all about this algorithm in the Elite source code at:
+\
+\ https://www.bbcelite.com/deep_dives/shift-and-add_multiplication.html
+\
+\ and you can see it in situ in the Elite source code here:
+\
+\ https://www.bbcelite.com/cassette/main/subroutine/mult1.html
+\
+\ If we aren't worried about memory usage, then we can unroll the central loop
+\ of the algorithm like this, to save a bit of time going around the loop:
+\
+\   BCC P%+4            \ Shift-and-add the first bit of P
+\   ADC T1
+\   ROR A
+\   ROR P
+\
+\   BCC P%+4            \ Repeat for the second bit
+\   ADC T1
+\   ROR A
+\   ROR P
+\
+\   BCC P%+4            \ Repeat for the third bit
+\   ADC T1
+\   ROR A
+\   ROR P
+\
+\ and so on for all the bits of n. You can see this approach in the 6502 Second
+\ Processor version of Elite, here:
+\
+\ https://www.bbcelite.com/6502sp/main/subroutine/mult1.html
+\
+\ Note that we still have to shift the result right by one place after the
+\ unrolled loop (i.e. the LSR A and ROR P after the end of the loop).
+\
+\ Aviator takes this to the next level by hard-coding a specific value of T into
+\ the code itself - let's refer to this fixed value of T as n, so our routine
+\ will now calculate A * n / 256, for a fixed n.
+\
+\ Given this, let's look at the above unrolled code. If a bit of n is 0 above,
+\ then the BCC P%+4 will skip the next instruction (ADC T), leaving just the
+\ ROR A and ROR P instructions. Also, in this case, we know the C flag is clear,
+\ as we took the BCC, so the ROR A is identical to LSR A.
+\
+\ We can therefore hard-code the value of n into the code by replacing each of
+\ these unrolled blocks:
+\
+\   BCC P%+4
+\   ADC T1
+\   ROR A
+\   ROR P
+\
+\ with either this, when that bit of n is 0:
+\
+\   LSR A
+\   ROR P
+\
+\ or this, when that bit of n is 1:
+\
+\   ADC T1
+\   ROR A
+\   ROR P
+\
+\ We can also ditch the need to calculate T1 = T - 1 by adding in a CLC, like
+\ this:
+\
+\   CLC
+\   ADC T
+\   ROR A
+\   ROR P
+\
+\ Finally, we only need to keep the ROR P instructions if we need to keep the
+\ overspill from the result, as we are no longer shifting P to see whether or
+\ not to branch over each bit's addition. If we don't need the overspill, we
+\ can replace the unrolled calculation with this, when that bit of n is 0:
+\
+\   LSR A
+\
+\ or this, when that bit of n is 1:
+\
+\   CLC
+\   ADC T
+\   ROR A
+\
+\ Putting this all together into a working example, the following code
+\ calculates A = T * 68 / 256, using a value of n = 34 (%00100010). The factor
+\ of 2 is because the following omits the final LSR A that normally appears
+\ after the loop, for optimal performance.
+\
+\   LDA T               \ Set A = T
+\
+\   LSR A               \ Bit 0 of n is 0
+\
+\   CLC                 \ Bit 1 of n is 1
+\   ADC T
+\   ROR A
+\
+\   LSR A               \ Bit 2 of n is 0
+\
+\   LSR A               \ Bit 3 of n is 0
+\
+\   LSR A               \ Bit 4 of n is 0
+\
+\   CLC                 \ Bit 5 of n is 1
+\   ADC T
+\   ROR A
+\
+\   LSR A               \ Bit 6 of n is 0
+\
+\                       \ Bit 7 of n is 0 and the final right shift is missing
+\
+\ You can see this exact code in part 7 below.
+\
+\ The result is a streamlined multiplication algorithm that is tailored to the
+\ specific requirements of the UpdateIndicator routine.
+\
 \ Arguments:
 \
 \   X                   Indicator number:
@@ -5101,7 +5278,6 @@ ORG &0B00
                         \
                         \ which takes |VerticalSpeed| / 8 in the range 0 to 255
                         \ and reduces it to the range 0 to 68
-
 
  CMP #40                \ If A < 40, jump to uind11 to skip the following
  BCC uind11             \ instruction
