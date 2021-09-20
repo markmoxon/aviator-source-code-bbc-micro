@@ -455,7 +455,7 @@ ORG &0B00
 \
 \       Name: SetupScreen
 \       Type: Subroutine
-\   Category: Start and end
+\   Category: Setup
 \    Summary: Set up the screen mode and load the dashboard image
 \
 \ ******************************************************************************
@@ -471,7 +471,7 @@ ORG &0B00
                         \ cursor, whose bytes are in the variable at Cursor, so
                         \ set up a counter in Y
 
-.sscrL1
+.sscr1
 
  LDA Cursor,Y           \ Write the Y-th value from Cursor
  JSR OSWRCH
@@ -479,7 +479,7 @@ ORG &0B00
  INY                    \ Increment the loop counter
 
  CPY #10                \ Loop back to write the next character until we have
- BNE sscrL1             \ written all 10, in other words:
+ BNE sscr1              \ written all 10, in other words:
                         \
                         \   VDU 23, 0, 10, 23, 0, 0, 0, 0, 0, 0
 
@@ -493,7 +493,7 @@ ORG &0B00
  LDY #0                 \ We now want to print the "Please wait" message in
                         \ variable PleaseWait, so set up a counter in Y
 
-.sscrL2
+.sscr2
 
  LDA PleaseWait,Y       \ Print the Y-th character from PleaseWait
  JSR OSWRCH
@@ -501,7 +501,7 @@ ORG &0B00
  INY                    \ Increment the loop counter
 
  CPY #11                \ Loop back to print the next character until we have
- BNE sscrL2             \ printed all 11 ("Please wait")
+ BNE sscr2              \ printed all 11 ("Please wait")
 
  LDX #LO(LoadDashboard) \ Set (Y X) to point to LoadDashboard ("L.DASHBD 7100")
  LDY #HI(LoadDashboard)
@@ -520,7 +520,7 @@ ORG &0B00
 \
 \       Name: LoadDashboard
 \       Type: Variable
-\   Category: Start and end
+\   Category: Setup
 \    Summary: The OS command string for loading the dashboard image
 \
 \ ******************************************************************************
@@ -534,7 +534,7 @@ ORG &0B00
 \
 \       Name: Cursor
 \       Type: Variable
-\   Category: Start and end
+\   Category: Setup
 \    Summary: The VDU command for disabling the cursor
 \
 \ ******************************************************************************
@@ -551,7 +551,7 @@ ORG &0B00
 \
 \       Name: PleaseWait
 \       Type: Variable
-\   Category: Start and end
+\   Category: Setup
 \    Summary: The "Please wait" message shown when the game loads
 \
 \ ******************************************************************************
@@ -565,7 +565,7 @@ ORG &0B00
 \
 \       Name: DrawCanopy
 \       Type: Subroutine
-\   Category: Start and end
+\   Category: Setup
 \    Summary: Move code around, clear the edges of the canopy view, draw the
 \             canopy edges and rivets, and jump to the main code
 \
@@ -595,7 +595,7 @@ ORG &0B00
                         \ &0B00 to &57FF, followed by screen memory at &5800 to
                         \ &7FFF
 
-.dcanL1
+.dcan1
 
  LDA &0400,Y            \ Copy the Y-th byte of &0400 to the Y-th byte of &0D00
  STA &0D00,Y
@@ -611,7 +611,7 @@ ORG &0B00
 
  DEY                    \ Decrement the loop counter
 
- BNE dcanL1             \ Loop back until we have copied a whole page of bytes
+ BNE dcan1              \ Loop back until we have copied a whole page of bytes
 
  NOP                    \ Presumably this contained some kind of copy protection
  NOP                    \ or decryption code that has been replaced by NOPs in
@@ -728,7 +728,7 @@ ORG &0B00
  LDY #121               \ Set Y = 121 so the first rivets are drawn at height
                         \ 121, i.e. at (0, 121) and (158, 121)
 
-.dcanL2
+.dcan2
 
  LDX #0                 \ Draw a square rivet at (0, Y)
  JSR DrawRivet
@@ -742,7 +742,7 @@ ORG &0B00
  TAY
 
  CPY #9                 \ Loop back to draw the next rivet until Y = 9, at which
- BNE dcanL2             \ point Y has wrapped round off the top of the screen
+ BNE dcan2              \ point Y has wrapped round off the top of the screen
                         \ back to the bottom and we will have drawn three rivets
                         \ up each side of the canopy view
 
@@ -752,7 +752,7 @@ ORG &0B00
  LDY #255               \ Set X and Y so the first rivet is at (19, 255)
  LDX #19
 
-.dcanL3
+.dcan3
 
  JSR DrawRivet          \ Draw a square rivet at (X, Y)
 
@@ -762,10 +762,10 @@ ORG &0B00
  TAX                    \ right
 
  CPX #163               \ Loop back to draw the next rivet until X = 163, at
- BNE dcanL3             \ which point we will have drawn six rivets along the
+ BNE dcan3              \ which point we will have drawn six rivets along the
                         \ top of the canopy view
 
- JMP MainLoop           \ Jump to MainLoop to start the game
+ JMP StartGame          \ Jump to StartGame to start the game
 
 \ ******************************************************************************
 \
@@ -1002,7 +1002,7 @@ ORG &0B00
 
  STY S                  \ Store the width of each character row in S
 
-.clrwL1
+.clrw1
 
  LDA #0                 \ We are about to zero a block of memory, so set A = 0
                         \ so we can use it as our overwrite value
@@ -1010,14 +1010,14 @@ ORG &0B00
  LDY S                  \ Fetch the width of each character row, which we stored
                         \ in S above
 
-.clrwL2
+.clrw2
 
  STA (P),Y              \ Zero the Y-th byte of the page at P(1 0), which sets 4
                         \ pixels to black
 
  DEY                    \ Decrement the byte pointer
 
- BNE clrwL2             \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
+ BNE clrw2              \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
 
  LDA P                  \ Set P(1 0) = P(1 0) + 320
  CLC                    \
@@ -1030,7 +1030,7 @@ ORG &0B00
 
  DEC R                  \ Decrement the row counter in R
 
- BNE clrwL1             \ Loop back until we have zeroed R rows
+ BNE clrw1              \ Loop back until we have zeroed R rows
 
  RTS                    \ Return from the subroutine
 
@@ -6049,9 +6049,9 @@ ORG &0B00
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- LDX WW                 \ If this is not indicator 7, jump to dinl1
+ LDX WW                 \ If this is not indicator 7, jump to dinl2
  CPX #7
- BNE dinl1
+ BNE dinl2
 
                         \ If we get here then this is the artificial horizon
                         \ (indicator 7)
@@ -6065,7 +6065,7 @@ ORG &0B00
                         \ from bottom to top contain 3 pixels, 1 pixel and 1
                         \ pixel, so so set a counter in Y for 3 bytes
 
-.dinlL1
+.dinl1
 
  STA Row23_Block13_2,Y  \ Redraw the Y-th pixel row in the centre block
 
@@ -6075,8 +6075,8 @@ ORG &0B00
 
  DEY                    \ Decrement the counter to move up to the next pixel row
 
- BPL dinlL1             \ Loop back until we have redrawn all three pixel rows in
-                        \ the centre block
+ BPL dinl1              \ Loop back until we have redrawn all three pixel rows
+                        \ in the centre block
 
  LDA #%00110011         \ Redraw the two-pixels at the left end of the
  STA Row23_Block12_4    \ artificial horizon's centre line
@@ -6099,10 +6099,10 @@ ORG &0B00
  STA IndicatorLineJ,X   \ Store the y-coordinate in IndicatorLineJ, so we can
                         \ use it to erase the line later
 
- BNE dinl2              \ Jump to dinl2 to draw the new line (this BNE is
+ BNE dinl3              \ Jump to dinl3 to draw the new line (this BNE is
                         \ effectively a JMP as A is never zero)
 
-.dinl1
+.dinl2
 
                         \ If we get here then this is indicator 0-6, so it's a
                         \ hand-based dial
@@ -6113,7 +6113,7 @@ ORG &0B00
  LDA IndicatorLineJ,X   \ Set J = y-coordinate of starting point of hand, which
                         \ is a fixed value for hand-based dials
 
-.dinl2
+.dinl3
 
  STA J                  \ Store A in J as the y-coordinate of the starting
                         \ point of the new line to draw
@@ -6559,7 +6559,7 @@ ORG &0B00
  LDA #%00010001         \ Set A = %00010001, the pixel pattern for pixel 0 in
                         \ white
 
-.dlinL1
+.dlin1
 
  STA RR,Y               \ Set the Y-th byte of RR to A
 
@@ -6567,7 +6567,7 @@ ORG &0B00
 
  DEY                    \ Decrement the byte counter
 
- BPL dlinL1             \ Loop back until we have updated RR to RR+3 as
+ BPL dlin1              \ Loop back until we have updated RR to RR+3 as
                         \ follows:
                         \
                         \   RR   = %10001000 = pixel 3 in white
@@ -6580,20 +6580,20 @@ ORG &0B00
 
  STA PP                 \ Set PP = 0
 
- LDA T                  \ If T < U, jump down to dlin1 to skip the following
+ LDA T                  \ If T < U, jump down to dlin2 to skip the following
  CMP U                  \ two instructions
- BCC dlin1
+ BCC dlin2
 
                         \ If we get here then T >= U, so the line is a shallow
                         \ horizontal slope
 
  STA VV                 \ Set VV = T, the length of the longer axis
 
- BCS dlin10             \ Jump down to dlin10 to start drawing the line (this
+ BCS dlin11             \ Jump down to dlin11 to start drawing the line (this
                         \ BCS is effectively a JMP as we just passed through a
                         \ BCC)
 
-.dlin1
+.dlin2
 
                         \ If we get here then T < U, so the line is a steep
                         \ vertical slope
@@ -6603,7 +6603,7 @@ ORG &0B00
 
  STA PP                 \ Set PP = U
 
- BCC dlin10             \ Jump down to dlin10 to start drawing the line (this
+ BCC dlin11             \ Jump down to dlin11 to start drawing the line (this
                         \ BCC is effectively a JMP as we got here by taking a
                         \ BCC)
 
@@ -6617,7 +6617,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.dlin2
+.dlin3
 
                         \ If we get here then we need to step along the x-axis
 
@@ -6627,8 +6627,8 @@ ORG &0B00
                         \ (the shorter axis)
 
  CMP T                  \ If A < T, then we haven't yet reached a full step of
- BCC dlin4              \ length T along the y-axis, so we don't change the
-                        \ y-coordinate and instead jump to dlin4 to do the step
+ BCC dlin5              \ length T along the y-axis, so we don't change the
+                        \ y-coordinate and instead jump to dlin5 to do the step
                         \ along the x-axis by one pixel
 
                         \ We now need to step along the y-axis by one pixel as
@@ -6644,53 +6644,53 @@ ORG &0B00
                         \ We now move one pixel along the y-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 6 of V is clear, jump to dlin3 to step along
- BVC dlin3              \ the y-axis in a positive direction
+ BIT V                  \ If bit 6 of V is clear, jump to dlin4 to step along
+ BVC dlin4              \ the y-axis in a positive direction
 
  DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
                         \ J so we move along the y-axis in a negative dirction
 
- BVS dlin4              \ Jump to dlin4 to do the step along the x-axis by one
+ BVS dlin5              \ Jump to dlin5 to do the step along the x-axis by one
                         \ pixel (this BVS is effectively a JMP as we know the V
                         \ flag is set)
 
-.dlin3
+.dlin4
 
  INC J                  \ Bit 6 of V is clear, so increment the y-coordinate in
                         \ J so we move along the y-axis in a positive direction
 
-.dlin4
+.dlin5
 
  STA QQ                 \ Store the updated fractional value in QQ
 
                         \ We now move one pixel along the x-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 7 of V is clear, jump to dlin5 to step along
- BPL dlin5              \ the x-axis in a positive direction
+ BIT V                  \ If bit 7 of V is clear, jump to dlin6 to step along
+ BPL dlin6              \ the x-axis in a positive direction
 
  DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
                         \ I so we move along the x-axis in a negative dirction
 
- JMP dlin10             \ Now that we have moved (I, J) to the next pixel in the
-                        \ line, jump to dlin10 to plot the next pixel
+ JMP dlin11             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dlin11 to plot the next pixel
 
-.dlin5
+.dlin6
 
  INC I                  \ Bit 7 of V is clear, so increment the x-coordinate in
                         \ I so we move along the x-axis in a positive direction
 
- JMP dlin10             \ Now that we have moved (I, J) to the next pixel in the
-                        \ line, jump to dlin10 to plot the next pixel
+ JMP dlin11             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dlin11 to plot the next pixel
 
-.dlin6
+.dlin7
 
                         \ We jump here when we need to calculate the coordinates
                         \ of the next pixel in the line when stepping along the
                         \ longer delta axis one pixel at a time
 
  LDA PP                 \ If PP = 0 then this is a shallow horizontal line, so
- BEQ dlin2              \ jump up to dlin2 step along the x-axis
+ BEQ dlin3              \ jump up to dlin3 step along the x-axis
 
                         \ If we get here then this is a steep vertical line, so
                         \ we need to step along the y-axis
@@ -6701,8 +6701,8 @@ ORG &0B00
                         \ (the shorter axis)
 
  CMP U                  \ If A < U, then we haven't yet reached a full step of
- BCC dlin8              \ length U along the x-axis, so we don't change the
-                        \ x-coordinate and instead jump to dlin8 to do the step
+ BCC dlin9              \ length U along the x-axis, so we don't change the
+                        \ x-coordinate and instead jump to dlin9 to do the step
                         \ along the y-axis by one pixel
 
                         \ We now need to step along the x-axis by one pixel as
@@ -6718,38 +6718,38 @@ ORG &0B00
                         \ We now move one pixel along the x-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 7 of V is clear, jump to dlin7 to step along
- BPL dlin7              \ the x-axis in a positive direction
+ BIT V                  \ If bit 7 of V is clear, jump to dlin8 to step along
+ BPL dlin8              \ the x-axis in a positive direction
 
  DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
                         \ I so we move along the x-axis in a negative dirction
 
- JMP dlin8              \ Jump to dlin8 to do the step along the y-axis by one
+ JMP dlin9              \ Jump to dlin9 to do the step along the y-axis by one
                         \ pixel
 
-.dlin7
+.dlin8
 
  INC I                  \ Bit 7 of V is clear, so increment the x-coordinate in
                         \ I so we move along the x-axis in a positive direction
 
-.dlin8
+.dlin9
 
  STA QQ                 \ Store the updated fractional value in QQ
 
                         \ We now move one pixel along the y-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 6 of V is clear, jump to dlin9 to step along
- BVC dlin9              \ the y-axis in a positive direction
+ BIT V                  \ If bit 6 of V is clear, jump to dlin10 to step along
+ BVC dlin10             \ the y-axis in a positive direction
 
  DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
                         \ J so we move along the y-axis in a negative dirction
 
- BVS dlin10             \ Now that we have moved (I, J) to the next pixel in the
-                        \ line, jump to dlin10 to plot the next pixel (this BVS
+ BVS dlin11             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dlin11 to plot the next pixel (this BVS
                         \ is effectively a JMP as we know the V flag is set)
 
-.dlin9
+.dlin10
 
  INC J                  \ Bit 6 of V is clear, so increment the y-coordinate in
                         \ J so we move along the y-axis in a positive direction
@@ -6766,7 +6766,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.dlin10
+.dlin11
 
                         \ When we first arrive here:
                         \
@@ -6813,8 +6813,8 @@ ORG &0B00
  AND #%00000011         \       = I mod 4
  TAX                    \       = pixel number within the 4-pixel byte
 
- BIT N                  \ If bit 7 of N is set, jump to dlin11 to erase the line
- BMI dlin11             \ with EOR logic instead of drawing it with OR logic
+ BIT N                  \ If bit 7 of N is set, jump to dlin12 to erase the line
+ BMI dlin12             \ with EOR logic instead of drawing it with OR logic
 
  LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
                         \ the X-th pixel set to white
@@ -6826,10 +6826,10 @@ ORG &0B00
                         \ pixel, which is set to white, so this will plot a
                         \ pixel at (I, J) when stored in screen memory
 
- JMP dlin12             \ Jump to dlin12 to skip the following three
+ JMP dlin13             \ Jump to dlin13 to skip the following three
                         \ instructions
 
-.dlin11
+.dlin12
 
  LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
                         \ the X-th pixel set to white
@@ -6844,7 +6844,7 @@ ORG &0B00
                         \ pixel, which is set to black, so this will erase the
                         \ pixel at (I, J) when stored in screen memory
 
-.dlin12
+.dlin13
 
  STA (P),Y              \ Store the byte in A in sceen memory at P(1 0) + Y,
                         \ which sets all four pixels to the pixel pattern in A,
@@ -6852,7 +6852,7 @@ ORG &0B00
 
  DEC VV                 \ Decrement VV to step one pixel along the longer axis
 
- BNE dlin6              \ If VV is non-zero, jump up to dlin6 to calculate the
+ BNE dlin7              \ If VV is non-zero, jump up to dlin7 to calculate the
                         \ coordinate of the next pixel in the line
 
  RTS                    \ Return from the subroutine
@@ -7549,8 +7549,8 @@ ORG &0B00
 
                         \ If we get here then the undercarriage is down
 
- LDY L0CC5              \ If L0CC5 <> 0, jump to indu3 to set the undercarriage
- BNE indu3              \ to up and return from the subroutine
+ LDY L0CC5              \ If L0CC5 <> 0, jump to indu4 to set the undercarriage
+ BNE indu4              \ to up and return from the subroutine
 
  CLC                    \ Set A = A + 10
  ADC #10
@@ -7574,18 +7574,18 @@ ORG &0B00
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the undercarriage indicator
 
-.induL1
+.indu3
 
  STA Row30_Block32_2,X  \ Update pixel row X of the undercarriage indicator to
                         \ the pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL induL1             \ Loop back to update the next row of the indicator
+ BPL indu3              \ Loop back to update the next row of the indicator
 
  RTS                    \ Return from the subroutine
 
-.indu3
+.indu4
 
  LDA #0                 \ Set Undercarriage = 0 to set the undercarriage to up
  STA Undercarriage
@@ -7654,14 +7654,14 @@ ORG &0B00
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the flaps indicator
 
-.indfL1
+.indf3
 
  STA Row30_Block35_2,X  \ Update pixel row X of the flaps indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL indfL1             \ Loop back to update the next row of the indicator
+ BPL indf3              \ Loop back to update the next row of the indicator
 
 .IndicatorF_RTS
 
@@ -7837,14 +7837,14 @@ ORG &0B00
  LDX #2                 \ Set X = 2 to use as a pixel row counter for the three
                         \ pixel rows in the Theme indicator
 
-.indtL1
+.indt2
 
  STA Row30_Block0_2,X   \ Update pixel row X of the Theme indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
 
- BPL indtL1             \ Loop back to update the next row of the indicator
+ BPL indt2              \ Loop back to update the next row of the indicator
 
  RTS                    \ Return from the subroutine
 
@@ -7905,14 +7905,14 @@ ORG &0B00
  LDA #5                 \ Set V = 5 to act as an offset as we work our way
  STA V                  \ through the six keys in KeyTable1
 
-.sktbL1
+.sckt1
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
  LDX KeyTable1,Y        \ Scan the keyboard to see if the Y-th key in KeyTable1
  JSR ScanKeyboard       \ is being pressed
 
- BNE sktb1              \ If the key is not being pressed, jump down to sktb1 to
+ BNE sckt2              \ If the key is not being pressed, jump down to sckt2 to
                         \ check the Y-th key in KeyTable1
 
  LDX V                  \ Set X = the offset of the key we are processing
@@ -7920,16 +7920,16 @@ ORG &0B00
  LDY KeyTable1Lo,X      \ Fetch the key logger value for this key press into
  LDA KeyTable1Hi,X      \ (A Y)
  
- JMP sktb3              \ Jump down to sktb3 to store (A Y) in the key logger
+ JMP sckt4              \ Jump down to sckt4 to store (A Y) in the key logger
 
-.sktb1
+.sckt2
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
  LDX KeyTable2,Y        \ Scan the keyboard to see if the Y-th key in KeyTable2
  JSR ScanKeyboard       \ is being pressed
 
- BNE sktb2              \ If the key is not being pressed, jump down to sktb2 to
+ BNE sckt3              \ If the key is not being pressed, jump down to sckt3 to
                         \ store 0 in the key logger
 
  LDX V                  \ Set X = the offset of the key we are processing
@@ -7937,9 +7937,9 @@ ORG &0B00
  LDY KeyTable2Lo,X      \ Fetch the key logger value for this key press into
  LDA KeyTable2Hi,X      \ (A Y)
 
- JMP sktb3              \ Jump down to sktb3 to store (A Y) in the key logger
+ JMP sckt4              \ Jump down to sckt4 to store (A Y) in the key logger
 
-.sktb2
+.sckt3
 
  LDA #0                 \ Set A = 0
 
@@ -7947,7 +7947,7 @@ ORG &0B00
 
  TAY                    \ Set Y = 0, so the key logger value in (A Y) is 0
 
-.sktb3
+.sckt4
 
  STA KeyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
                         \ in the X-th byte of KeyLoggerHigh
@@ -7958,7 +7958,7 @@ ORG &0B00
  DEC V                  \ Decrement the offset to point to the next key to
                         \ process
 
- BPL sktbL1             \ Loop back until we have processed all six key pairs
+ BPL sckt1              \ Loop back until we have processed all six key pairs
 
  RTS                    \ Return from the subroutine
 
@@ -8068,7 +8068,7 @@ ORG &0B00
 \
 \       Name: Reset
 \       Type: Subroutine
-\   Category: Start and end
+\   Category: Setup
 \    Summary: Reset most variables to prepare for a new flight
 \
 \ ******************************************************************************
@@ -8078,7 +8078,7 @@ ORG &0B00
  LDX #0                 \ Set A = 0 to use as our zero value
 
  TXA                    \ Set X = 0 to use as a counter for zeroing 256 bytes in
-                        \ the reseL1 loop
+                        \ the rset1 loop
 
  STA L4202              \ Set L4202 = 0
 
@@ -8092,7 +8092,7 @@ ORG &0B00
 
  STA L369D              \ Set L369D = 0
 
-.reseL1
+.rset1
 
                         \ This loop zeroes &0400 to &04FF
 
@@ -8100,16 +8100,16 @@ ORG &0B00
 
  DEX                    \ Decrement the byte counter
 
- BNE reseL1             \ Loop back until we have zeroed &0400 to &04FF
+ BNE rset1              \ Loop back until we have zeroed &0400 to &04FF
 
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
-                        \ in the reseL2 loop
+                        \ in the rset2 loop
 
  STA L05C8              \ Set L05C8 = 0
 
  STA L4206              \ Set L4206 = 0
 
-.reseL2
+.rset2
 
                         \ This loop zeroes &0C00 to &0CFE, which resets all of
                         \ the variables in the &0C00 workspace
@@ -8118,12 +8118,12 @@ ORG &0B00
 
  DEX                    \ Decrement the byte counter
 
- BNE reseL2             \ Loop back until we have zeroed &0C00 to &0CFE
+ BNE rset2              \ Loop back until we have zeroed &0C00 to &0CFE
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
-                        \ the reseL3 loop
+                        \ the rset3 loop
 
-.reseL3
+.rset3
 
                         \ This loop zeroes 8 bytes at L4210
 
@@ -8131,7 +8131,7 @@ ORG &0B00
 
  DEX                    \ Decrement the byte counter
 
- BPL reseL3             \ Loop back until we have zeroed L4210 to L4210+7
+ BPL rset3              \ Loop back until we have zeroed L4210 to L4210+7
 
  LDA #72                \ Set L0CFF = 72
  STA L0CFF
@@ -8174,11 +8174,11 @@ ORG &0B00
  STA L0CD0              \ Set L0CD0 = 255
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
-                        \ the reseL4 loop
+                        \ the rset4 loop
 
  STX L0CFA              \ Set L0CFA = 7
 
-.reseL4
+.rset4
 
                         \ This loop zeroes 8 bytes at L4208
 
@@ -8186,12 +8186,12 @@ ORG &0B00
 
  DEX                    \ Decrement the byte counter
 
- BPL reseL4             \ Loop back until we have zeroed L4208 to L4208+7
+ BPL rset4              \ Loop back until we have zeroed L4208 to L4208+7
 
  LDX #2                 \ Set X = 2 to use as a counter for zeroing 3 bytes in
-                        \ the reseL5 loop
+                        \ the rset5 loop
 
-.reseL5
+.rset5
 
                         \ This loop zeroes L4203, L4203 and L4204
 
@@ -8199,7 +8199,7 @@ ORG &0B00
 
  DEX                    \ Decrement the byte counter
 
- BPL reseL5             \ Loop back until we have zeroed L4203 to L4203+2
+ BPL rset5              \ Loop back until we have zeroed L4203 to L4203+2
 
  JSR IndicatorT         \ Update the Theme indicator
 
@@ -8209,14 +8209,14 @@ ORG &0B00
  LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
  STA L3692              \ 66 times in the following loop
 
-.reseL6
+.rset6
 
  DEC L3692              \ Decrement the counter in L3692
 
  JSR L33A1              \ ???
 
  LDA L3692              \ Loop back until L3692 = 0
- BNE reseL6
+ BNE rset6
 
                         \ Fall through into Reset2 to ???
 
@@ -8252,9 +8252,9 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: MainLoop
+\       Name: StartGame
 \       Type: Subroutine
-\   Category: 
+\   Category: Setup
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -8263,7 +8263,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.MainLoop
+.StartGame
 
  LDA #0                 \ Set L369F = 0 ???
  STA L369F
@@ -8273,7 +8273,22 @@ ORG &0B00
  LDA #14                \ Call DefineEnvelope with A = 14 to set up the second
  JSR DefineEnvelope     \ sound envelope
 
-.mnlpL1
+                        \ Fall through into NewGame to join the main game loop
+
+\ ******************************************************************************
+\
+\       Name: NewGame
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.NewGame
 
  JSR ClearCanopy        \ Clear the canopy view, leaving the canopy edges alone
 
@@ -8297,7 +8312,20 @@ ORG &0B00
  STA VIA+&65            \ (SHEILA &65) to 234 to start the T1 counter
                         \ counting down at a rate of 1 MHz
 
-.L26C4
+\ ******************************************************************************
+\
+\       Name: MainLoop
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.MainLoop
 
  LDA NN
  STA L0CC6
@@ -8458,7 +8486,7 @@ ORG &0B00
 
  JSR L4D92
 
- JMP mnlpL1
+ JMP NewGame
 
 .L27AF
 
@@ -8592,7 +8620,7 @@ ORG &0B00
  CPX NN
  BNE L285B
 
- JMP L26C4
+ JMP MainLoop
 
 .L285B
 
@@ -9866,7 +9894,7 @@ ORG &0B00
  INX
  INX
  TXS
- JMP mnlpL1
+ JMP NewGame
 
 \ ******************************************************************************
 \
@@ -10040,14 +10068,14 @@ ORG &0B00
 
  LDA S                  \ Fetch the value of A that we stored in S above
 
-.fcrwL1
+.fcrw2
 
  STA (P),Y              \ Set the Y-th byte of P(1 0) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
- BNE fcrwL1             \ Loop back until we have set 256 bytes, starting at
+ BNE fcrw2              \ Loop back until we have set 256 bytes, starting at
                         \ P(1 0), to the value in A
 
  LDY #47                \ Set a byte counter in Y for 47 bytes
@@ -10057,14 +10085,14 @@ ORG &0B00
                         \ so it points to the next byte to fill after the 256
                         \ bytes we just did
 
-.fcrwL2
+.fcrw3
 
  STA (P),Y              \ Set the Y-th byte of P(1 0) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
- BPL fcrwL2             \ Loop back until we have set 47 bytes, starting at
+ BPL fcrw3              \ Loop back until we have set 47 bytes, starting at
                         \ P(1 0), to the value in A
 
  LDA P                  \ Set P(1 0) = P(1 0) + 64
@@ -10072,7 +10100,7 @@ ORG &0B00
  ADC #64                \ starting with the low bytes
  STA P
 
- BCC fcrw2              \ If the above addition didn't overflow, skip the next
+ BCC fcrw4              \ If the above addition didn't overflow, skip the next
                         \ instruction
 
  INC P+1                \ The above addition overflowed, so increment the high
@@ -10081,7 +10109,7 @@ ORG &0B00
                         \ So now P(1 0) is 320 greater than at the start, so it
                         \ points to the next character row in screen memory
 
-.fcrw2
+.fcrw4
 
  DEC R                  \ Decrement the row counter in R
 
@@ -11265,7 +11293,9 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Other entry points:
+\
+\   L33AE               ???
 \
 \ ******************************************************************************
 
@@ -11539,11 +11569,11 @@ ORG &0B00
 
 .L369E
 
- EQUB &26               \ Zeroed at start of MainLoop (16-bit with L369E?)
+ EQUB &26               \ Zeroed in StartGame (16-bit with L369E?)
 
 .L369F
 
- EQUB &34               \ Zeroed at start of MainLoop
+ EQUB &34               \ Zeroed in StartGame
 
 \ ******************************************************************************
 \
@@ -13580,7 +13610,7 @@ ORG &0B00
  ADC #6
  TAX
  TXS
- JMP mnlpL1
+ JMP NewGame
 
 \ ******************************************************************************
 \
@@ -16502,7 +16532,7 @@ ORG &0B00
 \
 \       Name: Entry
 \       Type: Subroutine
-\   Category: Start and end
+\   Category: Setup
 \    Summary: The main entry point for the game: move code into lower memory and
 \             call it
 \
@@ -16541,7 +16571,7 @@ ORG &5E00
                         \ Note that the &5800-&5BFF block gets copied again in
                         \ the DrawCanopy routine, so it ends up at &0D00-&10FF
 
-.entrL1    
+.entr1    
 
  LDA &5800,Y            \ Copy the Y-th byte of &5800 to the Y-th byte of &0400
  STA &0400,Y
@@ -16563,7 +16593,7 @@ ORG &5E00
 
  DEY                    \ Decrement the loop counter
 
- BNE entrL1             \ Loop back until we have copied a whole page of bytes
+ BNE entr1              \ Loop back until we have copied a whole page of bytes
 
  NOP                    \ Presumably this contained some kind of copy protection
  NOP                    \ or decryption code that has been replaced by NOPs in
