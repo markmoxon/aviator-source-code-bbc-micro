@@ -71,17 +71,17 @@ L0175 = &0175
 L0400 = &0400           \ Whole page zeroed in Reset
 L04D8 = &04D8
 L04D9 = &04D9
-L04EC = $04EC
+L04EC = &04EC
 
 L0500 = &0500
-L05C8 = $05C8           \ Zeroed in Reset
+L05C8 = &05C8           \ Zeroed in Reset
 
-L0600 = $0600
+L0600 = &0600
 
 L0700 = &0700
-L075F = $075F
-L07E4 = $07E4
-L07FC = $07FC
+L075F = &075F
+L07E4 = &07E4
+L07FC = &07FC
 
 L0900 = &0900           \ Set to 80 in Reset, Reset2
 L091F = &091F
@@ -280,10 +280,16 @@ L0CC2 = &0CC2
 L0CC3 = &0CC3
 L0CC4 = &0CC4
 L0CC5 = &0CC5           \ Set to 1 in Reset ("on ground" flag?)
-L0CC6 = &0CC6
+
+L0CC6 = &0CC6           \ Used to store the value of NN during the main loop
+
 L0CC7 = &0CC7
 L0CC8 = &0CC8
-L0CC9 = &0CC9
+
+PressingT = &0CC9           \ Set to 0 in the main loop if "T" is not being pressed,
+                        \ otherwise set to 1, to prevent holding down "T" from
+                        \ constantly switching the engine on and off
+
 L0CCA = &0CCA
 L0CCB = &0CCB
 L0CCC = &0CCC           \ OB in original
@@ -319,7 +325,12 @@ Theme = &0CE7           \ Theme status
                         \ Set to 255 (Theme not enabled) in Reset
 
 L0CE8 = &0CE8           \ Set to 1 in Reset
-L0CE9 = &0CE9
+
+Engine = &0CE9          \ Engine status
+                        \
+                        \   * 0 = engine is off
+                        \   * Non-zero = engine is on
+
 L0CEA = &0CEA
 L0CEC = &0CEC
 L0CED = &0CED           \ Set to 229 in Reset
@@ -359,7 +370,14 @@ Brakes = &0CF5          \ Brakes status
                         \
                         \ Set to 1 (brakes are on) in Reset
 
-L0CF7 = &0CF7
+Propellor = &0CF7       \ Propellor status
+                        \
+                        \   * 0 = propellor is working
+                        \   * Non-zero = propellor is broken
+                        \
+                        \ If we make a crash landing with the undercarriage up,
+                        \ the propellor breaks and we can't turn the engine on
+
 L0CF8 = &0CF8           \ Set to 10 in Reset
 L0CF9 = &0CF9
 L0CFA = &0CFA           \ Set to 7 in Reset
@@ -6531,9 +6549,9 @@ ORG &0B00
 \
 \   N                   Drawing mode:
 \
-\                         * 0 = Draw (using OR logic)
+\                         * Bit 7 clear = draw (using OR logic)
 \
-\                         * 128 = Erase (using EOR logic)
+\                         * Bit 7 set = erase (using EOR logic)
 \
 \   T                   Magnitude of x-coordinate of line's vector |x-delta|
 \                       Horizontal width/length of line when V = 0
@@ -8206,19 +8224,25 @@ ORG &0B00
  LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
 
- LDA #65                \ Set L3692 = 65 to use as a counter for calling L33A1
- STA L3692              \ 66 times in the following loop
+ LDA #65                \ Set FuelLevel = 65, which indicates a full tank
+ STA FuelLevel
+
+                        \ We now drain the fuel tank one point at a time,
+                        \ updating the fuel gauge as we go so the fuel gauge
+                        \ gets cleared down to empty at the same time as
+                        \ the value in FuelLevel
 
 .rset6
 
- DEC L3692              \ Decrement the counter in L3692
+ DEC FuelLevel          \ Decrement the counter in FuelLevel
 
  JSR L33A1              \ ???
 
- LDA L3692              \ Loop back until L3692 = 0
- BNE rset6
+ LDA FuelLevel          \ Loop back until FuelLevel = 0, by which point we have
+ BNE rset6              \ reset the fuel tanks and cleared the fuel gauge
 
-                        \ Fall through into Reset2 to ???
+                        \ Fall through into Reset2 to finish resetting the rest
+                        \ of the flight variables
 
 \ ******************************************************************************
 \
@@ -8235,7 +8259,7 @@ ORG &0B00
 
 .Reset2
 
- LDA #80                \ Set L0900 = 90
+ LDA #80                \ Set L0900 = 80
  STA L0900
 
  LDA #1                 \ Set L0CE6 = 1
@@ -8273,7 +8297,7 @@ ORG &0B00
  LDA #14                \ Call DefineEnvelope with A = 14 to set up the second
  JSR DefineEnvelope     \ sound envelope
 
-                        \ Fall through into NewGame to join the main game loop
+                        \ Fall through into NewGame to start a new game
 
 \ ******************************************************************************
 \
@@ -8327,32 +8351,32 @@ ORG &0B00
 
 .MainLoop
 
- LDA NN
- STA L0CC6
+ LDA NN                 \ Fetch the value of NN, which appears to be a counter
+ STA L0CC6              \ of things at L0600
 
  JSR L2F1C
 
  JSR ScanKeyTable       \ Scan for key presses and update the key logger
 
  LDA L0CF1
- BNE L2701
+ BNE main2
 
  JSR L233E
 
  LDA L0CF1
- BEQ L2704
+ BEQ main3
 
  LDA #2
  STA L0CD9
  LDY #&21
 
-.L26E3
+.main1
 
  LDA L04D8,Y
  STA L41FA,Y
  DEY
  CPY #&1E
- BCS L26E3
+ BCS main1
 
  LDY II
  LDA #&3C
@@ -8362,46 +8386,46 @@ ORG &0B00
  STA L0500,Y
  INY
  STY II
- JMP L2704
+ JMP main3
 
-.L2701
+.main2
 
  JSR L233E
 
-.L2704
+.main3
 
  LDX #&13
  LDA #0
  STA L0CCA
  STA L05C8
 
-.L270E
+.main4
 
  STA L04D8,X
  STA L04EC,X
  DEX
- BPL L270E
+ BPL main4
 
  LDA L0CF1
- BEQ L272C
+ BEQ main5
 
  JSR L2EE6
 
  LDA L0CD9
- BEQ L272C
+ BEQ main5
 
  DEC L0CD9
  LDA #6
  JSR MakeSound
 
-.L272C
+.main5
 
  LDA Theme
- BMI L2734
+ BMI main6
 
  JSR L2DAC
 
-.L2734
+.main6
 
  JSR L2873
 
@@ -8418,149 +8442,166 @@ ORG &0B00
  CLC
  ADC #4
  AND #7
- BNE L2767
+ BNE main7
 
  LDY #1
  JSR L2CD3
 
  LDX L4205
- BMI L2767
+ BMI main7
 
  LDY #&21
  LDA L4210,X
  CMP #&1B
- BCC L2767
+ BCC main7
 
  JSR L2CD3
 
-.L2767
+.main7
 
  LDA Theme
- BNE L279D
+ BNE main12
 
  LDA L0CF1
- BEQ L279A
+ BEQ main11
 
  LDA #&21
  STA L0CCC
 
-.L2776
+.main8
 
  LDY L0CCC
  LDA L41FA,Y
- BPL L2786
+ BPL main9
 
  JSR L3053
 
  LDA L368F
- BNE L2792
+ BNE main10
 
-.L2786
+.main9
 
  DEC L0CCC
  LDA L0CCC
  CMP #&1E
- BCS L2776
+ BCS main8
 
- BCC L279A
+ BCC main11
 
-.L2792
+.main10
 
  STA L368C
  LDA #0
  STA L0CF1
 
-.L279A
+.main11
 
  JSR L2F4E
 
-.L279D
+.main12
 
  LDA L0CC5
- BEQ L27AF
+ BEQ main13
 
  LDX #&86               \ Scan the keyboard to see if the right arrow is being
  JSR ScanKeyboard       \ pressed
 
- BNE L27AF
+ BNE main13             \ If the right arrow is not being pressed, jump to
+                        \ main13
 
- JSR L4D92
+ JSR TerminateGame      \ The right arrow is being pressed, which is the key to
+                        \ terminate the game, so call TerminateGame
 
- JMP NewGame
+ JMP NewGame            \ Jump to NewGame to start a new game
 
-.L27AF
+.main13
 
  LDA L0CE8
- BEQ L27E2
+ BEQ main17
 
- BMI L27D3
+ BMI main16
 
  LDA L0CF1
- BEQ L27C8
+ BEQ main14
 
- LDA Theme
- BPL L27C8
+ LDA Theme              \ If Theme is positive then the Theme is enabled, so
+ BPL main14             \ jump to main14 to skip the following three
+                        \ instructions
 
- LDA #8
+ LDA #8                 \ Set Theme = 8 to enable the Theme
  STA Theme
- JSR IndicatorT
 
-.L27C8
+ JSR IndicatorT         \ Update the Theme indicator
 
- LDA L0CE9
- BNE L27D0
+.main14
 
- JSR L3387
+ LDA Engine             \ If the Engine is on, jump to main15 to skip the
+ BNE main15             \ following instruction
 
-.L27D0
+ JSR FillUpFuelTank     \ Fill up the fuel tank by one unit
 
- JSR L33C7
+.main15
 
-.L27D3
+ JSR VolumeKeys
+
+.main16
 
  LDA L0CF9
- BEQ L27E2
+ BEQ main17
 
  LDX #0
  STX L0CF9
  LDA #&15
  JSR L4BCB
 
-.L27E2
+.main17
 
  JSR L33A1
 
  LDX #&DC               \ Scan the keyboard to see if "T" is being pressed
  JSR ScanKeyboard
 
- BNE L2802
+ BNE main18             \ If "T" is not being pressed, jump to main18
 
- LDA L0CC9
- BNE L2804
+ LDA PressingT          \ If PressingT is non-zero, then we are still pressing
+ BNE main19             \ "T" having already toggled the engine, so jump down
+                        \ to main19 so we don't keep switching the engine on and
+                        \ off by accident
 
- LDA L0CF7
- BNE L2807
+ LDA Propellor          \ If Propellor is non-zero, then the propellor is broken
+ BNE main20             \  and we can't turn on the engine, so jump to main20 to
+                        \ skip the following
 
- LDA L0CE9
- EOR #1
- JSR L36A0
+                        \ At this point, we know that "T" is being pressed,
+                        \ PressingT is zero (so we haven't yet acted on the key
+                        \ press), and Propellor is zero (so the propellor is
+                        \ working), so now we toggle the engine status to switch
+                        \ it on or off
 
- LDA #1
- BNE L2804
+ LDA Engine             \ Fetch the value of Engine and invert bit 0 so it
+ EOR #1                 \ changes to the opposite state
 
-.L2802
+ JSR SetEngine          \ Set the engine status to the value in A
 
- LDA #0
+ LDA #1                 \ Set A = 1 to use as the new value of PressingT below,
+ BNE main19             \ so that holding down "T" won't keep toggling the
+                        \ engine status
 
-.L2804
+.main18
 
- STA L0CC9
+ LDA #0                 \ "T" is not being pressed, so set A = 0 to use as the
+                        \ new value of PressingT
 
-.L2807
+.main19
+
+ STA PressingT          \ Set PressingT = A, so we don't try toggling the engine
+                        \ again until we release the "T" key
+
+.main20
 
  LDA L05C8
  CMP #&23
- BCS L2817
+ BCS main21
 
  JSR L293A
 
@@ -8568,16 +8609,16 @@ ORG &0B00
 
  JSR L293A
 
-.L2817
+.main21
 
- LDX #&70
- LDY #0
- LDA #1
+ LDX #&70               \ Call OSWORD with A = 1 and (Y X) = &0070, which reads
+ LDY #&00               \ the system clock and writes the result into the five
+ LDA #1                 \ bytes from &0070 to &0074 (P, Q, R, S and T)
  JSR OSWORD
 
  JSR L3F10
 
- BCC L2807
+ BCC main20
 
  JSR L28B6
 
@@ -8586,53 +8627,64 @@ ORG &0B00
  JSR L4D6E
 
  LDA L0CD8
- BEQ L2839
+ BEQ main22
 
  CMP #&DC
- BNE L2840
+ BNE main23
 
- BEQ L2849
+ BEQ main24
 
-.L2839
+.main22
 
  LDX #&C8               \ Scan the keyboard to see if "P" is being pressed
  JSR ScanKeyboard
 
- BNE L2851
+ BNE main25
 
-.L2840
+.main23
 
  DEC L0CD8
- JSR L4C12
+ JSR DisplayScore
 
- JMP L2851
+ JMP main25
 
-.L2849
+.main24
 
  JSR L4883
 
  LDA #0
  STA L0CD8
 
-.L2851
+.main25
 
- LDX L0CC6
+ LDX L0CC6              \ If L0CC6 <> NN, jump down to main26
  CPX NN
- BNE L285B
+ BNE main26
 
  JMP MainLoop
 
-.L285B
+.main26
 
- INX
- LDY L0600,X
- STX L0CC6
- LDX L3F30,Y
- LDA #0
+ INX                    \ Increment X to point to the next thing
+
+ LDY L0600,X            \ Set Y to this thing's handle in L0600
+
+ STX L0CC6              \ Increment the value of L0CC6, which was the value of
+                        \ NN at the start of the main loop
+
+ LDX L3F30,Y            \ Set X to the Y-th byte from L3F30 (which is a static
+                        \ table)
+
+ LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
- LDX L3E00,Y
- STA L0400,X
- JMP L2851
+
+ LDX L3E00,Y            \ Set X to the Y-th byte from L3E00 (which is a static
+                        \ table
+
+ STA L0400,X            \ Zero the X-th byte of L0400
+
+ JMP main25             \ Jump back to main25 to repeat this process until we
+                        \ have processed all the new things
 
 \ ******************************************************************************
 \
@@ -8681,9 +8733,11 @@ ORG &0B00
 
 .L28A0
 
- INC NN
- LDX NN
- STA L0600,X
+ INC NN                 \ Increment NN, which contains the number of things at
+                        \ &0600
+
+ LDX NN                 \ Store A at the NN-th byte of L0600, so this adds a new
+ STA L0600,X            \ thing to the end of the L0600 table
 
 .L28A7
 
@@ -8771,9 +8825,11 @@ ORG &0B00
  LDA JJ
  BEQ L2904
 
- INC NN
- LDX NN
- STA L0600,X
+ INC NN                 \ Increment NN, which contains the number of things at
+                        \ &0600
+
+ LDX NN                 \ Store A at the NN-th byte of L0600, so this adds a new
+ STA L0600,X            \ thing to the end of the L0600 table
 
 .L291B
 
@@ -8858,9 +8914,12 @@ ORG &0B00
  LDX L0CCE
  BEQ L2969
 
- INC NN
- LDX NN
- STA L0600,X
+ INC NN                 \ Increment NN, which contains the number of things at
+                        \ &0600
+
+ LDX NN                 \ Store A at the NN-th byte of L0600, so this adds a new
+ STA L0600,X            \ thing to the end of the L0600 table
+
  RTS
 
 .L2969
@@ -9888,7 +9947,7 @@ ORG &0B00
  LDA #&5A
  JSR L2ED3
 
- JSR L4D92
+ JSR TerminateGame
 
  TSX
  INX
@@ -11250,7 +11309,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L3387
+\       Name: FillUpFuelTank
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -11261,28 +11320,33 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L3387
+.FillUpFuelTank
 
- LDA L4206
- AND #3
- BEQ L338F
+ LDA L4206              \ If bits 0 and 1 of L4206 are both 0, jump to fuel1
+ AND #%00000011
+ BEQ fuel1
 
- RTS
+ RTS                    \ At least one of the bits is set, so return from the
+                        \ subroutine
 
-.L338F
+.fuel1
 
- TAX
- LDA L3692
- CMP #&41
- BCS L339D
+ TAX                    \ Copy bits 0 and 1 of L4206 to X
 
- INC L3692
- JMP L33AE
+ LDA FuelLevel          \ If FuelLevel >= 65, then the tank is already full, so
+ CMP #65                \ jump to fuel2 to skip filling it up any more
+ BCS fuel2
 
-.L339D
+ INC FuelLevel          \ Increment the fuel level by 1, so we fill up the fuel
+                        \ tank by 1/65th of a full tank
 
- STX L0CE8
- RTS
+ JMP DrawFuelPixel      \ Update the fuel gauge by one pixel
+
+.fuel2
+
+ STX L0CE8              \ Store bits 0 and 1 of L4206 in L0CE8
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11293,47 +11357,84 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ Other entry points:
-\
-\   L33AE               ???
+\ 
 \
 \ ******************************************************************************
 
 .L33A1
 
- LDA L4206
- AND #&0F
+ LDA L4206              \ If bits 0, 1 and 2 of L4206 are all 0, jump to L33A9
+ AND #%00001111
  BEQ L33A9
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .L33A9
 
- LDX #&80
- LDA L3692
+ LDX #128               \ Set X = 128 to use as the value of N below, which sets
+                        \ the call to DrawVectorLine to erase
 
-.L33AE
+ LDA FuelLevel          \ Set A = FuelLevel
 
- STX N
- CLC
- ADC #&B8
- STA J
- LDA #2
- STA I
- LDA #1
- STA T
- STA U
- LDA #0
- STA V
-
- JSR DrawVectorLine     \ Draw/erase a line from (I, J) as a vector (T, U) with
-                        \ direction V
-
- RTS
+                        \ Fall through into DrawFuelPixel to erase a pixel from
+                        \ the fuel gauge at the top of the gauge, i.e. to reduce
+                        \ the amount shown on the fuel gauge by one
 
 \ ******************************************************************************
 \
-\       Name: L33C7
+\       Name: DrawFuelPixel
+\       Type: Subroutine
+\   Category: Dashboard
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The fuel gauge pixel to draw or erase (0 to 65)
+\
+\   N                   Drawing mode:
+\
+\                         * Bit 7 clear = draw (using OR logic)
+\
+\                         * Bit 7 set = erase (using EOR logic)
+\
+\ ******************************************************************************
+
+.DrawFuelPixel
+
+ STX N                  \ Store the drawing mode in N 
+
+ CLC                    \ Set J = A + 184
+ ADC #184               \
+ STA J                  \ so the y-coordinate is between
+                        \
+                        \   * 184, or -72, for A = 0  (empty tank)
+                        \   * 249, or  -7, for A = 65 (full tank)
+                        \
+                        \ So this is the correct y-coordinate for this pixel
+                        \ in the fuel gauge, as the fuel gauge starts at
+                        \ y-coordinate 231 and goes up to 167, which are 72
+                        \ and 7 pixels down from y-coordinate ???
+
+ LDA #2                 \ Set I = 2, the x-coordinate of the fuel gauge line
+ STA I
+
+ LDA #1                 \ Set T = 1, so line is 1 pixel wide
+ STA T
+
+ STA U                  \ Set U = 1, so the line is 1 pixel high
+
+ LDA #0                 \ Set V = 0 so the line is drawn in a positive direction
+ STA V                  \ for both axes
+
+ JSR DrawVectorLine     \ Draw/erase a pixel at (2, A + 184)
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: VolumeKeys
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -11344,42 +11445,43 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L33C7
+.VolumeKeys
 
  LDX #&DB               \ Scan the keyboard to see if "7" is being pressed
  JSR ScanKeyboard
 
- BEQ L33D9
+ BEQ volk1
 
  LDX #&EA               \ Scan the keyboard to see if "8" is being pressed
  JSR ScanKeyboard
 
- BNE L33ED
+ BNE volk4
 
  LDA #&FF
- BNE L33DB
+ BNE volk2
 
-.L33D9
+.volk1
 
  LDA #1
 
-.L33DB
+.volk2
 
  CLC
  ADC Sounds+10          \ Byte #3 of sound #1 (low byte of amplitude)
- BMI L33E3
+ BMI volk3
 
- BNE L33ED
+ BNE volk4
 
-.L33E3
+.volk3
 
  CMP #&F1
- BCC L33ED
+ BCC volk4
 
  STA Sounds+10          \ Byte #3 of sound #1 (low byte of amplitude)
- INC Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
 
-.L33ED
+ INC Sounds+60          \ Byte #5 of sound #7 (low byte of engine pitch)
+
+.volk4
 
  RTS
 
@@ -11554,10 +11656,14 @@ ORG &0B00
 
  EQUB &34
 
-.L3692
+.FuelLevel
 
- EQUB &41, &B2, &B7, &BC, &C1, &0F, &B4, &BA
- EQUB &BF, &C8
+ EQUB &41               \ Current fuel level
+                        \
+                        \   * 0 = empty
+                        \   * 65 = full
+
+ EQUB &B2, &B7, &BC, &C1, &0F, &B4, &BA, &BF, &C8
 
 .L369C
 
@@ -11577,43 +11683,56 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L36A0
+\       Name: SetEngine
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight
+\    Summary: Set the engine status
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The new status of the engine:
+\
+\                         * 0 = engine off
+\
+\                         * 1 = engine on
 \
 \ ******************************************************************************
 
-.L36A0
+.SetEngine
 
- CMP L0CE9
- BEQ L36BF
- STA L0CE9
- TAX
- JSR L4DB5
- LDA L4F85
- LDX L0CE9
- BNE L36B9
- CLC
- ADC #&14
- BNE L36BC
+ CMP Engine             \ If the value of Engine is already the same as A, jump
+ BEQ seng3              \ to seng3 to return from the subroutine
 
-.L36B9
+ STA Engine             \ Update the value of Engine to the new status in A
 
- SEC
- SBC #&14
+ TAX                    \ Either turn the engine sound off (if A = 0) or turn it
+ JSR ToggleEngineSound  \ on (if A is non-zero)
 
-.L36BC
+ LDA L4F85              \ Set A = L4F85
 
- STA L4F85
+ LDX Engine             \ If the engine is now on, jump to seng1
+ BNE seng1
 
-.L36BF
+ CLC                    \ Set A = A + 20
+ ADC #20
 
- RTS
+ BNE seng2              \ Jump to seng2 (this BNE is effectively a JMP as A is
+                        \ never zero)
+
+.seng1
+
+ SEC                    \ Set A = A - 20
+ SBC #20
+
+.seng2
+
+ STA L4F85              \ Update the value of L4F85
+
+.seng3
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12155,7 +12274,7 @@ ORG &0B00
 
 .L4206
 
- EQUB &67
+ EQUB &67               \ Something to do with fuel?
 
 .L4207
 
@@ -12719,8 +12838,8 @@ ORG &0B00
  STA JoystickX
 
  LDX #2
- JSR $25CA
- STA $0C0C
+ JSR L25CA
+ STA JoystickY
  LDX #&00
  LDA #&80
  JSR OSBYTE
@@ -13466,7 +13585,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L4C12
+\       Name: DisplayScore
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13477,7 +13596,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L4C12
+.DisplayScore
 
  LDX #0
  LDY #&10
@@ -13583,8 +13702,8 @@ ORG &0B00
 
 .L4C6A
 
- LDA #0
- JSR L4DB5
+ LDA #0                 \ Turn off the engine sound
+ JSR ToggleEngineSound
 
  LDA #5
  JSR MakeSound
@@ -13602,7 +13721,7 @@ ORG &0B00
  LDA #&5A
  JSR L2ED3
 
- JSR L4D92
+ JSR TerminateGame
 
  TSX
  TXA
@@ -13906,7 +14025,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L4D92
+\       Name: TerminateGame
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13917,23 +14036,23 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L4D92
+.TerminateGame
 
- LDA #0
- JSR L4DB5
+ LDA #0                 \ Turn off the engine sound
+ JSR ToggleEngineSound
 
  JSR L4BF3
 
- JSR L4C12
+ JSR DisplayScore
 
-.L4D9D
+.term1
 
  LDX #&B6               \ Scan the keyboard to see if RETURN is being pressed
  JSR ScanKeyboard
 
- BNE L4D9D
+ BNE term1              \ Loop back to keep scanning until RETURN is pressed
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -13977,11 +14096,11 @@ ORG &0B00
 \
 \ Arguments:
 \
-\   A                   The offset of the sound envelope data in Envelopes:
+\   A                   The action:
 \
-\                         * A = 0 for the first envelope definition
+\                         * A = 7 make a sound
 \
-\                         * A = 14 for the first envelope definition
+\                         * A = 8 to define a sound envelope
 \
 \   X                   The low byte of the address of the OSWORD block
 \
@@ -14008,117 +14127,171 @@ ORG &0B00
 
  RTS                    \ Return from the subroutine
 
+ NOP                    \ This instruction appears to be unused
+
 \ ******************************************************************************
 \
-\       Name: L4DB5
+\       Name: ToggleEngineSound
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Sound
+\    Summary: Turn the engine sound on or off
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   Defines the action:
+\
+\                         * 0 = turn engine sound off
+\
+\                         * Non-zero = turn engine sound on with pitch A
 \
 \ ******************************************************************************
 
- NOP
+.ToggleEngineSound
 
-.L4DB5
+ BNE MakeEngineSound    \ If A is non-zero then jump to MakeEngineSound to set
+                        \ up and make the engine sound
 
- BNE L4DC2
-
- LDA #0
+ LDA #0                 \ Make sound #0 to turn off the engine sound
  JSR MakeSound
 
+                        \ Fall through into ResetEngineSound to reset the pitch
+                        \ of the engine sound
+
 \ ******************************************************************************
 \
-\       Name: L4DBC
+\       Name: ResetEngineSound
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Sound
+\    Summary: Reset the pitch of the engine sound
 \
 \ ******************************************************************************
 
-.L4DBC
+.ResetEngineSound
 
- LDA #&FF
- STA Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
- RTS
+ LDA #255               \ Set byte #5 of sound #7 (low byte of engine pitch) to
+ STA Sounds+60          \ 255, which is the default setting
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L4DC2
+\       Name: MakeEngineSound
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Sound
+\    Summary: Make the engine sound, with the choppiness and pitch affected by
+\             thrust and airspeed
 \
 \ ******************************************************************************
 
-.L4DC2
+.MakeEngineSound
 
- LDA L0CE9
- BEQ L4E0F
+ LDA Engine             \ If Engine is zero, then the engine is not running, so
+ BEQ engs4              \ jump to engs4 to return from the subroutine
 
- LDA ThrustHi
- STA K
+ LDA ThrustHi           \ Set (K A) = (Thrusthi ThrustLo)
+ STA K                  \           = Thrust
  LDA ThrustLo
- LDY #3
 
-.L4DD1
+ LDY #3                 \ Set Y = 3 to act as a shift counter in the following
+                        \ loop, where we right shift (K A) four times
 
- LSR K
- ROR A
- DEY
- BPL L4DD1
+.engs1
 
- CLC
- ADC AirspeedHi
+ LSR K                  \ Set (K A) = (R A) / 2
+ ROR A                  \           = Thrust / 2
+
+ DEY                    \ Decrement the shift counter
+
+ BPL engs1              \ Loop back until we have shifted right by 4 places, so
+                        \ we now have:
+                        \
+                        \   (K A) = (K A) / 8
+                        \         = Thrust / 8
+                        \
+                        \ We now ignore the high byte in K, so presumably it is
+                        \ zero
+
+ CLC                    \ Set K = A + AirspeedHi
+ ADC AirspeedHi         \       = (Thrust / 8) + AirspeedHi
  STA K
- LDA #&32
- SEC
+
+ LDA #50                \ Set A = 50 - K
+ SEC                    \       = 50 - ((Thrust / 8) + AirspeedHi)
  SBC K
- BEQ L4DE6
 
- BPL L4DE8
+ BEQ engs2              \ If A = 0, jump to engs2 to set the engine choppiness
+                        \ to 1 (a very smooth engine sound)
 
-.L4DE6
+ BPL engs3              \ If A is positive, jump to engs3 to set the engine
+                        \ choppiness to A
 
- LDA #1
+.engs2
 
-.L4DE8
+ LDA #1                 \ If we get here then A is either 0 or negative, so we
+                        \ set A = 1 to use as the choppiness value in the engine
+                        \ sound, giving a very smooth engine sound
 
- STA Envelopes+2
- STA Envelopes+4
- EOR #&FF
- STA Envelopes+3
- LDA K
- CLC
- ADC #&50
- CMP Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
- BEQ L4E0F
+.engs3
 
- STA Sounds+60          \ Byte #5 of sound #7 (low byte of pitch)
+                        \ By the time we get here, A is in the range 1 to 50 and
+                        \ represents the engine choppiness, with a lower value
+                        \ indicating a smoother engine, and a higher value
+                        \ making the sound jump up and down in pitch more
+                        \
+                        \ In other words, the lower the air speed and thrust,
+                        \ the choppier the engine sound
+                        \
+                        \ We can apply this to the sound envelope for the engine
+                        \ by altering the amount that the pitch changes in each
+                        \ stage of the sound envelope. These values are set in
+                        \ the third, fourth and fifth values in the envelope
+                        \ definition, with larger values giving us a larger
+                        \ amount of pitch change, and hence more choppiness in
+                        \ the engine sound
 
- LDA #0                 \ Call DefineEnvelope with A = 0 to set up the first
- JSR DefineEnvelope     \ sound envelope
+ STA Envelopes+2        \ Set the third and fifth values of sound envelope 1 to
+ STA Envelopes+4        \ the value in A, and set the fourth value to the
+ EOR #&FF               \ inverse of A, which is -(A + 1) as this is a signed
+ STA Envelopes+3        \ value
 
- LDA #7
- JSR MakeSound
+                        \ We now want to set the pitch of the engine sound so
+                        \ that higher thrust and airspeed give us a higher
+                        \ pitch, making our Spitfire scream through the air
+                        \
+                        \ The engine pitch is controlled by byte #5 of sound #7,
+                        \ at Sounds+60, which contains the low byte of the
+                        \ engine pitch, so we now need to calculate a suitable
+                        \ pitch value
 
- LDA #1
- JSR MakeSound
+ LDA K                  \ Set A = K + 80
+ CLC                    \       = (Thrust / 8) + AirspeedHi + 50
+ ADC #80                \
+                        \ so A is a higher value when we have higher thrust and
+                        \ airspeed, which is what we want
 
-.L4E0F
+ CMP Sounds+60          \ If the pitch in byte #5 of sound #7 is already at this
+ BEQ engs4              \ value, jump to engs4 to return from the subroutine, as
+                        \ we don't need to change the pitch
 
- RTS
+ STA Sounds+60          \ Otherwise set byte #5 of sound #7 to our new pitch in
+                        \ A, so the pitch of the engine sound goes up with our
+                        \ thrust and airspeed
+
+ LDA #0                 \ Call DefineEnvelope with A = 0 to redefine the first
+ JSR DefineEnvelope     \ sound envelope with the new choppiness values
+
+ LDA #7                 \ Make sound #7 to change the engine sound's pitch and
+ JSR MakeSound          \ choppiness
+
+ LDA #1                 \ Make sound #1 to ensure that both engine sounds are
+ JSR MakeSound          \ being made, as we need to make both #1 and #7 for the
+                        \ sound to work
+
+.engs4
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -14232,19 +14405,6 @@ ORG &0B00
 
  RTS                    \ Return from the subroutine
 
-\ ******************************************************************************
-\
-\       Name: L4E8B
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
  EQUB &8D
 
 \ ******************************************************************************
@@ -14257,6 +14417,17 @@ ORG &0B00
 \ ------------------------------------------------------------------------------
 \
 \ There are two sound envelopes defined in Aviator.
+\
+\   * Envelope 1 defines the engine sound. The third, fourth and fifth values
+\     (Envelopes+2, Envelopes+3 and Envelopes+4) control the choppiness of the
+\     engine sound and get altered by the MakeEngineSound routine, depending on
+\     the thrust and airspeed. These values control the change of pitch per step
+\     in the three stages of the sound envelope, so higher values make the sound
+\     jump up and down more in terms of pitch, which makes the sound more
+\     choppy and less smooth.
+\
+\   * Envelope 2 defines the sound of gunfire, both for our Spitfire and for the
+\     Theme aliens.
 \
 \ ******************************************************************************
 
@@ -14293,7 +14464,7 @@ ORG &0B00
 \ So when we call MakeSound with A = 5 to make sound #5, this is what the
 \ routine effectively does:
 \
-\   SOUND &10, -13,   4,  12
+\   SOUND &10, -13, 4, 12
 \
 \ which makes a sound with flush control 1 on channel 0, and with amplitude -13,
 \ pitch 4 and duration 12. Meanwhile, sound #2 is like this:
@@ -14308,14 +14479,48 @@ ORG &0B00
 
 .Sounds
 
- EQUB &10, &00, &00, &00, &00, &00, &00, &00    \ #0 = &10,   0,   0,   0
- EQUB &10, &00, &FB, &FF, &03, &00, &FF, &00    \ #1 = &10,  -5,   3, 255
- EQUB &13, &00, &02, &00, &DC, &00, &02, &00    \ #2 = &13,   2, 220,   2
- EQUB &13, &00, &F1, &FF, &78, &00, &07, &00    \ #3 = &13, -15, 120,   7
- EQUB &13, &00, &F4, &FF, &00, &00, &01, &00    \ #4 = &13, -12,   0,   1
- EQUB &10, &00, &F3, &FF, &04, &00, &0C, &00    \ #5 = &10, -13,   4,  12
- EQUB &13, &00, &02, &00, &3C, &00, &02, &00    \ #6 = &13,   2,  60,   2
- EQUB &11, &00, &01, &00, &FF, &00, &FF, &00    \ #7 = &11,   1, 255, 255
+ EQUB &10, &00          \ Sound #0: Stop engine sound  (SOUND &10, 0, 0, 0)
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+
+ EQUB &10, &00          \ Sound #1: Engine amplitude (SOUND &10, -5, 3, 255)
+ EQUB &FB, &FF          \ 
+ EQUB &03, &00          \ Second parameter (Sounds+10) gets changed in the
+ EQUB &FF, &00          \ VolumeKeys routine to alter the volume
+
+ EQUB &13, &00          \ Sound #2: Theme gunfire ??? (SOUND &13, 2, 220, 2)
+ EQUB &02, &00          \
+ EQUB &DC, &00          \ Uses sound envelope 2
+ EQUB &02, &00
+
+ EQUB &13, &00          \ Sound #3: Long, medium beep (SOUND &13, -15, 120, 7)
+ EQUB &F1, &FF
+ EQUB &78, &00
+ EQUB &07, &00
+
+ EQUB &13, &00          \ Sound #4: Short, low beep (SOUND &13, -12, 0, 1)
+ EQUB &F4, &FF
+ EQUB &00, &00
+ EQUB &01, &00
+
+ EQUB &10, &00          \ Sound #5: Crash (SOUND &10, -13, 4, 12)
+ EQUB &F3, &FF
+ EQUB &04, &00
+ EQUB &0C, &00
+
+ EQUB &13, &00          \ Sound #6: Our gunfire (SOUND &13, 2, 60, 2)
+ EQUB &02, &00
+ EQUB &3C, &00
+ EQUB &02, &00
+
+ EQUB &11, &00          \ Sound #7: Engine pitch (SOUND &11, 1, 255, 255)
+ EQUB &01, &00          \
+ EQUB &FF, &00          \ Uses sound envelope 1 
+ EQUB &FF, &00          \
+                        \ The fifth byte (Sounds+60) is the low byte of the
+                        \ sound's pitch and gets changed in various places
+                        \ to change the pitch of the engine sound
 
 \ ******************************************************************************
 \
@@ -14594,7 +14799,9 @@ ORG &0B00
 \ Goes down by 10 if undercarriage is up
 \ Goes up by 200 if flaps are on
 \ Goes down by 200 if flaps are off
-\ Is this air speed? Acceleration? Drag factor?
+\ Goes up by 20 if engine is on
+\ Goes down by 20 if engine is switched off
+\ Is this acceleration? Drag factor?
 
  EQUB &16               \ Set to 198 in Reset
  EQUB &28
@@ -14626,12 +14833,12 @@ ORG &0B00
                         \ The maximum x-delta for the hand in each indicator
 
  EQUB 7                 \ Maximum x-delta for indicator 0 (compass)
- EQUB 9                 \ Maximum x-delta value for indicator 1 (airspeed)
- EQUB 5                 \ Maximum x-delta value for indicator 2 (altimeter small)
- EQUB 10                \ Maximum x-delta value for indicator 3 (altimeter large)
- EQUB 8                 \ Maximum x-delta value for indicator 4 (vertical speed)
- EQUB 9                 \ Maximum x-delta value for indicator 5 (turn)
- EQUB 9                 \ Maximum x-delta value for indicator 6 (slip)
+ EQUB 9                 \ Maximum x-delta for indicator 1 (airspeed)
+ EQUB 5                 \ Maximum x-delta for indicator 2 (altimeter small)
+ EQUB 10                \ Maximum x-delta for indicator 3 (altimeter large)
+ EQUB 8                 \ Maximum x-delta for indicator 4 (vertical speed)
+ EQUB 9                 \ Maximum x-delta for indicator 5 (turn)
+ EQUB 9                 \ Maximum x-delta for indicator 6 (slip)
 
  EQUB &0D
 
@@ -14639,13 +14846,13 @@ ORG &0B00
 
                         \ The maximum y-delta for the hand in each indicator
 
- EQUB 12                \ Maximum y-delta value for indicator 0 (compass)
- EQUB 10                \ Maximum y-delta value for indicator 1 (airspeed)
- EQUB 10                \ Maximum y-delta value for indicator 2 (altimeter small)
- EQUB 14                \ Maximum y-delta value for indicator 3 (altimeter large)
- EQUB 12                \ Maximum y-delta value for indicator 4 (vertical speed)
- EQUB 14                \ Maximum y-delta value for indicator 5 (turn)
- EQUB 14                \ Maximum y-delta value for indicator 6 (slip)
+ EQUB 12                \ Maximum y-delta for indicator 0 (compass)
+ EQUB 10                \ Maximum y-delta for indicator 1 (airspeed)
+ EQUB 10                \ Maximum y-delta for indicator 2 (altimeter small)
+ EQUB 14                \ Maximum y-delta for indicator 3 (altimeter large)
+ EQUB 12                \ Maximum y-delta for indicator 4 (vertical speed)
+ EQUB 14                \ Maximum y-delta for indicator 5 (turn)
+ EQUB 14                \ Maximum y-delta for indicator 6 (slip)
 
  EQUB &20
 
@@ -15099,17 +15306,17 @@ ORG &0B00
 
  JSR L522D
 
- LDA #7
- JSR L4DB5
+ LDA #7                 \ Make the engine sound
+ JSR ToggleEngineSound
 
  JSR L5670
 
  JSR L31AC
 
- LDA L3692
+ LDA FuelLevel
  BEQ L51D1
 
- LDA L0CE9
+ LDA Engine
  BEQ L51D6
 
  LDA ThrustHi
@@ -15135,16 +15342,16 @@ ORG &0B00
  STA L3691
  BCC L51D6
 
- LDA L3692
+ LDA FuelLevel
  BEQ L51D1
 
- DEC L3692
+ DEC FuelLevel
  BNE L51D6
 
 .L51D1
 
- LDA #0
- JSR L36A0
+ LDA #0                 \ Turn the engine off
+ JSR SetEngine
 
 .L51D6
 
@@ -16039,7 +16246,7 @@ ORG &0B00
 
 .L55F5
 
- LDX L0CE9
+ LDX Engine
  BEQ L5636
 
  STA H
@@ -16301,11 +16508,18 @@ ORG &0B00
  LDA VerticalSpeedLo
  ROR A
  STA R
- LDX Undercarriage
- BNE L5739
 
- DEX
- STX L0CF7
+ LDX Undercarriage      \ If Undercarriage is non-zero, then the undercarriage
+ BNE L5739              \ is down, so jump to L5739
+
+                        \ If we get here then the undercarriage is up and
+                        \ VerticalSpeedHi / 2 = 0, so we are in the process of
+                        \ making a crash landing (or we've pulled up the
+                        \ undercarriage when still on the runway)
+
+ DEX                    \ Set Propellor = 255 to denote that the propellor is
+ STX Propellor          \ broken, so we can't turn the engine on again
+
  CMP #&A0
  BCC L5740
 
@@ -16320,8 +16534,8 @@ ORG &0B00
 
 .L5740
 
- LDA #0
- JSR L36A0
+ LDA #0                 \ Turn the engine off
+ JSR SetEngine
 
 .L5745
 
@@ -16344,7 +16558,7 @@ ORG &0B00
  LDA #&1A
  JSR MakeSound
 
- JSR L4DBC
+ JSR ResetEngineSound
 
 .L5762
 
