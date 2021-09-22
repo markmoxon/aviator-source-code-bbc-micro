@@ -306,7 +306,10 @@ L0CCF = &0CCF
 L0CD0 = &0CD0           \ Set to 255 in Reset
 L0CD1 = &0CD1           \ Set to 47 in Reset
 L0CD7 = &0CD7
-L0CD8 = &0CD8
+
+ScoreDisplayTimer = &0CD8   \ Counter for removing the score after displaying it
+                        \ for a fixed amount of time
+
 L0CD9 = &0CD9
 L0CDA = &0CDA
 L0CE0 = &0CE0
@@ -6543,9 +6546,20 @@ ORG &0B00
 \
 \   I                   Start point x-coordinate
 \
-\   J                   Start point y-coordinate, relative to the top of the
-\                       dashboard at screen y-coordinate 160 (so this will be a
-\                       negative value when updating the dashboard)
+\   J                   Start point y-coordinate, relative to the bottom of the
+\                       canopy/top of the dashboard. Specifically:
+\
+\                        * J = 0 to 151 are all within the bounds of the canopy
+\
+\                        * The bottom pixel inside the canopy is 0, while the
+\                          top pixel just below the top canopy edge is 151
+\
+\                        * J = -1 to -96 are all on the dashboard
+\
+\                        * The white horizontal edge at the bottom of the
+\                          canopy/top of the dashboard is -1
+\
+\                        * The bottom row of pixels on-screen is -96
 \
 \   N                   Drawing mode:
 \
@@ -6825,7 +6839,10 @@ ORG &0B00
  LDA #159               \ Set Y = 159 - J
  SEC                    \
  SBC J                  \ so Y is the number of pixels that (I, J) is above
- TAY                    \ (+ve) or below (-ve) the top of the dashboard
+ TAY                    \ (+ve) or below (-ve) the top of the dashboard, where a
+                        \ value of 0 is the bottom pixel inside the canopy, and
+                        \ a value of -1 is the white horizontal edge at the
+                        \ bottom of the canopy
 
  LDA I                  \ Set X = bits 0 and 1 of I
  AND #%00000011         \       = I mod 4
@@ -8236,7 +8253,7 @@ ORG &0B00
 
  DEC FuelLevel          \ Decrement the counter in FuelLevel
 
- JSR L33A1              \ ???
+ JSR EraseFuelPixel     \ Erase the relevant pixel from the fuel gauge
 
  LDA FuelLevel          \ Loop back until FuelLevel = 0, by which point we have
  BNE rset6              \ reset the fuel tanks and cleared the fuel gauge
@@ -8556,7 +8573,9 @@ ORG &0B00
 
 .main17
 
- JSR L33A1
+ JSR EraseFuelPixel
+
+                        \ Handle engine start/stop
 
  LDX #&DC               \ Scan the keyboard to see if "T" is being pressed
  JSR ScanKeyboard
@@ -8569,7 +8588,7 @@ ORG &0B00
                         \ off by accident
 
  LDA Propellor          \ If Propellor is non-zero, then the propellor is broken
- BNE main20             \  and we can't turn on the engine, so jump to main20 to
+ BNE main20             \ and we can't turn on the engine, so jump to main20 to
                         \ skip the following
 
                         \ At this point, we know that "T" is being pressed,
@@ -8626,42 +8645,57 @@ ORG &0B00
 
  JSR L4D6E
 
- LDA L0CD8
- BEQ main22
+                        \ Handle score display
 
- CMP #&DC
- BNE main23
+ LDA ScoreDisplayTimer  \ If ScoreDisplayTimer = 0, jump to main22 to skip the
+ BEQ main22             \ following three instructions, as we are not currently
+                        \ displaying the score
 
- BEQ main24
+ CMP #220               \ If ScoreDisplayTimer <> 220, jump down to main23 to
+ BNE main23             \ decrement the timer and keep displaying the score
+
+ BEQ main24             \ If ScoreDisplayTimer = 220, it's time to remove the
+                        \ score from the screen, so jump down to main24
 
 .main22
 
  LDX #&C8               \ Scan the keyboard to see if "P" is being pressed
  JSR ScanKeyboard
 
- BNE main25
+ BNE main25             \ If "P" is not being pressed, jump to main25 to
+                        \ continue with the main loop
 
 .main23
 
- DEC L0CD8
- JSR DisplayScore
+                        \ If we get here then either we just pressed "P" or the
+                        \ score is already being displayed, so in either case we
+                        \ should update the timer and display the score
 
- JMP main25
+ DEC ScoreDisplayTimer  \ Decrement the score timer
+
+ JSR DisplayScore       \ Display the score, so we show it for the first time if
+                        \ we just pressed "P", or update it if it changes while
+                        \ being displayed
+
+ JMP main25             \ Jump down to main25 to continue with the main loop
 
 .main24
 
- JSR L4883
+ JSR RemoveScore        \ Remove the score from the screen
 
- LDA #0
- STA L0CD8
+ LDA #0                 \ Set ScoreDisplayTimer = 0 as we are no longer showing
+ STA ScoreDisplayTimer  \ the score on-screeen
 
 .main25
+
+                        \ ??? Update object handles
 
  LDX L0CC6              \ If L0CC6 <> NN, jump down to main26
  CPX NN
  BNE main26
 
- JMP MainLoop
+ JMP MainLoop           \ L0CC6 = NN, so jump back up to the top of the main
+                        \ loop for the next iteration
 
 .main26
 
@@ -11312,7 +11346,7 @@ ORG &0B00
 \       Name: FillUpFuelTank
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Fill up the fuel tank by 1/65th of a full tank
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11323,11 +11357,10 @@ ORG &0B00
 .FillUpFuelTank
 
  LDA L4206              \ If bits 0 and 1 of L4206 are both 0, jump to fuel1
- AND #%00000011
+ AND #%00000011         \ to add some fuel to the tank
  BEQ fuel1
 
- RTS                    \ At least one of the bits is set, so return from the
-                        \ subroutine
+ RTS                    \ Return from the subroutine
 
 .fuel1
 
@@ -11337,10 +11370,11 @@ ORG &0B00
  CMP #65                \ jump to fuel2 to skip filling it up any more
  BCS fuel2
 
- INC FuelLevel          \ Increment the fuel level by 1, so we fill up the fuel
-                        \ tank by 1/65th of a full tank
+ INC FuelLevel          \ FuelLevel < 65, so increment the fuel level by 1, to
+                        \ fill up the fuel tank by 1/65th of a full tank
 
- JMP DrawFuelPixel      \ Update the fuel gauge by one pixel
+ JMP DrawFuelPixel      \ Draw an extra pixel at the top of the fuel level so
+                        \ the fuel gauge goes up by one pixel
 
 .fuel2
 
@@ -11350,34 +11384,30 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L33A1
+\       Name: EraseFuelPixel
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
-.L33A1
+.EraseFuelPixel
 
- LDA L4206              \ If bits 0, 1 and 2 of L4206 are all 0, jump to L33A9
- AND #%00001111
- BEQ L33A9
+ LDA L4206              \ If bits 0, 1 and 2 of L4206 are all 0, jump to eraf1
+ AND #%00001111         \ to erase the top fuel pixel
+ BEQ eraf1
 
  RTS                    \ Return from the subroutine
 
-.L33A9
+.eraf1
 
- LDX #128               \ Set X = 128 to use as the value of N below, which sets
-                        \ the call to DrawVectorLine to erase
+ LDX #128               \ Set X = 128, so we erase a pixel from the fuel gauge
+                        \ in DrawFuelPixel below
 
  LDA FuelLevel          \ Set A = FuelLevel
 
                         \ Fall through into DrawFuelPixel to erase a pixel from
-                        \ the fuel gauge at the top of the gauge, i.e. to reduce
+                        \ the fuel gauge at the top of the gauge, i.e. reduce
                         \ the amount shown on the fuel gauge by one
 
 \ ******************************************************************************
@@ -11385,7 +11415,7 @@ ORG &0B00
 \       Name: DrawFuelPixel
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: 
+\    Summary: Draw or erase a pixel on the fuel gauge on the dashboard
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11393,7 +11423,7 @@ ORG &0B00
 \
 \   A                   The fuel gauge pixel to draw or erase (0 to 65)
 \
-\   N                   Drawing mode:
+\   X                   Drawing mode:
 \
 \                         * Bit 7 clear = draw (using OR logic)
 \
@@ -11407,15 +11437,18 @@ ORG &0B00
 
  CLC                    \ Set J = A + 184
  ADC #184               \
- STA J                  \ so the y-coordinate is between
+ STA J                  \ so the line's start y-coordinate is between:
                         \
                         \   * 184, or -72, for A = 0  (empty tank)
                         \   * 249, or  -7, for A = 65 (full tank)
                         \
-                        \ So this is the correct y-coordinate for this pixel
-                        \ in the fuel gauge, as the fuel gauge starts at
-                        \ y-coordinate 231 and goes up to 167, which are 72
-                        \ and 7 pixels down from y-coordinate ???
+                        \ As y-coordinates that we send to DrawVectorLine are
+                        \ relative to the top of the dashboard, this means we
+                        \ draw a pixel on the vertical line from 72 pixels below
+                        \ the top of the dashboard (i.e. the bottom of the fuel
+                        \ gauge at screen y-coordinate 231), up to 7 pixels
+                        \ below the top of the dashboard (i.e. the top of the
+                        \ fuel gauge at screen y-coordinate 166)
 
  LDA #2                 \ Set I = 2, the x-coordinate of the fuel gauge line
  STA I
@@ -12585,7 +12618,7 @@ ORG &0B00
  SBC #&04
  TAX
  TXS
- JMP L4C6A
+ JMP Crash
 
 .L42DF
 
@@ -13009,10 +13042,10 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L4883
+\       Name: RemoveScore
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Remove the score display from the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13020,7 +13053,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L4883
+.RemoveScore
 
  LDY #&5B
  LDX #&C8
@@ -13599,7 +13632,7 @@ ORG &0B00
 .DisplayScore
 
  LDX #0
- LDY #&10
+ LDY #16
  JSR L4C5C
 
  LDA L369F
@@ -13608,12 +13641,12 @@ ORG &0B00
  LDA L369E
  JSR L4C45
 
- LDX #&10
- LDY #&14
+ LDX #16
+ LDY #20
  JSR L4C5C
 
  LDX #8
- LDY #&10
+ LDY #16
  JSR L4C5C
 
  LDA L369D
@@ -13689,7 +13722,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L4C6A
+\       Name: Crash
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13700,7 +13733,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L4C6A
+.Crash
 
  LDA #0                 \ Turn off the engine sound
  JSR ToggleEngineSound
@@ -14405,7 +14438,7 @@ ORG &0B00
 
  RTS                    \ Return from the subroutine
 
- EQUB &8D
+ EQUB &8D               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -16530,7 +16563,7 @@ ORG &0B00
 
 .L573D
 
- JMP L4C6A
+ JMP Crash
 
 .L5740
 
