@@ -286,7 +286,7 @@ L0CC6 = &0CC6           \ Used to store the value of NN during the main loop
 L0CC7 = &0CC7
 L0CC8 = &0CC8
 
-PressingT = &0CC9           \ Set to 0 in the main loop if "T" is not being pressed,
+PressingT = &0CC9       \ Set to 0 in the main loop if "T" is not being pressed,
                         \ otherwise set to 1, to prevent holding down "T" from
                         \ constantly switching the engine on and off
 
@@ -417,6 +417,8 @@ Row1_Block1_0 = &5948   \ Second block on second row
 Row1_Block38_0 = &5A68  \ Last block but one on second row
 Row1_Block39_0 = &5A70  \ Last block on second row
 
+Row3_Block1_0 = &5BC8   \ Top-left corner of on-screen score display
+
 Row6_Block20_0 = &6020  \ Top of gun sight?
 Row7_Block20_0 = &6160  \ Middle of gun sight?
 Row8_Block11_0 = &6258  \ Left end of horizontal bar in gun sight?
@@ -489,12 +491,12 @@ ORG &0B00
  JSR OSWRCH             \   VDU 22, 5
 
  LDY #0                 \ We now want to write the VDU command to disable the
-                        \ cursor, whose bytes are in the variable at Cursor, so
-                        \ set up a counter in Y
+                        \ cursor, whose bytes are in the variable at
+                        \ DisableCursor, so set up a counter in Y
 
 .sscr1
 
- LDA Cursor,Y           \ Write the Y-th value from Cursor
+ LDA DisableCursor,Y    \ Write the Y-th value from DisableCursor
  JSR OSWRCH
 
  INY                    \ Increment the loop counter
@@ -512,11 +514,11 @@ ORG &0B00
  JSR OSWRCH
 
  LDY #0                 \ We now want to print the "Please wait" message in
-                        \ variable PleaseWait, so set up a counter in Y
+                        \ variable PleaseWaitText, so set up a counter in Y
 
 .sscr2
 
- LDA PleaseWait,Y       \ Print the Y-th character from PleaseWait
+ LDA PleaseWaitText,Y   \ Print the Y-th character from PleaseWaitText
  JSR OSWRCH
 
  INY                    \ Increment the loop counter
@@ -553,14 +555,14 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: Cursor
+\       Name: DisableCursor
 \       Type: Variable
 \   Category: Setup
 \    Summary: The VDU command for disabling the cursor
 \
 \ ******************************************************************************
 
-.Cursor
+.DisableCursor
 
  EQUB 23, 0, 10, 23     \ Set 6845 register R10 = 23
  EQUB 0, 0, 0           \
@@ -570,14 +572,14 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: PleaseWait
+\       Name: PleaseWaitText
 \       Type: Variable
 \   Category: Setup
 \    Summary: The "Please wait" message shown when the game loads
 \
 \ ******************************************************************************
 
-.PleaseWait
+.PleaseWaitText
 
  EQUS "Please wait"
  EQUB 13
@@ -8123,9 +8125,9 @@ ORG &0B00
 
  STA L44F0              \ Set L44F0 = 0
 
- STA L369C              \ Set L369C = 0
+ STA ScoreLo            \ Set ScoreLo = 0
 
- STA L369D              \ Set L369D = 0
+ STA ScoreHi            \ Set ScoreHi = 0
 
 .rset1
 
@@ -8296,20 +8298,16 @@ ORG &0B00
 \       Name: StartGame
 \       Type: Subroutine
 \   Category: Setup
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Reset the high score, set up the gunfire sound envelope and start
+\             a new game
 \
 \ ******************************************************************************
 
 .StartGame
 
- LDA #0                 \ Set L369F = 0 ???
- STA L369F
-
- STA L369E              \ Set L369E = 0 ???
+ LDA #0                 \ Set (HighScoreHi HighScoreLo) = 0
+ STA HighScoreHi
+ STA HighScoreLo
 
  LDA #14                \ Call DefineEnvelope with A = 14 to set up the second
  JSR DefineEnvelope     \ sound envelope
@@ -8321,7 +8319,7 @@ ORG &0B00
 \       Name: NewGame
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
+\    Summary: Start a new game
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11698,21 +11696,21 @@ ORG &0B00
 
  EQUB &B2, &B7, &BC, &C1, &0F, &B4, &BA, &BF, &C8
 
-.L369C
+.ScoreLo
 
- EQUB &49               \ Zeroed in Reset (16-bit with L369D?)
+ EQUB &49               \ Score (high byte of a BCD number)
 
-.L369D
+.ScoreHi
 
- EQUB &3D               \ Zeroed in Reset
+ EQUB &3D               \ Score (low byte of a BCD number)
 
-.L369E
+.HighScoreLo
 
- EQUB &26               \ Zeroed in StartGame (16-bit with L369E?)
+ EQUB &26               \ High score (high byte of a BCD number)
 
-.L369F
+.HighScoreHi
 
- EQUB &34               \ Zeroed in StartGame
+ EQUB &34               \ High score (low byte of a BCD number)
 
 \ ******************************************************************************
 \
@@ -12055,14 +12053,19 @@ ORG &0B00
  EQUB &32, &20, &43, &4D, &50, &20, &46, &4C
  EQUB &44, &50, &54, &52, &2C, &58, &3A, &42
 
-.L3DE0
-
- EQUB &1F, &01, &03, &48, &49, &47, &48, &20
- EQUB &53, &43, &4F, &52, &45, &3A, &20, &20
- EQUB &30, &1F, &03, &0A, &3A, &4A, &4D, &50
- EQUB &20, &73, &75, &74, &35, &0D, &04, &6A
-
 \ End of workspace noise
+
+.ScoreText
+
+ EQUB 31, 1, 3          \ VDU 31, 1, 3 moves the text cursor to column 1, row 3
+ EQUS "HIGH SCORE:  "
+
+ EQUB "0"
+ EQUB 31, 3, 10         \ VDU 31, 3, 10 moves the text cursor to column 3, row
+                        \ 10
+
+ EQUB &3A, &4A, &4D, &50
+ EQUB &20, &73, &75, &74, &35, &0D, &04, &6A
 
 .L3E00
 
@@ -12319,7 +12322,7 @@ ORG &0B00
 
 .L420F
 
- EQUB &5C \ Zeroed in Reset
+ EQUB &5C               \ Zeroed in Reset
 
 .L4210
 
@@ -13044,25 +13047,25 @@ ORG &0B00
 \
 \       Name: RemoveScore
 \       Type: Subroutine
-\   Category: 
+\   Category: Scoring
 \    Summary: Remove the score display from the screen
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
 \
 \ ******************************************************************************
 
 .RemoveScore
 
- LDY #&5B
- LDX #&C8
- LDA #8
- STA R
- LDA #0
- JSR FillCanopyRows
+ LDY #HI(Row3_Block1_0) \ Set (Y X) to the screen address for row 3, block 1
+ LDX #LO(Row3_Block1_0)
 
- RTS
+ LDA #8                 \ Set R = 19, so we clear 8 character rows
+ STA R
+
+ LDA #0                 \ Set X = 0 so we clear the canopy to black
+
+ JSR FillCanopyRows     \ Fill the 8 screen rows with black, avoiding the canopy
+                        \ edges and removing the score display from the screen
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -13526,7 +13529,7 @@ ORG &0B00
 \
 \       Name: L4BCB
 \       Type: Subroutine
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13548,7 +13551,7 @@ ORG &0B00
 \
 \       Name: L4BD4
 \       Type: Subroutine
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13561,19 +13564,19 @@ ORG &0B00
 
  SED
  CLC
- ADC L369C
- STA L369C
+ ADC ScoreLo
+ STA ScoreLo
  TXA
- ADC L369D
- STA L369D
+ ADC ScoreHi
+ STA ScoreHi
  BCS L4BF1
 
  CPX #&99
  BNE L4BF1
 
  LDA #0
- STA L369C
- STA L369D
+ STA ScoreLo
+ STA ScoreHi
 
 .L4BF1
 
@@ -13584,7 +13587,7 @@ ORG &0B00
 \
 \       Name: L4BF3
 \       Type: Subroutine
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13595,22 +13598,22 @@ ORG &0B00
 
 .L4BF3
 
- LDA L369D
- CMP L369F
+ LDA ScoreHi
+ CMP HighScoreHi
  BCC L4C11
 
  BNE L4C05
 
- LDA L369C
- CMP L369E
+ LDA ScoreLo
+ CMP HighScoreLo
  BCC L4C11
 
 .L4C05
 
- LDA L369C
- STA L369E
- LDA L369D
- STA L369F
+ LDA ScoreLo
+ STA HighScoreLo
+ LDA ScoreHi
+ STA HighScoreHi
 
 .L4C11
 
@@ -13620,105 +13623,114 @@ ORG &0B00
 \
 \       Name: DisplayScore
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Scoring
+\    Summary: Print the scores on-screen
 \
 \ ******************************************************************************
 
 .DisplayScore
 
- LDX #0
- LDY #16
- JSR L4C5C
+ LDX #0                 \ Print characters 0-15 from ScoreText, which moves the
+ LDY #16                \ text cursor to column 1, row 3 and prints
+ JSR PrintScoreText     \ "HIGH SCORE:  "
 
- LDA L369F
- JSR L4C45
+ LDA HighScoreHi        \ Print the high byte of the high score
+ JSR PrintScore
 
- LDA L369E
- JSR L4C45
+ LDA HighScoreLo        \ Print the low byte of the high score
+ JSR PrintScore
 
- LDX #16
- LDY #20
- JSR L4C5C
+ LDX #16                \ Print characters 16-19 from ScoreText, which prints a
+ LDY #20                \ "0" and moves the text cursor to column 3, row 10
+ JSR PrintScoreText
 
- LDX #8
- LDY #16
- JSR L4C5C
+ LDX #8                 \ Print characters 8-15 from ScoreText, which prints
+ LDY #16                \ "SCORE:  "
+ JSR PrintScoreText
 
- LDA L369D
- JSR L4C45
+ LDA ScoreHi            \ Print the high byte of the score
+ JSR PrintScore
 
- LDA L369C
- JSR L4C45
+ LDA ScoreLo            \ Print the low byte of the score
+ JSR PrintScore
 
- LDA #&30
+ LDA #'0'               \ Print a "0"
  JSR OSWRCH
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L4C45
+\       Name: PrintScore
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Scoring
+\    Summary: Print a score
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The byte to print, in BCD format (so each nibble is one
+\                       decimal digit)
 \
 \ ******************************************************************************
 
-.L4C45
+.PrintScore
 
- STA T
+ STA T                  \ Store the byte to print in T
+
+ LSR A                  \ Set A to the high nibble of the score (bits 4-7)
  LSR A
  LSR A
  LSR A
- LSR A
- CLC
- ADC #&30
+
+ CLC                    \ Print the high nibble as a digit
+ ADC #'0'
  JSR OSWRCH
 
- LDA T
- AND #&0F
- CLC
- ADC #&30
+ LDA T                  \ Set A to the low nibble of the score (bits 0-3)
+ AND #%00001111
+
+ CLC                    \ Print the low nibble as a digit
+ ADC #'0'
  JSR OSWRCH
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L4C5C
+\       Name: PrintScoreText
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Scoring
+\    Summary: Print text when showing the scores on-screen
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   Offset of the first character to print from ScoreText
+\
+\   Y                   Offset of the character that's just after the end of the
+\                       string that we want to print from ScoreText
 \
 \ ******************************************************************************
 
-.L4C5C
+.PrintScoreText
 
- STY T
+ STY T                  \ Set Y to the offset of the character that's just after
+                        \ the end of the string to print
 
 .L4C5E
 
- LDA L3DE0,X
+ LDA ScoreText,X        \ Print the X-th character from ScoreText
  JSR OSWRCH
 
- INX
- CPX T
- BNE L4C5E
+ INX                    \ Increment X to point to the next character
 
- RTS
+ CPX T                  \ Loop back to print the next character until we have
+ BNE L4C5E              \ printed all of them
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
