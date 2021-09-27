@@ -12944,72 +12944,102 @@ ORG &0B00
 \
 \       Name: YLookupLo
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Lookup table for converting pixel y-coordinate to low byte of
+\             screen address
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ See YLookupHi for an explanation of this table.
 \
 \ ******************************************************************************
 
 
 .YLookupLo
 
-                        \ Screen y-coordinate lookup table, low byte
-                        \
-                        \ We add Y to this to get the screen address, where Y is
-                        \ the pixel offset from the top of the dashboard, so the
-                        \ addresses in the table are out by +8 bytes for each
-                        \ row above the top of the dashboard, and -8 bytes for
-                        \ each row below
+FOR I%, 19, 0, -1
 
- EQUB &28, &F0, &B8, &80, &48, &10, &D8, &A0
- EQUB &68, &30, &F8, &C0, &88, &50, &18, &E0
- EQUB &A8, &70, &38, &00
+ EQUB LO(&5800 + (I% * &138))
 
- EQUB &C8, &90, &58, &20
- EQUB &E8, &B0, &78, &40, &08, &D0, &98, &60
+NEXT
+
+FOR I%, 31, 20, -1
+
+ EQUB LO(&5800 + (I% * &138))
+
+NEXT
 
 \ ******************************************************************************
 \
 \       Name: YLookupHi
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Lookup table for converting pixel y-coordinate to high byte of
+\             screen address
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Each character row contains &140 bytes, so this lookup table lets us convert a
+\ pixel y-coordinate to the 16-bit address of the start of that row. There are
+\ two twists, however.
+\
+\   * The table counts backwards from the bottom of the canopy/top of the
+\     dashboard, so the first entry in this table is for the bottom row of the
+\     canopy, the next entry is for the row above that, and so on until we hit
+\     the top of the canopy, after which we wrap around to the bottom of the
+\     screen (i.e. the bottom of the dashboard) and keep going up until the last
+\     entry, which is for the top row of the dashboard. To be more explicit,
+\     the first 20 entries cover the canopy:
+\
+\        * Entry 0 = &6F28 = Row18_Block21
+\        * Entry 1 = &6DF0 = Row17_Block22
+\        * Entry 2 = &6CB8 = Row16_Block23
+\        * Entry 3 = &6B80 = Row15_Block24
+\
+\          ...
+\
+\        * Entry 17 = &5A70 = Row1_Block38
+\        * Entry 18 = &5938 = Row0_Block39
+\        * Entry 19 = &5800 = Row0_Block0
+\
+\     while the last 12 entries cover the dashboard:
+\
+\        * Entry 20 = &7DC8 = Row30_Block9
+\        * Entry 21 = &7C90 = Row29_Block10
+\
+\          ...
+\
+\        * Entry 30 = &7198 = Row20_Block19
+\        * Entry 31 = &7060 = Row19_Block20
+\
+\   * The start addresses for each character row are offset by one character
+\     block (8 bytes) per row, so instead of being a simple lookup table for
+\     multiples of &140, it's actually a lookup table for multiples of &138,
+\     and the addresses in the table are out by +8 bytes for each row above
+\     the top of the dashboard, and -8 bytes for each row below.
+\
+\ The lookup table works this way so the y-coordinates treat the bottom of the
+\ canopy as the origin, with negative coordinates for the dashboard and positive
+\ coordinates for the canopy. The DrawVectorLine subtracts the y-coordinate from
+\ 159 to achieve this effect, which makes the coordinate system for the canopy
+\ a lot simpler, at the expense of making the lookup tables more convoluted. 
 \
 \ ******************************************************************************
 
 
 .YLookupHi
 
-                       \ Screen y-coordinate lookup table, low byte
+FOR I%, 19, 0, -1
 
- EQUB &6F, &6D, &6C, &6B, &6A, &69, &67, &66
- EQUB &65, &64, &62, &61, &60, &5F, &5E, &5C
- EQUB &5B, &5A, &59, &58
+ EQUB HI(&5800 + (I% * &138))
 
- EQUB &7D, &7C, &7B, &7A
- EQUB &78, &77, &76, &75, &74, &72, &71, &70
+NEXT
 
-\  0 = &6F28 = Row18_Block21
-\  1 = &6DF0 = Row17_Block22
-\  2 = &6CB8 = Row16_Block23
-\  3 = &6B80 = Row15_Block24
-\      ...
-\ 17 = &5A70 = Row1_Block38
-\ 18 = &5938 = Row0_Block39
-\ 19 = &5800 = Row0_Block0
+FOR I%, 31, 20, -1
 
-\ 20 = &7DC8 = Row30_Block9
-\ 21 = &7C90 = Row29_Block10
-\      ...
-\ 30 = &7198 = Row20_Block19
-\ 31 = &7060 = Row19_Block20
+ EQUB HI(&5800 + (I% * &138))
+
+NEXT
 
 \ ******************************************************************************
 \
@@ -14654,38 +14684,50 @@ ORG &0B00
 \
 \       Name: XLookupLo
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Lookup table for converting pixel x-coordinate to low byte of
+\             screen address
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ See XLookupHi for an explanation of this table.
 \
 \ ******************************************************************************
 
 .XLookupLo
 
-                        \ Screen x-coordinate lookup table, low byte
-                        \ Multiples of 8 in 16-bit number
-                        \ so XLookupLo,X = LO(X * 8)
+FOR I%, 0, 39
 
- EQUB &00, &08, &10, &18, &20, &28, &30, &38
- EQUB &40, &48, &50, &58, &60, &68, &70, &78
- EQUB &80, &88, &90, &98, &A0, &A8, &B0, &B8
- EQUB &C0, &C8, &D0, &D8, &E0, &E8, &F0, &F8
- EQUB &00, &08, &10, &18, &20, &28, &30, &38
+ EQUB LO(I% * 8)
+
+NEXT
+
+\ ******************************************************************************
+\
+\       Name: XLookupHi
+\       Type: Variable
+\   Category: Graphics
+\    Summary: Lookup table for converting pixel x-coordinate to high byte of
+\             screen address
+\
+\ ------------------------------------------------------------------------------
+\
+\ Each character block contains 8 bytes, so this lookup table lets us convert a
+\ pixel x-coordinate to a 16-bit address offset from the beginning of the
+\ character row. We could achieve the same effect by simply multiplying the
+\ pixel x-coordinate by 8, but using a lookup table is quicker than doing the
+\ multiplication.
+\
+\ ******************************************************************************
 
 .XLookupHi
 
-                        \ Screen x-coordinate lookup table, high byte
-                        \ Multiples of 8 in 16-bit number
-                        \ so XLookupHi,X = HI(X * 8)
+FOR I%, 0, 39
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &01, &01, &01, &01, &01, &01, &01, &01
+ EQUB HI(I% * 8)
+
+NEXT
+
 
 \ ******************************************************************************
 \
