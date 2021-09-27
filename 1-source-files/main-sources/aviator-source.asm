@@ -1246,9 +1246,9 @@ ORG &0B00
  JSR L0F48
 
  TAX
- LDA L3900,X
+ LDA Lookup3900,X
  STA TT
- LDA L4700,X
+ LDA Lookup4700,X
  AND #&F8
  STA S
  STY K
@@ -1378,34 +1378,34 @@ ORG &0B00
  STY I
  LDX TT
  LDY J
- LDA L4500,X
- ORA L3700,Y
+ LDA Lookup4500,X
+ ORA Lookup3700,Y
  STA T
  AND #&F0
- ORA L4300,Y
+ ORA Lookup4300,Y
  STA U
  AND #&0F
- ORA L3800,X
+ ORA Lookup3800,X
  STA V
  AND #&F0
- ORA L3700,Y
+ ORA Lookup3700,Y
  TAY
  LDX S
  AND #&0F
- ORA L4500,X
+ ORA Lookup4500,X
  TAX
- LDA L3A00,X
+ LDA Lookup3A00,X
  CLC
  LDX V
- ADC L3A00,X
+ ADC Lookup3A00,X
  STA P
  LDX T
- LDA L3A00,X
+ LDA Lookup3A00,X
  ADC #1
  STA P+1
  LDX U
- LDA L3A00,X
- ADC L3A00,Y
+ LDA Lookup3A00,X
+ ADC Lookup3A00,Y
  TAX
  LDY #0
  BCC L0EBB
@@ -1414,7 +1414,7 @@ ORG &0B00
 
 .L0EBB
 
- LDA L3800,X
+ LDA Lookup3800,X
  ADC P
  BCC L0EC3
 
@@ -1432,7 +1432,7 @@ ORG &0B00
  ADC S
  STA P
  TYA
- ADC L3700,X
+ ADC Lookup3700,X
  ADC P+1
  BCC L0EDB
 
@@ -1455,21 +1455,21 @@ ORG &0B00
 
  AND #&F0
  LDX TT
- ORA L3700,X
+ ORA Lookup3700,X
  TAY
  AND #&F0
- ORA L4300,X
+ ORA Lookup4300,X
  TAX
- LDA L3A00,X
+ LDA Lookup3A00,X
  TAX
  CLC
- LDA L3800,X
+ LDA Lookup3800,X
  ADC I
 
 .L0EFE
 
- LDA L3A00,Y
- ADC L3700,X
+ LDA Lookup3A00,Y
+ ADC Lookup3700,X
  ROR A
  CLC
  ADC P
@@ -1545,7 +1545,7 @@ ORG &0B00
 
  BEQ L0F77
 
- LDA L4700,X
+ LDA Lookup4700,X
  AND #7
  CLC
  ADC #8
@@ -1576,9 +1576,9 @@ ORG &0B00
 
  TAY
  LDX T
- LDA L3700,X
- ORA L3800,Y
- LDY L3800,X
+ LDA Lookup3700,X
+ ORA Lookup3800,Y
+ LDY Lookup3800,X
  RTS
 
 \ ******************************************************************************
@@ -1599,7 +1599,7 @@ ORG &0B00
  CPY #0
  BEQ L0F97
 
- LDA L4700,Y
+ LDA Lookup4700,Y
  AND #7
  STA WW
  CMP #4
@@ -1624,7 +1624,7 @@ ORG &0B00
  BEQ L0F8D
 
  TAX
- LDA L3800,X
+ LDA Lookup3800,X
  RTS
 
 .L0F97
@@ -2444,7 +2444,7 @@ ORG &0B00
 
 .L1323
 
- LDA L2E60,X
+ LDA Lookup2E60,X
 
 .L1326
 
@@ -2475,7 +2475,7 @@ ORG &0B00
 
 .L1342
 
- LDA L2E6A,X
+ LDA Lookup2E6A,X
 
 .L1345
 
@@ -2520,7 +2520,7 @@ ORG &0B00
 
 .L1363
 
- LDA L2E60,X
+ LDA Lookup2E60,X
 
 .L1366
 
@@ -3536,24 +3536,24 @@ ORG &0B00
 
 .L1821
 
- LDA L4300,X
- ORA L4500,Y
+ LDA Lookup4300,X
+ ORA Lookup4500,Y
  STA T
  AND #&F0
- ORA L3700,X
+ ORA Lookup3700,X
  STA U
  AND #&0F
- ORA L3800,Y
+ ORA Lookup3800,Y
  TAY
  AND #&F0
- ORA L4300,X
+ ORA Lookup4300,X
  TAX
- LDA L3A00,X
+ LDA Lookup3A00,X
  STA V
  LDX T
- LDA L3A00,X
+ LDA Lookup3A00,X
  CLC
- ADC L3A00,Y
+ ADC Lookup3A00,Y
  ROR A
  ROR A
  ROR A
@@ -3567,7 +3567,7 @@ ORG &0B00
  LDA T
  AND #&1F
  LDX U
- ADC L3A00,X
+ ADC Lookup3A00,X
  RTS
 
 \ ******************************************************************************
@@ -3691,11 +3691,11 @@ ORG &0B00
 
  STX H
  SEC
- LDA L4001,X
- SBC L4000,X
+ LDA Lookup4001,X
+ SBC Lookup4000,X
  STA I
- LDA L4102,X
- SBC L4101,X
+ LDA Lookup4102,X
+ SBC Lookup4101,X
  LSR A
  ROR I
  LDX I
@@ -3707,10 +3707,10 @@ ORG &0B00
  ROL A
  PHP
  CLC
- ADC L4000,X
+ ADC Lookup4000,X
  TAY
  LDA #0
- ADC L4101,X
+ ADC Lookup4101,X
  PLP
  ADC #0
  RTS
@@ -3732,28 +3732,28 @@ ORG &0B00
 
  LDX S
  LDY V
- LDA L3800,Y
- ORA L3700,X
+ LDA Lookup3800,Y
+ ORA Lookup3700,X
  TAY
  AND #&F0
- ORA L4300,X
+ ORA Lookup4300,X
  STA U
  LDX R
  AND #&F0
- ORA L3700,X
+ ORA Lookup3700,X
  TAX
- LDA L3A00,X
+ LDA Lookup3A00,X
  TAX
  STX T
- LDA L3A00,Y
+ LDA Lookup3A00,Y
  TAY
- LDA L3700,X
- ORA L3800,Y
+ LDA Lookup3700,X
+ ORA Lookup3800,Y
  CLC
  LDX U
- ADC L3A00,X
+ ADC Lookup3A00,X
  STA W
- LDA L3700,Y
+ LDA Lookup3700,Y
  ADC #0
  STA G
  BIT K
@@ -3762,12 +3762,12 @@ ORG &0B00
  LDX R
  LDA V
  AND #&0F
- ORA L3800,X
+ ORA Lookup3800,X
  TAY
  LDX T
- LDA L3800,X
+ LDA Lookup3800,X
  CLC
- ADC L3A00,Y
+ ADC Lookup3A00,Y
  BCC L1989
 
  INC W
@@ -3814,13 +3814,13 @@ ORG &0B00
 .L19A0
 
  LDX GG
- LDY L3400,X
+ LDY Lookup3400,X
  STY PP
- LDY L34D8,X
+ LDY Lookup34D8,X
  STY QQ
  LDY L35B0,X
  STY RR
- LDA L3700,Y
+ LDA Lookup3700,Y
  STA UU
  CMP #9
  ROR K
@@ -8704,14 +8704,12 @@ ORG &0B00
  STX L0CC6              \ Increment the value of L0CC6, which was the value of
                         \ NN at the start of the main loop
 
- LDX L3F30,Y            \ Set X to the Y-th byte from L3F30 (which is a static
-                        \ table)
+ LDX Lookup3F30,Y       \ Set X to the Y-th byte from Lookup3F30
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX L3E00,Y            \ Set X to the Y-th byte from L3E00 (which is a static
-                        \ table
+ LDX Lookup3E00,Y       \ Set X to the Y-th byte from Lookup3E00
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
@@ -8814,10 +8812,10 @@ ORG &0B00
  LDX KK
  LDY L0500,X
  STY JJ
- LDX L3F30,Y
+ LDX Lookup3F30,Y
  STX GG
  STX L
- LDX L3E00,Y
+ LDX Lookup3E00,Y
  STX M
  JSR L0D01
 
@@ -8984,9 +8982,9 @@ ORG &0B00
  STA L0CCE
  STA L0CBF
  LDX JJ
- LDY L3E00,X
+ LDY Lookup3E00,X
  STY M
- LDY L3F30,X
+ LDY Lookup3F30,X
  STY L
  CPX #&0C
  BCS L2999
@@ -9024,7 +9022,7 @@ ORG &0B00
 
 .L29AB
 
- LDA L4600,Y
+ LDA Lookup4600,Y
  CMP #&28
  BCC L29E3
 
@@ -9424,7 +9422,7 @@ ORG &0B00
 
 .L2BD1
 
- CMP L3BD8,Y
+ CMP Lookup3BD8,Y
  BCS L2BD9
 
  LDA #0
@@ -9602,11 +9600,11 @@ ORG &0B00
 .L2C51
 
  TAX
- LDY L3E00,X
+ LDY Lookup3E00,X
  STY M
  LDA #0
  STA L0400,Y
- LDY L3F30,X
+ LDY Lookup3F30,X
  STY L
  STA L0400,Y
  JSR L107F
@@ -10045,7 +10043,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2E60
+\       Name: Lookup2E60
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -10056,12 +10054,12 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L2E60
+.Lookup2E60
 
  EQUB &08, &0C, &0E, &0F, &04, &06, &07, &02
  EQUB &03, &01
 
-.L2E6A
+.Lookup2E6A
 
  EQUB &01, &03, &07, &0F, &02, &06, &0E, &04
  EQUB &0C, &08, &80, &C0, &E0, &F0, &40, &60
@@ -11547,7 +11545,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L3400
+\       Name: Lookup3400
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -11558,7 +11556,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L3400
+.Lookup3400
 
  EQUB &0D, &00, &00, &00, &08, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -11588,7 +11586,7 @@ ORG &0B00
  EQUB &02, &00, &00, &00, &0B, &0C, &0B, &00
  EQUB &00, &00, &00, &04, &01, &00, &00, &04
 
-.L34D8
+.Lookup34D8
 
  EQUB &3D, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -11646,11 +11644,11 @@ ORG &0B00
  EQUB &20, &2E, &23, &85, &23, &20, &2E, &23
  EQUB &79, &55, &54, &68, &55
 
-.L3675
+.Lookup3675
 
  EQUB &40, &52, &44, &54, &80
 
-.L367A
+.Lookup367A
 
  EQUB &80, &4C, &50, &40, &50, &40, &40, &40
  EQUB &40, &74, &84, &82, &85, &75
@@ -11767,7 +11765,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L36C0
+\       Name: Lookup36C0
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -11778,25 +11776,25 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L36C0
+.Lookup36C0
 
  EQUB &A8, &00, &56, &A8, &60, &56, &88, &00
  EQUB &56, &30, &00, &30, &D0, &00, &70, &10
  EQUB &00, &70, &E0, &00, &C0
 
-.L36D5
+.Lookup36D5
 
  EQUB &4C, &00, &86, &4C, &00, &86, &4C, &00
  EQUB &86, &04, &00, &03, &04, &00, &04, &06
  EQUB &00, &04, &04, &00, &03
 
-.L36EA
+.Lookup36EA
 
  EQUB &A8, &10, &18, &A8, &16, &18, &B8, &2C
  EQUB &18, &A8, &44, &28, &28, &84, &48, &60
  EQUB &24, &38, &78, &20, &60, &20
 
-.L3700
+.Lookup3700
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -11831,7 +11829,7 @@ ORG &0B00
  EQUB &0F, &0F, &0F, &0F, &0F, &0F, &0F, &0F
  EQUB &0F, &0F, &0F, &0F, &0F, &0F, &0F, &0F
 
-.L3800
+.Lookup3800
 
  EQUB &00, &10, &20, &30, &40, &50, &60, &70
  EQUB &80, &90, &A0, &B0, &C0, &D0, &E0, &F0
@@ -11866,7 +11864,7 @@ ORG &0B00
  EQUB &00, &10, &20, &30, &40, &50, &60, &70
  EQUB &80, &90, &A0, &B0, &C0, &D0, &E0, &F0
 
-.L3900
+.Lookup3900
 
  EQUB &FF, &FE, &FD, &FC, &FB, &FA, &F9, &F8
  EQUB &F7, &F6, &F5, &F4, &F3, &F2, &F1, &F0
@@ -11901,7 +11899,7 @@ ORG &0B00
  EQUB &83, &82, &82, &82, &82, &81, &81, &81
  EQUB &81, &80, &80, &80, &80, &7F, &7F, &7F
 
-.L3A00
+.Lookup3A00
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -11936,7 +11934,7 @@ ORG &0B00
  EQUB &00, &0F, &1E, &2D, &3C, &4B, &5A, &69
  EQUB &78, &87, &96, &A5, &B4, &C3, &D2, &E1
 
-.L3B00
+.Lookup3B00
 
  EQUB &10, &7D, &7D, &7D, &7D, &10, &10, &10
  EQUB &10, &10, &28, &10, &50, &50, &32, &32
@@ -11966,7 +11964,7 @@ ORG &0B00
  EQUB &6C, &70, &32, &20, &53, &54, &41, &26
  EQUB &37, &36, &0D, &03, &B2, &19, &2E, &64
 
-.L3BD8
+.Lookup3BD8
 
  EQUB &6C, &7D, &7D, &7D, &7D, &7D, &28, &28
  EQUB &6E, &6E, &3A, &42, &1E, &1E, &1E, &1E
@@ -12067,7 +12065,7 @@ ORG &0B00
  EQUB &3A, &4A, &4D, &50
  EQUB &20, &73, &75, &74, &35, &0D, &04, &6A
 
-.L3E00
+.Lookup3E00
 
  EQUB &1E, &02, &03, &04, &01, &07, &09, &0B
  EQUB &0D, &0F, &11, &13, &3B, &72, &2A, &2B
@@ -12154,7 +12152,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L3F26
+\       Name: Lookup3F26
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -12165,12 +12163,12 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L3F26
+.Lookup3F26
 
  EQUB &3D, &41
  EQUB &42, &43, &77, &78, &44, &45, &46, &50
 
-.L3F30
+.Lookup3F30
 
  EQUB &1F, &01, &02, &03, &04, &06, &08, &0A
  EQUB &0C, &0E, &10, &12, &72, &73, &29, &2A
@@ -12199,19 +12197,19 @@ ORG &0B00
  EQUB &D6, &6C, &03, &0A, &20, &20, &20, &20
  EQUB &00, &00
 
-.L3FFA
+.Lookup3FFA
 
  EQUB &05, &10, &15, &25, &00
 
-.L3FFF
+.Lookup3FFF
 
  EQUB &40
 
-.L4000
+.Lookup4000
 
  EQUB &00
 
-.L4001
+.Lookup4001
 
  EQUB &92, &24, &B6, &48, &DA, &6C, &FE, &8F
  EQUB &21, &B2, &44, &D5, &66, &F6, &87, &17
@@ -12246,11 +12244,11 @@ ORG &0B00
  EQUB &EA, &0E, &2F, &4E, &6A, &84, &9C, &B1
  EQUB &C3, &D3, &E1, &EC, &F4, &FB, &FE, &FF
 
-.L4101
+.Lookup4101
 
  EQUB &00
 
-.L4102
+.Lookup4102
 
  EQUB &01, &03, &04, &06, &07, &09, &0A, &0C
  EQUB &0E, &0F, &11, &12, &14, &15, &17, &19
@@ -12641,7 +12639,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L42EF
+\       Name: Lookup42EF
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -12652,16 +12650,16 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L42EF
+.Lookup42EF
 
  EQUB &20
 
-.L42F0
+.Lookup42F0
 
  EQUB &00, &FE, &FF, &01, &04, &00, &FB, &02
  EQUB &33, &3A, &FF, &FE, &FE, &23, &31, &38
 
-.L4300
+.Lookup4300
 
  EQUB &00, &01, &02, &03, &04, &05, &06, &07
  EQUB &08, &09, &0A, &0B, &0C, &0D, &0E, &0F
@@ -12786,7 +12784,7 @@ ORG &0B00
  EQUB &FD, &FF, &F9, &FB, &F8, &FB, &FA, &53
  EQUB &52, &FF, &FE, &01, &41, &58, &0D
 
-.L4500
+.Lookup4500
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -12821,7 +12819,7 @@ ORG &0B00
  EQUB &F0, &F0, &F0, &F0, &F0, &F0, &F0, &F0
  EQUB &F0, &F0, &F0, &F0, &F0, &F0, &F0, &F0
 
-.L4600
+.Lookup4600
 
  EQUB &31, &01, &01, &01, &01, &01, &01, &01
  EQUB &01, &01, &01, &01, &01, &01, &01, &01
@@ -12892,7 +12890,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L46FF
+\       Name: Lookup46FF
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -12903,11 +12901,11 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L46FF
+.Lookup46FF
 
  EQUB &36
 
-.L4700
+.Lookup4700
 
  EQUB &00, &00, &01, &09, &12, &1A, &22, &32
  EQUB &43, &53, &63, &7B, &8B, &A3, &BB, &DB
@@ -12942,6 +12940,20 @@ ORG &0B00
  EQUB &27, &E7, &9F, &5F, &17, &D7, &97, &4F
  EQUB &0F, &CF, &8F, &47, &07, &C7, &87, &47
 
+\ ******************************************************************************
+\
+\       Name: YLookupLo
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+
 .YLookupLo
 
                         \ Screen y-coordinate lookup table, low byte
@@ -12958,6 +12970,20 @@ ORG &0B00
 
  EQUB &C8, &90, &58, &20
  EQUB &E8, &B0, &78, &40, &08, &D0, &98, &60
+
+\ ******************************************************************************
+\
+\       Name: YLookupHi
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 
 .YLookupHi
 
@@ -13086,94 +13112,108 @@ ORG &0B00
 \ ******************************************************************************
 \
 \       Name: L48A0
-\       Type: Subroutine
+\       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
-\
-\ ******************************************************************************
-
-.L48A0                  \ Unused?
-
- LDX #7
-
-\ ******************************************************************************
-\
-\       Name: L48A2
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
+\ This variable contains workspace noise that disassembles into code that is
+\ never called:
 \
 \ 
-\
-\ ******************************************************************************
-
-.L48A2                  \ Unused?
-
- LDA #&77
- STA P
- LDA #&88
- STA P+1
- LDA #&EE
- STA R
- LDA #&11
- STA S
-
-.L48B2
-
- LDY #1
-
-.L48B4
-
- LDA Row1_Block0_0,X
- AND P
- ORA P+1
- STA Row1_Block0_0,X
- LDA Row1_Block38_0,X
- AND R
- ORA S
- STA Row1_Block38_0,X
- DEX
- DEY
- BPL L48B4
-
- LSR R
- LSR S
- LSR P
- LSR P+1
- CPX #&FF
- BNE L48B2
-
- RTS
-
-\ ******************************************************************************
-\
-\       Name: L48D9
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
+\ .L48A0
 \ 
+\  LDX #7
+\ 
+\ .L48A2
+\ 
+\  LDA #&77
+\  STA P
+\  LDA #&88
+\  STA P+1
+\  LDA #&EE
+\  STA R
+\  LDA #&11
+\  STA S
+\ 
+\ .L48B2
+\ 
+\  LDY #1
+\ 
+\ .L48B4
+\ 
+\  LDA Row1_Block0_0,X
+\  AND P
+\  ORA P+1
+\  STA Row1_Block0_0,X
+\  LDA Row1_Block38_0,X
+\  AND R
+\  ORA S
+\  STA Row1_Block38_0,X
+\  DEX
+\  DEY
+\  BPL L48B4
+\ 
+\  LSR R
+\  LSR S
+\  LSR P
+\  LSR P+1
+\  CPX #&FF
+\  BNE L48B2
+\ 
+\  RTS
+\ 
+\ .L48D9
+\ 
+\  LDY #&5B
+\  LDX #&C0
+\  LDA #8
+\  STA R
+\  LDA #0
+\  JSR FillCanopyRows
+\  RTS
 \
 \ ******************************************************************************
 
-.L48D9                  \ Unused?
+.L48A0
 
- LDY #&5B
- LDX #&C0
- LDA #8
- STA R
- LDA #0
- JSR FillCanopyRows
-
- RTS
+ EQUB &A2, &07
+ EQUB &A9, &77
+ EQUB &85, &70
+ EQUB &A9, &88
+ EQUB &85, &71
+ EQUB &A9, &EE
+ EQUB &85, &72
+ EQUB &A9, &11
+ EQUB &85, &73
+ EQUB &A0, &01
+ EQUB &BD, &40
+ EQUB &59, &25
+ EQUB &70, &05
+ EQUB &71, &9D
+ EQUB &40, &59
+ EQUB &BD, &68
+ EQUB &5A, &25
+ EQUB &72, &05
+ EQUB &73, &9D
+ EQUB &68, &5A
+ EQUB &CA, &88
+ EQUB &10, &E8
+ EQUB &46, &72
+ EQUB &46, &73
+ EQUB &46, &70
+ EQUB &46, &71
+ EQUB &E0, &FF
+ EQUB &D0, &DA
+ EQUB &60, &A0
+ EQUB &5B, &A2
+ EQUB &C0, &A9
+ EQUB &08, &85
+ EQUB &72, &A9
+ EQUB &00, &20
+ EQUB &AB, &2E
+ EQUB &60
 
 \ ******************************************************************************
 \
@@ -13405,7 +13445,7 @@ ORG &0B00
 
 .L4B66
 
- CMP L3B00,X
+ CMP Lookup3B00,X
  BCS L4B83
 
  LDA L0B00,Y
@@ -13415,7 +13455,7 @@ ORG &0B00
 
 .L4B72
 
- CMP L3B00,X
+ CMP Lookup3B00,X
  BCS L4B83
 
  LDA L4900,Y
@@ -13425,7 +13465,7 @@ ORG &0B00
 
 .L4B7E
 
- CMP L3B00,X
+ CMP Lookup3B00,X
  BCC L4B86
 
 .L4B83
@@ -13498,10 +13538,10 @@ ORG &0B00
  TAX
  SEC
  LDA L0CED,Y
- SBC L36C0,X
+ SBC Lookup36C0,X
  STA P
  LDA L0CFD,Y
- SBC L36D5,X
+ SBC Lookup36D5,X
  BMI L4BC9
 
  LSR A
@@ -13511,7 +13551,7 @@ ORG &0B00
 
  ROR P
  LDA P
- CMP L36EA,X
+ CMP Lookup36EA,X
  BCS L4BC9
 
  DEY
@@ -13833,8 +13873,8 @@ ORG &0B00
  JSR MakeSound
 
  LDX L368E
- LDY L367A,X
- LDA L3675,X
+ LDY Lookup367A,X
+ LDA Lookup3675,X
  STA U
  LDX #2
  CPX L368D
@@ -13970,12 +14010,12 @@ ORG &0B00
  CPY #&1F
  BCS L4D65
 
- LDA L3FFF
+ LDA Lookup3FFF
  JMP L4D68
 
 .L4D65
 
- LDA L3FFA,X
+ LDA Lookup3FFA,X
 
 .L4D68
 
@@ -15889,7 +15929,7 @@ ORG &0B00
 
 .L5434
 
- LDY L42F0,X
+ LDY Lookup42F0,X
  BEQ L545B
 
  BPL L5452
