@@ -1376,34 +1376,34 @@ ORG &0B00
  STY I
  LDX TT
  LDY J
- LDA Lookup4500,X
- ORA Lookup3700,Y
+ LDA HighNibble,X
+ ORA Times16Hi,Y
  STA T
  AND #&F0
- ORA Lookup4300,Y
+ ORA LowNibble,Y
  STA U
  AND #&0F
- ORA Lookup3800,X
+ ORA Times16Lo,X
  STA V
  AND #&F0
- ORA Lookup3700,Y
+ ORA Times16Hi,Y
  TAY
  LDX S
  AND #&0F
- ORA Lookup4500,X
+ ORA HighNibble,X
  TAX
- LDA Lookup3A00,X
+ LDA TimesTable,X
  CLC
  LDX V
- ADC Lookup3A00,X
+ ADC TimesTable,X
  STA P
  LDX T
- LDA Lookup3A00,X
+ LDA TimesTable,X
  ADC #1
  STA P+1
  LDX U
- LDA Lookup3A00,X
- ADC Lookup3A00,Y
+ LDA TimesTable,X
+ ADC TimesTable,Y
  TAX
  LDY #0
  BCC L0EBB
@@ -1412,7 +1412,7 @@ ORG &0B00
 
 .L0EBB
 
- LDA Lookup3800,X
+ LDA Times16Lo,X
  ADC P
  BCC L0EC3
 
@@ -1430,7 +1430,7 @@ ORG &0B00
  ADC S
  STA P
  TYA
- ADC Lookup3700,X
+ ADC Times16Hi,X
  ADC P+1
  BCC L0EDB
 
@@ -1453,21 +1453,21 @@ ORG &0B00
 
  AND #&F0
  LDX TT
- ORA Lookup3700,X
+ ORA Times16Hi,X
  TAY
  AND #&F0
- ORA Lookup4300,X
+ ORA LowNibble,X
  TAX
- LDA Lookup3A00,X
+ LDA TimesTable,X
  TAX
  CLC
- LDA Lookup3800,X
+ LDA Times16Lo,X
  ADC I
 
 .L0EFE
 
- LDA Lookup3A00,Y
- ADC Lookup3700,X
+ LDA TimesTable,Y
+ ADC Times16Hi,X
  ROR A
  CLC
  ADC P
@@ -1574,9 +1574,9 @@ ORG &0B00
 
  TAY
  LDX T
- LDA Lookup3700,X
- ORA Lookup3800,Y
- LDY Lookup3800,X
+ LDA Times16Hi,X
+ ORA Times16Lo,Y
+ LDY Times16Lo,X
  RTS
 
 \ ******************************************************************************
@@ -1622,15 +1622,16 @@ ORG &0B00
  BEQ L0F8D
 
  TAX
- LDA Lookup3800,X
+ LDA Times16Lo,X
  RTS
 
 .L0F97
 
- TSX
+ TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
+
  LDA #0
  STA P+1
  STA P
@@ -2561,10 +2562,11 @@ ORG &0B00
 
 .L1385
 
- TSX
+ TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
+
  JMP L1482
 
 .L138C
@@ -2985,10 +2987,11 @@ ORG &0B00
 
 .L1593
 
- TSX
+ TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
+
  RTS
 
 \ ******************************************************************************
@@ -3534,24 +3537,24 @@ ORG &0B00
 
 .L1821
 
- LDA Lookup4300,X
- ORA Lookup4500,Y
+ LDA LowNibble,X
+ ORA HighNibble,Y
  STA T
  AND #&F0
- ORA Lookup3700,X
+ ORA Times16Hi,X
  STA U
  AND #&0F
- ORA Lookup3800,Y
+ ORA Times16Lo,Y
  TAY
  AND #&F0
- ORA Lookup4300,X
+ ORA LowNibble,X
  TAX
- LDA Lookup3A00,X
+ LDA TimesTable,X
  STA V
  LDX T
- LDA Lookup3A00,X
+ LDA TimesTable,X
  CLC
- ADC Lookup3A00,Y
+ ADC TimesTable,Y
  ROR A
  ROR A
  ROR A
@@ -3565,7 +3568,7 @@ ORG &0B00
  LDA T
  AND #&1F
  LDX U
- ADC Lookup3A00,X
+ ADC TimesTable,X
  RTS
 
 \ ******************************************************************************
@@ -3730,28 +3733,28 @@ ORG &0B00
 
  LDX S
  LDY V
- LDA Lookup3800,Y
- ORA Lookup3700,X
+ LDA Times16Lo,Y
+ ORA Times16Hi,X
  TAY
  AND #&F0
- ORA Lookup4300,X
+ ORA LowNibble,X
  STA U
  LDX R
  AND #&F0
- ORA Lookup3700,X
+ ORA Times16Hi,X
  TAX
- LDA Lookup3A00,X
+ LDA TimesTable,X
  TAX
  STX T
- LDA Lookup3A00,Y
+ LDA TimesTable,Y
  TAY
- LDA Lookup3700,X
- ORA Lookup3800,Y
+ LDA Times16Hi,X
+ ORA Times16Lo,Y
  CLC
  LDX U
- ADC Lookup3A00,X
+ ADC TimesTable,X
  STA W
- LDA Lookup3700,Y
+ LDA Times16Hi,Y
  ADC #0
  STA G
  BIT K
@@ -3760,12 +3763,12 @@ ORG &0B00
  LDX R
  LDA V
  AND #&0F
- ORA Lookup3800,X
+ ORA Times16Lo,X
  TAY
  LDX T
- LDA Lookup3800,X
+ LDA Times16Lo,X
  CLC
- ADC Lookup3A00,Y
+ ADC TimesTable,Y
  BCC L1989
 
  INC W
@@ -3818,7 +3821,7 @@ ORG &0B00
  STY QQ
  LDY L35B0,X
  STY RR
- LDA Lookup3700,Y
+ LDA Times16Hi,Y
  STA UU
  CMP #9
  ROR K
@@ -8284,9 +8287,9 @@ ORG &0B00
 
  STA L4A00              \ Set L4A00 = 1
 
- JSR L2D32              \ ???
+ JSR L2D32
 
- LDY #33                \ ???
+ LDY #33
  JSR L25B5
 
  RTS                    \ Return from the subroutine
@@ -8327,7 +8330,8 @@ ORG &0B00
 
 .NewGame
 
- JSR ClearCanopy        \ Clear the canopy view, leaving the canopy edges alone
+ JSR ClearCanopy        \ Clear the canopy to black, leaving the canopy edges
+                        \ alone
 
  JSR Reset              \ Reset most variables to prepare for a new flight
 
@@ -8523,7 +8527,8 @@ ORG &0B00
                         \ main13
 
  JSR TerminateGame      \ The right arrow is being pressed, which is the key to
-                        \ terminate the game, so call TerminateGame
+                        \ terminate the game, so call TerminateGame to do
+                        \ exactly that
 
  JMP NewGame            \ Jump to NewGame to start a new game
 
@@ -9612,7 +9617,7 @@ ORG &0B00
  CMP II
  BCC L2C44
 
- JSR L4E10
+ JSR DrawGunSights
 
  LDA L0CC3
  BMI L2C84
@@ -9970,17 +9975,18 @@ ORG &0B00
  CMP #&0A
  BCS L2DCC
 
- JSR L4EE8
+ JSR PrintTooLate
 
  LDA #&5A
- JSR L2ED3
+ JSR Delay
 
  JSR TerminateGame
 
- TSX
+ TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
+
  JMP NewGame
 
 \ ******************************************************************************
@@ -10978,10 +10984,12 @@ ORG &0B00
 
  LDA L0CCC
  STA L368E
- TSX
+
+ TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
+
  LDA #&1B
  STA L368F
 
@@ -12016,18 +12024,18 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: Lookup3700
+\       Name: Times16Hi
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Lookup table for the high byte of a value * 16
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ In the table below, Times16Hi,X contains the high byte of X * 16.
 \
 \ ******************************************************************************
 
-.Lookup3700
+.Times16Hi
 
 FOR I%, 0, 255
 
@@ -12037,18 +12045,18 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3800
+\       Name: Times16Lo
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Lookup table for the low byte of a value * 16
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ In the table below, Times16Lo,X contains the low byte of X * 16.
 \
 \ ******************************************************************************
 
-.Lookup3800
+.Times16Lo
 
 FOR I%, 0, 255
 
@@ -12112,18 +12120,26 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3A00
+\       Name: TimesTable
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Lookup table for multiplication times tables
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ In the table below, TimesTable+X*16,Y contains X * Y.
+\
+\ To put it another way, X and Y are both in the range 0 to 15, so they are
+\ 4-bit values. If, in binary, they are X = %xxxx and Y = %yyyy, then:
+\
+\   TimesTable,%xxxxyyyy contains X * Y.
+\
+\ This table is used in conjunction with the HighNibble and LowNibble tables to
+\ look up multiplication results.
 \
 \ ******************************************************************************
 
-.Lookup3A00
+.TimesTable
 
 FOR I%, 0, 15
 
@@ -13072,12 +13088,13 @@ NEXT
 
 .L42D5
 
- TSX
+ TSX                    \ Add four bytes to the top of the stack
  TXA
  SEC
  SBC #&04
  TAX
  TXS
+
  JMP Crash
 
 .L42DF
@@ -13133,18 +13150,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup4300
+\       Name: LowNibble
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Lookup table for the low nibble of a value
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ In the table below, LowNibble,X contains the low nibble of X:
+\
+\   X AND %00001111
 \
 \ ******************************************************************************
 
-.Lookup4300
+.LowNibble
 
 FOR I%, 0, 255
 
@@ -13257,18 +13276,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup4500
+\       Name: HighNibble
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Lookup table for the high nibble of a value
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ In the table below, HighNibble,X contains the high nibble of X:
+\
+\   X AND %11110000
 \
 \ ******************************************************************************
 
-.Lookup4500
+.HighNibble
 
 FOR I%, 0, 255
 
