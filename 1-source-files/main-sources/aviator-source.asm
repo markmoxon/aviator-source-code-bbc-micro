@@ -11576,12 +11576,8 @@ ORG &0B00
 \
 \       Name: VolumeKeys
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Sound
+\    Summary: Adjust the volume when the volume keys are pressed
 \
 \ ******************************************************************************
 
@@ -11590,40 +11586,62 @@ ORG &0B00
  LDX #&DB               \ Scan the keyboard to see if "7" is being pressed
  JSR ScanKeyboard
 
- BEQ volk1
+ BEQ volk1              \ If "7" is being pressed, jump to volk1
 
  LDX #&EA               \ Scan the keyboard to see if "8" is being pressed
  JSR ScanKeyboard
 
- BNE volk4
+ BNE volk4              \ If "8" is not being pressed, jump to volk4 to return
+                        \ from the subroutine
 
- LDA #&FF
- BNE volk2
+ LDA #255               \ "8" is being pressed, which is the increase volume
+ BNE volk2              \ key, so set A = 255 = -1 and jump to volk2
 
 .volk1
 
- LDA #1
+ LDA #1                 \ If we get here then "7" is being pressed, which is the
+                        \ decrease volume key, so set A = 1
 
 .volk2
 
- CLC
- ADC Sounds+10          \ Byte #3 of sound #1 (low byte of amplitude)
- BMI volk3
+                        \ By this point, A contains 1 if we want to decrease the
+                        \ volume, or -1 if we want to increase it, which we can
+                        \ now add to the SOUND command's amplitude parameter to
+                        \ adjust the volume, as -15 is the loudest volume and 0
+                        \ is the quietest
 
- BNE volk4
+ CLC                    \ Add A to byte #3 of sound #1 (low byte of amplitude)
+ ADC Sounds+10
+
+ BMI volk3              \ If the result is negative, then jump to volk3 to
+                        \ update the volume
+
+ BNE volk4              \ If the result is non-zero, then we have just reduced
+                        \ the volume beyond the quietest setting of 0, so jump
+                        \ to volk4 to return from the subroutine without
+                        \ changing the volume, as it is already at the quietest
+                        \ setting
 
 .volk3
 
- CMP #&F1
- BCC volk4
+ CMP #241               \ If A < 241, i.e. A < -15, then we have just increased
+ BCC volk4              \ the volume past the loudest setting of -15, so jump
+                        \ to volk4 to return from the subroutine without
+                        \ changing the volume, as it is already at the loudest
+                        \ setting
 
- STA Sounds+10          \ Byte #3 of sound #1 (low byte of amplitude)
+ STA Sounds+10          \ The new volume is valid, so update byte #3 of sound #1
+                        \ (low byte of amplitude) with the new volume
 
- INC Sounds+60          \ Byte #5 of sound #7 (low byte of engine pitch)
+ INC Sounds+60          \ Increment byte #5 of sound #7 (low byte of engine
+                        \ pitch) to make the engine pitch jump up a bit, so we
+                        \ can hear the engine noise changing while adjusting the
+                        \ volume (the MakeEngineSound routine will bring it back
+                        \ down to the correct pitch)
 
 .volk4
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
