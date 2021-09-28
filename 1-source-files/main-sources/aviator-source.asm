@@ -15291,46 +15291,50 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4EE8
+\       Name: PrintTooLate
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Text
+\    Summary: Print the "TOO LATE!" message at column 6, row 7 on-screen
 \
 \ ******************************************************************************
 
-.L4EE8
+.PrintTooLate
 
- LDX #&0B
+ LDX #11                \ There are 11 VDU characters in the message, so set up
+                        \ a counter in X
 
-.L4EEA
+.late1
 
- LDA L4EF4,X
+ LDA TooLateText,X      \ Print the X-th character from PleaseWaitText
  JSR OSWRCH
- DEX
- BPL L4EEA
- RTS
+
+ DEX                    \ Decrement the loop counter, as the characters are
+                        \ stored backwards in the PleaseWaitText variable
+
+ BPL late1              \ Loop back to print the next character until we have
+                        \ printed all 11
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L4EF4
+\       Name: TooLateText
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Text
+\    Summary: The "TOO LATE!" message shown when the aliens land in Acornville
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The text and VDU codes in this variable are stored backwards, perhaps to
+\ discourage hackers from working out how to cheat.
 \
 \ ******************************************************************************
 
-.L4EF4
+.TooLateText
 
- EQUB &21, &45, &54, &41
- EQUB &4C, &20, &4F, &4F, &54, &07, &06, &1F
+ EQUB "!ETAL OOT"       \ "TOO LATE!", stored backwards
+
+ EQUB 7, 6, 31          \ VDU 31, 6, 7 moves the text cursor to column 6, row 7
 
 \ ******************************************************************************
 \
