@@ -272,7 +272,14 @@ KeyLoggerHigh = &0CB0   \ Key logger (high value)
 L0CB8 = &0CB8
 L0CBA = &0CBA
 L0CBB = &0CBB
-L0CBE = &0CBE           \ Show gun sights?
+
+GunSights = &0CBE       \ Gun sights status
+                        \
+                        \ Bit 6 = 1 while "I" is being held down
+                        \
+                        \ Bit 7 = 1 when sights are being shown
+                        \         0 when sights are not being shown
+
 L0CBF = &0CBF
 L0CC0 = &0CC0
 L0CC1 = &0CC1
@@ -294,12 +301,12 @@ L0CCA = &0CCA
 L0CCB = &0CCB
 L0CCC = &0CCC           \ OB in original
 
-Joystick = &0CCD        \ Joystick configuration
+PressingTab = &0CCD     \ Bit 7 determines whether TAB is being pressed
                         \
-                        \   * 0 = keyboard
-                        \   * 128 = joystick
+                        \   * 0 = not being pressed
+                        \   * 128 = being pressed
                         \
-                        \ Set to 0 (keyboard) in Reset
+                        \ This value is set in the ToggleJoystick routine
 
 L0CCE = &0CCE
 L0CCF = &0CCF
@@ -417,11 +424,14 @@ Row1_Block1_0 = &5948   \ Second block on second row
 Row1_Block38_0 = &5A68  \ Last block but one on second row
 Row1_Block39_0 = &5A70  \ Last block on second row
 
-Row3_Block1_0 = &5BC8   \ Top-left corner of on-screen score display
+Row3_Block1_0 = &5BC8   \ Top-left corner of the on-screen score display
 
-Row6_Block20_0 = &6020  \ Top of gun sight?
-Row7_Block20_0 = &6160  \ Middle of gun sight?
-Row8_Block11_0 = &6258  \ Left end of horizontal bar in gun sight?
+Row6_Block1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
+                        \ containing the gun sights on rows 6, 7 and 8
+
+Row6_Block20_0 = &6020  \ Top block of the vertical line in the gun sights
+Row7_Block20_0 = &6160  \ Bottom block of the vertical line in the gun sights
+Row8_Block11_0 = &6258  \ Left end of horizontal bar in the gun sights
 
                         \ Dashboard screen addresses (rows 20 to 31)
 
@@ -14841,113 +14851,176 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4E10
+\       Name: DrawGunSights
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Graphics
+\    Summary: Draw or erase the gun sights
 \
 \ ******************************************************************************
 
-.L4E10
+.DrawGunSights
 
- JSR L4840
+ JSR DrawCanopyCorners  \ Draw the canopy corners
 
  LDX #&DA               \ Scan the keyboard to see if "I" is being pressed
  JSR ScanKeyboard
 
- BNE L4E38
+ BNE guns1              \ If "I" is not being pressed, jump to guns1
 
- BIT L0CBE
- BVS L4E40
+ BIT GunSights          \ If bit 6 of GunSights is set, then "I" is still being
+ BVS guns3              \ held down from a previous call to this routine, so jump
+                        \ to guns3 to move on from the subroutine
 
- LDA #&C0
- EOR L0CBE
- BMI L4E3D
+ LDA #%11000000         \ Set A = GunSights with bits 6 and 7 flipped, which we
+ EOR GunSights          \ will set as the new value of GunSights below
 
- PHA
- LDY #&5F
- LDX #&88
- LDA #3
+ BMI guns2              \ If the result has bit 7 set, that means that bit 7 of
+                        \ GunSights is currently clear, so jump to guns2 as the
+                        \ sights are not already being shown, so we don't need
+                        \ to remove them
+
+                        \ If we get here then bit 7 of GunSights is set, so the
+                        \ sights are already on-screen, and we aren't still
+                        \ holding down "I" from a previous call, so now we
+                        \ remove the sights
+
+ PHA                    \ Store A on the stack so we can retrieve it below
+
+ LDY #HI(Row6_Block1_0) \ Set (Y X) to the screen address for row 6, block 0
+ LDX #LO(Row6_Block1_0)
+
+ LDA #3                 \ Set R = 3, so we clear 3 character rows for the sights
  STA R
- LDA #0
- JSR FillCanopyRows
 
- PLA
- JMP L4E3D
+ LDA #0                 \ Set X = 0 so we clear the sights to black
 
-.L4E38
+ JSR FillCanopyRows     \ Fill the 3 screen rows with black, avoiding the canopy
+                        \ edges and removing the sights from the screen
 
- LDA #&80
- AND L0CBE
+ PLA                    \ Retrieve A from the stack
 
-.L4E3D
+ JMP guns2              \ Jump down to guns2 to set GunSights to the value in A
 
- STA L0CBE
+.guns1
 
-.L4E40
+                        \ If we get here then "I" is not being pressed
 
- BPL L4E6D
+ LDA #%10000000         \ Extract bit 7 from GunSights into A, which clears bit
+ AND GunSights          \ 6 to indicate that "I" is not being pressed, while
+                        \ leaving the current state of bit 7 alone
 
- LDY #7
+.guns2
 
-.L4E44
+ STA GunSights          \ Update GunSights to the new value in A
 
- LDA #&88
- ORA Row6_Block20_0,Y
- STA Row6_Block20_0,Y
- LDA #&88
- ORA Row7_Block20_0,Y
- STA Row7_Block20_0,Y
- DEY
- BPL L4E44
+.guns3
 
- LDA #&77
- ORA Row8_Block11_0
- STA Row8_Block11_0
- SEC
- LDY #&88
+ BPL ToggleJoystick     \ If bit 7 of the new value of GunSights is clear, then
+                        \ the sights are no longer being shown, so jump down to
+                        \ ToggleJoystick to move onto the next routine
 
-.L4E62
+                        \ If we get here, then bit 7 of GunSights is set, so we
+                        \ need to draw the sights
 
- LDA #&FF
- STA Row8_Block11_0,Y
- TYA
- SBC #8
+ LDY #7                 \ First we draw the vertical bar in the middle of the
+                        \ sights, which runs through block 20 on rows 6 and 7,
+                        \ so we set a pixel row counter in Y to count through
+                        \ the rows in each character block
+
+.guns4
+
+ LDA #%10001000         \ Draw a vertical bar in the first pixel of the Y-th
+ ORA Row6_Block20_0,Y   \ pixel row in block 20 on row 6, keeping whatever is
+ STA Row6_Block20_0,Y   \ already on screen
+
+ LDA #%10001000         \ Draw a vertical bar in the first pixel of the Y-th
+ ORA Row7_Block20_0,Y   \ pixel row in block 20 on row 7, keeping whatever is
+ STA Row7_Block20_0,Y   \ already on screen
+
+ DEY                    \ Decrement the pixel row counter
+
+ BPL guns4              \ Loop back to draw the next pixel row until we have
+                        \ drawn a vertical line through both character blocks
+
+                        \ Now to draw the horizontal bar of the gun sights
+
+ LDA #%01110111         \ First we draw the left end of the horizontal bar,
+ ORA Row8_Block11_0     \ which is starts with the three rightmost pixels in
+ STA Row8_Block11_0     \ block 11 on row 8
+
+ SEC                    \ Set the C flag for the subtraction below
+
+ LDY #136               \ The rest of the line is made up of 17 character blocks
+                        \ with four pixels in each block, so we set a counter in
+                        \ Y to work as an offset from the left end of the line,
+                        \ counting 8 bytes per character block (17 * 8 = 136),
+                        \ working from the right end of the line to the left
+
+.guns5
+
+ LDA #%11111111         \ Draw a horizontal bar of four pixels starting at the
+ STA Row8_Block11_0,Y   \ Y-th offset from the start of block 11 on row 8
+
+ TYA                    \ Set Y = Y - 8, so Y now points to the four pixels to
+ SBC #8                 \ the left, as we work or way along the line
  TAY
- BNE L4E62
 
-.L4E6D
+ BNE guns5              \ Loop back to draw the next four pixels of the line
+                        \ until we have drawn the whole horizontal line
+
+                        \ Fall through into ToggleJoystick to check for the
+                        \ joystick key
+
+\ ******************************************************************************
+\
+\       Name: ToggleJoystick
+\       Type: Subroutine
+\   Category: 
+\    Summary: Toggle the joystick setting
+\
+\ ------------------------------------------------------------------------------
+\
+\ Note that the game uses Row29_Block20_4 to check the joystick status, so it
+\ is not only an on-screen indicator, it's also the joystick status variable.
+\
+\ ******************************************************************************
+
+.ToggleJoystick
 
  LDX #&9F               \ Scan the keyboard to see if TAB is being pressed
  JSR ScanKeyboard
 
- BNE L4E85              \ If TAB is not being pressed, jump to L4E85
+ BNE tjoy1              \ If TAB is not being pressed, jump to tjoy1
 
- LDA Joystick           \ If Joystick is non-zero, jump to L4E8A to return from
- BNE L4E8A              \ the subroutine
+ LDA PressingTab        \ If PressingTab is non-zero, then we are still pressing
+ BNE tjoy3              \ TAB from a previous visit to this routine, so jump to
+                        \ tjoy3 to return from the subroutine
+
+                        \ This is a new press of TAB, so now we want to toggle
+                        \ the joystick setting
 
  LDA Row29_Block20_4    \ Toggle the joystick indicator pixel above the middle
  EOR #%10001000         \ of the rudder indicator
  STA Row29_Block20_4
 
- LDA #128               \ Set A = 128 to use as the value for Joystick below
+ LDA #128               \ Set A = 128 to use as the value for PressingTab below,
+                        \ to indicate that TAB is being pressed
 
- BNE L4E87              \ Jump to L4E87 to skip the following instruction (this
+ BNE tjoy2              \ Jump to tjoy2 to skip the following instruction (this
                         \ BNE is effectively a JMP as A is never zero)
 
-.L4E85
+.tjoy1
 
- LDA #0                 \ Set A = 0 to use as the value for Joystick below
+ LDA #0                 \ If we get here then TAB is not being pressed, so we set
+                        \ A = 0 to set as the value for PressingTab
 
-.L4E87
+.tjoy2
 
- STA Joystick           \ Set Joystick = A
+ STA PressingTab        \ Set PressingTab to the value in A, which will be 0 if
+                        \ TAB is not being pressed, or 128 if it is being
+                        \ pressed
 
-.L4E8A
+.tjoy3
 
  RTS                    \ Return from the subroutine
 
