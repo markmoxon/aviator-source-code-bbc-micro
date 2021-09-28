@@ -13511,61 +13511,162 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4840
+\       Name: DrawCanopyCorners
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Draw the diagonal corners at the top of the canopy
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine draws the diagonal lines in the top corners of the canopy. They
+\ are drawn so that the area outside the canopy is set to black, while anything
+\ that is already on-screen inside the canopy is left alone. The diagonals are
+\ made up of four squares, each of them one pixel wide and two pixels high, so
+\ the overall size of each diagonal is one character block (four pixels wide and
+\ eight pixels high).
 \
 \ ******************************************************************************
 
-.L4840
+.DrawCanopyCorners
 
- LDX #7
- LDA #&77
+ LDX #7                 \ Set X as a pixel row counter, starting with the last
+                        \ pixel row, so we draw the diagonals upwards from the
+                        \ bottom row of the character block to the top row of
+                        \ the character block
+
+ LDA #%01110111         \ Set P to a pixel mask to clear the first pixel
  STA P
- LDA #&88
- STA P+1
- LDA #&EE
+
+ LDA #%10001000         \ Set Q to a pixel byte with a white first pixel
+ STA Q
+
+ LDA #%11101110         \ Set R to a pixel mask to clear the last pixel
  STA R
- LDA #&11
+
+ LDA #%00010001         \ Set S to a pixel byte with a white last pixel
  STA S
 
-.L4852
+.corn1
 
- LDY #1
+ LDY #1                 \ Each square in the diagonal is two pixels high, so we
+                        \ set a counter in Y to count the height of each square
 
-.L4854
+.corn2
 
- LDA Row1_Block1_0,X
- AND P
- ORA P+1
- STA Row1_Block1_0,X
- LDA Row1_Block39_0,X
- AND R
- ORA S
- STA Row1_Block39_0,X
- DEX
- DEY
- BPL L4854
+ LDA Row1_Block1_0,X    \ We want to update the X-th pixel row in the character
+                        \ block in the top-left corner of the canopy, so fetch
+                        \ the current contents of the row
 
- LDA R
- ASL A
- AND R
- STA R
- LDA P
- LSR A
- AND P
- STA P
- ASL S
- LSR P+1
- CPX #&FF
- BNE L4852
+ AND P                  \ Clear the pixel pointed to by P, which on the first
+                        \ iteration round the loop will be the first pixel
 
- RTS
+ ORA Q                  \ Set the pixel pointed to by Q, which on the first
+                        \ iteration round the loop will be the first pixel
+
+ STA Row1_Block1_0,X    \ Store the updated pixel row back in screen memory, so
+                        \ on the first iteration round the loop, we just set the
+                        \ first pixel in the bottom pixel row, which is the
+                        \ bottom-left pixel of the diagonal in the top-left
+                        \ corner of the canopy
+
+ LDA Row1_Block39_0,X   \ We want to update the X-th pixel row in the character
+                        \ block in the top-right corner of the canopy, so fetch
+                        \ the current contents of the row
+
+ AND R                  \ Clear the pixel pointed to by R, which on the first
+                        \ iteration round the loop will be the last pixel
+
+ ORA S                  \ Set the pixel pointed to by S, which on the first
+                        \ iteration round the loop will be the last pixel
+
+ STA Row1_Block39_0,X   \ Store the updated pixel row back in screen memory, so
+                        \ on the first iteration round the loop, we just set the
+                        \ last pixel in the bottom pixel row, which is the
+                        \ bottom-right pixel of the diagonal in the top-right
+                        \ corner of the canopy
+
+ DEX                    \ Decrement the pixel row counter so we move up to the
+                        \ pixel row above
+
+ DEY                    \ Decrement the square counter in Y, and if it is still
+ BPL corn2              \ positive, loop back to corn2 to draw the second row in
+                        \ this square, so we end up drawing the same pattern on
+                        \ two consecutive pixel rows, making each square two
+                        \ pixels high and one pixel wide
+
+ LDA R                  \ We now shift each nibble in R to the left by one, so
+ ASL A                  \ it moves through the following values:
+ AND R                  \
+ STA R                  \   %11101110 -> %11001100 -> %10001000 -> %00000000
+                        \
+                        \ so with each step up the diagonal, the mask clears
+                        \ the area to the right of the diagonal to black
+                        \
+                        \ We do this as follows (taking the case of the first
+                        \ transformation above):
+                        \
+                        \   R = R AND (R << 1)
+                        \     = %11101110 AND (%11101110 << 1)
+                        \     = %11101110 AND %11011100
+                        \     = %11001100
+
+ LDA P                  \ We now shift each nibble in P to the right by one, so
+ LSR A                  \ it moves through the following values:
+ AND P                  \
+ STA P                  \   %01110111 -> %00110011 -> %00010001 -> %00000000
+                        \
+                        \ so with each step up the diagonal, the mask clears
+                        \ the area to the left of the diagonal to black
+                        \
+                        \ We do this as follows (taking the case of the first
+                        \ transformation above):
+                        \
+                        \   P = P AND (P >> 1)
+                        \     = %01110111 AND (%01110111 >> 1)
+                        \     = %01110111 AND %00111011
+                        \     = %00110011
+
+ ASL S                  \ We also shift S to the left, so the pixel we draw in
+                        \ the top-right diagonal moves to the left as we move up
+                        \ the diagonal, like this:
+                        \
+                        \   %00010001 -> %00100010 -> %01000100 -> %10001000
+                        \
+                        \ or, putting them in the order on-screen with two rows
+                        \ per square, we get a top-right diagonal like this:
+                        \
+                        \   %10001000       x...
+                        \   %10001000       x...
+                        \   %01000100       .x..
+                        \   %01000100       .x..
+                        \   %00100010       ..x.
+                        \   %00100010       ..x.
+                        \   %00010001       ...x
+                        \   %00010001       ...x
+
+ LSR Q                  \ Finally, we shift Q to the right, so the pixel we draw
+                        \ in the top-left diagonal moves to the right as we move
+                        \ up the diagonal, like this:
+                        \
+                        \   %10001000 -> %01000100 -> %00100010 -> %00010001
+                        \
+                        \ or, putting them in the order on-screen with two rows
+                        \ per square, we get a top-left diagonal like this:
+                        \
+                        \   %00010001       ...x
+                        \   %00010001       ...x
+                        \   %00100010       ..x.
+                        \   %00100010       ..x.
+                        \   %01000100       .x..
+                        \   %01000100       .x..
+                        \   %10001000       x...
+                        \   %10001000       x...
+
+ CPX #255               \ Loop back until we have drawn all eight rows in the
+ BNE corn1              \ diagonal, at which point we will have decremented X
+                        \ from 0 to 255
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
