@@ -14396,12 +14396,8 @@ NEXT
 \
 \       Name: Crash
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Flight
+\    Summary: Make a crashing sound, flash the canopy and start a new game
 \
 \ ******************************************************************************
 
@@ -14410,31 +14406,34 @@ NEXT
  LDA #0                 \ Turn off the engine sound
  JSR ToggleEngineSound
 
- LDA #5
+ LDA #5                 \ Make the sound of a crash
  JSR MakeSound
 
- LDX #&FF
- JSR FillCanopy
+ LDX #%11111111         \ Fill the canopy with white, leaving the canopy edges
+ JSR FillCanopy         \ alone, to give a flash effect
 
- LDA #&0A
- JSR L2ED3
+ LDA #10                \ Delay for 10^3 loop iterations
+ JSR Delay
 
- JSR ClearCanopy
+ JSR ClearCanopy        \ Clear the canopy to black, leaving the canopy edges
+                        \ alone
 
- JSR L4840
+ JSR DrawCanopyCorners  \ Redraw the diagonal canopy corners, which were cleared
+                        \ by the flashing canopy effect
 
- LDA #&5A
- JSR L2ED3
+ LDA #90                \ Delay for 90^3 loop iterations
+ JSR Delay
 
- JSR TerminateGame
+ JSR TerminateGame      \ Terminate the game
 
- TSX
+ TSX                    \ Remove six bytes from the top of the stack
  TXA
  CLC
  ADC #6
  TAX
  TXS
- JMP NewGame
+
+ JMP NewGame            \ Jump to NewGame to start a new game
 
 \ ******************************************************************************
 \
