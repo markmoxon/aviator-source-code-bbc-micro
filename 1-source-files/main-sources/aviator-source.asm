@@ -10310,41 +10310,50 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2ED3
+\       Name: Delay
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Utility routines
+\    Summary: Delay for a specified number of loops
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine performs A^3 loop iterations, to create a delay.
+\
+\ Fragments of the original source for this routine appear in the game code, as
+\ follows:
+\
+\   .dlp2 STA&76
+\   .dl ...
+\   ... :BNE dlp2
+\   DEC&74:BNE dlp1
+\   rts
 \
 \ ******************************************************************************
 
-.L2ED3                  \ DLP. in original
+.Delay
 
- STA T
+ STA T                  \ Set T as the counter for the outer loop
 
-.L2ED5
+.delp1
 
- STA U
+ STA U                  \ Set U as the counter for the middle loop
 
-.L2ED7
+.delp2
 
- STA V
+ STA V                  \ Set V as the counter for the inner loop
 
-.L2ED9
+.delp3
 
- DEC V
- BNE L2ED9
+ DEC V                  \ Loop around for A iterations in the inner loop
+ BNE delp3
 
- DEC U
- BNE L2ED7
+ DEC U                  \ Loop around for A iterations in the middle loop
+ BNE delp2
 
- DEC T
- BNE L2ED5
+ DEC T                  \ Loop around for A iterations in the outer loop
+ BNE delp1
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
