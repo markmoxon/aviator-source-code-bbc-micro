@@ -50,9 +50,12 @@ HH = &0089
 II = &008A
 JJ = &008B
 KK = &008C
-LL = &008D
+
+LL = &008D              \ Index into L0500 table
+
 MM = &008E
-NN = &008F
+
+NN = &008F              \ Index into L0600 table
 
 L0100 = &0100
 L0160 = &0160
@@ -180,7 +183,7 @@ L0C26 = &0C26
 L0C2A = &0C2A
 
 AxisKeyUsage = &0C2D    \ The following locations are updated when keys are
-                        \ pressed in ApplyFlightKeys:
+                        \ pressed in ProcessKeyLogger:
                         \
                         \   * AxisKeyUsage   = elevator
                         \   * AxisKeyUsage+1 = rudder
@@ -7365,14 +7368,14 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: ApplyFlightKeys (Part 1 of 4)
+\       Name: ProcessKeyLogger (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Flight
 \    Summary: Apply any axis control key presses to the current axis values
 \
 \ ******************************************************************************
 
-.ApplyFlightKeys
+.ProcessKeyLogger
 
  LDX #2                 \ We start with the aileron, rudder and elevator key
                         \ pairs, whose values are stored in these key logger
@@ -7426,7 +7429,7 @@ ORG &0B00
 
                         \ If we get here, then this key pair's AxisChangeRate
                         \ value has been reduced down to zero by repeated calls
-                        \ to ApplyFlightKeys with the key being held down, so
+                        \ to ProcessKeyLogger with the key being held down, so
                         \ the relavant control is now fully engaged and we bump
                         \ up the rate of change by another 3 in the relevant
                         \ direction
@@ -7502,7 +7505,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: ApplyFlightKeys (Part 2 of 4)
+\       Name: ProcessKeyLogger (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Flight
 \    Summary: Apply any throttle key presses to the current thrust value
@@ -7566,7 +7569,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: ApplyFlightKeys (Part 3 of 4)
+\       Name: ProcessKeyLogger (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Flight
 \    Summary: Process the undercarriage, brake, flaps and fire keys
@@ -7575,8 +7578,8 @@ ORG &0B00
 
 .fkey11
 
- LDX #4                 \ Apply the undercarriage or brake keys, if pressed
- JSR ApplyUFBSKeys
+ LDX #4                 \ Process the undercarriage or brake keys, if pressed
+ JSR ProcessOtherKeys
 
  BEQ fkey13             \ If neither are being pressed, jump to fkey13 to check
                         \ for the next set of key presses
@@ -7597,8 +7600,8 @@ ORG &0B00
 
 .fkey13
 
- LDX #5                 \ Apply the flaps or fire keys, if pressed
- JSR ApplyUFBSKeys
+ LDX #5                 \ Process the flaps or fire keys, if pressed
+ JSR ProcessOtherKeys
 
  BEQ fkey15             \ If neither are being pressed, jump to fkey15 to check
                         \ for the next set of key presses
@@ -7619,7 +7622,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: ApplyFlightKeys (Part 4 of 4)
+\       Name: ProcessKeyLogger (Part 4 of 4)
 \       Type: Subroutine
 \   Category: Flight
 \    Summary: 
@@ -7659,7 +7662,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: ApplyUFBSKeys
+\       Name: ProcessOtherKeys
 \       Type: Subroutine
 \   Category: 
 \    Summary: Apply the undercarriage, brakes, flaps and fire keys
@@ -7670,17 +7673,18 @@ ORG &0B00
 \
 \   X                   The offset within the key logger for the keys to check:
 \
-\                         * 4 = U or B (undercarriage, brakes)
+\                         * 4 = "U" or "B" (undercarriage, brakes)
 \
-\                         * 5 = F or SHIFT (flaps, fire)
+\                         * 5 = "F" or SHIFT (flaps, fire)
 \
 \ Returns:
 \
 \   A                   Returns the status of the relevant key presses:
 \
 \                         * 0 = neither key in the pair is being pressed, or a
-\                             key is still being held down from a previous call
-\                             to the routine, when it was already processed
+\                               key is still being held down from a previous
+\                               call to the routine, so it has already been
+\                               processed
 \
 \                         * 1 = U or F (undercarriage, flaps) is being pressed
 \
@@ -7688,7 +7692,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.ApplyUFBSKeys
+.ProcessOtherKeys
 
  LDA KeyLoggerLow,X     \ Fetch the low value for this key pair
 
@@ -7714,9 +7718,9 @@ ORG &0B00
 
  TAY                    \ Copy the low value into Y, so we have:
                         \
-                        \   * Y = 4 if U is being pressed (undercarriage)
-                        \   * Y = 5 if F is being pressed (flaps)
-                        \   * Y = 7 if B is being pressed (brakes)
+                        \   * Y = 4 if "U" is being pressed (undercarriage)
+                        \   * Y = 5 if "F" is being pressed (flaps)
+                        \   * Y = 7 if "B" is being pressed (brakes)
                         \   * Y = 8 if SHIFT is being pressed (fire)
 
  LDA PressingUFBS-4,Y   \ Fetch the relevant value from PressingUFBS to see if
@@ -7729,9 +7733,9 @@ ORG &0B00
  LDA Undercarriage-4,Y  \ Flip the value of the relevant status byte, as
  EOR #1                 \ follows:
  STA Undercarriage-4,Y  \
-                        \   * Flip Undercarriage if U is being pressed
-                        \   * Flip Flaps if F is being pressed
-                        \   * Flip Brakes if B is being pressed
+                        \   * Flip Undercarriage if "U" is being pressed
+                        \   * Flip Flaps if "F" is being pressed
+                        \   * Flip Brakes if "B" is being pressed
                         \   * Flip Brakes+1 if SHIFT is being pressed (which has
                         \     no effect
 
@@ -8124,7 +8128,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: ScanKeyTable
+\       Name: UpdateKeyLogger
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Scan the keyboard for keys in the two key tables and update the
@@ -8139,7 +8143,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.ScanKeyTable
+.UpdateKeyLogger
 
  LDA #5                 \ Set V = 5 to act as an offset as we work our way
  STA V                  \ through the six keys in KeyTable1
@@ -8553,9 +8557,9 @@ ORG &0B00
 
  JSR Reset              \ Reset most variables to prepare for a new flight
 
- JSR ScanKeyTable       \ Scan for key presses and update the key logger
+ JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
- JSR ApplyFlightKeys
+ JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
  JSR L2BDC
 
@@ -8591,12 +8595,12 @@ ORG &0B00
 
  JSR L2F1C
 
- JSR ScanKeyTable       \ Scan for key presses and update the key logger
+ JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
  LDA L0CF1
  BNE main2
 
- JSR ApplyFlightKeys
+ JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
  LDA L0CF1
  BEQ main3
@@ -8625,7 +8629,7 @@ ORG &0B00
 
 .main2
 
- JSR ApplyFlightKeys
+ JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
 .main3
 
@@ -9149,42 +9153,63 @@ ORG &0B00
 \       Name: L2953
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Populate tables at L0500 and L0600
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Gets called L4207 times by NewGame > L2BDC, with the counter in JJ.
+\
+\ Arguments:
+\
+\   JJ                  A counter that goes from 0 to L4207-1
+\
+\   LL                  A counter that starts at 255 on the first call
+\
+\   L0CCE               0 = add to L0500, otherwise add to L0600
+\
+\
+\ Returns:
+\
+\   II                  Gets incremented from 0 for each addition to L0500
 \
 \ ******************************************************************************
 
 .L2953
 
- LDA #0
+ LDA #0                 \ Set HH = 0
  STA HH
+
  JSR L2973
 
- LDA JJ
- LDX L0CCE
+ LDA JJ                 \ Fetch the counter into A
+
+ LDX L0CCE              \ If L0CCE = 0, jump down to L2969
  BEQ L2969
 
- INC NN                 \ Increment NN, which contains the number of things at
-                        \ &0600
+ INC NN                 \ Increment NN, so that it counts the number of
+                        \ additions to L0600
 
- LDX NN                 \ Store A at the NN-th byte of L0600, so this adds a new
- STA L0600,X            \ thing to the end of the L0600 table
+ LDX NN                 \ Store the counter number in A in the NN-th byte of
+ STA L0600,X            \ L0600, so this adds a new byte to the end of the L0600
+                        \ table
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .L2969
 
- INC II
- INC LL
- LDX LL
- STA L0500,X
+ INC II                 \ Increment II, so that it counts the number of
+                        \ additions to L0500
+
+ INC LL                 \ Increment LL, so that it's 0 on the first call, 1 on
+                        \ the second and so on
+
+ LDX LL                 \ Store the counter number in A in the LL-th byte of
+ STA L0500,X            \ L0500, so this adds a new byte to the end of the L0500
+                        \ table
 
 .L2972
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9671,15 +9696,15 @@ ORG &0B00
 
 .L2BDC
 
- LDA #128               \ Set L0CC2 = -1
+ LDA #%10000000         \ Set L0CC2 = %10000000
  STA L0CC2
 
- LDA #15                \ Set L0CC3 = 15
+ LDA #%00001111         \ Set L0CC3 = %00001111
  STA L0CC3
 
  JSR L14AC
 
- LDA #0                 \ Set JJ = 0
+ LDA #0                 \ Set JJ = 0 to act as a loop counter below
  STA JJ
 
  STA II                 \ Set II = 0
@@ -9693,13 +9718,12 @@ ORG &0B00
 
 .L2BF7
 
- JSR L2953
+ JSR L2953              \ Add number JJ to either the L0500 or L0600 table
 
- INC JJ
+ INC JJ                 \ Increment the loop counter
 
- LDA JJ
+ LDA JJ                 \ Loop back until JJ = L4207
  CMP L4207
-
  BCC L2BF7
 
  LDX #3
@@ -9710,7 +9734,7 @@ ORG &0B00
 \       Name: L2C08
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Set L0CC2 and L0CC3 depending on the sign of L0CC3
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9720,19 +9744,28 @@ ORG &0B00
 
 .L2C08
 
- LDX #&0F
- LDY #&80
- LDA L0CC3
+ LDX #%00001111         \ Set X and Y for when L0CC3 is negative
+ LDY #%10000000
+
+ LDA L0CC3              \ If L0CC3 is negative, jump to L2C15
  BMI L2C15
 
- LDX #&F0
- LDY #&40
+ LDX #%11110000         \ Set X and Y for when L0CC3 is negative
+ LDY #%01000000
 
 .L2C15
 
- STX L0CC3
- STY L0CC2
- RTS
+ STX L0CC3              \ Store X in L0CC3, so L0CC3 is now:
+                        \
+                        \   * %11110000 if L0CC3 was positive
+                        \   * %00001111 if L0CC3 was negative
+
+ STY L0CC2              \ Store Y in L0CC2, so L0CC2 is now:
+                        \
+                        \   * %01000000 if L0CC3 was positive
+                        \   * %10000000 if L0CC3 was negative
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9749,8 +9782,10 @@ ORG &0B00
 
 .L2C1C
 
- LDY #7
- BNE L2C22
+ LDY #7                 \ Set Y = 7
+
+ BNE L2C22              \ Jump to L2C22 (this BNE is effeftively a JMP as Y is
+                        \ never zero
 
 \ ******************************************************************************
 \
@@ -9872,7 +9907,7 @@ ORG &0B00
 
 .L2C91
 
- JSR L2C08
+ JSR L2C08              \ Set L0CC2 and L0CC3 depending on the sign of L0CC3
 
  RTS
 
@@ -15687,7 +15722,7 @@ NEXT
 \ If an axis control key is held down (e.g. dive, yaw left, roll right and so
 \ on), then it will change that axis value by 1 in the relevant direction (by
 \ updating Elevator, Rudder or Aileron). If the key is held down, then after six
-\ calls to ApplyFlightKeys without the key being released, the relevant control
+\ calls to ProcessKeyLogger without the key being released, the relevant control
 \ is fully engaged, and the rate of change increases to 4 in the relevant
 \ direction.
 \
@@ -15699,7 +15734,7 @@ NEXT
  EQUB 0                 \ The rate of change of the rudder (yaw)
  EQUB 0                 \ The rate of change of the aileron (roll)
 
- EQUB 0
+ EQUB 0                 \ This byte appears to be unused
 
 \ ******************************************************************************
 \
