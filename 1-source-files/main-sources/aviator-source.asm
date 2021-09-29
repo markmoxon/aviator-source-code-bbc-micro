@@ -13587,8 +13587,8 @@ NEXT
 .ReadJoystick
 
  LDA Row29_Block20_4    \ If the screen byte at row 29, block 20, pixel row 4 is
- BEQ L46FE              \ zero (i.e. black) then the joystick is not enabled, so
-                        \ jump to L46FE to return from the subroutine
+ BEQ rjoy1              \ zero (i.e. black) then the joystick is not enabled, so
+                        \ jump to rjoy1 to return from the subroutine
 
  LDX #1                 \ Set Aileron to the value from ADC channel 1, the
  JSR ReadADCChannel     \ joystick's x-position, inverted and clipped to the
@@ -13603,15 +13603,15 @@ NEXT
  JSR OSBYTE
 
  TXA                    \ If bit 0 of X is zero, the fire button is not being
- AND #1                 \ pressed, so jump to L46FE
- BEQ L46FE
+ AND #1                 \ pressed, so jump to rjoy1
+ BEQ rjoy1
 
  LDA #8                 \ The fire button is being pressed, so update the key
  STA KeyLoggerLow+5     \ logger at KeyLoggerLow+5, which corresponds to the
                         \ flaps and fire keys. We set the value to 8, the value
                         \ from KeyTable2Lo for the fire button
 
-.L46FE
+.rjoy1
 
  RTS                    \ Return from the subroutine
 
