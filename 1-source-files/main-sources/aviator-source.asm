@@ -126,17 +126,17 @@ L0C06 = &0C06
 L0C08 = &0C08
 L0C09 = &0C09
 
-JoystickY = &0C0C       \ Joystick y-coordinate
+Elevator = &0C0C        \ Elevator position (pitch)
                         \
-                        \ Shown on indicator 8 or 10
+                        \ Shown on indicator 8 or 10 as the joystick y-position
 
-Rudder = &0C0D          \ Rudder position
+Rudder = &0C0D          \ Rudder position (yaw)
                         \
                         \ Shown on indicator 9
 
-JoystickX = &0C0E       \ Joystick x-coordinate
+Aileron = &0C0E         \ Aileron position (roll)
                         \
-                        \ Shown on indicator 8 or 10
+                        \ Shown on indicator 8 or 10 as the joystick x-position
 
 ThrustLo = &0C0F        \ Thrust (low byte)
                         \
@@ -178,7 +178,20 @@ ThrustHi = &0C1F        \ Thrust (high byte)
 L0C20 = &0C20
 L0C26 = &0C26
 L0C2A = &0C2A
-L0C2D = &0C2D
+
+AxisKeyUsage = &0C2D    \ The following locations are updated when keys are
+                        \ pressed in ApplyFlightKeys:
+                        \
+                        \   * AxisKeyUsage   = elevator
+                        \   * AxisKeyUsage+1 = rudder
+                        \   * AxisKeyUsage+2 = aileron
+                        \
+                        \ In each case, the value is updated by adding the
+                        \ relevant KeyLoggerLow value, which is 1 in each case,
+                        \ so these count up by 1 every time a relevant axis
+                        \ control key is pressed (in any direction), so they
+                        \ measure "axis control key usage"
+
 L0C30 = &0C30
 L0C32 = &0C32
 L0C40 = &0C40
@@ -246,7 +259,7 @@ Slip = &0C9C            \ Slip rate
 KeyLoggerLow = &0CA0    \ Key logger (low value)
                         \
                         \ Populated with values from KeyTable1Lo or KeyTable2Lo
-                        \ when key is pressed:
+                        \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      =   1 or  1
                         \ A or + (rudder yaw left/right)    =   1 or  1
@@ -260,7 +273,7 @@ L0CA8 = &0CA8
 KeyLoggerHigh = &0CB0   \ Key logger (high value)
                         \
                         \ Populated with values from KeyTable1Hi or KeyTable2Hi
-                        \ when key is pressed:
+                        \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      = -1 or 1
                         \ A or + (rudder yaw left/right)    = -1 or 1
@@ -283,8 +296,8 @@ GunSights = &0CBE       \ Gun sights status
 L0CBF = &0CBF
 L0CC0 = &0CC0
 L0CC1 = &0CC1
-L0CC2 = &0CC2
-L0CC3 = &0CC3
+L0CC2 = &0CC2           \ Set to 128 for new game
+L0CC3 = &0CC3           \ Set to 15 for new game
 L0CC4 = &0CC4
 L0CC5 = &0CC5           \ Set to 1 in Reset ("on ground" flag?)
 
@@ -312,6 +325,24 @@ L0CCE = &0CCE
 L0CCF = &0CCF
 L0CD0 = &0CD0           \ Set to 255 in Reset
 L0CD1 = &0CD1           \ Set to 47 in Reset
+
+PressingUFBS = &0CD2    \ Determines whether any of the following keys are
+                        \ being pressed:
+                        \
+                        \ PressingUFBS = 1 while the undercarriage key "U" is 
+                        \ being pressed, 0 otherwise
+
+                        \ PressingUFBS+1 = 1 while the flaps button "F" is being
+                        \ pressed, 0 otherwise
+
+                        \ PressingUFBS+2 is not used
+
+                        \ PressingUFBS+3 = 1 while the brake key "B" is being
+                        \ pressed, 0 otherwise
+
+                        \ PressingUFBS+4 = 1 while the fire key SHIFT is being
+                        \ pressed, 0 otherwise
+
 L0CD7 = &0CD7
 
 ScoreDisplayTimer = &0CD8   \ Counter for removing the score after displaying it
@@ -4891,7 +4922,8 @@ ORG &0B00
                         \ We now calculate A = T * n / 256 with a hardcoded n,
                         \ using unrolled shift-and-add multiplication
 
-\LDA T                  \ We can drop this instruction as A is already = T
+                        \ We don't need an LDA T instruction as A already
+                        \ contains the same value as T
 
  LSR A                  \ Bit 0 of n is 0
 
@@ -5434,7 +5466,8 @@ ORG &0B00
                         \ We now calculate A = T * n / 256 with a hardcoded n,
                         \ using unrolled shift-and-add multiplication
 
-\LDA T                  \ We can drop this instruction as A is already = T
+                        \ We don't need an LDA T instruction as A already
+                        \ contains the same value as T
 
  LSR A                  \ Bit 0 of n is 0
 
@@ -5721,11 +5754,11 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the joystick position from (JoystickX, JoystickY) and
-\ reduces it to -8 to +8 (for the x-coordinate) and the -32 to +32 (for the
-\ y-coordinate), before passing it to the DrawJoystickCross to update the cross
-\ in the joystick position display. The x-coordinate is reduced more because the
-\ joystick position display is taller than it is wide.
+\ This section takes the joystick position from Aileron and Elevator and reduces
+\ it to -8 to +8 (for the x-position in Aileron) and to -32 to +32 (for the
+\ y-position in Elevator), before passing it to the DrawJoystickCross to
+\ update the cross in the joystick position display. The x-position is reduced
+\ more because the joystick position display is taller than it is wide.
 \
 \ Note that this indicator has two IDs, 8 and 10, so that it gets updated twice
 \ as often by UpdateDashboard.
@@ -5756,10 +5789,10 @@ ORG &0B00
  STA Row26_Block20_7
  STA Row27_Block20_7
 
- LDA JoystickX          \ Set A = JoystickX, the x-coordinate of the joystick
+ LDA Aileron            \ Set A = Aileron, the x-position of the joystick
 
  SEC                    \ Set the C flag so the following call to ScaleSigned
-                        \ divides the joystick x-coordinate by 16 
+                        \ divides the joystick x-position by 16 
 
  JSR ScaleSigned        \ Scale the value in A down by a factor of 16, retaining
                         \ the sign and being sensitive to small values
@@ -5769,17 +5802,17 @@ ORG &0B00
                         \ but also so we can erase this cross when we need to
                         \ update the indicator in the future
 
- LDA JoystickY          \ Set A = JoystickY, the y-coordinate of the joystick
+ LDA Elevator           \ Set A = Elevator, the y-position of the joystick
 
  CLC                    \ Clear the C flag so the following call to ScaleSigned
-                        \ divides the joystick y-coordinate by 4
+                        \ divides the joystick y-position by 4
 
  JSR ScaleSigned        \ Scale the value in A down by a factor of 4, retaining
                         \ the sign and being sensitive to small values
 
  EOR #&FF               \ Set A = -A using two's complement
  CLC                    \
- ADC #1                 \ This flips the sign of the y-coordinate, because the
+ ADC #1                 \ This flips the sign of the y-position, because the
                         \ joystick value will be high when we pull up, but this
                         \ corresponds to moving the stick down, which should be
                         \ shown lower down the indicator
@@ -6566,9 +6599,9 @@ ORG &0B00
 \
 \   N                   Drawing mode:
 \
-\                         * Bit 7 clear = draw (using OR logic)
+\                         * Bit 7 clear = draw
 \
-\                         * Bit 7 set = erase (using EOR logic)
+\                         * Bit 7 set = erase
 \
 \   T                   Magnitude of x-coordinate of line's vector |x-delta|
 \                       Horizontal width/length of line when V = 0
@@ -7332,168 +7365,287 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L233E
+\       Name: ApplyFlightKeys (Part 1 of 4)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Flight
+\    Summary: Apply any axis control key presses to the current axis values
 \
 \ ******************************************************************************
 
-.L233E
+.ApplyFlightKeys
 
- LDX #2
+ LDX #2                 \ We start with the aileron, rudder and elevator key
+                        \ pairs, whose values are stored in these key logger
+                        \ offsets in KeyLoggerLow and KeyLoggerHigh:
+                        \
+                        \   * 2 = aileron
+                        \   * 1 = rudder
+                        \   * 0 = elevator
+                        \
+                        \ So we set a counter in X to count down through these
+                        \ index values, from 2 to 1 to 0
 
-.L2340
+.fkey1
 
- CLC
- LDA KeyLoggerLow,X
- BEQ L2372
+ CLC                    \ Clear the C flag for the addition below
 
- ADC L0C2D,X
- STA L0C2D,X
+ LDA KeyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
+                        \ if a key is being pressed, or 0 if no key is pressed
 
- LDA KeyLoggerHigh,X
- STA P
- ADC JoystickY,X
+ BEQ fkey4              \ If A = 0 then neither key in this key pair is being
+                        \ pressed, so jump down to fkey4
 
- LDY L4F5C,X
- BEQ L235C
+ ADC AxisKeyUsage,X     \ Add the low value to the corresponding variable for
+ STA AxisKeyUsage,X     \ this key pair in AxisKeyUsage, so we increment the
+                        \ value every time a key from this pair is used
 
- DEC L4F5C,X
+ LDA KeyLoggerHigh,X    \ Fetch the high value for this key pair, which will be
+                        \ +1 or -1 if a key is being pressed, or 0 if no key is
+                        \ pressed
 
-.L235C
+ STA P                  \ Store the value in P so we can check its sign below
 
- BNE L2367
+ ADC Elevator,X         \ Set A = A + one of the following axis values:
+                        \
+                        \   * Aileron if this is the aileron key pair
+                        \   * Rudder if this is the rudder key pair
+                        \   * Elevator if this is the elevator key pair
+                        \
+                        \ so the relevant value is increased or decreased by 1
+                        \ according to the key press
 
- CLC
+ LDY AxisChangeRate,X   \ If this key pair's AxisChangeRate value is already
+ BEQ fkey2              \ zero, skip the following instruction
+
+ DEC AxisChangeRate,X   \ Decrement this key pair's AxisChangeRate value
+
+.fkey2
+
+ BNE fkey3              \ If this key pair's AxisChangeRate value is non-zero,
+                        \ skip the following
+
+                        \ If we get here, then this key pair's AxisChangeRate
+                        \ value has been reduced down to zero by repeated calls
+                        \ to ApplyFlightKeys with the key being held down, so
+                        \ the relavant control is now fully engaged and we bump
+                        \ up the rate of change by another 3 in the relevant
+                        \ direction
+
+ CLC                    \ Set A = A + 3
  ADC #3
- BIT P
- BPL L2367
 
- ADC #&FA
+ BIT P                  \ If P is positive (so we are increasing the relevant
+ BPL fkey3              \ axis value), skip the following instruction
 
-.L2367
+ ADC #250               \ P is negative (so we are decreasing the relevant
+                        \ axis value), so set A = A - 6, giving a net change of
+                        \ setting A = A - 3
 
- TAY
- BPL L2379
+.fkey3
 
- CMP #&8C
- BCS L237F
+ TAY                    \ If the adjusted axis value is positive, jump down to
+ BPL fkey5              \ fkey5 to check the maximum allowed value
 
- LDA #&8C
- BNE L237F
+                        \ If we get here then the adjusted axis value is
+                        \ negative, so now we check against the minimum allowed
+                        \ value
 
-.L2372
+ CMP #140               \ If A >= -116, the value is within limits, so jump to
+ BCS fkey6              \ fkey6 to store it
 
- LDA #6
- STA L4F5C,X
- BNE L2382
+ LDA #140               \ Set A = -116 as the minimum allowed value for the axis
+ BNE fkey6              \ value and jump to fkey6 to store it
 
-.L2379
+.fkey4
 
- CMP #&77
- BCC L237F
+                        \ If we get here then neither key was pressed from this
+                        \ key pair
 
- LDA #&76
+ LDA #6                 \ Set the AxisChangeRate value for this key pair to 6,
+ STA AxisChangeRate,X   \ so the rate of change goes back to 1 until we fully
+                        \ engage the control once again
 
-.L237F
+ BNE fkey7              \ Jump down to fkey7 to move on to the next key pair
+                        \ (this BNE is effectively a JMP as A is never zero)
 
- STA JoystickY,X
+.fkey5
 
-.L2382
+                        \ If we get here then the adjusted axis value is
+                        \ positive, so now we check against the maximum allowed
+                        \ value
 
- DEX
- BPL L2340
+ CMP #119               \ If A < 119, the value is within limits, so jump to
+ BCC fkey6              \ fkey6 to store it
 
- JSR L46D8
+ LDA #118               \ Set A = 118 as the maximum allowed value for the axis
+                        \ value
 
- CLC
- LDA KeyLoggerLow+3     \ Throttle key
- BEQ L23B2
+.fkey6
 
- ADC ThrustLo
+ STA Elevator,X         \ Store the adjusted axis value in the relevant axis
+                        \ variable:
+                        \
+                        \   * Aileron if this is the aileron key pair
+                        \   * Rudder if this is the rudder key pair
+                        \   * Elevator if this is the elevator key pair
+
+.fkey7
+
+ DEX                    \ Decrement the key pair index
+
+ BPL fkey1              \ Loop back to process the next key pair until we have
+                        \ done all three axes of movement (aileron roll, rudder
+                        \ yaw and elevator pitch)
+
+ JSR ReadJoystick       \ Read the joystick axes and fire button and update the
+                        \ aileron, elevator and fire key values accordingly
+
+\ ******************************************************************************
+\
+\       Name: ApplyFlightKeys (Part 2 of 4)
+\       Type: Subroutine
+\   Category: Flight
+\    Summary: Apply any throttle key presses to the current thrust value
+\
+\ ******************************************************************************
+
+                        \ Now we process the thrust keys
+
+ CLC                    \ Clear the C flag for the addition below
+
+ LDA KeyLoggerLow+3     \ Fetch the low value for the throttle key
+
+ BEQ fkey11             \ If A = 0 then neither key in this key pair is being
+                        \ pressed, so jump down to fkey11 to skip the throttle
+                        \ calculations below
+
+                        \ We now want to add the key logger value to the current
+                        \ thrust value, which we do like this:
+                        \
+                        \   (Y X) = (KeyLoggerHigh+3 KeyLoggerLow+3)
+                        \           +  (ThrustHi ThrustLo)
+
+ ADC ThrustLo           \ We start by adding the low bytes
  TAX
- LDA KeyLoggerHigh+3
- ADC ThrustHi
+
+
+ LDA KeyLoggerHigh+3    \ And then add the high bytes, so now (Y X) contains the
+ ADC ThrustHi           \ updated thrust value
  TAY
- BMI L23A3
 
- CPY #5
- BCC L23A7
+ BMI fkey8              \ If the result is negative, jump to fkey8 to set both X
+                        \ and Y to zero, so the minimum thrust value is zero
 
- LDY #5
- BNE L23A5
+ CPY #5                 \ If the high byte in Y < 5, then the result is within
+ BCC fkey10             \ bounds, so jump to fkey10 to store the new thrust
+                        \ value
 
-.L23A3
+ LDY #5                 \ Set Y = 5 and jump to fkey9 to set X to 0, so the
+ BNE fkey9              \ maximum thrust value is (5 0), or 1280 (this BNE is
+                        \ effectively a JMP, as Y is never zero)
 
- LDY #0
+.fkey8
 
-.L23A5
+ LDY #0                 \ If we get here then the new thrust in (Y X) turned out
+                        \ to be negative, so we set Y = 0 and then X = 0 to zero
+                        \ the thrust
 
- LDX #0
+.fkey9
 
-.L23A7
+ LDX #0                 \ Zero the low byte of the new thrust as we are either at
+                        \ the maxiumum value of (5 0) or the minimum value of
+                        \ (0 0)
 
- STX ThrustLo
- STY ThrustHi
+.fkey10
 
- LDX #11
+ STX ThrustLo           \ Store the thrust value in (ThrustHi ThrustLo) to the
+ STY ThrustHi           \ updated thrust value in (Y X)
+
+ LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
 
-.L23B2
+\ ******************************************************************************
+\
+\       Name: ApplyFlightKeys (Part 3 of 4)
+\       Type: Subroutine
+\   Category: Flight
+\    Summary: Process the undercarriage, brake, flaps and fire keys
+\
+\ ******************************************************************************
 
- LDX #4
- JSR L23F9
+.fkey11
 
- BEQ L23C4
+ LDX #4                 \ Apply the undercarriage or brake keys, if pressed
+ JSR ApplyUFBSKeys
 
- BMI L23C1
+ BEQ fkey13             \ If neither are being pressed, jump to fkey13 to check
+                        \ for the next set of key presses
 
- JSR IndicatorU
+ BMI fkey12             \ If the brake key is being pressed, then the returned
+                        \ value is 128, so jump to fkey12
 
- JMP L23C4
+ JSR IndicatorU         \ The undercarriage key is being pressed, so update the
+                        \ undercarriage indicator
 
-.L23C1
+ JMP fkey13             \ Jump to fkey13 to check for the next set of key
+                        \ presses
 
- JSR IndicatorB
+.fkey12
 
-.L23C4
+ JSR IndicatorB         \ The brake key is being pressed, so update the brakes
+                        \ indicator
 
- LDX #5
- JSR L23F9
+.fkey13
 
- BEQ L23D6
+ LDX #5                 \ Apply the flaps or fire keys, if pressed
+ JSR ApplyUFBSKeys
 
- BMI L23D3
+ BEQ fkey15             \ If neither are being pressed, jump to fkey15 to check
+                        \ for the next set of key presses
 
- JSR IndicatorF
 
- JMP L23D6
+ BMI fkey14             \ If the fire key is being pressed, then the returned
+                        \ value is 128, so jump to fkey14
 
-.L23D3
+ JSR IndicatorF         \ The flaps key is being pressed, so update the flaps
+                        \ indicator
 
- JSR L247F
+ JMP fkey15             \ Jump to fkey15 to check for the next set of key
+                        \ presses
 
-.L23D6
+.fkey14
+
+ JSR FireGuns           \ The fire key is being pressed, so call FireGuns
+
+\ ******************************************************************************
+\
+\       Name: ApplyFlightKeys (Part 4 of 4)
+\       Type: Subroutine
+\   Category: Flight
+\    Summary: 
+\
+\ ******************************************************************************
+
+.fkey15
 
  LDY #2
 
-.L23D8
+.fkey16
 
  STY L0CC4
+
  JSR L1862
 
  LDY L0CC4
+
  DEY
- BPL L23D8
+
+ BPL fkey16
 
  LDA #0
  STA L0CCB
  STA L0CC4
+
  JSR L1AFC
 
  JSR L5000
@@ -7503,55 +7655,104 @@ ORG &0B00
 
  JSR UpdateDash7To11    \ Update the next indicator in the range 7 to 11
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L23F9
+\       Name: ApplyUFBSKeys
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Apply the undercarriage, brakes, flaps and fire keys
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The offset within the key logger for the keys to check:
+\
+\                         * 4 = U or B (undercarriage, brakes)
+\
+\                         * 5 = F or SHIFT (flaps, fire)
+\
+\ Returns:
+\
+\   A                   Returns the status of the relevant key presses:
+\
+\                         * 0 = neither key in the pair is being pressed, or a
+\                             key is still being held down from a previous call
+\                             to the routine, when it was already processed
+\
+\                         * 1 = U or F (undercarriage, flaps) is being pressed
+\
+\                         * 128 = B or SHIFT (brakes, fire) is being pressed
 \
 \ ******************************************************************************
 
-.L23F9
+.ApplyUFBSKeys
 
- LDA KeyLoggerLow,X
- BNE L2407
+ LDA KeyLoggerLow,X     \ Fetch the low value for this key pair
 
- STA L0CCE,X
- STA L0CD1,X
+ BNE ufbs2              \ If A is non-zero then a key from this key pair is
+                        \ being pressed, so jump down to ufbs2 to process the
+                        \ key press
 
-.L2404
+ STA PressingUFBS-4,X   \ Zero the relevant value in PressingUFBS (for U) or
+                        \ PressingUFBS+1 (for F) to indicate that the first key
+                        \ from this pair is not being held down
 
- LDA #0
- RTS
+ STA PressingUFBS-4+3,X \ Zero the relevant value in PressingUFBS+3 (for B) or
+                        \ PressingUFBS+4 (for SHIFT) to indicate that the second
+                        \ key from this pair is not being held down
 
-.L2407
+.ufbs1
 
- TAY
- LDA L0CCE,Y
- BNE L2404
+ LDA #0                 \ Set A = 0 as the return value
 
- LDA AltitudeLo,Y
- EOR #1
- STA AltitudeLo,Y
- LDA #1
- STA L0CCE,Y
- CPY #7
- BCC L2421
+ RTS                    \ Return from the subroutine
 
- LDA #&80
- RTS
+.ufbs2
 
-.L2421
+ TAY                    \ Copy the low value into Y, so we have:
+                        \
+                        \   * Y = 4 if U is being pressed (undercarriage)
+                        \   * Y = 5 if F is being pressed (flaps)
+                        \   * Y = 7 if B is being pressed (brakes)
+                        \   * Y = 8 if SHIFT is being pressed (fire)
 
- LDA #1
- RTS
+ LDA PressingUFBS-4,Y   \ Fetch the relevant value from PressingUFBS to see if
+ BNE ufbs1              \ the key press has already been processed, and if it is
+                        \ non-zero, this indicates that it is still being held
+                        \ down from a previous visit to this routine, so jump to
+                        \ ufbs1 to return a value of 0, so we can ignore the key
+                        \ press
+
+ LDA Undercarriage-4,Y  \ Flip the value of the relevant status byte, as
+ EOR #1                 \ follows:
+ STA Undercarriage-4,Y  \
+                        \   * Flip Undercarriage if U is being pressed
+                        \   * Flip Flaps if F is being pressed
+                        \   * Flip Brakes if B is being pressed
+                        \   * Flip Brakes+1 if SHIFT is being pressed (which has
+                        \     no effect
+
+ LDA #1                 \ Set the relevant value in PressingUFBS to denote that
+ STA PressingUFBS-4,Y   \ this key is being pressed, so if we revisit this
+                        \ routine before the key is released, we don't keep on
+                        \ flipping the status byte
+
+ CPY #7                 \ If Y < 7, i.e. U or F are being pressed, jump to ufbs3
+ BCC ufbs3              \ to return a result of 1
+
+ LDA #128               \ Y >= 7, i.e. B or SHIFT are being pressed, so set
+                        \ A = 128 as the return value
+
+ RTS                    \ Return from the subroutine
+
+.ufbs3
+
+ LDA #1                 \ Set A = 1 as the return value
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7707,7 +7908,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L247F
+\       Name: FireGuns
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -7718,7 +7919,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L247F
+.FireGuns
 
  LDA L0CF1
  ORA L368F
@@ -8064,43 +8265,60 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L25CA
+\       Name: ReadADCChannel
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Keyboard
+\    Summary: Read the joystick position from one of the ADC channels
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The ADC channel to read:
+\
+\                         * 1 = joystick X
+\
+\                         * 2 = joystick Y
+\
+\ Returns:
+\
+\   A                   The joystick position, inverted and clipped to the range
+\                       -118 to +116
 \
 \ ******************************************************************************
 
-.L25CA
+.ReadADCChannel
 
- LDA #&80
- JSR OSBYTE
+ LDA #128               \ Call OSBYTE with A = 128 to fetch the 16-bit value
+ JSR OSBYTE             \ from ADC channel X, returning (Y X), i.e. the high
+                        \ byte in Y and the low byte in X
 
- TYA
- CMP #&F7
- BCC L25D6
+ TYA                    \ Copy Y to A, so the result is now in (A X)
 
- LDA #&F6
+ CMP #247               \ If A < 247, jump to radc1 to skip the next instruction
+ BCC radc1
 
-.L25D6
+ LDA #246               \ Set A = 246, so A now has a maximum value of 246
 
- CMP #&0C
- BCS L25DC
+.radc1
 
- LDA #&0C
+ CMP #12                \ If A >= 12, jump to radc2 to skip the next instruction
+ BCS radc2
 
-.L25DC
+ LDA #12                \ Set A = 12, so A now has a minimum value of 12
 
- SEC
- SBC #&80
- EOR #&FF
- CLC
+.radc2
+
+                        \ By the time we get here, A is in the range 12 to 246
+
+ SEC                    \ Set A = A - 128, so A is now in the range -116 to +118
+ SBC #128
+
+ EOR #&FF               \ Negate A using two's complement, so A is now in the
+ CLC                    \ range -118 to +116
  ADC #1
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -8145,7 +8363,7 @@ ORG &0B00
 
  STA L05C8              \ Set L05C8 = 0
 
- STA L4206              \ Set L4206 = 0
+ STA MainLoopCounter    \ Set MainLoopCounter = 0
 
 .rset2
 
@@ -8256,7 +8474,7 @@ ORG &0B00
 
  DEC FuelLevel          \ Decrement the counter in FuelLevel
 
- JSR EraseFuelPixel     \ Erase the relevant pixel from the fuel gauge
+ JSR UpdateFuelGauge    \ Update the fuel gauge
 
  LDA FuelLevel          \ Loop back until FuelLevel = 0, by which point we have
  BNE rset6              \ reset the fuel tanks and cleared the fuel gauge
@@ -8337,7 +8555,7 @@ ORG &0B00
 
  JSR ScanKeyTable       \ Scan for key presses and update the key logger
 
- JSR L233E
+ JSR ApplyFlightKeys
 
  JSR L2BDC
 
@@ -8378,7 +8596,7 @@ ORG &0B00
  LDA L0CF1
  BNE main2
 
- JSR L233E
+ JSR ApplyFlightKeys
 
  LDA L0CF1
  BEQ main3
@@ -8407,7 +8625,7 @@ ORG &0B00
 
 .main2
 
- JSR L233E
+ JSR ApplyFlightKeys
 
 .main3
 
@@ -8454,8 +8672,9 @@ ORG &0B00
  LDY #&22
  JSR L4244
 
- INC L4206
- LDA L4206
+ INC MainLoopCounter
+
+ LDA MainLoopCounter
  CLC
  ADC #4
  AND #7
@@ -8560,7 +8779,8 @@ ORG &0B00
 
 .main15
 
- JSR VolumeKeys
+ JSR VolumeKeys         \ Check the volume keys and adjust the sound volume
+                        \ accordingly
 
 .main16
 
@@ -8574,7 +8794,7 @@ ORG &0B00
 
 .main17
 
- JSR EraseFuelPixel
+ JSR UpdateFuelGauge    \ Update the fuel gauge
 
                         \ Handle engine start/stop
 
@@ -9451,27 +9671,35 @@ ORG &0B00
 
 .L2BDC
 
- LDA #&80
+ LDA #128               \ Set L0CC2 = -1
  STA L0CC2
- LDA #&0F
+
+ LDA #15                \ Set L0CC3 = 15
  STA L0CC3
+
  JSR L14AC
 
- LDA #0
+ LDA #0                 \ Set JJ = 0
  STA JJ
- STA II
- LDA #&FF
+
+ STA II                 \ Set II = 0
+
+ LDA #255               \ Set NN = 255
  STA NN
- STA LL
- STA MM
+
+ STA LL                 \ Set LL = 255
+
+ STA MM                 \ Set MM = 255
 
 .L2BF7
 
  JSR L2953
 
  INC JJ
+
  LDA JJ
  CMP L4207
+
  BCC L2BF7
 
  LDX #3
@@ -10488,8 +10716,8 @@ ORG &0B00
 
 .L2F4E
 
- LDA L4206
- AND #&7F
+ LDA MainLoopCounter
+ AND #127
  BNE L2F6A
 
  LDX #7
@@ -10615,8 +10843,8 @@ ORG &0B00
 
 .L2FE3
 
- LDA L4206
- AND #&7F
+ LDA MainLoopCounter
+ AND #127
  BNE L302B
 
  LDY #&1F
@@ -11460,26 +11688,23 @@ ORG &0B00
 \
 \       Name: FillUpFuelTank
 \       Type: Subroutine
-\   Category: 
-\    Summary: Fill up the fuel tank by 1/65th of a full tank
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Dashboard
+\    Summary: Fill up the fuel tank by 1/65th of a full tank every four
+\             iterations of the main loop
 \
 \ ******************************************************************************
 
 .FillUpFuelTank
 
- LDA L4206              \ If bits 0 and 1 of L4206 are both 0, jump to fuel1
- AND #%00000011         \ to add some fuel to the tank
- BEQ fuel1
+ LDA MainLoopCounter    \ If the MainLoopCounter is a multiple of 4, jump to
+ AND #3                 \ fuel1 to add some fuel to the tank (so we do this
+ BEQ fuel1              \ every four iterations of the main loop)
 
  RTS                    \ Return from the subroutine
 
 .fuel1
 
- TAX                    \ Copy bits 0 and 1 of L4206 to X
+ TAX                    \ We got here because A contains 3, so this sets X = 0
 
  LDA FuelLevel          \ If FuelLevel >= 65, then the tank is already full, so
  CMP #65                \ jump to fuel2 to skip filling it up any more
@@ -11488,42 +11713,46 @@ ORG &0B00
  INC FuelLevel          \ FuelLevel < 65, so increment the fuel level by 1, to
                         \ fill up the fuel tank by 1/65th of a full tank
 
- JMP DrawFuelPixel      \ Draw an extra pixel at the top of the fuel level so
-                        \ the fuel gauge goes up by one pixel
+ JMP DrawFuelPixel      \ Draw an extra pixel at the top of the fuel level, so
+                        \ the fuel gauge goes up by one pixel, returning from
+                        \ the subroutine using a tail call
 
 .fuel2
 
- STX L0CE8              \ Store bits 0 and 1 of L4206 in L0CE8
+                        \ If we get here then the fuel tank is full
+
+ STX L0CE8              \ Set L0CE8 = 0
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: EraseFuelPixel
+\       Name: UpdateFuelGauge
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Dashboard
+\    Summary: Update the fuel gauge every 16 iterations of the main loop
 \
 \ ******************************************************************************
 
-.EraseFuelPixel
+.UpdateFuelGauge
 
- LDA L4206              \ If bits 0, 1 and 2 of L4206 are all 0, jump to eraf1
- AND #%00001111         \ to erase the top fuel pixel
- BEQ eraf1
+ LDA MainLoopCounter    \ If the MainLoopCounter is a multiple of 16, jump to
+ AND #15                \ upfu1 to update the fuel gauge
+ BEQ upfu1
 
  RTS                    \ Return from the subroutine
 
-.eraf1
+.upfu1
 
- LDX #128               \ Set X = 128, so we erase a pixel from the fuel gauge
-                        \ in DrawFuelPixel below
+ LDX #128               \ Set X = 128, so we erase a pixel from the top of the
+                        \ fuel gauge in DrawFuelPixel below, if there is one
 
  LDA FuelLevel          \ Set A = FuelLevel
 
                         \ Fall through into DrawFuelPixel to erase a pixel from
-                        \ the fuel gauge at the top of the gauge, i.e. reduce
-                        \ the amount shown on the fuel gauge by one
+                        \ the fuel gauge at the top of the gauge if there is
+                        \ one, which will set the amount shown on the fuel gauge
+                        \ to FuelLevel
 
 \ ******************************************************************************
 \
@@ -12781,9 +13010,10 @@ NEXT
 
  EQUB &69               \ Zeroed in Reset
 
-.L4206
+.MainLoopCounter
 
- EQUB &67               \ Something to do with fuel?
+ EQUB &67               \ The main loop counter, which is incremented every
+                        \ iteration of the main loop
 
 .L4207
 
@@ -13342,10 +13572,11 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L46D8
+\       Name: ReadJoystick
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Keyboard
+\    Summary: Read the joystick axes and fire button and update the aileron,
+\             elevator and fire key values accordingly
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13353,31 +13584,36 @@ NEXT
 \
 \ ******************************************************************************
 
-.L46D8
+.ReadJoystick
 
- LDA Row29_Block20_4
- BEQ L46FE
+ LDA Row29_Block20_4    \ If the screen byte at row 29, block 20, pixel row 4 is
+ BEQ L46FE              \ zero (i.e. black) then the joystick is not enabled, so
+                        \ jump to L46FE to return from the subroutine
 
- LDX #1
- JSR L25CA
- STA JoystickX
+ LDX #1                 \ Set Aileron to the value from ADC channel 1, the
+ JSR ReadADCChannel     \ joystick's x-position, inverted and clipped to the
+ STA Aileron            \ range -118 to +116
 
- LDX #2
- JSR L25CA
- STA JoystickY
- LDX #&00
- LDA #&80
+ LDX #2                 \ Set Elevator to the value from ADC channel 2, the
+ JSR ReadADCChannel     \ joystick's y-position, inverted and clipped to the
+ STA Elevator           \ range -118 to +116
+
+ LDX #0                 \ Call OSBYTE with A = 128 and X = 0 to read the status
+ LDA #128               \ of the joystick's fire button into X
  JSR OSBYTE
 
- TXA
- AND #1
+ TXA                    \ If bit 0 of X is zero, the fire button is not being
+ AND #1                 \ pressed, so jump to L46FE
  BEQ L46FE
- LDA #&08
- STA KeyLoggerLow+5     \ Flaps or fire key
+
+ LDA #8                 \ The fire button is being pressed, so update the key
+ STA KeyLoggerLow+5     \ logger at KeyLoggerLow+5, which corresponds to the
+                        \ flaps and fire keys. We set the value to 8, the value
+                        \ from KeyTable2Lo for the fire button
 
 .L46FE
 
- RTS
+ RTS                    \ Return from the subroutine
 
  EQUB &36
 
@@ -15440,20 +15676,30 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4F5C
+\       Name: AxisChangeRate
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Flight
+\    Summary: Stores the amount by which the three axes of movement change when
+\             the aileron, elevator or rudder are moved
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ If an axis control key is held down (e.g. dive, yaw left, roll right and so
+\ on), then it will change that axis value by 1 in the relevant direction (by
+\ updating Elevator, Rudder or Aileron). If the key is held down, then after six
+\ calls to ApplyFlightKeys without the key being released, the relevant control
+\ is fully engaged, and the rate of change increases to 4 in the relevant
+\ direction.
 \
 \ ******************************************************************************
 
-.L4F5C
+.AxisChangeRate
 
- EQUB &00, &00, &00, &00
+ EQUB 0                 \ The rate of change of the elevator (pitch)
+ EQUB 0                 \ The rate of change of the rudder (yaw)
+ EQUB 0                 \ The rate of change of the aileron (roll)
+
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -16857,7 +17103,7 @@ NEXT
 
 .L5502
 
- LDA JoystickY,X
+ LDA Elevator,X
  BEQ L552F
 
  LDY KeyLoggerLow,X
@@ -16899,11 +17145,11 @@ NEXT
 
 .L552C
 
- STA JoystickY,X
+ STA Elevator,X
 
 .L552F
 
- LDA JoystickY,X
+ LDA Elevator,X
  BPL L5539
 
  EOR #&FF
@@ -16918,7 +17164,7 @@ NEXT
  JSR L546E
 
  LDX VV
- LDY JoystickY,X
+ LDY Elevator,X
  BPL L554F
 
  SEC
