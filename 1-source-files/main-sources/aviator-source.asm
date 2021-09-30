@@ -300,13 +300,29 @@ L0CBF = &0CBF
 L0CC0 = &0CC0
 L0CC1 = &0CC1
 
-L0CC2 = &0CC2           \ Set to %10000000 for new game
-
-L0CC3 = &0CC3           \ Set to %00001111 for new game
+ColourLogic = &0CC2     \ Determines the logic used to draw the canopy view
                         \
-                        \ Fluctuates between %11110000 and %00001111
-                        \ Something to do with drawing frames using colours 1, 2
-                        \ See L2C37
+                        \   * %00000000 just after each flip (L178D)
+                        \     AND logic
+                        \   * %01000000 when ColourCycle is %11110000 (FlipColours)
+                        \     ORA logic
+                        \   * %10000000 when ColourCycle is %00001111 (L2BDC, FlipColours)
+                        \     ORA logic
+                        \
+                        \ Set to %10000000 for each new game
+
+
+ColourCycle = &0CC3     \ Determines which of the two canopy screens we are
+                        \ showing, so we can use colour cycling for smooth
+                        \ animation
+                        \
+                        \ %00001111 = show colour 1, hide colour 2
+                        \ %11110000 = show colour 2, hide colour 1
+                        \
+                        \ We show a colour by mapping it to white, and hide a
+                        \ colour by mapping it to black
+                        \
+                        \ Set to %00001111 for each new game
 
 L0CC4 = &0CC4
 L0CC5 = &0CC5           \ Set to 1 in Reset ("on ground" flag?)
@@ -2204,8 +2220,9 @@ ORG &0B00
 
  INC T
  INC U
- LDA L0CC3
- BMI L11E5
+
+ LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ BMI L11E5              \ jump down to L11E5
 
  LDX L0CD1
  CPX #&5F
@@ -2258,7 +2275,8 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The code in this routine is modified by the ModifyDrawColours routine, and by
+\ the L1214 routine itself.
 \
 \ ******************************************************************************
 
@@ -2298,7 +2316,7 @@ ORG &0B00
 
 .L1247
 
- LDA #&60
+ LDA #&60               \ Gets modified by the ModifyDrawColours routine
  STA L1363+1
  LDA #&27
  STA I
@@ -2313,7 +2331,7 @@ ORG &0B00
 
 .L125C
 
- LDA #&6A
+ LDA #&6A               \ Gets modified by the ModifyDrawColours routine
  STA L1363+1
  LDA #0
  STA I
@@ -2471,13 +2489,13 @@ ORG &0B00
 
 .L131A
 
- BCC L1321
+ BCC L1321              \ Gets modified by the L1214 routine
 
  JSR L135F
 
 .L131F
 
- BNE L132A
+ BNE L132A              \ Gets modified by the L1214 routine
 
 .L1321
 
@@ -2485,11 +2503,12 @@ ORG &0B00
 
 .L1323
 
- LDA Lookup2E60,X
+ LDA Lookup2E60,X       \ Gets modified by the ModifyDrawColours routine
 
 .L1326
 
- ORA (P),Y
+ ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
@@ -2516,11 +2535,12 @@ ORG &0B00
 
 .L1342
 
- LDA Lookup2E6A,X
+ LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawColours routine
 
 .L1345
 
- ORA (P),Y
+ ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
@@ -2550,7 +2570,8 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The code in this routine is modified by the ModifyDrawColours and L1214
+\ routines, and by the L135F routine itself.
 \
 \ ******************************************************************************
 
@@ -2561,21 +2582,22 @@ ORG &0B00
 
 .L1363
 
- LDA Lookup2E60,X
+ LDA Lookup2E60,X       \ Gets modified by the L1214 routine
 
 .L1366
 
- ORA (P),Y
+ ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
 .L136A
 
- INY
+ INY                    \ Gets modified by the L1214 routine
 
 .L136B
 
- TYA
+ TYA                    \ Gets modified by the L1214 routine
  AND #7
  BNE L137D
 
@@ -2584,13 +2606,13 @@ ORG &0B00
 
 .L1373
 
- ADC #&38
+ ADC #&38               \ Gets modified by the L1214 routine
  STA P
  LDA P+1
 
 .L1379
 
- ADC #1
+ ADC #1                 \ Gets modified by the L1214 routine
  STA P+1
 
 .L137D
@@ -2695,7 +2717,8 @@ ORG &0B00
 
 .L1408
 
- LDA #8
+ LDA #8                 \ Gets modified by the ModifyDrawColours routine
+
  CPX #0
  BEQ L1412
 
@@ -2713,11 +2736,12 @@ ORG &0B00
 
 .L1417
 
- LDA H
+ LDA H                  \ Gets modified by the ModifyDrawColours routine
 
 .L1419
 
- ORA (P),Y
+ ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
@@ -2726,7 +2750,7 @@ ORG &0B00
 
 .L1421
 
- BCS L1440
+ BCS L1440              \ Gets modified by the L135F routine
 
  STA SS
 
@@ -2745,13 +2769,13 @@ ORG &0B00
 
 .L142E
 
- ADC #&C8
+ ADC #&C8               \ Gets modified by the L135F routine
  STA P
  LDA P+1
 
 .L1434
 
- ADC #&FE
+ ADC #&FE               \ Gets modified by the L135F routine
  STA P+1
  CPY J
  CLC
@@ -2769,7 +2793,7 @@ ORG &0B00
 
 .L1448
 
- CMP #0
+ CMP #0                 \ Gets modified by the ModifyDrawColours routine
  BNE L1459
 
  LDA P
@@ -2779,7 +2803,7 @@ ORG &0B00
 
 .L1453
 
- LDA #8
+ LDA #8                 \ Gets modified by the ModifyDrawColours routine
  BCC L1459
 
  INC P+1
@@ -2801,7 +2825,7 @@ ORG &0B00
 
 .L146A
 
- CMP #&10
+ CMP #16                \ Gets modified by the ModifyDrawColours routine
  BNE L147B
 
  LDA P
@@ -2811,7 +2835,7 @@ ORG &0B00
 
 .L1475
 
- LDA #1
+ LDA #1                 \ Gets modified by the ModifyDrawColours routine
  BCS L147B
 
  DEC P+1
@@ -2857,107 +2881,183 @@ ORG &0B00
 .L14A7
 
  STA G
+
  JMP L1214
 
 \ ******************************************************************************
 \
-\       Name: L14AC
+\       Name: ModifyDrawColours
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Modify the drawing routines to draw in the correct colour for the
+\             current colour cycle
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ If ColourLogic = %00000000:
+\
+\   * Modify the drawing logic in L1214 and L135F to AND
+\   * Modify L1214 and L135F so they fetch bit patterns from:
+\       * Lookup2E88 if ColourCycle = %00001111
+\       * Lookup2E92 if ColourCycle = %11110000
+\     In other words, the bit pattern they fetch is always the same as the value
+\     of ColourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
+\     %11110000
+\   * Modify L135F so it pokes the value of ColourCycle as a bit pattern in the
+\     screen updating routine at L1417
+\
+\ If ColourLogic = %01000000:
+\
+\   * Modify the drawing logic in L1214 and L135F to OR (the default)
+\   * Modify L1214 and L135F so they fetch bit patterns from Lookup2E74 and
+\     Lookup2E7E (colour 2) instead of Lookup2E60 and Lookup2E6A (colour 1)
+\
+\ If ColourLogic = %10000000:
+\
+\   * Modify the drawing logic in L1214 and L135F to OR (the default)
+\   * Restore the L1214 and L135F routines back to their default code, so we
+\     draw in colour 1
 \
 \ ******************************************************************************
 
-.L14AC
+.ModifyDrawColours
 
- LDA L0CC2
- BNE L14E2
+ LDA ColourLogic        \ If ColourLogic is non-zero, jump to mcol3
+ BNE mcol3
 
- LDA #&31
- STA L1326
- STA L1345
- STA L1366
- STA L1419
- LDA L0CC3
- BMI L14C8
+                        \ If we get here then ColourLogic is %00000000
 
- LDA #&88
- BNE L14CA
+ LDA #&31               \ Set A to the opcode for the AND (P),Y instruction
 
-.L14C8
+ STA L1326              \ Modify the screen-poking instructions in L1214 to use
+ STA L1345              \ AND (P),Y
 
- LDA #&92
+ STA L1366              \ Modify the screen-poking instructions in L135F to use
+ STA L1419              \ AND (P),Y
 
-.L14CA
+ LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ BMI mcol1              \ jump down to mcol1
 
- STA L1247+1
- STA L1323+1
- STA L125C+1
- STA L1342+1
- LDA L0CC3
- STA L1417+1
- LDA #&A9
- STA L1417
- RTS
+ LDA #&88               \ Bit 7 of ColourCycle is clear, i.e. %00001111, so set
+                        \ A to &88 so the L1214 instructions below are modified
+                        \ to the following:
+                        \
+                        \   LDA #&88 : STA L1363+1
+                        \   LDA Lookup2E88,X
+                        \   LDA #&88 : STA L1363+1
+                        \   LDA Lookup2E88,X
 
-.L14E2
+ BNE mcol2              \ Jump down to mcol2 (this BNE is effectively a JMP as
+                        \ A is never zero)
 
- LDA #&11
- STA L1326
- STA L1345
- STA L1366
- STA L1419
- LDA L0CC2
- BMI L1520
+.mcol1
 
- LDA #&74
- STA L1247+1
- STA L1323+1
- LDA #&7E
- STA L125C+1
- STA L1342+1
- LDA #&80
- STA L1408+1
- LDA #8
- STA L1448+1
- LDA #&80
- STA L1453+1
- LDA #0
- STA L146A+1
- LDA #&10
- STA L1475+1
- BNE L1549
+ LDA #&92               \ Bit 7 of ColourCycle is set, i.e. %11110000, so set
+                        \ A to &92 so the L1214 instructions below are modified
+                        \ to the following:
+                        \
+                        \   LDA #&92 : STA L1363+1
+                        \   LDA Lookup2E92,X
+                        \   LDA #&92 : STA L1363+1
+                        \   LDA Lookup2E92,X
 
-.L1520
+.mcol2
 
- LDA #&60
- STA L1247+1
- STA L1323+1
- LDA #&6A
- STA L125C+1
- STA L1342+1
- LDA #8
- STA L1408+1
- LDA #0
- STA L1448+1
- LDA #8
- STA L1453+1
- LDA #&10
- STA L146A+1
- LDA #1
- STA L1475+1
+                        \ Modify the following instructions in the L1214 routine
+                        \ where aa is the value of A:
+                        \
+ STA L1247+1            \   LDA #&60 : STA L1363+1 -> LDA #&aa : STA L1363+1
+ STA L1323+1            \   LDA Lookup2E60,X       -> LDA Lookup2Eaa,X
+ STA L125C+1            \   LDA #&6A : STA L1363+1 -> LDA #&aa : STA L1363+1
+ STA L1342+1            \   LDA Lookup2E6A,X       -> LDA Lookup2Eaa,X
 
-.L1549
+ LDA ColourCycle        \ Modify the following instruction in the L135F
+ STA L1417+1            \ routine:
+ LDA #&A9               \
+ STA L1417              \   LDA H -> LDA #ColourCycle
+                        \
+                        \ as the opcode for the LDA #n instruction is &A9
 
- LDA #&A5
- STA L1417
- LDA #&79
- STA L1417+1
- RTS
+ RTS                    \ Return from the subroutine
+
+.mcol3
+
+                        \ If we get here then ColourLogic is non-zero
+
+ LDA #&11               \ Set A to the opcode for the ORA (P),Y instruction
+
+ STA L1326              \ Modify the screen-poking instructions in L1214 to use
+ STA L1345              \ ORA (P),Y
+
+ STA L1366              \ Modify the screen-poking instructions in L135F to use
+ STA L1419              \ ORA (P),Y
+
+ LDA ColourLogic        \ If bit 7 of ColourLogic is set, i.e. %10000000, jump
+ BMI mcol4              \ to mcol4
+
+                        \ If we get here then ColourLogic is %01000000
+
+                        \ Modify the following instructions in the L1214
+                        \ routine:
+ LDA #&74               \
+ STA L1247+1            \   LDA #&60 : STA L1363+1 -> LDA #&74 : STA L1363+1
+ STA L1323+1            \   LDA Lookup2E60,X       -> LDA Lookup2E74,X
+ LDA #&7E               \
+ STA L125C+1            \   LDA #&6A : STA L1363+1 -> LDA #&74 : STA L1363+1
+ STA L1342+1            \   LDA Lookup2E6A,X       -> LDA Lookup2E7E,X
+
+                        \ Modify the following instructions in the L135F
+                        \ routine:
+ LDA #&80               \
+ STA L1408+1            \   LDA #8 -> LDA #&80
+ LDA #8                 \
+ STA L1448+1            \   CMP #0 -> CMP #8
+ LDA #&80               \
+ STA L1453+1            \   LDA #8 -> LDA #&80
+ LDA #0                 \
+ STA L146A+1            \   CMP #16 -> CMP #0
+ LDA #16                \
+ STA L1475+1            \   LDA #1 -> LDA #16
+
+ BNE mcol5              \ Jump down to mcol5 (this BNE is effectively a JMP as
+                        \ A is never zero)
+
+.mcol4
+
+                        \ If we get here then ColourLogic is %10000000
+
+                        \ Modify the following instructions in the L1214
+                        \ routine:
+ LDA #&60               \
+ STA L1247+1            \   LDA #&60 : STA L1363+1 -> LDA #&60 : STA L1363+1
+ STA L1323+1            \   LDA Lookup2E60,X       -> LDA Lookup2E60,X
+ LDA #&6A               \
+ STA L125C+1            \   LDA #&6A : STA L1363+1 -> LDA #&6A : STA L1363+1
+ STA L1342+1            \   LDA Lookup2E6A,X       -> LDA Lookup2E6A,X
+
+                        \ Modify the following instructions in the L135F
+                        \ routine:
+ LDA #8                 \
+ STA L1408+1            \   LDA #8 -> LDA #8
+ LDA #0                 \
+ STA L1448+1            \   CMP #0 -> CMP #0
+ LDA #8                 \
+ STA L1453+1            \   LDA #8 -> LDA #8
+ LDA #16                \
+ STA L146A+1            \   CMP #16 -> CMP #16
+ LDA #1                 \
+ STA L1475+1            \   LDA #1 -> LDA #1
+
+.mcol5
+
+                        \ Modify the following instruction in the L135F
+                        \ routine:
+ LDA #&A5               \
+ STA L1417              \   LDA H -> LDA H
+ LDA #&79               \
+ STA L1417+1            \ as the opcode for the LDA n instruction is &A5
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -3443,14 +3543,16 @@ ORG &0B00
 
 .L178D
 
- LDA #0
- STA L0CC2
- JSR L14AC
+ LDA #%00000000         \ Set ColourLogic = %00000000
+ STA ColourLogic
+
+ JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
+                        \ cycle
 
 .L1795
 
- LDA L0CC3
- BPL L17A8
+ LDA ColourCycle        \ If bit 7 of ColourCycle is clear, i.e. %00001111, jump
+ BPL L17A8              \ down to L17A8
 
  LDX L0CD1
  CPX #&2F
@@ -3493,6 +3595,7 @@ ORG &0B00
  STA U
  LDA L48A0,X
  STA V
+
  JSR L1214
 
  JMP L1795
@@ -4453,7 +4556,7 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The code in this routine is modified by the L5295 routine.
 \
 \ ******************************************************************************
 
@@ -4469,7 +4572,7 @@ ORG &0B00
 
 .L1D46
 
- ADC #&80
+ ADC #&80               \ Gets modified by the L5295 routine
  STA W
  BCC L1D4E
 
@@ -8874,7 +8977,7 @@ ORG &0B00
 
  JSR L28B6
 
- JSR L2C37
+ JSR L2C37              \ Update canopy view
 
  JSR L4D6E
 
@@ -9704,13 +9807,14 @@ ORG &0B00
 
 .L2BDC
 
- LDA #%10000000         \ Set L0CC2 = %10000000
- STA L0CC2
+ LDA #%10000000         \ Set ColourLogic = %10000000
+ STA ColourLogic
 
- LDA #%00001111         \ Set L0CC3 = %00001111
- STA L0CC3
+ LDA #%00001111         \ Set ColourCycle = %00001111, so we show colour 1 and
+ STA ColourCycle        \ hide colour 2 in the canopy view
 
- JSR L14AC
+ JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
+                        \ cycle
 
  LDA #0                 \ Set JJ = 0 to act as a loop counter below
  STA JJ
@@ -9734,44 +9838,59 @@ ORG &0B00
  CMP L4207
  BCC L2BF7
 
- LDX #3                 \ Set logical colour 3 to white
- JSR SetColourToWhite
+ LDX #3                 \ Set logical colour 3 to white so the dashboard display
+ JSR SetColourToWhite   \ shows up in white
+
+                        \ Fall through into FlipColours to flip the values of
+                        \ ColourCycle and ColourLogic to cycle to the next
+                        \ colour state
 
 \ ******************************************************************************
 \
-\       Name: L2C08
+\       Name: FlipColours
 \       Type: Subroutine
-\   Category: 
-\    Summary: Set L0CC2 and L0CC3 depending on the sign of L0CC3
+\   Category: Graphics
+\    Summary: Flip the values of ColourCycle and ColourLogic to cycle to the
+\             next colour state
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Thie routine flips the ColourCycle and ColourLogic variables between these two
+\ states:
+\
+\   * ColourLogic = %10000000 = ORA logic
+\     ColourCycle = %00001111 = show colour 1, hide colour 2
+\
+\   * ColourLogic = %01000000 = ORA logic
+\     ColourCycle = %11110000 = show colour 2, hide colour 1
+\
+\ The routine only checks the value of Colour Cycle, so if ColourLogic is
+\ %00000000 on entry, it will be set to one of %10000000 and %01000000.
 \
 \ ******************************************************************************
 
-.L2C08
+.FlipColours
 
- LDX #%00001111         \ Set X and Y for when L0CC3 is negative
- LDY #%10000000
+ LDX #%00001111         \ Set the values of X and Y to use if bit 7 of
+ LDY #%10000000         \ ColourCycle is set, i.e. %11110000
 
- LDA L0CC3              \ If L0CC3 is negative, jump to L2C15
- BMI L2C15
+ LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ BMI cycl1              \ down to cycl1
 
- LDX #%11110000         \ Set X and Y for when L0CC3 is negative
- LDY #%01000000
+ LDX #%11110000         \ Set X and Y for when bit 7 of ColourCycle is clear,
+ LDY #%01000000         \ i.e. %00001111
 
-.L2C15
+.cycl1
 
- STX L0CC3              \ Store X in L0CC3, so L0CC3 is now:
+ STX ColourCycle        \ Store X in ColourCycle, so ColourCycle is now:
                         \
-                        \   * %11110000 if L0CC3 was positive
-                        \   * %00001111 if L0CC3 was negative
+                        \   * %11110000 if the old ColourCycle was %00001111
+                        \   * %00001111 if the old ColourCycle was %11110000
 
- STY L0CC2              \ Store Y in L0CC2, so L0CC2 is now:
+ STY ColourLogic        \ Store Y in ColourLogic, so ColourLogic is now:
                         \
-                        \   * %01000000 if L0CC3 was positive
-                        \   * %10000000 if L0CC3 was negative
+                        \   * %01000000 if the old ColourCycle was %00001111
+                        \   * %10000000 if the old ColourCycle was %11110000
 
  RTS                    \ Return from the subroutine
 
@@ -9872,8 +9991,8 @@ ORG &0B00
 \
 \       Name: L2C37
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Draw canopy view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9883,7 +10002,8 @@ ORG &0B00
 
 .L2C37
 
- JSR L14AC
+ JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
+                        \ cycle
 
  LDA II
  BNE L2C40
@@ -9925,24 +10045,28 @@ ORG &0B00
 
  JSR DrawGunSights      \ Update the gun sights, if shown
 
- LDA L0CC3
- BMI L2C84
+                        \ We now flip the screens between the old screen (which
+                        \ is being shown in white) and the new one (which we
+                        \ just drew in black)
 
- LDX #2                 \ Set logical colour 2 to black
- JSR SetColourToBlack
+ LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ BMI L2C84              \ down to L2C84
 
- LDX #1                 \ Set logical colour 1 to white
- JSR SetColourToWhite
+ LDX #2                 \ Set logical colour 2 to black, to hide the old canopy
+ JSR SetColourToBlack   \ view in colour 2
+
+ LDX #1                 \ Set logical colour 1 to white, to show the new canopy
+ JSR SetColourToWhite   \ view that we just drew in colour 1
 
  JMP L2C8E
 
 .L2C84
 
- LDX #1                 \ Set logical colour 1 to black
- JSR SetColourToBlack
+ LDX #1                 \ Set logical colour 1 to black, to hide the old canopy
+ JSR SetColourToBlack   \ view in colour 1
 
- LDX #2                 \ Set logical colour 2 to white
- JSR SetColourToWhite
+ LDX #2                 \ Set logical colour 2 to white,  to show the new
+ JSR SetColourToWhite   \ view that we just drew in colour 2
 
 .L2C8E
 
@@ -9950,9 +10074,10 @@ ORG &0B00
 
 .L2C91
 
- JSR L2C08              \ Set L0CC2 and L0CC3 depending on the sign of L0CC3
+ JSR FlipColours        \ Flip the values of ColourCycle and ColourLogic to
+                        \ cycle to the next colour state
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -10379,19 +10504,6 @@ ORG &0B00
  EQUB %00000011
  EQUB %00000001
 
-\ ******************************************************************************
-\
-\       Name: Lookup2E6A
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 .Lookup2E6A
 
  EQUB %00000001
@@ -10407,6 +10519,8 @@ ORG &0B00
  EQUB %00001100
  EQUB %00001000
 
+.Lookup2E74
+
  EQUB %10000000
  EQUB %11000000
  EQUB %11100000
@@ -10420,6 +10534,8 @@ ORG &0B00
  EQUB %00110000
  EQUB %00010000
 
+.Lookup2E7E
+
  EQUB %00010000
  EQUB %00110000
  EQUB %01110000
@@ -10433,24 +10549,32 @@ ORG &0B00
  EQUB %11000000
  EQUB %10000000
 
- EQUB %00001111
- EQUB %00001111
- EQUB %00001111
- EQUB %00001111
- EQUB %00001111
- EQUB %00001111
+.Lookup2E88
+
  EQUB %00001111
  EQUB %00001111
  EQUB %00001111
  EQUB %00001111
 
+ EQUB %00001111
+ EQUB %00001111
+ EQUB %00001111
+
+ EQUB %00001111
+ EQUB %00001111
+ EQUB %00001111
+
+.Lookup2E92
+
  EQUB %11110000
  EQUB %11110000
  EQUB %11110000
  EQUB %11110000
+
  EQUB %11110000
  EQUB %11110000
  EQUB %11110000
+
  EQUB %11110000
  EQUB %11110000
  EQUB %11110000
