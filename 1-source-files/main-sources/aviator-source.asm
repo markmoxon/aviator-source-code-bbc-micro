@@ -299,8 +299,15 @@ GunSights = &0CBE       \ Gun sights status
 L0CBF = &0CBF
 L0CC0 = &0CC0
 L0CC1 = &0CC1
-L0CC2 = &0CC2           \ Set to 128 for new game
-L0CC3 = &0CC3           \ Set to 15 for new game
+
+L0CC2 = &0CC2           \ Set to %10000000 for new game
+
+L0CC3 = &0CC3           \ Set to %00001111 for new game
+                        \
+                        \ Fluctuates between %11110000 and %00001111
+                        \ Something to do with drawing frames using colours 1, 2
+                        \ See L2C37
+
 L0CC4 = &0CC4
 L0CC5 = &0CC5           \ Set to 1 in Reset ("on ground" flag?)
 
@@ -391,7 +398,8 @@ L0CEF = &0CEF           \ Set to 92 in Reset
 L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
                         \ IndicatorU
 
-L0CF1 = &0CF1           \ ? FRFLAG in original
+L0CF1 = &0CF1           \ ? FRFLAG in original, fire flag?
+                        \ Can't fire guns if this or L368F are non-zero
 
 Undercarriage = &0CF2   \ Undercarriage status
                         \
@@ -7388,15 +7396,15 @@ ORG &0B00
                         \ So we set a counter in X to count down through these
                         \ index values, from 2 to 1 to 0
 
-.fkey1
+.pkey1
 
  CLC                    \ Clear the C flag for the addition below
 
  LDA KeyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
                         \ if a key is being pressed, or 0 if no key is pressed
 
- BEQ fkey4              \ If A = 0 then neither key in this key pair is being
-                        \ pressed, so jump down to fkey4
+ BEQ pkey4              \ If A = 0 then neither key in this key pair is being
+                        \ pressed, so jump down to pkey4
 
  ADC AxisKeyUsage,X     \ Add the low value to the corresponding variable for
  STA AxisKeyUsage,X     \ this key pair in AxisKeyUsage, so we increment the
@@ -7418,13 +7426,13 @@ ORG &0B00
                         \ according to the key press
 
  LDY AxisChangeRate,X   \ If this key pair's AxisChangeRate value is already
- BEQ fkey2              \ zero, skip the following instruction
+ BEQ pkey2              \ zero, skip the following instruction
 
  DEC AxisChangeRate,X   \ Decrement this key pair's AxisChangeRate value
 
-.fkey2
+.pkey2
 
- BNE fkey3              \ If this key pair's AxisChangeRate value is non-zero,
+ BNE pkey3              \ If this key pair's AxisChangeRate value is non-zero,
                         \ skip the following
 
                         \ If we get here, then this key pair's AxisChangeRate
@@ -7438,28 +7446,28 @@ ORG &0B00
  ADC #3
 
  BIT P                  \ If P is positive (so we are increasing the relevant
- BPL fkey3              \ axis value), skip the following instruction
+ BPL pkey3              \ axis value), skip the following instruction
 
  ADC #250               \ P is negative (so we are decreasing the relevant
                         \ axis value), so set A = A - 6, giving a net change of
                         \ setting A = A - 3
 
-.fkey3
+.pkey3
 
  TAY                    \ If the adjusted axis value is positive, jump down to
- BPL fkey5              \ fkey5 to check the maximum allowed value
+ BPL pkey5              \ pkey5 to check the maximum allowed value
 
                         \ If we get here then the adjusted axis value is
                         \ negative, so now we check against the minimum allowed
                         \ value
 
  CMP #140               \ If A >= -116, the value is within limits, so jump to
- BCS fkey6              \ fkey6 to store it
+ BCS pkey6              \ pkey6 to store it
 
  LDA #140               \ Set A = -116 as the minimum allowed value for the axis
- BNE fkey6              \ value and jump to fkey6 to store it
+ BNE pkey6              \ value and jump to pkey6 to store it
 
-.fkey4
+.pkey4
 
                         \ If we get here then neither key was pressed from this
                         \ key pair
@@ -7468,22 +7476,22 @@ ORG &0B00
  STA AxisChangeRate,X   \ so the rate of change goes back to 1 until we fully
                         \ engage the control once again
 
- BNE fkey7              \ Jump down to fkey7 to move on to the next key pair
+ BNE pkey7              \ Jump down to pkey7 to move on to the next key pair
                         \ (this BNE is effectively a JMP as A is never zero)
 
-.fkey5
+.pkey5
 
                         \ If we get here then the adjusted axis value is
                         \ positive, so now we check against the maximum allowed
                         \ value
 
  CMP #119               \ If A < 119, the value is within limits, so jump to
- BCC fkey6              \ fkey6 to store it
+ BCC pkey6              \ pkey6 to store it
 
  LDA #118               \ Set A = 118 as the maximum allowed value for the axis
                         \ value
 
-.fkey6
+.pkey6
 
  STA Elevator,X         \ Store the adjusted axis value in the relevant axis
                         \ variable:
@@ -7492,11 +7500,11 @@ ORG &0B00
                         \   * Rudder if this is the rudder key pair
                         \   * Elevator if this is the elevator key pair
 
-.fkey7
+.pkey7
 
  DEX                    \ Decrement the key pair index
 
- BPL fkey1              \ Loop back to process the next key pair until we have
+ BPL pkey1              \ Loop back to process the next key pair until we have
                         \ done all three axes of movement (aileron roll, rudder
                         \ yaw and elevator pitch)
 
@@ -7518,8 +7526,8 @@ ORG &0B00
 
  LDA KeyLoggerLow+3     \ Fetch the low value for the throttle key
 
- BEQ fkey11             \ If A = 0 then neither key in this key pair is being
-                        \ pressed, so jump down to fkey11 to skip the throttle
+ BEQ pkey11             \ If A = 0 then neither key in this key pair is being
+                        \ pressed, so jump down to pkey11 to skip the throttle
                         \ calculations below
 
                         \ We now want to add the key logger value to the current
@@ -7536,30 +7544,30 @@ ORG &0B00
  ADC ThrustHi           \ updated thrust value
  TAY
 
- BMI fkey8              \ If the result is negative, jump to fkey8 to set both X
+ BMI pkey8              \ If the result is negative, jump to pkey8 to set both X
                         \ and Y to zero, so the minimum thrust value is zero
 
  CPY #5                 \ If the high byte in Y < 5, then the result is within
- BCC fkey10             \ bounds, so jump to fkey10 to store the new thrust
+ BCC pkey10             \ bounds, so jump to pkey10 to store the new thrust
                         \ value
 
- LDY #5                 \ Set Y = 5 and jump to fkey9 to set X to 0, so the
- BNE fkey9              \ maximum thrust value is (5 0), or 1280 (this BNE is
+ LDY #5                 \ Set Y = 5 and jump to pkey9 to set X to 0, so the
+ BNE pkey9              \ maximum thrust value is (5 0), or 1280 (this BNE is
                         \ effectively a JMP, as Y is never zero)
 
-.fkey8
+.pkey8
 
  LDY #0                 \ If we get here then the new thrust in (Y X) turned out
                         \ to be negative, so we set Y = 0 and then X = 0 to zero
                         \ the thrust
 
-.fkey9
+.pkey9
 
- LDX #0                 \ Zero the low byte of the new thrust as we are either at
-                        \ the maxiumum value of (5 0) or the minimum value of
+ LDX #0                 \ Zero the low byte of the new thrust as we are either
+                        \ at the maxiumum value of (5 0) or the minimum value of
                         \ (0 0)
 
-.fkey10
+.pkey10
 
  STX ThrustLo           \ Store the thrust value in (ThrustHi ThrustLo) to the
  STY ThrustHi           \ updated thrust value in (Y X)
@@ -7576,47 +7584,47 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.fkey11
+.pkey11
 
  LDX #4                 \ Process the undercarriage or brake keys, if pressed
  JSR ProcessOtherKeys
 
- BEQ fkey13             \ If neither are being pressed, jump to fkey13 to check
+ BEQ pkey13             \ If neither are being pressed, jump to pkey13 to check
                         \ for the next set of key presses
 
- BMI fkey12             \ If the brake key is being pressed, then the returned
-                        \ value is 128, so jump to fkey12
+ BMI pkey12             \ If the brake key is being pressed, then the returned
+                        \ value is 128, so jump to pkey12
 
  JSR IndicatorU         \ The undercarriage key is being pressed, so update the
                         \ undercarriage indicator
 
- JMP fkey13             \ Jump to fkey13 to check for the next set of key
+ JMP pkey13             \ Jump to pkey13 to check for the next set of key
                         \ presses
 
-.fkey12
+.pkey12
 
  JSR IndicatorB         \ The brake key is being pressed, so update the brakes
                         \ indicator
 
-.fkey13
+.pkey13
 
  LDX #5                 \ Process the flaps or fire keys, if pressed
  JSR ProcessOtherKeys
 
- BEQ fkey15             \ If neither are being pressed, jump to fkey15 to check
+ BEQ pkey15             \ If neither are being pressed, jump to pkey15 to check
                         \ for the next set of key presses
 
 
- BMI fkey14             \ If the fire key is being pressed, then the returned
-                        \ value is 128, so jump to fkey14
+ BMI pkey14             \ If the fire key is being pressed, then the returned
+                        \ value is 128, so jump to pkey14
 
  JSR IndicatorF         \ The flaps key is being pressed, so update the flaps
                         \ indicator
 
- JMP fkey15             \ Jump to fkey15 to check for the next set of key
+ JMP pkey15             \ Jump to pkey15 to check for the next set of key
                         \ presses
 
-.fkey14
+.pkey14
 
  JSR FireGuns           \ The fire key is being pressed, so call FireGuns
 
@@ -7629,11 +7637,11 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.fkey15
+.pkey15
 
  LDY #2
 
-.fkey16
+.pkey16
 
  STY L0CC4
 
@@ -7643,7 +7651,7 @@ ORG &0B00
 
  DEY
 
- BPL fkey16
+ BPL pkey16
 
  LDA #0
  STA L0CCB
@@ -7696,8 +7704,8 @@ ORG &0B00
 
  LDA KeyLoggerLow,X     \ Fetch the low value for this key pair
 
- BNE ufbs2              \ If A is non-zero then a key from this key pair is
-                        \ being pressed, so jump down to ufbs2 to process the
+ BNE poth2              \ If A is non-zero then a key from this key pair is
+                        \ being pressed, so jump down to poth2 to process the
                         \ key press
 
  STA PressingUFBS-4,X   \ Zero the relevant value in PressingUFBS (for U) or
@@ -7708,13 +7716,13 @@ ORG &0B00
                         \ PressingUFBS+4 (for SHIFT) to indicate that the second
                         \ key from this pair is not being held down
 
-.ufbs1
+.poth1
 
  LDA #0                 \ Set A = 0 as the return value
 
  RTS                    \ Return from the subroutine
 
-.ufbs2
+.poth2
 
  TAY                    \ Copy the low value into Y, so we have:
                         \
@@ -7724,10 +7732,10 @@ ORG &0B00
                         \   * Y = 8 if SHIFT is being pressed (fire)
 
  LDA PressingUFBS-4,Y   \ Fetch the relevant value from PressingUFBS to see if
- BNE ufbs1              \ the key press has already been processed, and if it is
+ BNE poth1              \ the key press has already been processed, and if it is
                         \ non-zero, this indicates that it is still being held
                         \ down from a previous visit to this routine, so jump to
-                        \ ufbs1 to return a value of 0, so we can ignore the key
+                        \ poth1 to return a value of 0, so we can ignore the key
                         \ press
 
  LDA Undercarriage-4,Y  \ Flip the value of the relevant status byte, as
@@ -7744,15 +7752,15 @@ ORG &0B00
                         \ routine before the key is released, we don't keep on
                         \ flipping the status byte
 
- CPY #7                 \ If Y < 7, i.e. U or F are being pressed, jump to ufbs3
- BCC ufbs3              \ to return a result of 1
+ CPY #7                 \ If Y < 7, i.e. U or F are being pressed, jump to poth3
+ BCC poth3              \ to return a result of 1
 
  LDA #128               \ Y >= 7, i.e. B or SHIFT are being pressed, so set
                         \ A = 128 as the return value
 
  RTS                    \ Return from the subroutine
 
-.ufbs3
+.poth3
 
  LDA #1                 \ Set A = 1 as the return value
 
@@ -8591,7 +8599,7 @@ ORG &0B00
 .MainLoop
 
  LDA NN                 \ Fetch the value of NN, which appears to be a counter
- STA L0CC6              \ of things at L0600
+ STA L0CC6              \ of things at L0600, and store it in L0CC6
 
  JSR L2F1C
 
@@ -9718,7 +9726,7 @@ ORG &0B00
 
 .L2BF7
 
- JSR L2953              \ Add number JJ to either the L0500 or L0600 table
+ JSR L2953              \ Append number JJ to either the L0500 or L0600 table
 
  INC JJ                 \ Increment the loop counter
 
@@ -9726,8 +9734,8 @@ ORG &0B00
  CMP L4207
  BCC L2BF7
 
- LDX #3
- JSR L2C1C
+ LDX #3                 \ Set logical colour 3 to white
+ JSR SetColourToWhite
 
 \ ******************************************************************************
 \
@@ -9769,61 +9777,96 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2C1C
+\       Name: SetColourToWhite
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Set a logical colour to white
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The logical colour to set to white
 \
 \ ******************************************************************************
 
-.L2C1C
+.SetColourToWhite
 
- LDY #7                 \ Set Y = 7
+ LDY #7                 \ Set Y = 7 so we set the logical colour to physical
+                        \ colour 7 (white)
 
- BNE L2C22              \ Jump to L2C22 (this BNE is effeftively a JMP as Y is
+ BNE SetLogicalColour   \ Jump to SetLogicalColour to set the logical colour in
+                        \ X to white (this BNE is effectively a JMP as Y is
                         \ never zero
 
 \ ******************************************************************************
 \
-\       Name: L2C20
+\       Name: SetColourToBlack
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Graphics
+\    Summary: Set a logical colour to black
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The logical colour to set to black
 \
 \ ******************************************************************************
 
-.L2C20
+.SetColourToBlack
 
- LDY #0
+ LDY #0                 \ Set Y = 0 so we set the logical colour to physical
+                        \ colour 7 (black)
 
-.L2C22
+                        \ Fall through into SetLogicalColour to set the logical
+                        \ colour in X to black
 
- LDA #&13
+\ ******************************************************************************
+\
+\       Name: SetLogicalColour
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Set a logical colour to a physical colour
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The logical colour to set
+\
+\   Y                   The physical colour to map to the logical colour
+\
+\ ******************************************************************************
+
+.SetLogicalColour
+
+ LDA #19                \ Start a VDU 19 command, which sets a logical colour to
+ JSR OSWRCH             \ a physical colour using the following format:
+                        \
+                        \   VDU 19, logical, physical, 0, 0, 0
+
+ TXA                    \ Write the value in X, which is the logical colour
  JSR OSWRCH
 
- TXA
- JSR OSWRCH
+ TYA                    \ Copy the physical colour from Y to A
 
- TYA
- LDX #3
+ LDX #3                 \ Set a counter in X to write the next four values, so
+                        \ the following loop writes:
+                        \
+                        \   physical, 0, 0, 0
 
-.L2C2E
+.setl1
 
- JSR OSWRCH
+ JSR OSWRCH             \ Write the value in A
 
- LDA #0
- DEX
- BPL L2C2E
+ LDA #0                 \ Set A to 0 to write the three zeroes
 
- RTS
+ DEX                    \ Decrement the loop counter
+
+ BPL setl1              \ Loop back until we have written the whole VDU command
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9880,26 +9923,26 @@ ORG &0B00
  CMP II
  BCC L2C44
 
- JSR DrawGunSights
+ JSR DrawGunSights      \ Update the gun sights, if shown
 
  LDA L0CC3
  BMI L2C84
 
- LDX #2
- JSR L2C20
+ LDX #2                 \ Set logical colour 2 to black
+ JSR SetColourToBlack
 
- LDX #1
- JSR L2C1C
+ LDX #1                 \ Set logical colour 1 to white
+ JSR SetColourToWhite
 
  JMP L2C8E
 
 .L2C84
 
- LDX #1
- JSR L2C20
+ LDX #1                 \ Set logical colour 1 to black
+ JSR SetColourToBlack
 
- LDX #2
- JSR L2C1C
+ LDX #2                 \ Set logical colour 2 to white
+ JSR SetColourToWhite
 
 .L2C8E
 
@@ -12142,6 +12185,7 @@ ORG &0B00
 .L368F                  \ EPLO in orginal
 
  EQUB &26               \ Zeroed in Reset
+                        \ Can't fire guns if this or L0CF1 are non-zero
 
 .L3690
 
@@ -15287,8 +15331,8 @@ NEXT
  BNE guns1              \ If "I" is not being pressed, jump to guns1
 
  BIT GunSights          \ If bit 6 of GunSights is set, then "I" is still being
- BVS guns3              \ held down from a previous call to this routine, so jump
-                        \ to guns3 to move on from the subroutine
+ BVS guns3              \ held down from a previous call to this routine, so
+                        \ jump to guns3 to move on from the subroutine
 
  LDA #%11000000         \ Set A = GunSights with bits 6 and 7 flipped, which we
  EOR GunSights          \ will set as the new value of GunSights below
