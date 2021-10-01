@@ -63,7 +63,7 @@ If you want to browse the source in an IDE, you might find the following useful.
 
   * The main game's source code is in the [aviator-source.asm](1-source-files/main-sources/aviator-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `*AVIA?` that contains the entire game.
 
-  * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they ae, however, completely optional, and it is possible to skip these and run the game using `*AVIA?`.
+  * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they are, however, completely optional, and it is possible to skip these and run the game using `*AVIA?`.
 
 * It's probably worth skimming through the [notes on terminology and notations](https://www.bbcelite.com/about_site/terminology_used_in_this_commentary.html) on the accompanying website, as this explains a number of terms used in the commentary, without which it might be a bit tricky to follow at times (in particular, you should understand the terminology I use for multi-byte numbers).
 

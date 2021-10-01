@@ -75,6 +75,7 @@ L0400 = &0400           \ Whole page zeroed in Reset
 L04D8 = &04D8
 L04D9 = &04D9
 L04EC = &04EC
+L04F6 = &04F6
 
 L0500 = &0500
 L05C8 = &05C8           \ Zeroed in Reset
@@ -325,9 +326,16 @@ ColourCycle = &0CC3     \ Determines which of the two canopy screens we are
                         \ Set to %00001111 for each new game
 
 L0CC4 = &0CC4
-L0CC5 = &0CC5           \ Set to 1 in Reset ("on ground" flag?)
 
-L0CC6 = &0CC6           \ Used to store the value of NN during the main loop
+OnGround = &0CC5        \ "On the ground" status
+                        \
+                        \   * 0 = we are not on the ground
+                        \   * 1 = we are on the ground
+                        \
+                        \ Set to 1 in Reset (on the ground)
+
+MainLoopNN = &0CC6      \ Used to store the value of NN at the start of each
+                        \ iteration of the main loop
 
 L0CC7 = &0CC7
 L0CC8 = &0CC8
@@ -374,7 +382,9 @@ L0CD7 = &0CD7
 ScoreDisplayTimer = &0CD8   \ Counter for removing the score after displaying it
                         \ for a fixed amount of time
 
-L0CD9 = &0CD9
+GunSoundCounter = &0CD9 \ Counter for the number of firing sounds we make when
+                        \ firing our guns (which makes the sound of two shots)
+
 L0CDA = &0CDA
 L0CE0 = &0CE0
 L0CE1 = &0CE1
@@ -392,6 +402,8 @@ Theme = &0CE7           \ Theme status
                         \ Set to 255 (Theme not enabled) in Reset
 
 L0CE8 = &0CE8           \ Set to 1 in Reset
+                        \
+                        \ Gets shifted left with a 1 inserted in bit 0 in L5670
 
 Engine = &0CE9          \ Engine status
                         \
@@ -414,7 +426,13 @@ L0CEF = &0CEF           \ Set to 92 in Reset
 L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
                         \ IndicatorU
 
-L0CF1 = &0CF1           \ ? FRFLAG in original, fire flag?
+Firing = &0CF1          \ Firing status
+                        \
+                        \   * 0 = no bullets in the air
+                        \   * Non-zero = guns fired, bullets in the air
+                        \
+                        \ Called FRFLAG in original source code
+                        \
                         \ Can't fire guns if this or L368F are non-zero
 
 Undercarriage = &0CF2   \ Undercarriage status
@@ -426,8 +444,8 @@ Undercarriage = &0CF2   \ Undercarriage status
              
 Flaps = &0CF3           \ Flaps status
                         \
-                        \   * 0 = flaps are off
-                        \   * Non-zero = flaps are on
+                        \   * 0 = flaps are off (raised)
+                        \   * Non-zero = flaps are on (dropped)
                         \
                         \ Set to 0 (flaps are off) in Reset
 
@@ -7797,9 +7815,11 @@ ORG &0B00
 \                               call to the routine, so it has already been
 \                               processed
 \
-\                         * 1 = U or F (undercarriage, flaps) is being pressed
+\                         * 1 = One of "U" and "F" (undercarriage, flaps) is
+\                               being pressed
 \
-\                         * 128 = B or SHIFT (brakes, fire) is being pressed
+\                         * 128 = One of "B" and SHIFT (brakes, fire) is being
+\                               pressed
 \
 \ ******************************************************************************
 
@@ -7903,8 +7923,9 @@ ORG &0B00
 
                         \ If we get here then the undercarriage is down
 
- LDY L0CC5              \ If L0CC5 <> 0, jump to indu4 to set the undercarriage
- BNE indu4              \ to up and return from the subroutine
+ LDY OnGround           \ If OnGround is non-zero, then we are on the ground, so
+ BNE indu4              \ jump to indu4 to set the undercarriage to up and
+                        \ return from the subroutine
 
  CLC                    \ Set A = A + 10
  ADC #10
@@ -7953,12 +7974,6 @@ ORG &0B00
 \   Category: Dashboard
 \    Summary: Update the flaps indicator ("F") and and related variables
 \
-\ ------------------------------------------------------------------------------
-\
-\ Other entry points:
-\
-\   IndicatorF_RTS      Contains an RTS
-\
 \ ******************************************************************************
 
 .IndicatorF
@@ -7973,7 +7988,7 @@ ORG &0B00
  SEC                    \ Set A = A - 200
  SBC #200
 
- LDX #0                 \ Set X = 5 to store in L4F87 below
+ LDX #0                 \ Set X = 0 to store in L4F87 below
 
  LDY #%01000100         \ Set Y to a four-pixel block with pixel 2 in white, to
                         \ act as the centre of the flaps indicator when turned
@@ -8000,7 +8015,7 @@ ORG &0B00
  STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 200 or
                         \ reduced by 200 for flaps on/off) ???
 
- STX L4F87              \ Store X in L4F87 (5 if flaps are off, 152 if they are
+ STX L4F87              \ Store X in L4F87 (0 if flaps are off, 152 if they are
                         \ on) ???
 
  TYA                    \ Set A to the pixel pattern in Y
@@ -8017,8 +8032,6 @@ ORG &0B00
 
  BPL indf3              \ Loop back to update the next row of the indicator
 
-.IndicatorF_RTS
-
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
@@ -8030,15 +8043,17 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Other entry points:
+\
+\   FireGuns-1          Contains an RTS
 \
 \ ******************************************************************************
 
 .FireGuns
 
- LDA L0CF1
- ORA L368F
- BNE IndicatorF_RTS
+ LDA Firing             \ If either Firing or L368F are non-zero, return from
+ ORA L368F              \ the subroutine (as FireGuns-1 contains an RTS)
+ BNE FireGuns-1
 
  LDX #&E4
  JSR L4B4A
@@ -8061,7 +8076,10 @@ ORG &0B00
  STA GG
  LDA #9
  STA L0CCB
- STA L0CF1
+
+ STA Firing             \ Set Firing = 9, which is a non-zero value, to indicate
+                        \ that there are bullets are in the air
+
  JSR L1D8D
 
  LDX #&E5
@@ -8533,8 +8551,8 @@ ORG &0B00
 
  JSR IndicatorU         \ Update the undercarriage indicator
 
- LDA #1                 \ Set L0CC5 = 1
- STA L0CC5
+ LDA #1                 \ Set OnGround = 1 (on the ground)
+ STA OnGround
 
  LDA #47                \ Set L0CD1 = 47
  STA L0CD1
@@ -8688,10 +8706,10 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: MainLoop
+\       Name: MainLoop (Part 1 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
+\    Summary: Start the main loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8701,42 +8719,83 @@ ORG &0B00
 
 .MainLoop
 
- LDA NN                 \ Fetch the value of NN, which appears to be a counter
- STA L0CC6              \ of things at L0600, and store it in L0CC6
+ LDA NN                 \ Store the value of NN, which appears to be a counter
+ STA MainLoopNN         \ of things at L0600, in MainLoopNN, so we can refer to
+                        \ it later
 
  JSR L2F1C
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
- LDA L0CF1
- BNE main2
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 2 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Process gunfire and bullets
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+ LDA Firing             \ If Firing is non-zero, then we have already fired our
+ BNE main2              \ gun and the bullets are still in the air, so jump to
+                        \ main2 to skip firing bullets, as we can't fire any
+                        \ more bullets until the current ones expire
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
- LDA L0CF1
- BEQ main3
+ LDA Firing             \ If the call to ProcessKeyLogger has left Firing set to
+ BEQ main3              \ zero, then the fire key is not being pressed, so jump
+                        \ to main3 to skip firing bullets
 
- LDA #2
- STA L0CD9
- LDY #&21
+                        \ The call to ProcessKeyLogger had changed Firing from
+                        \ zero to non-zero, which means the fire key is being
+                        \ pressed, so we now need to add two bullets to the
+                        \ scene
+
+ LDA #2                 \ Set GunSoundCounter = 2, so we make two firing sounds
+ STA GunSoundCounter    \ below, one for each bullet
+
+ LDY #&21               \ We now copy four bytes from L04D8 to L41FA, between
+                        \ offset &1E and &21, so set up a counter in Y that can
+                        \ also act as the offset
 
 .main1
 
- LDA L04D8,Y
- STA L41FA,Y
- DEY
- CPY #&1E
+ LDA L04D8,Y            \ Copy the Y-th byte of L04D8 to the Y-th byte of L41FA,
+ STA L41FA,Y            \ so that's:
+                        \
+                        \   L04D8+30 -> L41FA+30
+                        \   ...
+                        \   L04D8+33 -> L41FA+33
+
+ DEY                    \ Decrement the loop counter
+
+ CPY #&1E               \ Loop back until we have copied all four bytes
  BCS main1
 
- LDY II
- LDA #&3C
+ LDY II                 \ Set Y = the size of the L0500 table from II
+
+ LDA #&3C               \ Append &3C to the end of the L0500 table
  STA L0500,Y
- INY
- LDA #&3D
+
+ INY                    \ Increment Y to point to the next free entry in the
+                        \ table
+
+ LDA #&3D               \ Append &3D to the end of the L0500 table
  STA L0500,Y
- INY
- STY II
- JMP main3
+
+ INY                    \ Increment Y to point to the next free entry in the
+                        \ table
+
+ STY II                 \ Update II with the new size of the table, which is two
+                        \ more than it was before we added the bullets
+
+ JMP main3              \ Skip the following instruction, as we have already
+                        \ processed the key logger
 
 .main2
 
@@ -8744,36 +8803,71 @@ ORG &0B00
 
 .main3
 
- LDX #&13
- LDA #0
+ LDX #19                \ We now want to zero memory from L04D8 to &04FF, which
+                        \ we do as two blocks of 19 bytes, so set a counter in X
+
+ LDA #0                 \ Set L0CCA = 0
  STA L0CCA
- STA L05C8
+
+ STA L05C8              \ Set L05C8 = 0
 
 .main4
 
- STA L04D8,X
- STA L04EC,X
- DEX
- BPL main4
+ STA L04D8,X            \ Zero the X-th byte of L04D8, to zero L04D8 to L04EB
 
- LDA L0CF1
- BEQ main5
+ STA L04EC,X            \ Zero the X-th byte of L04EC, to zero L04EC to &04FF
 
- JSR L2EE6
+ DEX                    \ Decrement the loop counter
 
- LDA L0CD9
- BEQ main5
+ BPL main4              \ Loop back until we have zeroed from L04D8 to &04FF
 
- DEC L0CD9
- LDA #6
+ LDA Firing             \ If Firing is zero then there are no bullets in the
+ BEQ main5              \ air, so jump to main5 to skip updating the bullet
+                        \ positions
+
+ JSR UpdateBullets      \ Update the bullet positions
+
+ LDA GunSoundCounter    \ If GunSoundCounter = 0 then we don't have any gun
+ BEQ main5              \ firing sounds to make, so jump to main5 to skip the
+                        \ gun sounds code
+
+ DEC GunSoundCounter    \ Decrement the sound counter in GunSoundCounter
+
+ LDA #6                 \ Make sound #6, the sound of our guns firing
  JSR MakeSound
+
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 3 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Call the Theme main loop
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .main5
 
- LDA Theme
- BMI main6
+ LDA Theme              \ If bit 7 of Theme is set, then the Theme is not
+ BMI main6              \ enabled, so jump to main6
 
  JSR L2DAC
+
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 4 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .main6
 
@@ -8808,13 +8902,26 @@ ORG &0B00
 
  JSR L2CD3
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 5 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .main7
 
  LDA Theme
  BNE main12
 
- LDA L0CF1
- BEQ main11
+ LDA Firing             \ If Firing is zero then there are no bullets in the
+ BEQ main11             \ air, so jump to main11
 
  LDA #&21
  STA L0CCC
@@ -8843,16 +8950,26 @@ ORG &0B00
 
  STA L368C
  LDA #0
- STA L0CF1
+ STA Firing
 
 .main11
 
  JSR L2F4E
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 6 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Theme main loop
+\
+\ ******************************************************************************
+
 .main12
 
- LDA L0CC5
- BEQ main13
+ LDA OnGround           \ If OnGround is zero, we are in the air and can't
+ BEQ main13             \ terminate the game with the right arrow key, so jump
+                        \ to main13 to skip the following
 
  LDX #&86               \ Scan the keyboard to see if the right arrow is being
  JSR ScanKeyboard       \ pressed
@@ -8866,24 +8983,47 @@ ORG &0B00
 
  JMP NewGame            \ Jump to NewGame to start a new game
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 7 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Theme main loop
+\
+\ ******************************************************************************
+
 .main13
 
- LDA L0CE8
+ LDA L0CE8              \ If L0CE8 = 0, jump to main17
  BEQ main17
 
- BMI main16
+ BMI main16             \ If bit 7 of L0CE8 is set, jump to main16
 
- LDA L0CF1
- BEQ main14
+ LDA Firing             \ If Firing is zero then there are no bullets in the
+ BEQ main14             \ air, so jump to main14
 
- LDA Theme              \ If Theme is positive then the Theme is enabled, so
- BPL main14             \ jump to main14 to skip the following three
-                        \ instructions
+ LDA Theme              \ If Theme is positive then the Theme is already
+ BPL main14             \ enabled, so jump to main14
+
+                        \ If we get here then there are bullets in the air and
+                        \ the Theme is not enabled, so we now need to enable the
+                        \ Theme (as it is triggered by us firing bullets when
+                        \ we are stationary and on the runway with the brakes
+                        \ on)
 
  LDA #8                 \ Set Theme = 8 to enable the Theme
  STA Theme
 
  JSR IndicatorT         \ Update the Theme indicator
+
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 8 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ******************************************************************************
 
 .main14
 
@@ -8897,6 +9037,19 @@ ORG &0B00
  JSR VolumeKeys         \ Check the volume keys and adjust the sound volume
                         \ accordingly
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 9 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .main16
 
  LDA L0CF9
@@ -8904,14 +9057,22 @@ ORG &0B00
 
  LDX #0
  STX L0CF9
+
  LDA #&15
  JSR L4BCB
+
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 10 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Process engine start and stop
+\
+\ ******************************************************************************
 
 .main17
 
  JSR UpdateFuelGauge    \ Update the fuel gauge
-
-                        \ Handle engine start/stop
 
  LDX #&DC               \ Scan the keyboard to see if "T" is being pressed
  JSR ScanKeyboard
@@ -8952,6 +9113,19 @@ ORG &0B00
  STA PressingT          \ Set PressingT = A, so we don't try toggling the engine
                         \ again until we release the "T" key
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 11 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .main20
 
  LDA L05C8
@@ -8975,13 +9149,33 @@ ORG &0B00
 
  BCC main20
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 12 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
  JSR L28B6
 
- JSR L2C37              \ Update canopy view
+ JSR Draw3DView         \ Update the 3D view out of the canopy
 
  JSR L4D6E
 
-                        \ Handle score display
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 13 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Handle the score display
+\
+\ ******************************************************************************
 
  LDA ScoreDisplayTimer  \ If ScoreDisplayTimer = 0, jump to main22 to skip the
  BEQ main22             \ following three instructions, as we are not currently
@@ -9022,25 +9216,48 @@ ORG &0B00
  LDA #0                 \ Set ScoreDisplayTimer = 0 as we are no longer showing
  STA ScoreDisplayTimer  \ the score on-screeen
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 14 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Add new objects to L0400
+\
+\ ------------------------------------------------------------------------------
+\
+\ If we have added any objects to the table in L0600 during the main loop (and
+\ therefore incremented NN), we process each of them to add their details to
+\ L0400.
+\
+\ ******************************************************************************
+
 .main25
 
-                        \ ??? Update object handles
+ LDX MainLoopNN         \ If the value of NN at the start of the main loop,
+ CPX NN                 \ which we stored in MainLoopNN, does not equal NN, then
+ BNE main26             \ this means the value of NN has changed during this
+                        \ iteration of the main loop, so jump down to main26 to
+                        \ process the change
 
- LDX L0CC6              \ If L0CC6 <> NN, jump down to main26
- CPX NN
- BNE main26
-
- JMP MainLoop           \ L0CC6 = NN, so jump back up to the top of the main
-                        \ loop for the next iteration
+ JMP MainLoop           \ Otherwise we are done, so jump back up to the top of
+                        \ the main loop for the next iteration
 
 .main26
 
- INX                    \ Increment X to point to the next thing
+                        \ The first time we get here, X contains the size of the
+                        \ L0600 table as it was when we started this iteration of
+                        \ the main loop, and we have added new objects to the
+                        \ table, so now we need to process the new objects
 
- LDY L0600,X            \ Set Y to this thing's handle in L0600
+ INX                    \ Increment X to point to the next object, which will be
+                        \ the first new one to process
 
- STX L0CC6              \ Increment the value of L0CC6, which was the value of
-                        \ NN at the start of the main loop
+ LDY L0600,X            \ Set Y to this object's handle in L0600
+
+ STX MainLoopNN         \ Update the value of MainLoopNN, so if we revisit the
+                        \ main26 loop, we will move on to the next object
+
+                        \ Now to process the object
 
  LDX Lookup3F30,Y       \ Set X to the Y-th byte from Lookup3F30
 
@@ -9989,10 +10206,10 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2C37
+\       Name: Draw3DView
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Draw canopy view
+\    Summary: Draw the 3D view out of the canopy
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10000,33 +10217,37 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L2C37
+.Draw3DView
 
  JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
                         \ cycle
 
- LDA II
- BNE L2C40
+ LDA II                 \ If II is non-zero, jump to view1 to skip the following
+ BNE view1              \ instruction
 
- BEQ L2C91
+ BEQ view6              \ II is zero, so jump down to view6 to flip the colours
+                        \ as we are done drawing (this BEQ is effectively a JMP
+                        \ as we know A is zero)
 
-.L2C40
+.view1
 
- LDA #0
- STA KK
+ LDA #0                 \ Set KK = 0 to act as a counter in the following loop,
+ STA KK                 \ where KK loops from 0 to II - 1
 
-.L2C44
+.view2
 
- TAX
+ TAX                    \ Set A = KK-th entry from L0500
  LDA L0500,X
- STA JJ
- BNE L2C51
+
+ STA JJ                 \ Store A in JJ so we can retrieve it below
+
+ BNE view3              \ If A is non-zero, jump to view3
 
  JSR L3347
 
- LDA JJ
+ LDA JJ                 \ Fetch the KK-th entry from L0500 that we stored in JJ
 
-.L2C51
+.view3
 
  TAX
  LDY Lookup3E00,X
@@ -10038,10 +10259,11 @@ ORG &0B00
  STA L0400,Y
  JSR L107F
 
- INC KK
- LDA KK
+ INC KK                 \ Increment the loop counter
+
+ LDA KK                 \ Loop back to process the next 
  CMP II
- BCC L2C44
+ BCC view2
 
  JSR DrawGunSights      \ Update the gun sights, if shown
 
@@ -10050,7 +10272,7 @@ ORG &0B00
                         \ just drew in black)
 
  LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
- BMI L2C84              \ down to L2C84
+ BMI view4              \ down to view4 to hide colour 1 and show colour 2
 
  LDX #2                 \ Set logical colour 2 to black, to hide the old canopy
  JSR SetColourToBlack   \ view in colour 2
@@ -10058,9 +10280,10 @@ ORG &0B00
  LDX #1                 \ Set logical colour 1 to white, to show the new canopy
  JSR SetColourToWhite   \ view that we just drew in colour 1
 
- JMP L2C8E
+ JMP view5              \ Now that we have cycled the colours, jump down to
+                        \ view5
 
-.L2C84
+.view4
 
  LDX #1                 \ Set logical colour 1 to black, to hide the old canopy
  JSR SetColourToBlack   \ view in colour 1
@@ -10068,11 +10291,11 @@ ORG &0B00
  LDX #2                 \ Set logical colour 2 to white,  to show the new
  JSR SetColourToWhite   \ view that we just drew in colour 2
 
-.L2C8E
+.view5
 
  JSR L178D
 
-.L2C91
+.view6
 
  JSR FlipColours        \ Flip the values of ColourCycle and ColourLogic to
                         \ cycle to the next colour state
@@ -10793,21 +11016,22 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2EE6
+\       Name: UpdateBullets
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ UBUL in original
 \
 \ ******************************************************************************
 
-.L2EE6                  \ UBUL in original
+.UpdateBullets
 
  LDY #&0F
  STY L0CCC
+
  LDA #&62
  STA GG
 
@@ -10834,7 +11058,7 @@ ORG &0B00
 .L2F0A
 
  LDA #0
- STA L0CF1
+ STA Firing
 
 .L2F0F
 
@@ -10866,7 +11090,7 @@ ORG &0B00
 
  BEQ L2F4D
 
- LDA L0CC5
+ LDA OnGround
  BNE L2F4D
 
  STA L420F,X
@@ -11906,7 +12130,7 @@ ORG &0B00
 
 .fuel1
 
- TAX                    \ We got here because A contains 3, so this sets X = 0
+ TAX                    \ We got here because A = 0, so this sets X = 0
 
  LDA FuelLevel          \ If FuelLevel >= 65, then the tank is already full, so
  CMP #65                \ jump to fuel2 to skip filling it up any more
@@ -12084,32 +12308,42 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L33EE
+\       Name: RetractFlapsSpeed
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight
+\    Summary: Retract the flaps if we are going faster than 150 mph
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The high byte of the current airspeed
 \
 \ ******************************************************************************
 
-.L33EE
+.RetractFlapsSpeed
 
- CMP #&0E
- BCC L33FF
+ CMP #14                \ First we check the high byte of the current airspeed
+ BCC rflp1              \ in A to see if it is less than 14, at which point the
+                        \ airspeed is:
+                        \
+                        \   (14 0) * 100 / 2368 = 3584 * 100 / 2368 = 151
+                        \
+                        \ So if the airspeed is less than 151mph, we jump to
+                        \ rflp1 to return from the subroutine without changing
+                        \ the flaps
 
- LDA Flaps
- BEQ L33FF
+ LDA Flaps              \ If the flaps are already retracted, jump to rflp1 to
+ BEQ rflp1              \ return from the subroutine without changing anything
 
- LDA #0
- STA Flaps
- JSR IndicatorF
+ LDA #0                 \ The speed is at least 151 mph and the flaps are on,
+ STA Flaps              \ so we retract them by setting Flaps to 0
 
-.L33FF
+ JSR IndicatorF         \ Update the flaps indicator
 
- RTS
+.rflp1
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12309,7 +12543,7 @@ ORG &0B00
 .L368F                  \ EPLO in orginal
 
  EQUB &26               \ Zeroed in Reset
-                        \ Can't fire guns if this or L0CF1 are non-zero
+                        \ Can't fire guns if this or Firing are non-zero
 
 .L3690
 
@@ -13234,7 +13468,9 @@ NEXT
 
  EQUB &5B, &5A, &59, &58, &7D, &7C, &7B, &7A \ Zeroed in Reset
 
- EQUB &78, &77, &76, &75, &74, &72, &71, &70
+.L4218
+
+ EQUB &78, &77, &76, &75, &74, &72, &71, &70 \ Populated when guns are fired in main 1
 
 .L4220
 
@@ -14641,7 +14877,7 @@ NEXT
 
  JSR L4BD4
 
- LDA #3
+ LDA #3                 \ Make sound #3, a long, medium beep
  JSR MakeSound
 
  RTS
@@ -14845,7 +15081,7 @@ NEXT
  LDA #0                 \ Turn off the engine sound
  JSR ToggleEngineSound
 
- LDA #5                 \ Make the sound of a crash
+ LDA #5                 \ Make sound #5, the sound of a crash
  JSR MakeSound
 
  LDX #%11111111         \ Fill the canopy with white, leaving the canopy edges
@@ -14927,7 +15163,7 @@ NEXT
  LDA L368F
  BEQ L4D19
 
- LDA #2
+ LDA #2                 \ Make sound #2, the sound of Theme gunfire
  JSR MakeSound
 
  LDX L368E
@@ -15296,7 +15532,7 @@ NEXT
  BNE MakeEngineSound    \ If A is non-zero then jump to MakeEngineSound to set
                         \ up and make the engine sound
 
- LDA #0                 \ Make sound #0 to turn off the engine sound
+ LDA #0                 \ Make sound #0, to turn off the engine sound
  JSR MakeSound
 
                         \ Fall through into ResetEngineSound to reset the pitch
@@ -15425,12 +15661,12 @@ NEXT
  LDA #0                 \ Call DefineEnvelope with A = 0 to redefine the first
  JSR DefineEnvelope     \ sound envelope with the new choppiness values
 
- LDA #7                 \ Make sound #7 to change the engine sound's pitch and
- JSR MakeSound          \ choppiness
+ LDA #7                 \ Make sound #7, the engine pitch, to change the engine
+ JSR MakeSound          \ sound's pitch and choppiness
 
- LDA #1                 \ Make sound #1 to ensure that both engine sounds are
- JSR MakeSound          \ being made, as we need to make both #1 and #7 for the
-                        \ sound to work
+ LDA #1                 \ Make sound #1, the engine amplitude, to ensure that
+ JSR MakeSound          \ both engine sounds are being made, as we need to make
+                        \ both #1 and #7 for the sound to work
 
 .engs4
 
@@ -16002,7 +16238,29 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4F78
+\       Name: Sound26
+\       Type: Variable
+\   Category: Sound
+\    Summary: The sound of us making contact with the ground without the
+\             undercarriage down
+\
+\ ------------------------------------------------------------------------------
+\
+\ This location is at Sounds + (26 * 8), so this block is contains the details
+\ for sound #26.
+\
+\ ******************************************************************************
+
+.Sound26
+
+ EQUB &10, &00          \ Sound #26: Ground contact (SOUND &10, -13, 6, 3)
+ EQUB &F3, &FF
+ EQUB &06, &00
+ EQUB &03, &00
+ 
+\ ******************************************************************************
+\
+\       Name: L4F80
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -16013,10 +16271,6 @@ NEXT
 \
 \ ******************************************************************************
 
-.L4F78
-
- EQUB &10, &00, &F3, &FF, &06, &00, &03, &00
- 
 .L4F80
 
  EQUB &D4, &C9, &CC, &B0
@@ -16027,21 +16281,26 @@ NEXT
 
 .L4F85
 
-\ Goes up by 10 if undercarriage is down
-\ Goes down by 10 if undercarriage is up
-\ Goes up by 200 if flaps are on
-\ Goes down by 200 if flaps are off
-\ Goes up by 20 if engine is on
-\ Goes down by 20 if engine is switched off
-\ Is this acceleration? Drag factor?
+ EQUB &16               \ Drag factor? lift factor?
+                        \
+                        \ Goes up by 10 if undercarriage is down
+                        \ Goes down by 10 if undercarriage is up
+                        \ Goes up by 200 if flaps are on
+                        \ Goes down by 200 if flaps are off
+                        \ Goes up by 20 if engine is on
+                        \ Goes down by 20 if engine is switched off
+                        \
+                        \ Set to 198 in Reset
 
- EQUB &16               \ Set to 198 in Reset
  EQUB &28
 
 .L4F87
 
- EQUB 152               \ Zeroed in Reset
-                        \ Set to 5 if flaps are off, 152 if they are on
+ EQUB 152               \ Flaps lift factor? Drag factor?
+                        \
+                        \ Set to 0 if flaps are off, 152 if they are on
+                        \
+                        \ Zeroed in Reset
 
  EQUB &00, &00, &FF, &8D, &BE, &00, &05
  EQUB &7D, &FF, &50
@@ -16274,7 +16533,7 @@ NEXT
  JSR L4B4A
 
  LDA #&FE
- LDX L0CC5
+ LDX OnGround
  STX L
  BEQ L502B
 
@@ -16884,7 +17143,7 @@ NEXT
  LDA L
  BNE L5347
 
- LDA #4
+ LDA #4                 \ Make sound #4, a short, low beep
  JSR MakeSound
 
  LDA #&27
@@ -17069,7 +17328,7 @@ NEXT
  CMP #8
  BCC L5434
 
- LDA #3
+ LDA #3                 \ Make sound #3, a long, medium beep
  JSR MakeSound
 
  LDX #4
@@ -17459,13 +17718,19 @@ NEXT
  LDA L0C77
  SBC L0C74
  STA L0BFC
- LDA AirspeedHi
- BMI L55F3
 
- PHA
- JSR L33EE
+ LDA AirspeedHi         \ Set A to the high byte of our airspeed
 
- PLA
+ BMI L55F3              \ If it is negative, jump down to L55F3 to skip the
+                        \ following checks
+
+ PHA                    \ Store A on the stack so we can retrieve it after the
+                        \ following call to RetractFlapsSpeed
+
+ JSR RetractFlapsSpeed  \ Retract the flaps if we are going too fast
+
+ PLA                    \ Retrieve the value of A from the stack
+
  CMP #&30
  BCC L55F5
 
@@ -17639,7 +17904,7 @@ NEXT
 .L569D
 
  LDA #0
- STA L0CC5
+ STA OnGround
  RTS
 
 .L56A3
@@ -17787,8 +18052,8 @@ NEXT
 
 .L575A
 
- LDA #&1A
- JSR MakeSound
+ LDA #26                \ Make sound #26, the sound of us making contact with
+ JSR MakeSound          \ the ground without having our undercarriage down
 
  JSR ResetEngineSound
 
@@ -17845,8 +18110,8 @@ NEXT
  CMP L0CF0
  BNE L57B2
 
- LDA #1
- STA L0CC5
+ LDA #1                 \ Set OnGround = 1 to denote that we are on the ground
+ STA OnGround
 
 .L57B2
 
