@@ -87,7 +87,7 @@ L075F = &075F
 L07E4 = &07E4
 L07FC = &07FC
 
-L0900 = &0900           \ Set to 80 in Reset, Reset2
+L0900 = &0900           \ Set to 80 in Reset, UpdateRadar
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
@@ -392,7 +392,7 @@ L0CE2 = &0CE2
 L0CE3 = &0CE3
 L0CE4 = &0CE4
 L0CE5 = &0CE5
-L0CE6 = &0CE6           \ Set to 1 in Reset, Reset2
+L0CE6 = &0CE6           \ Set to 1 in Reset, UpdateRadar
 
 Theme = &0CE7           \ Theme status
                         \
@@ -465,7 +465,9 @@ Propellor = &0CF7       \ Propellor status
                         \ the propellor breaks and we can't turn the engine on
 
 L0CF8 = &0CF8           \ Set to 10 in Reset
+
 L0CF9 = &0CF9
+
 L0CFA = &0CFA           \ Set to 7 in Reset
 
 Compass = &0CFB         \ Compass direction
@@ -3703,13 +3705,13 @@ ORG &0B00
  LDA LowNibble,X
  ORA HighNibble,Y
  STA T
- AND #&F0
+ AND #%11110000
  ORA Times16Hi,X
  STA U
- AND #&0F
+ AND #%00001111
  ORA Times16Lo,Y
  TAY
- AND #&F0
+ AND #%11110000
  ORA LowNibble,X
  TAX
  LDA TimesTable,X
@@ -3724,12 +3726,12 @@ ORG &0B00
  ROR A
  STA T
  ROR A
- AND #&F0
+ AND #%11110000
  CLC
  ADC V
  STA V
  LDA T
- AND #&1F
+ AND #%00011111
  LDX U
  ADC TimesTable,X
  RTS
@@ -8381,7 +8383,9 @@ ORG &0B00
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Called with Y = &0C to &0F in FireGuns
+\
+\ Called with Y = &21 in UpdateRadar
 \
 \ ******************************************************************************
 
@@ -8390,10 +8394,13 @@ ORG &0B00
  LDA #0
  STA L4400,Y
  STA L4478,Y
- STA L4428,Y
- STA L44A0,Y
- STA L4450,Y
- STA L44C8,Y
+
+ STA L4400+&28,Y
+ STA L4478+&28,Y
+
+ STA L4400+&50,Y
+ STA L4478+&50,Y
+
  RTS
 
 \ ******************************************************************************
@@ -8612,15 +8619,15 @@ ORG &0B00
  LDA FuelLevel          \ Loop back until FuelLevel = 0, by which point we have
  BNE rset6              \ reset the fuel tanks and cleared the fuel gauge
 
-                        \ Fall through into Reset2 to finish resetting the rest
-                        \ of the flight variables
+                        \ Fall through into UpdateRadar to update the radar
+                        \ display
 
 \ ******************************************************************************
 \
-\       Name: Reset2
+\       Name: UpdateRadar
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Dashboard
+\    Summary: Update the radar display
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8628,7 +8635,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Reset2
+.UpdateRadar
 
  LDA #80                \ Set L0900 = 80
  STA L0900
@@ -8638,9 +8645,9 @@ ORG &0B00
 
  STA L4A00              \ Set L4A00 = 1
 
- JSR L2D32
+ JSR UpdateRadarLine
 
- LDY #33
+ LDY #&21
  JSR L25B5
 
  RTS                    \ Return from the subroutine
@@ -8657,7 +8664,7 @@ ORG &0B00
 
 .StartGame
 
- LDA #0                 \ Set (HighScoreHi HighScoreLo) = 0
+ LDA #0                 \ Set the high score in (HighScoreHi HighScoreLo) to 0
  STA HighScoreHi
  STA HighScoreLo
 
@@ -9058,8 +9065,11 @@ ORG &0B00
  LDX #0
  STX L0CF9
 
- LDA #&15
- JSR L4BCB
+ LDA #&15               \ Add 150 points to the score and make a beep by calling
+ JSR ScorePoints        \ ScorePoints with (X A) = &0015
+                        \
+                        \ This is the score for landing the plane without
+                        \ crashing
 
 \ ******************************************************************************
 \
@@ -10440,7 +10450,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2D32
+\       Name: UpdateRadarLine
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -10451,7 +10461,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L2D32
+.UpdateRadarLine
 
  LDX L0CE6
  LDA L3688,X
@@ -10461,7 +10471,7 @@ ORG &0B00
  LDA #&80
  STA N
  LDA L2E9C
- JSR L2E2F
+ JSR RadarVector
 
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
@@ -10519,7 +10529,7 @@ ORG &0B00
  LDA #0
  STA N
  LDA Compass
- JSR L2E2F
+ JSR RadarVector
 
  JSR DrawVectorLine     \ Draw a line from (I, J) as a vector (T, U) with
                         \ direction V
@@ -10645,7 +10655,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L2E2F
+\       Name: RadarVector
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -10656,7 +10666,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L2E2F
+.RadarVector
 
  CPX #0
  BEQ L2E37
@@ -11310,9 +11320,11 @@ ORG &0B00
 
  LDA #8
  STA Theme
- LDX #0
- LDA #&50
- JSR L4BCB
+
+ LDX #&00               \ Add 500 points to the score and make a beep by calling
+ LDA #&50               \ ScorePoints with (X A) = &0050
+ JSR ScorePoints        \
+                        \ This is the score for completing a wave in the Theme
 
  LDA L0CF8
  CLC
@@ -12565,18 +12577,30 @@ ORG &0B00
 .ScoreLo
 
  EQUB &49               \ Score (high byte of a BCD number)
+                        \
+                        \ The score is displayed with an extra "0" added to the
+                        \ end, so this contains the score divided by 10
 
 .ScoreHi
 
  EQUB &3D               \ Score (low byte of a BCD number)
+                        \
+                        \ The score is displayed with an extra "0" added to the
+                        \ end, so this contains the score divided by 10
 
 .HighScoreLo
 
  EQUB &26               \ High score (high byte of a BCD number)
+                        \
+                        \ The high score is displayed with an extra "0" added to
+                        \ the end, so this contains the high score divided by 10
 
 .HighScoreHi
 
  EQUB &34               \ High score (low byte of a BCD number)
+                        \
+                        \ The high score is displayed with an extra "0" added to
+                        \ the end, so this contains the high score divided by 10
 
 \ ******************************************************************************
 \
@@ -13268,37 +13292,34 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3FFA
+\       Name: AlienScore
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Theme
+\    Summary: The scores for killing aliens in the various feeding stages
 \
 \ ******************************************************************************
 
-.Lookup3FFA
+.AlienScore
 
- EQUB &05, &10, &15, &25, &00
+ EQUB &05               \ The score for a large feeding alien (50 points)
+ EQUB &10               \ The score for a medium feeding alien (100 points)
+ EQUB &15               \ The score for a small feeding alien (150 points)
+ EQUB &25               \ The score for the smallest feeding alien (250 points)
+
+ EQUB &00
 
 \ ******************************************************************************
 \
-\       Name: Lookup3FFF
+\       Name: DormantAlienScore
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Theme
+\    Summary: The score for killing a dormant alien
 \
 \ ******************************************************************************
 
-.Lookup3FFF
+.DormantAlienScore
 
- EQUB &40
+ EQUB &40               \ The score for a dormant alien (400 points)
 
 \ ******************************************************************************
 \
@@ -13770,9 +13791,11 @@ NEXT
 
  LDA L0CD7
  BEQ L42EE
- LDX #&00
- JSR L4BCB
- LDA #&00
+
+ LDX #0                 \ Add A * 10 points to the score and make a beep by
+ JSR ScorePoints        \ calling ScorePoints with (X A) = (0 A) = A
+
+ LDA #0
 
 .L42EB
 
@@ -14576,7 +14599,7 @@ NEXT
 
 .L4A00
 
- EQUB &20               \ Set to 1 in Reset, Reset2
+ EQUB &20               \ Set to 1 in Reset, UpdateRadar
 
  EQUB &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &58, &41, &4C, &4F, &2C, &59
@@ -14862,97 +14885,109 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4BCB
+\       Name: ScorePoints
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: 
+\    Summary: Increase the score and make a beep
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (X A)               The number of points to add to the score (in BCD),
+\                       divided by 10, so adding &15 will add 150 to the score
 \
 \ ******************************************************************************
 
-.L4BCB
+.ScorePoints
 
- JSR L4BD4
+ JSR UpdateScore        \ Increase the score by the number of points in A
 
  LDA #3                 \ Make sound #3, a long, medium beep
  JSR MakeSound
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L4BD4
+\       Name: UpdateScore
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: 
+\    Summary: Increase the score by a specified number of points
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (X A)               The number of points to add to the score (in BCD)
 \
 \ ******************************************************************************
 
-.L4BD4
+.UpdateScore
 
- SED
- CLC
- ADC ScoreLo
- STA ScoreLo
- TXA
- ADC ScoreHi
- STA ScoreHi
- BCS L4BF1
+ SED                    \ The scores are stored in BCD format, so first of all
+                        \ we set the D flag to switch arithmetic to decimal
 
- CPX #&99
- BNE L4BF1
+ CLC                    \ We now want to add (X A) points to the score in
+ ADC ScoreLo            \ (ScoreHi ScoreLo), so we start by adding the low bytes
+ STA ScoreLo            \ and store the result in ScoreLo
 
- LDA #0
- STA ScoreLo
+ TXA                    \ And then we add the high bytes and store the result
+ ADC ScoreHi            \ in ScoreHi
  STA ScoreHi
 
-.L4BF1
+ BCS upsc1              \ If the addition overflowed (so the high byte is
+                        \ greater than &99), jump to upsc1 to return from the
+                        \ subroutine
 
- CLD
- RTS
+ CPX #&99               \ If X is not &99, jump to upsc1 to return from the
+ BNE upsc1              \ subroutine (in practice, this routine is only ever
+                        \ called with X = 0, so we should never get here)
+
+ LDA #0                 \ If we get here then X = &99 and the addition of the
+ STA ScoreLo            \ high bytes overflowed, so reset the score to zero
+ STA ScoreHi
+
+.upsc1
+
+ CLD                    \ Clear the D flag to switch arithmetic back to normal
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L4BF3
+\       Name: UpdateHighScore
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: If this is a high score, update the high score
 \
 \ ******************************************************************************
 
-.L4BF3
+.UpdateHighScore
 
- LDA ScoreHi
- CMP HighScoreHi
- BCC L4C11
+ LDA ScoreHi            \ If ScoreHi < HighScoreHi then we have not achieved a
+ CMP HighScoreHi        \ high score, so jump to uphs3 to return from the
+ BCC uphs3              \ subroutine
 
- BNE L4C05
+ BNE uphs1              \ If the high byte of the score and high score are not
+                        \ equal, then we know ScoreHi > HighScoreHi, so jump to
+                        \ uphs1 to update the high score
 
- LDA ScoreLo
- CMP HighScoreLo
- BCC L4C11
+ LDA ScoreLo            \ If we get here then ScoreHi = HighScoreHi, so now we
+ CMP HighScoreLo        \ check the low bytes. If ScoreHLo < HighScoreLo then we
+ BCC uphs3              \ have not achieved a high score, so jump to uphs3 to
+                        \ return from the subroutine
 
-.L4C05
+.uphs1
 
- LDA ScoreLo
- STA HighScoreLo
- LDA ScoreHi
+ LDA ScoreLo            \ (ScoreHi ScoreLo) > (HighScoreHi HighScoreLo), so this
+ STA HighScoreLo        \ is a new high score, so update the 16-bit high score
+ LDA ScoreHi            \ to the new score
  STA HighScoreHi
 
-.L4C11
+.uphs3
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -15293,9 +15328,9 @@ NEXT
  CPY #&21
  BNE L4D58
 
- JSR Reset2
+ JSR UpdateRadar
 
- LDA #3
+ LDA #3                 \ Set A = 3 and jump down to L4D68 to award 30 points
  BNE L4D68
 
 .L4D58
@@ -15304,17 +15339,17 @@ NEXT
  CPY #&1F
  BCS L4D65
 
- LDA Lookup3FFF
- JMP L4D68
+ LDA DormantAlienScore  \ Fetch the score for killing a dormant alien (400
+ JMP L4D68              \ points) and jump down to L4D68 to increase the score
 
 .L4D65
 
- LDA Lookup3FFA,X
+ LDA AlienScore,X
 
 .L4D68
 
- LDX #0
- JSR L4BD4
+ LDX #0                 \ Add A * 10 points to the score by calling UpdateScore
+ JSR UpdateScore        \ with (X A) = (0 A) = A
 
  RTS
 
@@ -15406,12 +15441,8 @@ NEXT
 \
 \       Name: TerminateGame
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Main loop
+\    Summary: Terminate the current game
 \
 \ ******************************************************************************
 
@@ -15420,9 +15451,9 @@ NEXT
  LDA #0                 \ Turn off the engine sound
  JSR ToggleEngineSound
 
- JSR L4BF3
+ JSR UpdateHighScore    \ If this is a high score, update the high score 
 
- JSR DisplayScore
+ JSR DisplayScore       \ Print the scores on-screen
 
 .term1
 
