@@ -20,6 +20,102 @@
 \
 \ ******************************************************************************
 
+GUARD &6000             \ Guard against assembling over screen memory
+
+\ ******************************************************************************
+\
+\ Configuration variables
+\
+\ ******************************************************************************
+
+LOAD% = &1100           \ The load address of the main code binary
+
+CODE% = &0B00           \ The address of the main game code once the code has
+                        \ been rearranged. The code starts off at &1100-&5EFF
+                        \ and is moved in three stages:
+                        \
+                        \   * &5800-&5BFF is copied to &0400-&07FF
+                        \   * &5C00-&5DFF is copied to &0B00-&0CFF
+                        \   * &0400-&07FF is copied to &0D00-&10FF
+                        \
+                        \ This address points to the start of the executable
+                        \ code after all these moves, which is at &0B00
+
+                        \ These are screen address variables with names in the
+                        \ following format:
+                        \
+                        \   Row1_Block2_3 = Row 1, block 2, byte 3
+
+                        \ These are canopy screen addresses (rows 0 to 19)
+
+Row1_Block0_0 = &5940   \ First block on second row
+Row1_Block1_0 = &5948   \ Second block on second row
+Row1_Block38_0 = &5A68  \ Last block but one on second row
+Row1_Block39_0 = &5A70  \ Last block on second row
+
+Row3_Block1_0 = &5BC8   \ Top-left corner of the on-screen score display
+
+Row6_Block1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
+                        \ containing the gun sights on rows 6, 7 and 8
+
+Row6_Block20_0 = &6020  \ Top block of the vertical line in the gun sights
+Row7_Block20_0 = &6160  \ Bottom block of the vertical line in the gun sights
+Row8_Block11_0 = &6258  \ Left end of horizontal bar in the gun sights
+
+                        \ These are dashboard screen addresses (rows 20 to 31)
+
+Row21_Block20_7 = &72E7 \ Top block of joystick position display y-axis
+Row22_Block20_7 = &7427 \ Second block of joystick position display y-axis
+Row23_Block20_7 = &7567 \ Third block of joystick position display y-axis
+Row24_Block20_7 = &76A7 \ Fourth block of joystick position display y-axis
+                        \ Right-middle block of joystick position display x-axis
+Row25_Block20_7 = &77E7 \ Fifth block of joystick position display y-axis
+Row26_Block20_7 = &7927 \ Sixth block of joystick position display y-axis
+Row27_Block20_7 = &7A67 \ Bottom block of joystick position display y-axis
+
+Row24_Block18_7 = &7697 \ Left block of joystick position display x-axis
+Row24_Block19_7 = &769F \ Left-middle block of joystick position display x-axis
+Row24_Block21_7 = &76AF \ Right block of joystick position display x-axis
+
+Row23_Block12_4 = &7524 \ Left block of artificial horizon
+Row23_Block13_2 = &752A \ Middle block of artificial horizon
+Row23_Block14_4 = &7534 \ Right block of artificial horizon
+
+Row25_Block31_1 = &77A9 \ Left block of radar horizontal middle line
+Row25_Block34_7 = &7857 \ Left-middle block of radar horizontal middle line
+Row25_Block35_6 = &785E \ Right-middle block of radar horizontal middle line
+Row25_Block35_7 = &785F \ Right-middle block of radar horizontal middle line
+Row26_Block35_0 = &7998 \ Block containing bottom bit of centre cross in radar
+Row26_Block35_1 = &7999 \ Block containing bottom bit of centre cross in radar
+
+Row28_Block26_5 = &7BD5 \ Centre block of slip-and-turn indicator
+
+Row29_Block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
+
+Row30_Block0_2 = &7D82  \ Theme indicator
+Row30_Block32_2 = &7E82 \ Undercarriage indicator
+Row30_Block35_2 = &7E9A \ Flaps indicator
+Row30_Block37_2 = &7EAA \ Brakes indicator
+
+VIA = &FE00             \ Memory-mapped space for accessing internal hardware,
+                        \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
+                        \ known as SHEILA)
+
+OSBYTE = &FFF4          \ The address for the OSBYTE routine
+OSWORD = &FFF1          \ The address for the OSWORD routine
+OSWRCH = &FFEE          \ The address for the OSWRCH routine
+OSCLI = &FFF7           \ The address for the OSCLI routine
+
+\ ******************************************************************************
+\
+\       Name: ZP
+\       Type: Workspace
+\    Address: &0070 to &008F
+\   Category: Workspaces
+\    Summary: Important variables
+\
+\ ******************************************************************************
+
 P = &0070
 Q = &0071               \ DTIP in original
 R = &0072
@@ -57,6 +153,16 @@ MM = &008E
 
 NN = &008F              \ Index into L0600 table
 
+\ ******************************************************************************
+\
+\       Name: L0100
+\       Type: Workspace
+\    Address: &0100 to &0175
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
+
 L0100 = &0100
 L0160 = &0160
 L0161 = &0161
@@ -71,26 +177,86 @@ L0173 = &0173
 L0174 = &0174
 L0175 = &0175
 
+\ ******************************************************************************
+\
+\       Name: L0400
+\       Type: Workspace
+\    Address: &0400 to &04FF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
+
 L0400 = &0400           \ Whole page zeroed in Reset
 L04D8 = &04D8
 L04D9 = &04D9
 L04EC = &04EC
 L04F6 = &04F6
 
+\ ******************************************************************************
+\
+\       Name: L0500
+\       Type: Workspace
+\    Address: &0500 to &05FF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
+
 L0500 = &0500
 L05C8 = &05C8           \ Zeroed in Reset
 
+\ ******************************************************************************
+\
+\       Name: L0600
+\       Type: Workspace
+\    Address: &0600 to &06FF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
+
 L0600 = &0600
+
+\ ******************************************************************************
+\
+\       Name: L0700
+\       Type: Workspace
+\    Address: &0700 to &07FF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
 
 L0700 = &0700
 L075F = &075F
 L07E4 = &07E4
 L07FC = &07FC
 
+\ ******************************************************************************
+\
+\       Name: L0900
+\       Type: Workspace
+\    Address: &0900 to &09FF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
+
 L0900 = &0900           \ Set to 80 in Reset, UpdateRadar
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
+
+\ ******************************************************************************
+\
+\       Name: L0A00
+\       Type: Workspace
+\    Address: &0A00 to &0AFF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
 
 L0A00 = &0A00
 L0A1F = &0A1F
@@ -98,11 +264,31 @@ L0A5F = &0A5F
 L0AFC = &0AFC
 L0AFD = &0AFD
 
+\ ******************************************************************************
+\
+\       Name: L0B00
+\       Type: Workspace
+\    Address: &0B00 to &0BFF
+\   Category: Workspaces
+\    Summary: ???
+\
+\ ******************************************************************************
+
 L0B00 = &0B00
 L0B1F = &0B1F
 L0BFC = &0BFC
 L0BFD = &0BFD
 L0BFF = &0BFF
+
+\ ******************************************************************************
+\
+\       Name: L0C00
+\       Type: Workspace
+\    Address: &0C00 to &0CFF
+\   Category: Workspaces
+\    Summary: The main block of game variables
+\
+\ ******************************************************************************
 
 L0C00 = &0C00
 
@@ -303,7 +489,7 @@ L0CC1 = &0CC1
 
 ColourLogic = &0CC2     \ Determines the logic used to draw the canopy view
                         \
-                        \   * %00000000 just after each flip (L178D)
+                        \   * %00000000 just after each flip (DrawCanopyLines)
                         \     AND logic
                         \   * %01000000 when ColourCycle is %11110000 (FlipColours)
                         \     ORA logic
@@ -491,76 +677,15 @@ AltitudeHi = &0CFE      \ Altitude (high byte)
 
 L0CFF = &0CFF           \ Set to 72 in Reset
 
-                        \ Screen address variables
-                        \ Row1_Block2_3 = Row 1, block 2, byte 3
-                        \ All count from zero
+\ ******************************************************************************
+\
+\ AVIATOR MAIN GAME CODE
+\
+\ Produces the binary file AVIA.bin that contains the main game code.
+\
+\ ******************************************************************************
 
-                        \ Canopy screen addresses (rows 0 to 19)
-
-Row1_Block0_0 = &5940   \ First block on second row
-Row1_Block1_0 = &5948   \ Second block on second row
-Row1_Block38_0 = &5A68  \ Last block but one on second row
-Row1_Block39_0 = &5A70  \ Last block on second row
-
-Row3_Block1_0 = &5BC8   \ Top-left corner of the on-screen score display
-
-Row6_Block1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
-                        \ containing the gun sights on rows 6, 7 and 8
-
-Row6_Block20_0 = &6020  \ Top block of the vertical line in the gun sights
-Row7_Block20_0 = &6160  \ Bottom block of the vertical line in the gun sights
-Row8_Block11_0 = &6258  \ Left end of horizontal bar in the gun sights
-
-                        \ Dashboard screen addresses (rows 20 to 31)
-
-Row21_Block20_7 = &72E7 \ Top block of joystick position display y-axis
-Row22_Block20_7 = &7427 \ Second block of joystick position display y-axis
-Row23_Block20_7 = &7567 \ Third block of joystick position display y-axis
-Row24_Block20_7 = &76A7 \ Fourth block of joystick position display y-axis
-                        \ Right-middle block of joystick position display x-axis
-Row25_Block20_7 = &77E7 \ Fifth block of joystick position display y-axis
-Row26_Block20_7 = &7927 \ Sixth block of joystick position display y-axis
-Row27_Block20_7 = &7A67 \ Bottom block of joystick position display y-axis
-
-Row24_Block18_7 = &7697 \ Left block of joystick position display x-axis
-Row24_Block19_7 = &769F \ Left-middle block of joystick position display x-axis
-Row24_Block21_7 = &76AF \ Right block of joystick position display x-axis
-
-Row23_Block12_4 = &7524 \ Left block of artificial horizon
-Row23_Block13_2 = &752A \ Middle block of artificial horizon
-Row23_Block14_4 = &7534 \ Right block of artificial horizon
-
-Row25_Block31_1 = &77A9 \ Left block of radar horizontal middle line
-Row25_Block34_7 = &7857 \ Left-middle block of radar horizontal middle line
-Row25_Block35_6 = &785E \ Right-middle block of radar horizontal middle line
-Row25_Block35_7 = &785F \ Right-middle block of radar horizontal middle line
-Row26_Block35_0 = &7998 \ Block containing bottom bit of centre cross in radar
-Row26_Block35_1 = &7999 \ Block containing bottom bit of centre cross in radar
-
-Row28_Block26_5 = &7BD5 \ Centre block of slip-and-turn indicator
-
-Row29_Block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
-
-Row30_Block0_2 = &7D82  \ Theme indicator
-Row30_Block32_2 = &7E82 \ Undercarriage indicator
-Row30_Block35_2 = &7E9A \ Flaps indicator
-Row30_Block37_2 = &7EAA \ Brakes indicator
-
-VIA = &FE00             \ Memory-mapped space for accessing internal hardware,
-                        \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
-                        \ known as SHEILA)
-
-OSBYTE = &FFF4          \ The address for the OSBYTE routine
-OSWORD = &FFF1          \ The address for the OSWORD routine
-OSWRCH = &FFEE          \ The address for the OSWRCH routine
-OSCLI = &FFF7           \ The address for the OSCLI routine
-
-CODE% = &1100           \ The start address of the main code block (though note
-                        \ that code is moved to &0D00-&1100 before the main game
-                        \ is run, so this doesn't represent the start of the
-                        \ main game code in memory)
-
-ORG &0B00
+ORG CODE%
 
 \ ******************************************************************************
 \
@@ -2288,109 +2413,143 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L1214
+\       Name: DrawCanopyLine (Part 1 of 4)
 \       Type: Subroutine
-\   Category: 
+\   Category: Graphics
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ The code in this routine is modified by the ModifyDrawColours routine, and by
-\ the L1214 routine itself.
+\ The code in this routine is modified by the ModifyDrawRoutine routine, and by
+\ the DrawCanopyLine routine itself.
+\
+\ The default code (i.e. the unmodified version in the source) is run when bit 6
+\ of V is clear (y-axis up) and bit 7 is set (x-axis left).
 \
 \ ******************************************************************************
 
-.L1214
+.DrawCanopyLine
 
- LDA R
- LSR A
- LSR A
- TAX
- LDA S
- LSR A
- LSR A
- LSR A
+ LDA R                  \ Set X = R / 4
+ LSR A                  \
+ LSR A                  \ so X is the number of the character block containing
+ TAX                    \ pixel (R, S), as each character block is 4 pixels wide
+
+ LDA S                  \ Set Y = S / 8
+ LSR A                  \
+ LSR A                  \ so Y is the number of the character row containing
+ LSR A                  \ pixel (R, S), as each character row is 8 pixels high
  TAY
- CLC
- LDA XLookupLo,X
- ADC YLookupLo,Y
+
+ CLC                    \ Set P = X-th byte of XLookupLo
+ LDA XLookupLo,X        \         + Y-th byte of YLookupLo
+ ADC YLookupLo,Y        \       = LO(X * 8) + LO(screen address)
  STA P
- LDA XLookupHi,X
- ADC YLookupHi,Y
- STA P+1
- LDA U
- CMP T
- BCC L1239
 
- JMP L138C
+ LDA XLookupHi,X        \ Set P+1 = X-th byte of XLookupHi
+ ADC YLookupHi,Y        \           + Y-th byte of YLookupHi
+ STA P+1                \         = HI(X * 8) + HI(screen address)
 
-.L1239
+                        \ So P(1 0) is the screen address of the pixel row
+                        \ containing (R, S), out by 8 bytes for each row above
+                        \ or below the top of the dashboard
 
- BIT V
- BMI L1252
+ LDA U                  \ If U < T, the line is a shallow horizontal slope, so
+ CMP T                  \ jump down to dlin1 to draw the line
+ BCC dlin1
 
- LDA #5
- STA L131A+1
+ JMP dlin39             \ Otherwise U >= T and the line is a steep vertical
+                        \ slope, so jump down to part 3 to draw the line
+
+.dlin1
+
+                        \ If we get here then the line is a shallow horizontal
+                        \ slope
+
+ BIT V                  \ If bit 7 of V is set, jump to dlin3 to step along the
+ BMI dlin3              \ x-axis in a negative direction, i.e. to the left
+
+                        \ Bit 7 of V is clear, so we step along the x-axis in a
+                        \ positive direction, i.e. to the right
+ 
+ LDA #5                 \ Defaults
+ STA dlin20+1
  LDA #9
- STA L131F+1
+ STA dlin21+1
 
-.L1247
+.dlin2
 
- LDA #&60               \ Gets modified by the ModifyDrawColours routine
- STA L1363+1
- LDA #&27
+ LDA #&60               \ Gets modified by the ModifyDrawRoutine routine
+ STA dlin31+1           \ Default
+
+ LDA #39                \ Set I = 39
  STA I
- BNE L1265
 
-.L1252
+ BNE dlin5              \ Junp to dlin5 (this BNE is effectively a JMP as A is
+                        \ never zero)
+
+.dlin3
+
+                        \ Bit 7 of V is set, so we step along the x-axis in a
+                        \ negative direction, i.e. to the left
 
  LDA #&24
- STA L131A+1
+ STA dlin20+1
  LDA #&28
- STA L131F+1
+ STA dlin21+1
 
-.L125C
+.dlin4
 
- LDA #&6A               \ Gets modified by the ModifyDrawColours routine
- STA L1363+1
- LDA #0
+ LDA #&6A               \ Gets modified by the ModifyDrawRoutine routine
+ STA dlin31+1
+
+ LDA #0                 \ Set I = 0
  STA I
 
-.L1265
+.dlin5
 
- BIT V
- BVS L1287
+ BIT V                  \ If bit 6 of V is set, jump to dlin6 to step along the
+ BVS dlin6              \ y-axis in a negative direction, i.e. down the screen
+
+                        \ Bit 6 of V is clear, so we step along the y-axis in a
+                        \ positive direction, i.e. up the screen
 
  LDA #&98
- STA L136A
+ STA dlin33
  LDA #&88
- STA L136B
+ STA dlin34
  LDA #&C8
- STA L1373+1
+ STA dlin35+1
  LDA #&FE
- STA L1379+1
- LDA #&9E
+ STA dlin36+1
+
+ LDA #158               \ Set J = 158 - G
  SEC
  SBC G
  STA J
- JMP L12A2
 
-.L1287
+ JMP dlin7
 
- LDA #&C8
- STA L136A
+.dlin6
+
+                        \ Bit 6 of V is set, so we step along the y-axis in a
+                        \ negative direction, i.e. down the screen
+
+ LDA #&C8               \ Defaults
+ STA dlin33
  LDA #&98
- STA L136B
+ STA dlin34
  LDA #&38
- STA L1373+1
+ STA dlin35+1
  LDA #1
- STA L1379+1
- LDA #&A0
+ STA dlin36+1
+
+ LDA #160               \ Set J = 160 - G
  SEC
  SBC G
  STA J
 
-.L12A2
+.dlin7
 
  LDA #&9F
  SEC
@@ -2405,16 +2564,16 @@ ORG &0B00
  STA SS
  LDA V
  AND #3
- BEQ L12C4
+ BEQ dlin8
 
  LDA U
  CMP #2
- BCC L12C4
+ BCC dlin8
 
  LDA #&FF
  STA SS
 
-.L12C4
+.dlin8
 
  LDA R
  AND #3
@@ -2425,141 +2584,141 @@ ORG &0B00
  STA QQ
  LDA SS
  BIT V
- BMI L12E5
+ BMI dlin10
 
  CPX #1
- BCC L12F8
+ BCC dlin13
 
- BNE L12DE
+ BNE dlin9
 
  CLC
- BCC L1301
+ BCC dlin14
 
-.L12DE
+.dlin9
 
  CPX #3
- BCC L130B
+ BCC dlin16
 
  CLC
- BCC L1315
+ BCC dlin18
 
-.L12E5
+.dlin10
 
  CPX #1
- BCC L1315
+ BCC dlin18
 
- BNE L12EE
+ BNE dlin11
 
  CLC
- BCC L130B
+ BCC dlin16
 
-.L12EE
+.dlin11
 
  CPX #3
- BCC L1301
+ BCC dlin14
 
  CLC
- BCC L12F8
+ BCC dlin13
 
-.L12F5
+.dlin12
 
  CLC
  LDA SS
 
-.L12F8
+.dlin13
 
  LDX #0
  ADC U
- BCC L1303
+ BCC dlin15
 
- JSR L135F
+ JSR dlin30
 
-.L1301
+.dlin14
 
  LDX #3
 
-.L1303
+.dlin15
 
  INX
  ADC U
- BCC L130D
+ BCC dlin17
 
- JSR L135F
+ JSR dlin30
 
-.L130B
+.dlin16
 
  LDX #6
 
-.L130D
+.dlin17
 
  INX
  ADC U
- BCC L1317
+ BCC dlin19
 
- JSR L135F
+ JSR dlin30
 
-.L1315
+.dlin18
 
  LDX #8
 
-.L1317
+.dlin19
 
  INX
  ADC U
 
-.L131A
+.dlin20
 
- BCC L1321              \ Gets modified by the L1214 routine
+ BCC dlin22             \ Gets modified by the DrawCanopyLine routine
 
- JSR L135F
+ JSR dlin30
 
-.L131F
+.dlin21
 
- BNE L132A              \ Gets modified by the L1214 routine
+ BNE dlin25             \ Gets modified by the DrawCanopyLine routine
 
-.L1321
+.dlin22
 
  STA SS
 
-.L1323
+.dlin23
 
- LDA Lookup2E60,X       \ Gets modified by the ModifyDrawColours routine
+ LDA Lookup2E60,X       \ Gets modified by the ModifyDrawRoutine routine
 
-.L1326
+.dlin24
 
- ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
-.L132A
+.dlin25
 
  LDA P
  CLC
  ADC #8
  STA P
- BCC L1335
+ BCC dlin26
 
  INC P+1
 
-.L1335
+.dlin26
 
  INC QQ
  LDA QQ
  CMP I
- BNE L12F5
+ BNE dlin12
 
- JMP L1482
+ JMP dlin62
 
  STA SS
 
-.L1342
+.dlin27
 
- LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawColours routine
+ LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawRoutine routine
 
-.L1345
+.dlin28
 
- ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -2568,144 +2727,163 @@ ORG &0B00
  SEC
  SBC #8
  STA P
- BCS L1354
+ BCS dlin29
 
  DEC P+1
 
-.L1354
+.dlin29
 
  DEC QQ
  LDA QQ
  CMP I
- BNE L12F5
+ BNE dlin12
 
- JMP L1482
+ JMP dlin62
 
 \ ******************************************************************************
 \
-\       Name: L135F
+\       Name: DrawCanopyLine (Part 2 of 4)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ The code in this routine is modified by the ModifyDrawColours and L1214
-\ routines, and by the L135F routine itself.
+\ The code in this routine is modified by the ModifyDrawRoutine, and by the
+\ DrawCanopyLine routine itself.
 \
 \ ******************************************************************************
 
-.L135F
+.dlin30
 
  ADC RR
  STA SS
 
-.L1363
+.dlin31
 
- LDA Lookup2E60,X       \ Gets modified by the L1214 routine
+ LDA Lookup2E60,X       \ Gets modified by the DrawCanopyLine routine
 
-.L1366
+.dlin32
 
- ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
-.L136A
+.dlin33
 
- INY                    \ Gets modified by the L1214 routine
+ INY                    \ Gets modified by the DrawCanopyLine routine
 
-.L136B
+.dlin34
 
- TYA                    \ Gets modified by the L1214 routine
+ TYA                    \ Gets modified by the DrawCanopyLine routine
  AND #7
- BNE L137D
+ BNE dlin37
 
  LDA P
  CLC
 
-.L1373
+.dlin35
 
- ADC #&38               \ Gets modified by the L1214 routine
+ ADC #&38               \ Gets modified by the DrawCanopyLine routine
  STA P
  LDA P+1
 
-.L1379
+.dlin36
 
- ADC #1                 \ Gets modified by the L1214 routine
+ ADC #1                 \ Gets modified by the DrawCanopyLine routine
  STA P+1
 
-.L137D
+.dlin37
 
  LDA SS
  CPY J
  CLC
- BEQ L1385
+ BEQ dlin38
 
  RTS
 
-.L1385
+.dlin38
 
  TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
 
- JMP L1482
+ JMP dlin62
 
-.L138C
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 3 of 4)
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ The code in this routine is modified by the ModifyDrawRoutine routine, and by
+\ the DrawCanopyLine routine itself.
+\
+\ The default code (i.e. the unmodified version in the source) is run when bit 6
+\ of V is clear (y-axis up) and bit 7 is set (x-axis left).
+\
+\ ******************************************************************************
+
+.dlin39
+
+                        \ If we get here then the line is a steep vertical slope
 
  BIT V
- BVS L13AA
+ BVS dlin40
 
  LDA #&98
- STA L1425
+ STA dlin51
  LDA #&88
- STA L1426
+ STA dlin52
  LDA #&C8
- STA L142E+1
+ STA dlin53+1
  LDA #&FE
- STA L1434+1
+ STA dlin54+1
  LDA #7
  STA J
- BNE L13C2
+ BNE dlin41
 
-.L13AA
+.dlin40
 
  LDA #&C8
- STA L1425
+ STA dlin51
  LDA #&98
- STA L1426
+ STA dlin52
  LDA #&38
- STA L142E+1
+ STA dlin53+1
  LDA #1
- STA L1434+1
+ STA dlin54+1
  LDA #&A0
  STA J
 
-.L13C2
+.dlin41
 
  BIT V
- BMI L13D5
+ BMI dlin42
 
  LDA #&1D
- STA L1421+1
+ STA dlin50+1
  LDA W
  CLC
  ADC #1
  STA I
- JMP L13E1
+ JMP dlin43
 
-.L13D5
+.dlin42
 
  LDA #&3F
- STA L1421+1
+ STA dlin50+1
  LDA W
  SEC
  SBC #1
  STA I
 
-.L13E1
+.dlin43
 
  LDA #&9F
  SEC
@@ -2720,47 +2898,47 @@ ORG &0B00
  STA SS
  LDA V
  AND #3
- BEQ L1403
+ BEQ dlin44
 
  LDA T
  CMP #2
- BCC L1403
+ BCC dlin44
 
  LDA #&FF
  STA SS
 
-.L1403
+.dlin44
 
  LDA R
  AND #3
  TAX
 
-.L1408
+.dlin45
 
- LDA #8                 \ Gets modified by the ModifyDrawColours routine
+ LDA #8                 \ Gets modified by the ModifyDrawRoutine routine
 
  CPX #0
- BEQ L1412
+ BEQ dlin47
 
-.L140E
+.dlin46
 
  LSR A
  DEX
- BNE L140E
+ BNE dlin46
 
-.L1412
+.dlin47
 
  STA H
  CLC
  LDX R
 
-.L1417
+.dlin48
 
- LDA H                  \ Gets modified by the ModifyDrawColours routine
+ LDA H                  \ Gets modified by the ModifyDrawRoutine routine
 
-.L1419
+.dlin49
 
- ORA (P),Y              \ Gets modified by the ModifyDrawColours routine
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
  STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -2768,42 +2946,42 @@ ORG &0B00
  LDA SS
  ADC T
 
-.L1421
+.dlin50
 
- BCS L1440              \ Gets modified by the L135F routine
+ BCS dlin55              \ Gets modified by DrawCanopyLine (part 2)
 
  STA SS
 
-.L1425
+.dlin51
 
  TYA
 
-.L1426
+.dlin52
 
  DEY
  AND #7
- BNE L1417
+ BNE dlin48
 
  LDA P
  CLC
 
-.L142E
+.dlin53
 
- ADC #&C8               \ Gets modified by the L135F routine
+ ADC #&C8               \ Gets modified by DrawCanopyLine (part 2)
  STA P
  LDA P+1
 
-.L1434
+.dlin54
 
- ADC #&FE               \ Gets modified by the L135F routine
+ ADC #&FE               \ Gets modified by DrawCanopyLine (part 2)
  STA P+1
  CPY J
  CLC
- BNE L1417
+ BNE dlin48
 
- JMP L1482
+ JMP dlin62
 
-.L1440
+.dlin55
 
  ADC RR
  STA SS
@@ -2811,31 +2989,31 @@ ORG &0B00
  LDA H
  LSR A
 
-.L1448
+.dlin56
 
- CMP #0                 \ Gets modified by the ModifyDrawColours routine
- BNE L1459
+ CMP #0                 \ Gets modified by the ModifyDrawRoutine routine
+ BNE dlin58
 
  LDA P
  CLC
  ADC #8
  STA P
 
-.L1453
+.dlin57
 
- LDA #8                 \ Gets modified by the ModifyDrawColours routine
- BCC L1459
+ LDA #8                 \ Gets modified by the ModifyDrawRoutine routine
+ BCC dlin58
 
  INC P+1
 
-.L1459
+.dlin58
 
  STA H
  CPX I
  CLC
- BNE L1425
+ BNE dlin51
 
- BEQ L1482
+ BEQ dlin62
 
  ADC RR
  STA SS
@@ -2843,39 +3021,52 @@ ORG &0B00
  LDA H
  ASL A
 
-.L146A
+.dlin59
 
- CMP #16                \ Gets modified by the ModifyDrawColours routine
- BNE L147B
+ CMP #16                \ Gets modified by the ModifyDrawRoutine routine
+ BNE dlin61
 
  LDA P
  SEC
  SBC #8
  STA P
 
-.L1475
+.dlin60
 
- LDA #1                 \ Gets modified by the ModifyDrawColours routine
- BCS L147B
+ LDA #1                 \ Gets modified by the ModifyDrawRoutine routine
+ BCS dlin61
 
  DEC P+1
 
-.L147B
+.dlin61
 
  STA H
  CPX I
  CLC
- BNE L1425
+ BNE dlin51
 
-.L1482
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 4 of 4)
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
+.dlin62
 
  LDA V
  LSR A
- BCS L1488
+ BCS dlin63
 
  RTS
 
-.L1488
+.dlin63
 
  ASL A
  EOR #&C0
@@ -2886,27 +3077,27 @@ ORG &0B00
  STA S
  LDA #4
  BIT V
- BMI L149F
+ BMI dlin64
 
  LDA #&9B
 
-.L149F
+.dlin64
 
  STA W
  LDA #0
- BVS L14A7
+ BVS dlin65
 
  LDA #&97
 
-.L14A7
+.dlin65
 
  STA G
 
- JMP L1214
+ JMP DrawCanopyLine
 
 \ ******************************************************************************
 \
-\       Name: ModifyDrawColours
+\       Name: ModifyDrawRoutine
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Modify the drawing routines to draw in the correct colour for the
@@ -2916,31 +3107,31 @@ ORG &0B00
 \
 \ If ColourLogic = %00000000:
 \
-\   * Modify the drawing logic in L1214 and L135F to AND
-\   * Modify L1214 and L135F so they fetch bit patterns from:
+\   * Modify the drawing logic in DrawCanopyLine to AND
+\   * Modify DrawCanopyLine so they fetch bit patterns from:
 \       * Lookup2E88 if ColourCycle = %00001111
 \       * Lookup2E92 if ColourCycle = %11110000
 \     In other words, the bit pattern they fetch is always the same as the value
 \     of ColourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
 \     %11110000
-\   * Modify L135F so it pokes the value of ColourCycle as a bit pattern in the
-\     screen updating routine at L1417
+\   * Modify DrawCanopyLine (part 3) so it pokes the value of ColourCycle as a
+\     bit pattern in the screen updating routine at dlin48
 \
 \ If ColourLogic = %01000000:
 \
-\   * Modify the drawing logic in L1214 and L135F to OR (the default)
-\   * Modify L1214 and L135F so they fetch bit patterns from Lookup2E74 and
+\   * Modify the drawing logic in DrawCanopyLine to OR (the default)
+\   * Modify DrawCanopyLine so it fetches bit patterns from Lookup2E74 and
 \     Lookup2E7E (colour 2) instead of Lookup2E60 and Lookup2E6A (colour 1)
 \
 \ If ColourLogic = %10000000:
 \
-\   * Modify the drawing logic in L1214 and L135F to OR (the default)
-\   * Restore the L1214 and L135F routines back to their default code, so we
-\     draw in colour 1
+\   * Modify the drawing logic in DrawCanopyLine to OR (the default)
+\   * Restore the DrawCanopyLine routine back to its default code, so we draw
+\     in colour 1
 \
 \ ******************************************************************************
 
-.ModifyDrawColours
+.ModifyDrawRoutine
 
  LDA ColourLogic        \ If ColourLogic is non-zero, jump to mcol3
  BNE mcol3
@@ -2949,22 +3140,22 @@ ORG &0B00
 
  LDA #&31               \ Set A to the opcode for the AND (P),Y instruction
 
- STA L1326              \ Modify the screen-poking instructions in L1214 to use
- STA L1345              \ AND (P),Y
+ STA dlin24             \ Modify the screen-poking instructions in
+ STA dlin28             \ DrawCanopyLine (part 1) to use AND (P),Y
 
- STA L1366              \ Modify the screen-poking instructions in L135F to use
- STA L1419              \ AND (P),Y
+ STA dlin32             \ Modify the screen-poking instructions in
+ STA dlin49             \ DrawCanopyLine (part 2) to use AND (P),Y
 
  LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
  BMI mcol1              \ jump down to mcol1
 
  LDA #&88               \ Bit 7 of ColourCycle is clear, i.e. %00001111, so set
-                        \ A to &88 so the L1214 instructions below are modified
-                        \ to the following:
+                        \ A to &88 so the DrawCanopyLine (part 1) instructions
+                        \ below are modified to the following:
                         \
-                        \   LDA #&88 : STA L1363+1
+                        \   LDA #&88 : STA dlin31+1
                         \   LDA Lookup2E88,X
-                        \   LDA #&88 : STA L1363+1
+                        \   LDA #&88 : STA dlin31+1
                         \   LDA Lookup2E88,X
 
  BNE mcol2              \ Jump down to mcol2 (this BNE is effectively a JMP as
@@ -2973,28 +3164,28 @@ ORG &0B00
 .mcol1
 
  LDA #&92               \ Bit 7 of ColourCycle is set, i.e. %11110000, so set
-                        \ A to &92 so the L1214 instructions below are modified
-                        \ to the following:
+                        \ A to &92 so the DrawCanopyLine (part 1) instructions
+                        \ below are modified to the following:
                         \
-                        \   LDA #&92 : STA L1363+1
+                        \   LDA #&92 : STA dlin31+1
                         \   LDA Lookup2E92,X
-                        \   LDA #&92 : STA L1363+1
+                        \   LDA #&92 : STA dlin31+1
                         \   LDA Lookup2E92,X
 
 .mcol2
 
-                        \ Modify the following instructions in the L1214 routine
-                        \ where aa is the value of A:
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (part 1) where aa is the value of A:
                         \
- STA L1247+1            \   LDA #&60 : STA L1363+1 -> LDA #&aa : STA L1363+1
- STA L1323+1            \   LDA Lookup2E60,X       -> LDA Lookup2Eaa,X
- STA L125C+1            \   LDA #&6A : STA L1363+1 -> LDA #&aa : STA L1363+1
- STA L1342+1            \   LDA Lookup2E6A,X       -> LDA Lookup2Eaa,X
+ STA dlin2+1            \   LDA #&60 : STA dlin31+1 -> LDA #&aa : STA dlin31+1
+ STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2Eaa,X
+ STA dlin4+1            \   LDA #&6A : STA dlin31+1 -> LDA #&aa : STA dlin31+1
+ STA dlin27+1           \   LDA Lookup2E6A,X        -> LDA Lookup2Eaa,X
 
- LDA ColourCycle        \ Modify the following instruction in the L135F
- STA L1417+1            \ routine:
+ LDA ColourCycle        \ Modify the following instruction in DrawCanopyLine
+ STA dlin48+1           \ (part 2):
  LDA #&A9               \
- STA L1417              \   LDA H -> LDA #ColourCycle
+ STA dlin48             \   LDA H -> LDA #ColourCycle
                         \
                         \ as the opcode for the LDA #n instruction is &A9
 
@@ -3006,38 +3197,38 @@ ORG &0B00
 
  LDA #&11               \ Set A to the opcode for the ORA (P),Y instruction
 
- STA L1326              \ Modify the screen-poking instructions in L1214 to use
- STA L1345              \ ORA (P),Y
+ STA dlin24             \ Modify the screen-poking instructions in
+ STA dlin28             \ DrawCanopyLine (part 2) to use ORA (P),Y
 
- STA L1366              \ Modify the screen-poking instructions in L135F to use
- STA L1419              \ ORA (P),Y
+ STA dlin32             \ Modify the screen-poking instructions in
+ STA dlin49             \ DrawCanopyLine (part 1) to use ORA (P),Y
 
  LDA ColourLogic        \ If bit 7 of ColourLogic is set, i.e. %10000000, jump
  BMI mcol4              \ to mcol4
 
                         \ If we get here then ColourLogic is %01000000
 
-                        \ Modify the following instructions in the L1214
-                        \ routine:
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (part 1):
  LDA #&74               \
- STA L1247+1            \   LDA #&60 : STA L1363+1 -> LDA #&74 : STA L1363+1
- STA L1323+1            \   LDA Lookup2E60,X       -> LDA Lookup2E74,X
+ STA dlin2+1            \   LDA #&60 : STA dlin31+1 -> LDA #&74 : STA dlin31+1
+ STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E74,X
  LDA #&7E               \
- STA L125C+1            \   LDA #&6A : STA L1363+1 -> LDA #&74 : STA L1363+1
- STA L1342+1            \   LDA Lookup2E6A,X       -> LDA Lookup2E7E,X
+ STA dlin4+1            \   LDA #&6A : STA dlin31+1 -> LDA #&74 : STA dlin31+1
+ STA dlin27+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E7E,X
 
-                        \ Modify the following instructions in the L135F
-                        \ routine:
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (part 2):
  LDA #&80               \
- STA L1408+1            \   LDA #8 -> LDA #&80
+ STA dlin45+1           \   LDA #8 -> LDA #&80
  LDA #8                 \
- STA L1448+1            \   CMP #0 -> CMP #8
+ STA dlin56+1           \   CMP #0 -> CMP #8
  LDA #&80               \
- STA L1453+1            \   LDA #8 -> LDA #&80
+ STA dlin57+1           \   LDA #8 -> LDA #&80
  LDA #0                 \
- STA L146A+1            \   CMP #16 -> CMP #0
+ STA dlin59+1           \   CMP #16 -> CMP #0
  LDA #16                \
- STA L1475+1            \   LDA #1 -> LDA #16
+ STA dlin60+1           \   LDA #1 -> LDA #16
 
  BNE mcol5              \ Jump down to mcol5 (this BNE is effectively a JMP as
                         \ A is never zero)
@@ -3046,36 +3237,36 @@ ORG &0B00
 
                         \ If we get here then ColourLogic is %10000000
 
-                        \ Modify the following instructions in the L1214
-                        \ routine:
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (part 1):
  LDA #&60               \
- STA L1247+1            \   LDA #&60 : STA L1363+1 -> LDA #&60 : STA L1363+1
- STA L1323+1            \   LDA Lookup2E60,X       -> LDA Lookup2E60,X
+ STA dlin2+1            \   LDA #&60 : STA dlin31+1 -> LDA #&60 : STA dlin31+1
+ STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E60,X
  LDA #&6A               \
- STA L125C+1            \   LDA #&6A : STA L1363+1 -> LDA #&6A : STA L1363+1
- STA L1342+1            \   LDA Lookup2E6A,X       -> LDA Lookup2E6A,X
+ STA dlin4+1            \   LDA #&6A : STA dlin31+1 -> LDA #&6A : STA dlin31+1
+ STA dlin27+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E6A,X
 
-                        \ Modify the following instructions in the L135F
-                        \ routine:
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (part 2):
  LDA #8                 \
- STA L1408+1            \   LDA #8 -> LDA #8
+ STA dlin45+1           \   LDA #8 -> LDA #8
  LDA #0                 \
- STA L1448+1            \   CMP #0 -> CMP #0
+ STA dlin56+1           \   CMP #0 -> CMP #0
  LDA #8                 \
- STA L1453+1            \   LDA #8 -> LDA #8
+ STA dlin57+1           \   LDA #8 -> LDA #8
  LDA #16                \
- STA L146A+1            \   CMP #16 -> CMP #16
+ STA dlin59+1           \   CMP #16 -> CMP #16
  LDA #1                 \
- STA L1475+1            \   LDA #1 -> LDA #1
+ STA dlin60+1           \   LDA #1 -> LDA #1
 
 .mcol5
 
-                        \ Modify the following instruction in the L135F
-                        \ routine:
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (part 2):
  LDA #&A5               \
- STA L1417              \   LDA H -> LDA H
+ STA dlin48             \   LDA H -> LDA H
  LDA #&79               \
- STA L1417+1            \ as the opcode for the LDA n instruction is &A5
+ STA dlin48+1           \ as the opcode for the LDA n instruction is &A5
 
  RTS                    \ Return from the subroutine
 
@@ -3550,7 +3741,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: L178D
+\       Name: DrawCanopyLines
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -3561,12 +3752,12 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.L178D
+.DrawCanopyLines
 
  LDA #%00000000         \ Set ColourLogic = %00000000
  STA ColourLogic
 
- JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
+ JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
 .L1795
@@ -3616,7 +3807,7 @@ ORG &0B00
  LDA L48A0,X
  STA V
 
- JSR L1214
+ JSR DrawCanopyLine
 
  JMP L1795
 
@@ -6209,7 +6400,8 @@ ORG &0B00
 \
 \                         * Bit 6 is the direction of the the y-delta
 \
-\                       Direction is like a clock, so positive is up and right
+\                       Direction is like a clock, so positive (clear) is up and
+\                       right
 \
 \   X                   The indicator number (0-7)
 \
@@ -6504,8 +6696,8 @@ ORG &0B00
 \
 \                         * Bit 6 is the direction of the the y-delta
 \
-\                       Direction is like a clock, so positive is up and right,
-\                       so this means the following:
+\                       Direction is like a clock, so positive (clear) is up and
+\                       right, so this means the following:
 \
 \                         * x-delta +ve, y-delta +ve: 12 to 3 o'clock
 \
@@ -6749,7 +6941,8 @@ ORG &0B00
 \
 \                         * Bit 6 is the direction of the the y-delta
 \
-\                       Direction is like a clock, so positive is up and right
+\                       Direction is like a clock, so positive (clear) is up and
+\                       right
 \
 \ ******************************************************************************
 
@@ -6761,7 +6954,7 @@ ORG &0B00
  LDA #%00010001         \ Set A = %00010001, the pixel pattern for pixel 0 in
                         \ white
 
-.dlin1
+.dvec1
 
  STA RR,Y               \ Set the Y-th byte of RR to A
 
@@ -6769,7 +6962,7 @@ ORG &0B00
 
  DEY                    \ Decrement the byte counter
 
- BPL dlin1              \ Loop back until we have updated RR to RR+3 as
+ BPL dvec1              \ Loop back until we have updated RR to RR+3 as
                         \ follows:
                         \
                         \   RR   = %10001000 = pixel 3 in white
@@ -6782,20 +6975,20 @@ ORG &0B00
 
  STA PP                 \ Set PP = 0
 
- LDA T                  \ If T < U, jump down to dlin2 to skip the following
+ LDA T                  \ If T < U, jump down to dvec2 to skip the following
  CMP U                  \ two instructions
- BCC dlin2
+ BCC dvec2
 
                         \ If we get here then T >= U, so the line is a shallow
                         \ horizontal slope
 
  STA VV                 \ Set VV = T, the length of the longer axis
 
- BCS dlin11             \ Jump down to dlin11 to start drawing the line (this
+ BCS dvec11             \ Jump down to dvec11 to start drawing the line (this
                         \ BCS is effectively a JMP as we just passed through a
                         \ BCC)
 
-.dlin2
+.dvec2
 
                         \ If we get here then T < U, so the line is a steep
                         \ vertical slope
@@ -6805,7 +6998,7 @@ ORG &0B00
 
  STA PP                 \ Set PP = U
 
- BCC dlin11             \ Jump down to dlin11 to start drawing the line (this
+ BCC dvec11             \ Jump down to dvec11 to start drawing the line (this
                         \ BCC is effectively a JMP as we got here by taking a
                         \ BCC)
 
@@ -6819,7 +7012,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.dlin3
+.dvec3
 
                         \ If we get here then we need to step along the x-axis
 
@@ -6829,8 +7022,8 @@ ORG &0B00
                         \ (the shorter axis)
 
  CMP T                  \ If A < T, then we haven't yet reached a full step of
- BCC dlin5              \ length T along the y-axis, so we don't change the
-                        \ y-coordinate and instead jump to dlin5 to do the step
+ BCC dvec5              \ length T along the y-axis, so we don't change the
+                        \ y-coordinate and instead jump to dvec5 to do the step
                         \ along the x-axis by one pixel
 
                         \ We now need to step along the y-axis by one pixel as
@@ -6846,53 +7039,53 @@ ORG &0B00
                         \ We now move one pixel along the y-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 6 of V is clear, jump to dlin4 to step along
- BVC dlin4              \ the y-axis in a positive direction
+ BIT V                  \ If bit 6 of V is clear, jump to dvec4 to step along
+ BVC dvec4              \ the y-axis in a positive direction
 
  DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
                         \ J so we move along the y-axis in a negative dirction
 
- BVS dlin5              \ Jump to dlin5 to do the step along the x-axis by one
+ BVS dvec5              \ Jump to dvec5 to do the step along the x-axis by one
                         \ pixel (this BVS is effectively a JMP as we know the V
                         \ flag is set)
 
-.dlin4
+.dvec4
 
  INC J                  \ Bit 6 of V is clear, so increment the y-coordinate in
                         \ J so we move along the y-axis in a positive direction
 
-.dlin5
+.dvec5
 
  STA QQ                 \ Store the updated fractional value in QQ
 
                         \ We now move one pixel along the x-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 7 of V is clear, jump to dlin6 to step along
- BPL dlin6              \ the x-axis in a positive direction
+ BIT V                  \ If bit 7 of V is clear, jump to dvec6 to step along
+ BPL dvec6              \ the x-axis in a positive direction
 
  DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
                         \ I so we move along the x-axis in a negative dirction
 
- JMP dlin11             \ Now that we have moved (I, J) to the next pixel in the
-                        \ line, jump to dlin11 to plot the next pixel
+ JMP dvec11             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dvec11 to plot the next pixel
 
-.dlin6
+.dvec6
 
  INC I                  \ Bit 7 of V is clear, so increment the x-coordinate in
                         \ I so we move along the x-axis in a positive direction
 
- JMP dlin11             \ Now that we have moved (I, J) to the next pixel in the
-                        \ line, jump to dlin11 to plot the next pixel
+ JMP dvec11             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dvec11 to plot the next pixel
 
-.dlin7
+.dvec7
 
                         \ We jump here when we need to calculate the coordinates
                         \ of the next pixel in the line when stepping along the
                         \ longer delta axis one pixel at a time
 
  LDA PP                 \ If PP = 0 then this is a shallow horizontal line, so
- BEQ dlin3              \ jump up to dlin3 step along the x-axis
+ BEQ dvec3              \ jump up to dvec3 step along the x-axis
 
                         \ If we get here then this is a steep vertical line, so
                         \ we need to step along the y-axis
@@ -6903,8 +7096,8 @@ ORG &0B00
                         \ (the shorter axis)
 
  CMP U                  \ If A < U, then we haven't yet reached a full step of
- BCC dlin9              \ length U along the x-axis, so we don't change the
-                        \ x-coordinate and instead jump to dlin9 to do the step
+ BCC dvec9              \ length U along the x-axis, so we don't change the
+                        \ x-coordinate and instead jump to dvec9 to do the step
                         \ along the y-axis by one pixel
 
                         \ We now need to step along the x-axis by one pixel as
@@ -6920,38 +7113,41 @@ ORG &0B00
                         \ We now move one pixel along the x-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 7 of V is clear, jump to dlin8 to step along
- BPL dlin8              \ the x-axis in a positive direction
+ BIT V                  \ If bit 7 of V is clear, jump to dvec8 to step along
+ BPL dvec8              \ the x-axis in a positive direction
 
  DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
-                        \ I so we move along the x-axis in a negative dirction
+                        \ I so we move along the x-axis in a negative direction,
+                        \ i.e. to the left
 
- JMP dlin9              \ Jump to dlin9 to do the step along the y-axis by one
+ JMP dvec9              \ Jump to dvec9 to do the step along the y-axis by one
                         \ pixel
 
-.dlin8
+.dvec8
 
  INC I                  \ Bit 7 of V is clear, so increment the x-coordinate in
-                        \ I so we move along the x-axis in a positive direction
+                        \ I so we move along the x-axis in a positive direction,
+                        \ i.e. to the right
 
-.dlin9
+.dvec9
 
  STA QQ                 \ Store the updated fractional value in QQ
 
                         \ We now move one pixel along the y-axis in the
                         \ direction given in V
 
- BIT V                  \ If bit 6 of V is clear, jump to dlin10 to step along
- BVC dlin10             \ the y-axis in a positive direction
+ BIT V                  \ If bit 6 of V is clear, jump to dvec10 to step along
+ BVC dvec10             \ the y-axis in a positive direction, i.e up the screen
 
  DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
-                        \ J so we move along the y-axis in a negative dirction
+                        \ J so we move along the y-axis in a negative direction,
+                        \ i.e. down the screen
 
- BVS dlin11             \ Now that we have moved (I, J) to the next pixel in the
-                        \ line, jump to dlin11 to plot the next pixel (this BVS
+ BVS dvec11             \ Now that we have moved (I, J) to the next pixel in the
+                        \ line, jump to dvec11 to plot the next pixel (this BVS
                         \ is effectively a JMP as we know the V flag is set)
 
-.dlin10
+.dvec10
 
  INC J                  \ Bit 6 of V is clear, so increment the y-coordinate in
                         \ J so we move along the y-axis in a positive direction
@@ -6968,7 +7164,7 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.dlin11
+.dvec11
 
                         \ When we first arrive here:
                         \
@@ -7018,8 +7214,8 @@ ORG &0B00
  AND #%00000011         \       = I mod 4
  TAX                    \       = pixel number within the 4-pixel byte
 
- BIT N                  \ If bit 7 of N is set, jump to dlin12 to erase the line
- BMI dlin12             \ with EOR logic instead of drawing it with OR logic
+ BIT N                  \ If bit 7 of N is set, jump to dvec12 to erase the line
+ BMI dvec12             \ with EOR logic instead of drawing it with OR logic
 
  LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
                         \ the X-th pixel set to white
@@ -7031,10 +7227,10 @@ ORG &0B00
                         \ pixel, which is set to white, so this will plot a
                         \ pixel at (I, J) when stored in screen memory
 
- JMP dlin13             \ Jump to dlin13 to skip the following three
+ JMP dvec13             \ Jump to dvec13 to skip the following three
                         \ instructions
 
-.dlin12
+.dvec12
 
  LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
                         \ the X-th pixel set to white
@@ -7049,7 +7245,7 @@ ORG &0B00
                         \ pixel, which is set to black, so this will erase the
                         \ pixel at (I, J) when stored in screen memory
 
-.dlin13
+.dvec13
 
  STA (P),Y              \ Store the byte in A in sceen memory at P(1 0) + Y,
                         \ which sets all four pixels to the pixel pattern in A,
@@ -7057,7 +7253,7 @@ ORG &0B00
 
  DEC VV                 \ Decrement VV to step one pixel along the longer axis
 
- BNE dlin7              \ If VV is non-zero, jump up to dlin7 to calculate the
+ BNE dvec7              \ If VV is non-zero, jump up to dvec7 to calculate the
                         \ coordinate of the next pixel in the line
 
  RTS                    \ Return from the subroutine
@@ -9174,7 +9370,7 @@ ORG &0B00
 
  JSR L28B6
 
- JSR Draw3DView         \ Update the 3D view out of the canopy
+ JSR DrawCanopyView     \ Update the 3D view out of the canopy
 
  JSR L4D6E
 
@@ -10040,7 +10236,7 @@ ORG &0B00
  LDA #%00001111         \ Set ColourCycle = %00001111, so we show colour 1 and
  STA ColourCycle        \ hide colour 2 in the canopy view
 
- JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
+ JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
  LDA #0                 \ Set JJ = 0 to act as a loop counter below
@@ -10216,7 +10412,7 @@ ORG &0B00
 
 \ ******************************************************************************
 \
-\       Name: Draw3DView
+\       Name: DrawCanopyView
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Draw the 3D view out of the canopy
@@ -10227,9 +10423,9 @@ ORG &0B00
 \
 \ ******************************************************************************
 
-.Draw3DView
+.DrawCanopyView
 
- JSR ModifyDrawColours  \ Modify the drawing routines to use the current colour
+ JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
  LDA II                 \ If II is non-zero, jump to view1 to skip the following
@@ -10303,7 +10499,7 @@ ORG &0B00
 
 .view5
 
- JSR L178D
+ JSR DrawCanopyLines
 
 .view6
 
@@ -18375,10 +18571,10 @@ ORG &5E00
 \
 \ ******************************************************************************
 
-\ Code between &0D00 and &1100 starts out at &5800 before being moved
+\ Code between &0D00 and &10FF starts out at &5800 before being moved
 COPYBLOCK &0D00, &1100, &5800
 
-\ Code between &0B00 and &CFF starts out at &5C00 before being moved
+\ Code between &0B00 and &0CFF starts out at &5C00 before being moved
 COPYBLOCK &0B00, &0D00, &5C00
 
-SAVE "3-assembled-output/AVIA.bin", CODE%, P%
+SAVE "3-assembled-output/AVIA.bin", LOAD%, P%
