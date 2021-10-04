@@ -116,42 +116,138 @@ OSCLI = &FFF7           \ The address for the OSCLI routine
 \
 \ ******************************************************************************
 
-P = &0070
-Q = &0071               \ DTIP in original
-R = &0072
-S = &0073
-T = &0074
-U = &0075
-V = &0076
-W = &0077
-G = &0078
-H = &0079
-I = &007A
-J = &007B
-K = &007C
-L = &007D
-M = &007E
-N = &007F
+ORG &0070
 
-PP = &0080
-QQ = &0081
-RR = &0082
-SS = &0083
-TT = &0084
-UU = &0085
-VV = &0086
-WW = &0087
-GG = &0088              \ PP in original
-HH = &0089
-II = &008A
-JJ = &008B
-KK = &008C
+.P
 
-LL = &008D              \ Index into L0500 table
+ SKIP 1                 \ Temporary storage, used in a number of places
 
-MM = &008E
+.Q
 
-NN = &008F              \ Index into L0600 table
+ SKIP 1                 \ Temporary storage, used in a number of places
+                        \ Called DTIP in original
+
+.R
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.S
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.T
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.U
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.V
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.W
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.G
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.H
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.I
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.J
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.K
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.L
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.M
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.N
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.PP
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.QQ
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+                        \ Called DTIP in original
+
+.RR
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.SS
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.TT
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.UU
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.VV
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.WW
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.GG
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+                        \ Called PP in original
+
+.HH
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.II
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.JJ
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.KK
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.LL
+
+ SKIP 1                 \ Index into L0500 table
+
+.MM
+
+ SKIP 1                 \ Temporary storage, used in a number of places
+
+.NN
+
+ SKIP 1                 \ Index into L0600 table
 
 \ ******************************************************************************
 \
@@ -159,7 +255,7 @@ NN = &008F              \ Index into L0600 table
 \       Type: Workspace
 \    Address: &0100 to &0175
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -183,7 +279,7 @@ L0175 = &0175
 \       Type: Workspace
 \    Address: &0400 to &04FF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -199,7 +295,7 @@ L04F6 = &04F6
 \       Type: Workspace
 \    Address: &0500 to &05FF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -212,7 +308,7 @@ L05C8 = &05C8           \ Zeroed in Reset
 \       Type: Workspace
 \    Address: &0600 to &06FF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -224,7 +320,7 @@ L0600 = &0600
 \       Type: Workspace
 \    Address: &0700 to &07FF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -239,7 +335,7 @@ L07FC = &07FC
 \       Type: Workspace
 \    Address: &0900 to &09FF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -254,7 +350,7 @@ L09FC = &09FC
 \       Type: Workspace
 \    Address: &0A00 to &0AFF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -270,7 +366,7 @@ L0AFD = &0AFD
 \       Type: Workspace
 \    Address: &0B00 to &0BFF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: 
 \
 \ ******************************************************************************
 
@@ -278,7 +374,6 @@ L0B00 = &0B00
 L0B1F = &0B1F
 L0BFC = &0BFC
 L0BFD = &0BFD
-L0BFF = &0BFF
 
 \ ******************************************************************************
 \
@@ -290,20 +385,29 @@ L0BFF = &0BFF
 \
 \ ******************************************************************************
 
-L0C00 = &0C00
+ORG &0C00
 
-TurnLo = &0C01          \ Turn rate (low byte)
+.L0C00
+
+ SKIP 1
+
+.TurnLo                 \ Turn rate (low byte)
                         \
-                        \ Stored as 35 * the turn rate in 180 degrees per minute
+ SKIP 1                 \ Stored as 35 * the turn rate in 180 degrees per minute
                         \ 
                         \ Shown on indicator 5
 
-L0C02 = &0C02
-L0C03 = &0C03
+.L0C02
 
-AirspeedLo = &0C05      \ Air speed (low byte)
+ SKIP 1
+
+.L0C03
+
+ SKIP 2
+
+.AirspeedLo             \ Air speed (low byte)
                         \
-                        \ 100 mph is stored as 9.25 * 256 = 2368
+ SKIP 1                 \ 100 mph is stored as 9.25 * 256 = 2368
                         \
                         \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
                         \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
@@ -312,41 +416,57 @@ AirspeedLo = &0C05      \ Air speed (low byte)
                         \
                         \ Shown on indicator 1
 
-L0C06 = &0C06
-L0C08 = &0C08
-L0C09 = &0C09
+.L0C06
 
-Elevator = &0C0C        \ Elevator position (pitch)
-                        \
-                        \ Shown on indicator 8 or 10 as the joystick y-position
+ SKIP 2
 
-Rudder = &0C0D          \ Rudder position (yaw)
-                        \
-                        \ Shown on indicator 9
+.L0C08
 
-Aileron = &0C0E         \ Aileron position (roll)
-                        \
-                        \ Shown on indicator 8 or 10 as the joystick x-position
+ SKIP 1
 
-ThrustLo = &0C0F        \ Thrust (low byte)
+.L0C09
+
+ SKIP 3
+
+.Elevator               \ Elevator position (pitch)
                         \
-                        \ Thrust is in the range 0 to 1280
+ SKIP 1                 \ Shown on indicator 8 or 10 as the joystick y-position
+
+.Rudder                 \ Rudder position (yaw)
+                        \
+ SKIP 1                 \ Shown on indicator 9
+
+.Aileron                \ Aileron position (roll)
+                        \
+ SKIP 1                 \ Shown on indicator 8 or 10 as the joystick x-position
+
+.ThrustLo               \ Thrust (low byte)
+                        \
+ SKIP 1                 \ Thrust is in the range 0 to 1280
                         \
                         \ Shown on indicator 11
-L0C10 = &0C10
 
-TurnHi = &0C11          \ Turn rate (low byte)
+.L0C10
+
+ SKIP 1
+
+.TurnHi                 \ Turn rate (low byte)
                         \
-                        \ Stored as 35 * the turn rate in 180 degrees per minute
+ SKIP 1                 \ Stored as 35 * the turn rate in 180 degrees per minute
                         \
                         \ Shown on indicator 5
 
-L0C12 = &0C12
-L0C13 = &0C13
+.L0C12
 
-AirspeedHi = &0C15      \ Air speed (high byte)
+ SKIP 1
+
+.L0C13
+
+ SKIP 2
+
+.AirspeedHi             \ Air speed (high byte)
                         \
-                        \ 100 mph is stored as 9.25 * 256 = 2368
+ SKIP 1                 \ 100 mph is stored as 9.25 * 256 = 2368
                         \
                         \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
                         \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
@@ -355,23 +475,39 @@ AirspeedHi = &0C15      \ Air speed (high byte)
                         \
                         \ Shown on indicator 1
 
-L0C16 = &0C16
-L0C18 = &0C18
-L0C19 = &0C19
+.L0C16
 
-ThrustHi = &0C1F        \ Thrust (high byte)
+ SKIP 2
+
+.L0C18
+
+ SKIP 1
+
+.L0C19
+
+ SKIP 6
+
+.ThrustHi               \ Thrust (high byte)
                         \
-                        \ Thrust is in the range 0 to 1280
+ SKIP 1                 \ Thrust is in the range 0 to 1280
                         \
                         \ Shown on indicator 11
 
-L0C20 = &0C20
-L0C26 = &0C26
-L0C2A = &0C2A
+.L0C20
 
-AxisKeyUsage = &0C2D    \ The following locations are updated when keys are
+ SKIP 6
+
+.L0C26
+
+ SKIP 4
+
+.L0C2A
+
+ SKIP 3
+
+.AxisKeyUsage           \ The following locations are updated when keys are
                         \ pressed in ProcessKeyLogger:
-                        \
+ SKIP 3                 \
                         \   * AxisKeyUsage   = elevator
                         \   * AxisKeyUsage+1 = rudder
                         \   * AxisKeyUsage+2 = aileron
@@ -382,47 +518,157 @@ AxisKeyUsage = &0C2D    \ The following locations are updated when keys are
                         \ control key is pressed (in any direction), so they
                         \ measure "axis control key usage"
 
-L0C30 = &0C30
-L0C32 = &0C32
-L0C40 = &0C40
-L0C43 = &0C43
-L0C45 = &0C45
-L0C46 = &0C46
-L0C47 = &0C47
-L0C4A = &0C4A
-L0C50 = &0C50
-L0C53 = &0C53
-L0C55 = &0C55
-L0C56 = &0C56
-L0C57 = &0C57
-L0C5A = &0C5A
-L0C60 = &0C60
-L0C63 = &0C63
-L0C64 = &0C64
-L0C65 = &0C65
-L0C66 = &0C66
-L0C67 = &0C67
-L0C6A = &0C6A
-L0C6D = &0C6D
-L0C6E = &0C6E
-L0C6F = &0C6F
-L0C70 = &0C70
-L0C73 = &0C73
-L0C74 = &0C74
-L0C75 = &0C75
-L0C76 = &0C76
-L0C77 = &0C77
-L0C7A = &0C7A
-L0C80 = &0C80
-L0C82 = &0C82
-L0C83 = &0C83
-L0C84 = &0C84
-L0C86 = &0C86
-L0C89 = &0C89
+.L0C30
 
-VerticalSpeedLo = &0C8A \ Vertical speed
+ SKIP 2
+
+.L0C32
+
+ SKIP 14
+
+.L0C40
+
+ SKIP 3
+
+.L0C43
+
+ SKIP 2
+
+.L0C45
+
+ SKIP 1
+
+.L0C46
+
+ SKIP 1
+
+.L0C47
+
+ SKIP 3
+
+.L0C4A
+
+ SKIP 6
+
+.L0C50
+
+ SKIP 3
+
+.L0C53
+
+ SKIP 2
+
+.L0C55
+
+ SKIP 1
+
+.L0C56
+
+ SKIP 1
+
+.L0C57
+
+ SKIP 3
+
+.L0C5A
+
+ SKIP 6
+
+.L0C60
+
+ SKIP 3
+
+.L0C63
+
+ SKIP 1
+
+.L0C64
+
+ SKIP 1
+
+.L0C65
+
+ SKIP 1
+
+.L0C66
+
+ SKIP 1
+
+.L0C67
+
+ SKIP 3
+
+.L0C6A
+
+ SKIP 3
+
+.L0C6D
+
+ SKIP 1
+
+.L0C6E
+
+ SKIP 1
+
+.L0C6F
+
+ SKIP 1
+
+.L0C70
+
+ SKIP 3
+
+.L0C73
+
+ SKIP 1
+
+.L0C74
+
+ SKIP 1
+
+.L0C75
+
+ SKIP 1
+
+.L0C76
+
+ SKIP 1
+
+.L0C77
+
+ SKIP 3
+
+.L0C7A
+
+ SKIP 6
+
+.L0C80
+
+ SKIP 2
+
+.L0C82
+
+ SKIP 1
+
+.L0C83
+
+ SKIP 1
+
+.L0C84
+
+ SKIP 2
+
+.L0C86
+
+ SKIP 3
+
+.L0C89
+
+ SKIP 1
+
+.VerticalSpeedLo        \ Vertical speed (low byte)
                         \
-                        \ Stored as 128/425 * vertical speed in feet per minute,
+ SKIP 1                 \ Stored as 128/425 * vertical speed in feet per minute,
                         \ so:
                         \
                         \ 1000 feet/minute is stored as 128/425 * 1000 = 301
@@ -430,25 +676,51 @@ VerticalSpeedLo = &0C8A \ Vertical speed
                         \
                         \ Shown on indicator 4
 
-L0C8C = &0C8C
-L0C90 = &0C90
-L0C92 = &0C92
-L0C93 = &0C93
-L0C94 = &0C94
-L0C96 = &0C96
-L0C99 = &0C99
+ SKIP 1
 
-VerticalSpeedHi = &0C9A \ Vertical speed
-                        \
-                        \ Shown on indicator 4
+.L0C8C
 
-Slip = &0C9C            \ Slip rate
-                        \
-                        \ Shown on indicator 6
+ SKIP 4
 
-KeyLoggerLow = &0CA0    \ Key logger (low value)
+.L0C90
+
+ SKIP 2
+
+.L0C92
+
+ SKIP 1
+
+.L0C93
+
+ SKIP 1
+
+.L0C94
+
+ SKIP 2
+
+.L0C96
+
+ SKIP 3
+
+.L0C99
+
+ SKIP 1
+
+.VerticalSpeedHi         \ Vertical speed (high byte)
+                         \
+ SKIP 1                  \ Shown on indicator 4
+
+ SKIP 1
+
+.Slip                   \ Slip rate
                         \
-                        \ Populated with values from KeyTable1Lo or KeyTable2Lo
+ SKIP 1                 \ Shown on indicator 6
+
+ SKIP 3
+
+.KeyLoggerLow           \ Key logger (low value)
+                        \
+ SKIP 6                 \ Populated with values from KeyTable1Lo or KeyTable2Lo
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      =   1 or  1
@@ -458,11 +730,15 @@ KeyLoggerLow = &0CA0    \ Key logger (low value)
                         \ U or B (undercarriage, brakes)    =   4 or  7
                         \ F or SHIFT (flaps, fire)          =   5 or  8
 
-L0CA8 = &0CA8
+ SKIP 2
 
-KeyLoggerHigh = &0CB0   \ Key logger (high value)
+.L0CA8
+
+ SKIP 8
+
+.KeyLoggerHigh          \ Key logger (high value)
                         \
-                        \ Populated with values from KeyTable1Hi or KeyTable2Hi
+ SKIP 6                 \ Populated with values from KeyTable1Hi or KeyTable2Hi
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      = -1 or 1
@@ -472,24 +748,42 @@ KeyLoggerHigh = &0CB0   \ Key logger (high value)
                         \ U or B (undercarriage, brakes)    =  0 or 0
                         \ F or SHIFT (flaps, fire)          =  0 or 0
 
-L0CB8 = &0CB8
-L0CBA = &0CBA
-L0CBB = &0CBB
+ SKIP 2
 
-GunSights = &0CBE       \ Gun sights status
+.L0CB8
+
+ SKIP 2
+
+.L0CBA
+
+ SKIP 1
+
+.L0CBB
+
+ SKIP 3
+
+.GunSights              \ Gun sights status
                         \
-                        \ Bit 6 = 1 while "I" is being held down
+ SKIP 1                 \ Bit 6 = 1 while "I" is being held down
                         \
                         \ Bit 7 = 1 when sights are being shown
                         \         0 when sights are not being shown
 
-L0CBF = &0CBF
-L0CC0 = &0CC0
-L0CC1 = &0CC1
+.L0CBF
 
-ColourLogic = &0CC2     \ Determines the logic used to draw the canopy view
+ SKIP 1
+
+.L0CC0
+
+ SKIP 1
+
+.L0CC1
+
+ SKIP 1
+
+.ColourLogic            \ Determines the logic used to draw the canopy view
                         \
-                        \   * %00000000 just after each flip (DrawCanopyLines)
+ SKIP 1                 \   * %00000000 just after each flip (DrawCanopyLines)
                         \     AND logic
                         \   * %01000000 when ColourCycle is %11110000 (FlipColours)
                         \     ORA logic
@@ -499,9 +793,9 @@ ColourLogic = &0CC2     \ Determines the logic used to draw the canopy view
                         \ Set to %10000000 for each new game
 
 
-ColourCycle = &0CC3     \ Determines which of the two canopy screens we are
+.ColourCycle            \ Determines which of the two canopy screens we are
                         \ showing, so we can use colour cycling for smooth
-                        \ animation
+ SKIP 1                 \ animation
                         \
                         \ %00001111 = show colour 1, hide colour 2
                         \ %11110000 = show colour 2, hide colour 1
@@ -511,44 +805,71 @@ ColourCycle = &0CC3     \ Determines which of the two canopy screens we are
                         \
                         \ Set to %00001111 for each new game
 
-L0CC4 = &0CC4
+.L0CC4
 
-OnGround = &0CC5        \ "On the ground" status
+ SKIP 1
+
+.OnGround               \ "On the ground" status
                         \
-                        \   * 0 = we are not on the ground
+ SKIP 1                 \   * 0 = we are not on the ground
                         \   * 1 = we are on the ground
                         \
                         \ Set to 1 in Reset (on the ground)
 
-MainLoopNN = &0CC6      \ Used to store the value of NN at the start of each
+.MainLoopNN             \ Used to store the value of NN at the start of each
                         \ iteration of the main loop
+ SKIP 1
 
-L0CC7 = &0CC7
-L0CC8 = &0CC8
+.L0CC7
 
-PressingT = &0CC9       \ Set to 0 in the main loop if "T" is not being pressed,
+ SKIP 1
+
+.L0CC8
+
+ SKIP 1
+
+.PressingT              \ Set to 0 in the main loop if "T" is not being pressed,
                         \ otherwise set to 1, to prevent holding down "T" from
-                        \ constantly switching the engine on and off
+ SKIP 1                 \ constantly switching the engine on and off
 
-L0CCA = &0CCA
-L0CCB = &0CCB
-L0CCC = &0CCC           \ OB in original
+.L0CCA
 
-PressingTab = &0CCD     \ Bit 7 determines whether TAB is being pressed
+ SKIP 1
+
+.L0CCB
+
+ SKIP 1
+
+.L0CCC
+
+ SKIP 1                 \ OB in original
+
+.PressingTab            \ Bit 7 determines whether TAB is being pressed
                         \
-                        \   * 0 = not being pressed
+ SKIP 1                 \   * 0 = not being pressed
                         \   * 128 = being pressed
                         \
                         \ This value is set in the ToggleJoystick routine
 
-L0CCE = &0CCE
-L0CCF = &0CCF
-L0CD0 = &0CD0           \ Set to 255 in Reset
-L0CD1 = &0CD1           \ Set to 47 in Reset
+.L0CCE
 
-PressingUFBS = &0CD2    \ Determines whether any of the following keys are
+ SKIP 1
+
+.L0CCF
+
+ SKIP 1
+
+.L0CD0
+
+ SKIP 1                 \ Set to 255 in Reset
+
+.L0CD1
+
+ SKIP 1                 \ Set to 47 in Reset
+
+.PressingUFBS           \ Determines whether any of the following keys are
                         \ being pressed:
-                        \
+ SKIP 5                 \
                         \ PressingUFBS = 1 while the undercarriage key "U" is 
                         \ being pressed, 0 otherwise
 
@@ -563,119 +884,179 @@ PressingUFBS = &0CD2    \ Determines whether any of the following keys are
                         \ PressingUFBS+4 = 1 while the fire key SHIFT is being
                         \ pressed, 0 otherwise
 
-L0CD7 = &0CD7
+.L0CD7
 
-ScoreDisplayTimer = &0CD8   \ Counter for removing the score after displaying it
+ SKIP 1
+
+.ScoreDisplayTimer      \ Counter for removing the score after displaying it
                         \ for a fixed amount of time
+ SKIP 1
 
-GunSoundCounter = &0CD9 \ Counter for the number of firing sounds we make when
+
+.GunSoundCounter        \ Counter for the number of firing sounds we make when
                         \ firing our guns (which makes the sound of two shots)
+ SKIP 1
 
-L0CDA = &0CDA
-L0CE0 = &0CE0
-L0CE1 = &0CE1
-L0CE2 = &0CE2
-L0CE3 = &0CE3
-L0CE4 = &0CE4
-L0CE5 = &0CE5
-L0CE6 = &0CE6           \ Set to 1 in Reset, UpdateRadar
+.L0CDA
 
-Theme = &0CE7           \ Theme status
+ SKIP 6
+
+.L0CE0
+
+ SKIP 1
+
+.L0CE1
+
+ SKIP 1
+
+.L0CE2
+
+ SKIP 1
+
+.L0CE3
+
+ SKIP 1
+
+.L0CE4
+
+ SKIP 1
+
+.L0CE5
+
+ SKIP 1
+
+.L0CE6
+
+ SKIP 1                 \ Set to 1 UpdateRadar
+
+.Theme                  \ Theme status
                         \
-                        \   * Positive (bit 7 = 0) = the Theme is enabled
+ SKIP 1                 \   * Positive (bit 7 = 0) = the Theme is enabled
                         \   * Negative (bit 7 = 1) = the Theme is not enabled
                         \
                         \ Set to 255 (Theme not enabled) in Reset
 
-L0CE8 = &0CE8           \ Set to 1 in Reset
+.L0CE8                  \ Set to 1 in Reset
                         \
-                        \ Gets shifted left with a 1 inserted in bit 0 in L5670
+ SKIP 1                 \ Gets shifted left with a 1 inserted in bit 0 in L5670
 
-Engine = &0CE9          \ Engine status
+.Engine                 \ Engine status
                         \
-                        \   * 0 = engine is off
+ SKIP 1                 \   * 0 = engine is off
                         \   * Non-zero = engine is on
 
-L0CEA = &0CEA
-L0CEC = &0CEC
-L0CED = &0CED           \ Set to 229 in Reset
+.L0CEA
 
-AltitudeLo = &0CEE      \ Altitude (high byte)
+ SKIP 2
+
+.L0CEC
+
+ SKIP 1
+
+.L0CED
+
+ SKIP 1                 \ Set to 229 in Reset
+
+.AltitudeLo             \ Altitude (high byte)
                         \
-                        \ Stored as the altitude in feet x 4
+ SKIP 1                 \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
                         \ Set to 10 in Reset
 
-L0CEF = &0CEF           \ Set to 92 in Reset
+.L0CEF
 
-L0CF0 = &0CF0           \ Set to 5 if undercarriage is up, 10 if it is down in
+ SKIP 1                 \ Set to 92 in Reset
+
+.L0CF0
+
+ SKIP 1                 \ Set to 5 if undercarriage is up, 10 if it is down in
                         \ IndicatorU
 
-Firing = &0CF1          \ Firing status
+.Firing                 \ Firing status
                         \
-                        \   * 0 = no bullets in the air
+ SKIP 1                 \   * 0 = no bullets in the air
                         \   * Non-zero = guns fired, bullets in the air
                         \
                         \ Called FRFLAG in original source code
                         \
                         \ Can't fire guns if this or L368F are non-zero
 
-Undercarriage = &0CF2   \ Undercarriage status
+.Undercarriage          \ Undercarriage status
                         \
-                        \   * 0 = undercarriage is up
+ SKIP 1                 \   * 0 = undercarriage is up
                         \   * Non-zero = undercarriage is down
                         \
                         \ Set to 1 (undercarriage is down) in Reset
              
-Flaps = &0CF3           \ Flaps status
+.Flaps                  \ Flaps status
                         \
-                        \   * 0 = flaps are off (raised)
+ SKIP 1                 \   * 0 = flaps are off (raised)
                         \   * Non-zero = flaps are on (dropped)
                         \
                         \ Set to 0 (flaps are off) in Reset
 
-Brakes = &0CF5          \ Brakes status
+ SKIP 1
+
+.Brakes                 \ Brakes status
                         \
-                        \   * 0 = brakes are off
+ SKIP 1                 \   * 0 = brakes are off
                         \   * Non-zero = brakes are on
                         \
                         \ Set to 1 (brakes are on) in Reset
 
-Propellor = &0CF7       \ Propellor status
+ SKIP 1
+
+.Propellor              \ Propellor status
                         \
-                        \   * 0 = propellor is working
+ SKIP 1                 \   * 0 = propellor is working
                         \   * Non-zero = propellor is broken
                         \
                         \ If we make a crash landing with the undercarriage up,
                         \ the propellor breaks and we can't turn the engine on
 
-L0CF8 = &0CF8           \ Set to 10 in Reset
+.L0CF8
 
-L0CF9 = &0CF9
+ SKIP 1                 \ Set to 10 in Reset
 
-L0CFA = &0CFA           \ Set to 7 in Reset
+.L0CF9
 
-Compass = &0CFB         \ Compass direction
+ SKIP 1
+
+.L0CFA
+
+ SKIP 1                 \ Set to 7 in Reset
+
+.Compass                \ Compass direction
                         \
-                        \   * 0 = North
+ SKIP 1                 \   * 0 = North
                         \   * 64 = East
                         \   * 128 = South
                         \   * 192 = West
                         \
                         \ Shown on indicator 0
 
-L0CFC = &0CFC
-L0CFD = &0CFD           \ Set to 198 in Reset
+.L0CFC
 
-AltitudeHi = &0CFE      \ Altitude (high byte)
+ SKIP 1
+
+.L0CFD
+
+ SKIP 1                 \ Set to 198 in Reset
+
+.AltitudeHi             \ Altitude (high byte)
                         \
-                        \ Stored as the altitude in feet x 4
+ SKIP 1                 \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
                         \ Set to 0 in Reset
 
-L0CFF = &0CFF           \ Set to 72 in Reset
+.L0CFF
+
+ SKIP 1                 \ Set to 72 in Reset
+
+CLEAR &0C00, &0D00      \ Clear the guard on the &0C00 workspace so we can
+                        \ assemble the loader code into this address range
 
 \ ******************************************************************************
 \
@@ -8706,7 +9087,7 @@ ORG CODE%
                         \ This loop zeroes &0C00 to &0CFE, which resets all of
                         \ the variables in the &0C00 workspace
 
- STA L0BFF,X            \ Zero the X-1-th byte of page &C
+ STA &0C00-1,X          \ Zero the X-1-th byte of page &C
 
  DEX                    \ Decrement the byte counter
 
@@ -15415,8 +15796,8 @@ NEXT
  LDA L368F
  BEQ L4D19
 
- LDA #2                 \ Make sound #2, the sound of Theme gunfire
- JSR MakeSound
+ LDA #2                 \ Make sound #2, the sound of gunfire hitting its target
+ JSR MakeSound          \ ???
 
  LDX L368E
  LDY Lookup367A,X
@@ -16179,7 +16560,7 @@ NEXT
  EQUB &03, &00          \ Second parameter (Sounds+10) gets changed in the
  EQUB &FF, &00          \ VolumeKeys routine to alter the volume
 
- EQUB &13, &00          \ Sound #2: Theme gunfire ??? (SOUND &13, 2, 220, 2)
+ EQUB &13, &00          \ Sound #2: Gunfire hitting ??? (SOUND &13, 2, 220, 2)
  EQUB &02, &00          \
  EQUB &DC, &00          \ Uses sound envelope 2
  EQUB &02, &00
