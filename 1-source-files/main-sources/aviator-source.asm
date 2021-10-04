@@ -8359,7 +8359,7 @@ ORG CODE%
 
  JSR L1AFC
 
- JSR L5000
+ JSR ApplyFlightModel   \ Apply the flight model to our plane
 
  JSR UpdateDashboard    \ Update the next two indicators in the ranges 0 to 6
                         \ and 7 to 11
@@ -8677,7 +8677,7 @@ ORG CODE%
 
  LDX #&ED
  LDY #&60
- JSR L4B00
+ JSR CopyFrom0C00
 
  LDY #&0C
  LDX #&60
@@ -9206,10 +9206,6 @@ ORG CODE%
 \   Category: Dashboard
 \    Summary: Update the radar display
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
 .UpdateRadar
@@ -9217,7 +9213,7 @@ ORG CODE%
  LDA #80                \ Set L0900 = 80
  STA L0900
 
- LDA #1                 \ Set L0CE6 = 1
+ LDA #1                 \ Set L0CE6 = 1, so we draw a dot on the radar
  STA L0CE6
 
  STA L4A00              \ Set L4A00 = 1
@@ -10998,7 +10994,7 @@ ORG CODE%
  LDX #&A8
  LDY #0
  STY GG
- JSR L4B00
+ JSR CopyFrom0C00
 
  LDA #0
  STA L0CCB
@@ -11029,26 +11025,43 @@ ORG CODE%
 \
 \       Name: UpdateRadarLine
 \       Type: Subroutine
-\   Category: 
+\   Category: Dashboard
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   L0900               80 for the runway
+\
+\   L0CE6               Determines which coordinate at L3688/L368A to use and
+\                       what to draw
+\
+\                         * 0 = use L3688 and L368A, draw line
+\
+\                         * Non-zero = use L3688+1 and L368A+1, draw dot
+\
+\   L4A00               1 for the runway
 \
 \ ******************************************************************************
 
 .UpdateRadarLine
 
- LDX L0CE6
- LDA L3688,X
- STA I
- LDA L368A,X
- STA J
- LDA #&80
- STA N
- LDA L2E9C
- JSR RadarVector
+ LDX L0CE6              \ Set X = L0CE6
+
+ LDA L3688,X            \ Set I = the X-th byte of L3688, the x-coordinate of
+ STA I                  \ the current line on the radar
+
+ LDA L368A,X            \ Set J = the X-th byte of L368A, the y-coordinate of
+ STA J                  \ the current line on the radar
+
+ LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
+ STA N                  \ current line
+
+ LDA PreviousCompass    \ Set A = PreviousCompass, so it contains the value of A from the
+                        \ last call to RadarVector
+
+ JSR RadarVector        \ Calculate the vector for the line on the radar
 
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
@@ -11103,8 +11116,10 @@ ORG CODE%
  ADC #&D0
  STA J
  STA L368A,X
+
  LDA #0
  STA N
+
  LDA Compass
  JSR RadarVector
 
@@ -11234,57 +11249,136 @@ ORG CODE%
 \
 \       Name: RadarVector
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Dashboard
+\    Summary: Calculate the radar line vector for a line (the runway) or a dot
+\             (an alien)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   The current compass direction, or a previous compass
+\                       direction if we are erasing the line (runway only)
+\
+\                         * 0 = North
+\                         * 64 = East
+\                         * 128 = South
+\                         * 192 = West
+\
+\   X                   0 = calculate line vector (for the runway)
+\
+\                       Non-zero = calculate a dot (for an alien)
+\
+\ Returns:
+\
+\   T                   Magnitude of x-coordinate of line's vector |x-delta|
+\
+\   U                   Magnitude of y-coordinate of line's vector |y-delta|
+\
+\   V                   The direction of the line (runway), or an arbitrary
+\                       direction (alien)
 \
 \ ******************************************************************************
 
 .RadarVector
 
- CPX #0
- BEQ L2E37
+ CPX #0                 \ If X = 0, jump to rvec1 to calculate the line vector
+ BEQ rvec1              \ for the runway
 
- LDY #1
- BNE L2E59
+                        \ Otherwise X = 1, so we return the deltas for a dot,
+                        \ i.e. T = U = 1
 
-.L2E37
+ LDY #1                 \ Set Y = 1 to return as the y-delta in U
 
- STA L2E9C
- CLC
- ADC #&10
- ASL A
- STA P
- PHP
- ROR A
- SEC
- SBC #&40
- PLP
- ROR A
- EOR #&C0
- STA V
- LDX #2
- LDY #4
- BIT P
- BVS L2E5B
+ BNE rvec2              \ Jump down to rvec2 to return from the subroutine (this
+                        \ BNE is effectively a JMP as Y is never zero)
 
- BPL L2E59
+.rvec1
 
- LDY #1
- BNE L2E5B
+                        \ We now want to calculate the vector for the runway
+                        \ line on the radar
+                        \
+                        \ The runway runs north-south, so our compass direction
+                        \ in A gives us the direction of the runway line on the
+                        \ radar
+                        \
+                        \   * 0 = North
+                        \   * 64 = East
+                        \   * 128 = South
+                        \   * 192 = West
 
-.L2E59
+ STA PreviousCompass    \ Store A in PreviousCompass, so we can use it to erase
+                        \ the line we are about to draw
 
- LDX #1
+ CLC                    \ Set A = A + 16
+ ADC #16                \
+                        \ This rotates the compass needle clockwise by 16,
+                        \ giving:
+                        \
+                        \   * 16 = North    -> bit 7 clear
+                        \   * 80 = East     -> bit 7 set
+                        \   * 146 = South   -> bit 7 set
+                        \   * 208 = West    -> bit 7 set
 
-.L2E5B
+ ASL A                  \ Shift bit 7 of the result into the C flag
 
- STX T
- STY U
- RTS
+ STA P                  \ Store the result in P, so:
+                        \
+                        \   P = (A + 16) << 1
+                        \
+                        \ which looks like this:
+                        \
+                        \   * 32 = North
+                        \   * 0 = East
+                        \   * 18 = South
+                        \   * 80 = West
+                        \
+                        \ We can use this below to work out the length of the
+                        \ line to show
+
+ PHP                    \ Store the flags on the stack, in particular the C
+                        \ flag from the above operation, which gives us out x-delta
+
+ ROR A                  \ Shift the sign of the y-delta into A, so we can return
+                        \ it as bit 6 of V
+
+ SEC                    \ Set A = A - 48
+ SBC #64
+
+ PLP                    \ Retrieve the C flag from above
+
+ ROR A                  \ Shift the sign of the x-delta into A, so we can return
+                        \ it as bit 7 of V
+
+ EOR #%11000000         \ Flip both bits 6 and 7 of A
+
+ STA V                  \ Store the result in V to set the direction of the line
+                        \ vector
+
+ LDX #2                 \ Set X = 2 to return as the x-delta in T
+
+ LDY #4                 \ Set Y = 4 to return as the y-delta in U
+
+ BIT P                  \ If bit 6 of P is set, jump to rvec3 to return these
+ BVS rvec3              \ values as the deltas (i.e. 2 and 4)
+
+ BPL rvec2              \ If bit 7 of P is clear, jump to rvec2 to return an
+                        \ x-delta of 1 and a y-delta of 4
+
+ LDY #1                 \ Otherwise set Y = 1 and jump to rvec3 to return an
+ BNE rvec3              \ x-delta of 2 and a y-delta of 1
+
+.rvec2
+
+ LDX #1                 \ Set X = 1 to return as the x-delta in T
+
+.rvec3
+
+ STX T                  \ Return X as the x-delta in T
+
+ STY U                  \ Return Y as the y-delta in U
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11391,18 +11485,15 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2E9C
+\       Name: PreviousCompass
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Dashboard
+\    Summary: Stores the value of Compass when we draw the runway on the radar,
+\             so we can erase the line later
 \
 \ ******************************************************************************
 
-.L2E9C
+.PreviousCompass
 
  EQUB &20
 
@@ -12066,7 +12157,7 @@ ORG CODE%
 
  LDX #&A8
  LDY #0
- JSR L4B00
+ JSR CopyFrom0C00
 
  LDY VV
  JSR L3152
@@ -12533,7 +12624,7 @@ ORG CODE%
 
  LDX #&A8
  LDY #5
- JSR L4B25
+ JSR CopyTo0C00
 
 .L32BC
 
@@ -12556,7 +12647,7 @@ ORG CODE%
 
  LDX #&A8
  INY
- JSR L4B00
+ JSR CopyFrom0C00
 
  CPY #&13
  BNE L32BC
@@ -15222,7 +15313,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4B00
+\       Name: CopyFrom0C00
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -15231,17 +15322,17 @@ NEXT
 \
 \ Called with:
 \
-\   FireGuns: X = &ED, Y = &60
-\   L2CD3:    X = &A8, Y = 0
-\   L3053:      "
-\   L31BD:    X = &A8, Y = range
-\   L4CB0:    X = &A8, Y = range
-\   L5000:    X = &89, Y = &FF
-\             X = 0,   Y = &FE
+\   FireGuns            X = &ED, Y = &60
+\   L2CD3               X = &A8, Y = 0
+\   L3053               X = &A8, Y = 0
+\   L31BD               X = &A8, Y = range
+\   L4CB0               X = &A8, Y = range
+\   ApplyFlightModel    X = &89, Y = &FF
+\                       X = 0,   Y = &FE
 \
 \ ******************************************************************************
 
-.L4B00
+.CopyFrom0C00
 
  LDA &0C00,X
  STA L0900,Y
@@ -15259,7 +15350,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4B25
+\       Name: CopyTo0C00
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -15268,15 +15359,15 @@ NEXT
 \
 \ Called with:
 \
-\   L31BD: X = &A8, Y = 5
-\   L4CB0: X = &A8, Y = range
-\   L5000: X = 3,   Y = &FF
-\          X = &83, Y = &FC
-\          X = &86, Y = &FE
+\   L31BD               X = &A8, Y = 5
+\   L4CB0               X = &A8, Y = range
+\   ApplyFlightModel    X = 3,   Y = &FF
+\                       X = &83, Y = &FC
+\                       X = &86, Y = &FE
 \
 \ ******************************************************************************
 
-.L4B25
+.CopyTo0C00
 
  LDA L0900,Y
  STA &0C00,X
@@ -15303,10 +15394,10 @@ NEXT
 \
 \ Called with:
 \
-\   FireGuns: X = &E4
-\   L2C95:    X = M
-\             X = L
-\   L5000:    X = &FD
+\   FireGuns            X = &E4
+\   L2C95               X = M
+\                       X = L
+\   ApplyFlightModel    X = &FD
 \
 \ ******************************************************************************
 
@@ -15824,7 +15915,7 @@ NEXT
 .L4CD7
 
  LDX #&A8
- JSR L4B25
+ JSR CopyTo0C00
 
  STY T
  LDY #2
@@ -15856,7 +15947,7 @@ NEXT
 
  LDY T
  LDX #&A8
- JSR L4B00
+ JSR CopyFrom0C00
 
  DEY
  CPY U
@@ -17145,10 +17236,10 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L5000
+\       Name: ApplyFlightModel
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Apply the flight model to our plane
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17156,7 +17247,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L5000
+.ApplyFlightModel
 
  LDX #&FD
  JSR L4B4A
@@ -17195,7 +17286,7 @@ NEXT
  LDX #&89
  LDY #&FF
  STY GG
- JSR L4B00
+ JSR CopyFrom0C00
 
  LDA #0
  STA L0CCB
@@ -17203,7 +17294,7 @@ NEXT
 
  LDX #3
  LDY #&FF
- JSR L4B25
+ JSR CopyTo0C00
 
  JSR L5295
 
@@ -17405,7 +17496,7 @@ NEXT
  STA L0BFC
  LDX #&83
  LDY #&FC
- JSR L4B25
+ JSR CopyTo0C00
 
  JSR L51F9
 
@@ -17414,7 +17505,7 @@ NEXT
  LDX #0
  LDY #&FE
  STY GG
- JSR L4B00
+ JSR CopyFrom0C00
 
  LDA #&12
  STA L0CCB
@@ -17422,7 +17513,7 @@ NEXT
 
  LDX #&86
  LDY #&FE
- JSR L4B25
+ JSR CopyTo0C00
 
  JSR L522D
 
