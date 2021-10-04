@@ -81,14 +81,14 @@ Row23_Block12_4 = &7524 \ Left block of artificial horizon
 Row23_Block13_2 = &752A \ Middle block of artificial horizon
 Row23_Block14_4 = &7534 \ Right block of artificial horizon
 
-Row25_Block31_1 = &77A9 \ Left block of radar horizontal middle line
-Row25_Block34_7 = &7857 \ Left-middle block of radar horizontal middle line
-Row25_Block35_6 = &785E \ Right-middle block of radar horizontal middle line
-Row25_Block35_7 = &785F \ Right-middle block of radar horizontal middle line
-Row26_Block35_0 = &7998 \ Block containing bottom bit of centre cross in radar
-Row26_Block35_1 = &7999 \ Block containing bottom bit of centre cross in radar
+Row25_Block31_1 = &77A9 \ Middle of the left edge of the radar
+Row25_Block34_7 = &7857 \ Left spur of the radar's cross
+Row25_Block35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
+Row25_Block35_7 = &785F \ Centre and right spur of the radar's cross
+Row26_Block35_0 = &7998 \ Top pixel of the bottom spur of the radar's cross
+Row26_Block35_1 = &7999 \ Bottom pixel of the bottom spur of the radar's cross
 
-Row28_Block26_5 = &7BD5 \ Centre block of slip-and-turn indicator
+Row28_Block26_5 = &7BD5 \ Centre block of the slip-and-turn indicator
 
 Row29_Block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
 
@@ -339,7 +339,7 @@ L07FC = &07FC
 \
 \ ******************************************************************************
 
-L0900 = &0900           \ Set to 80 in Reset, UpdateRadar
+L0900 = &0900           \ Set to 80 in Reset, ResetRadar
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
@@ -925,9 +925,12 @@ ORG &0C00
 
  SKIP 1
 
-.L0CE6
+.Alien
 
- SKIP 1                 \ Set to 1 UpdateRadar
+ SKIP 1                 \ Used to store a flag when updating the radar, to
+                        \ denote whether we are updating the runway or an alien
+                        \
+                        \ Also used as a counter in L2A8C
 
 .Theme                  \ Theme status
                         \
@@ -1021,7 +1024,7 @@ ORG &0C00
 
 .L0CF9
 
- SKIP 1
+ SKIP 1                 \ Set to non-zero when AltitudeHi >= 2 (512 feet)
 
 .L0CFA
 
@@ -5770,7 +5773,7 @@ ORG CODE%
  LDA #0                 \ Set T = 0
  STA T
 
-                        \ We now calculate A = R * n /256 with a hardcoded n,
+                        \ We now calculate A = R * n / 256 with a hardcoded n,
                         \ using unrolled shift-and-add multiplication
 
  LDA R                  \ Set A = R
@@ -8962,7 +8965,7 @@ ORG CODE%
 \
 \ Called with Y = &0C to &0F in FireGuns
 \
-\ Called with Y = &21 in UpdateRadar
+\ Called with Y = &21 in ResetRadar
 \
 \ ******************************************************************************
 
@@ -9196,29 +9199,31 @@ ORG CODE%
  LDA FuelLevel          \ Loop back until FuelLevel = 0, by which point we have
  BNE rset6              \ reset the fuel tanks and cleared the fuel gauge
 
-                        \ Fall through into UpdateRadar to update the radar
+                        \ Fall through into ResetRadar to reset the radar
                         \ display
 
 \ ******************************************************************************
 \
-\       Name: UpdateRadar
+\       Name: ResetRadar
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update the radar display
 \
 \ ******************************************************************************
 
-.UpdateRadar
+.ResetRadar
 
- LDA #80                \ Set L0900 = 80
- STA L0900
+ LDA #80                \ Set L0900 = 80, so we don't draw a new alien on the
+ STA L0900              \ radar (as this coordinate is off the radar)
 
- LDA #1                 \ Set L0CE6 = 1, so we draw a dot on the radar
- STA L0CE6
+ LDA #1                 \ Set Alien = 1, so we remove the alien from the radar
+ STA Alien              \ rather than the runway
 
- STA L4A00              \ Set L4A00 = 1
+ STA L4A00              \ Set L4A00 = 1, so the value in L0900 is treated as
+                        \ positive
 
- JSR UpdateRadarLine
+ JSR UpdateRadar        \ Remove the current dot from the radar, but don't draw
+                        \ a new one, as L0900 is off-radar
 
  LDY #&21
  JSR L25B5
@@ -10392,7 +10397,7 @@ ORG CODE%
  BCS L2AD8
 
  LDA #8
- STA L0CE6
+ STA Alien
 
 .L2AC6
 
@@ -10417,7 +10422,7 @@ ORG CODE%
  BNE L2B1D
 
  LDA #8
- STA L0CE6
+ STA Alien
 
 .L2AEC
 
@@ -10519,7 +10524,7 @@ ORG CODE%
 
  BCC L2BA0
 
- DEC L0CE6
+ DEC Alien
  BEQ L2BB7
 
  JMP L2AC6
@@ -10534,7 +10539,7 @@ ORG CODE%
  ADC #1
  AND #7
  STA L4202
- DEC L0CE6
+ DEC Alien
  BEQ L2BB7
 
  JMP L2AEC
@@ -10967,12 +10972,12 @@ ORG CODE%
 .L2CD3
 
  LDX #0
- STX L0CE6
+ STX Alien
  CPY #&21
  BNE L2CE1
 
  LDA #1
- STA L0CE6
+ STA Alien
 
 .L2CE1
 
@@ -11023,112 +11028,139 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateRadarLine
+\       Name: UpdateRadar
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: 
+\    Summary: Update an item on the radar (runway or alien)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   L0900               80 for the runway
+\   L0900               The x-coordinate of the item to display
 \
-\   L0CE6               Determines which coordinate at L3688/L368A to use and
-\                       what to draw
+\   L4A00               Bit 7 denotes the sign of the x-coordinate
 \
-\                         * 0 = use L3688 and L368A, draw line
+\   L0700               The y-coordinate of the item to display
 \
-\                         * Non-zero = use L3688+1 and L368A+1, draw dot
+\   L4900               Bit 7 denotes the sign of the y-coordinate
 \
-\   L4A00               1 for the runway
+\   Alien               The item to update on the radar:
+\
+\                         * 0 = update the runway
+\
+\                         * 1 = update the alien
 \
 \ ******************************************************************************
 
-.UpdateRadarLine
+.UpdateRadar
 
- LDX L0CE6              \ Set X = L0CE6
+ LDX Alien              \ Set X = Alien to point to the item to update on the
+                        \ radar (0 for the runway, 1 for the alien)
 
- LDA L3688,X            \ Set I = the X-th byte of L3688, the x-coordinate of
- STA I                  \ the current line on the radar
+ LDA RadarX,X           \ Set I = the X-th byte of RadarX, the x-coordinate of
+ STA I                  \ the current line or dot on the radar
 
- LDA L368A,X            \ Set J = the X-th byte of L368A, the y-coordinate of
- STA J                  \ the current line on the radar
+ LDA RadarY,X           \ Set J = the X-th byte of RadarY, the y-coordinate of
+ STA J                  \ the current line or dot on the radar
 
  LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
  STA N                  \ current line
 
- LDA PreviousCompass    \ Set A = PreviousCompass, so it contains the value of A from the
-                        \ last call to RadarVector
+ LDA PreviousCompass    \ Set A = PreviousCompass, so it contains the value of A
+                        \ from the last call to GetRadarVector, i.e. for the
+                        \ current line on the radar
 
- JSR RadarVector        \ Calculate the vector for the line on the radar
+ JSR GetRadarVector     \ Calculate the vector for the current line on the radar
 
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- LDX L0CE6
- BNE L2D66
+ LDX Alien              \ If Alien is non-zero then we just erased a dot from
+ BNE radl1              \ the radar, so jump to radl1 as we don't need to redraw
+                        \ the cross at the centre of the radar
+                        
+                        \ If we get here then we just erased a line from the
+                        \ radar, which may have corrupted the cross in the
+                        \ centre, so we redraw it
 
- LDA #&88
- STA Row25_Block35_6
- STA Row26_Block35_0
+ LDA #%10001000         \ Redraw the top-but-one pixel of the cross (though,
+ STA Row25_Block35_6    \ oddly, not the very top pixel)
+
+ STA Row26_Block35_0    \ Redraw the bottom two pixels of the cross
  STA Row26_Block35_1
- LDA #&11
+
+ LDA #%00010001         \ Redraw the left pixel of the cross
  STA Row25_Block34_7
- LDA #&CC
+
+ LDA #%11001100         \ Redraw the centre and right pixels of the cross
  STA Row25_Block35_7
 
-.L2D66
+.radl1
 
- LDA L0900
- BIT L4A00
- BPL L2D73
+                        \ Now to calculate the position of the new line or dot
+                        \ to draw on the radar
 
- EOR #&FF
- CLC
+ LDA L0900              \ Set A = L0900, the x-coordinate of the alien or runway
+
+ BIT L4A00              \ If bit 7 of L4A00 is 0, so L0900 is positive, jump to
+ BPL radl2              \ radl2 to skip the following three instructions
+
+ EOR #&FF               \ Otherwise negate A using two's complement, so A is
+ CLC                    \ positive, i.e. A = |L0900|
  ADC #1
 
-.L2D73
+.radl2
 
- CMP #&0D
- BCS L2DAB
+ CMP #13                \ If A >= 13, jump to radl4 to return from the
+ BCS radl4              \ subroutine, as the item is off the side of the radar
 
- LDA L0700
- BIT L4900
- BPL L2D84
+ LDA L0700              \ Set A = L0700, the y-coordinate of the alien or runway
 
- EOR #&FF
- CLC
+ BIT L4900              \ If bit 7 of L4900 is 0, so L0700 is positive, jump to
+ BPL radl3              \ radl3 to skip the following three instructions
+
+ EOR #&FF               \ Otherwise negate A using two's complement, so A is
+ CLC                    \ positive, i.e. A = |L0700|
  ADC #1
 
-.L2D84
+.radl3
 
- CMP #&1A
- BCS L2DAB
+ CMP #26                \ If A >= 26, jump to radl4 to return from the
+ BCS radl4              \ subroutine, as the item is off the top or bottom of
+                        \ the radar
 
- LDA L0900
- CLC
- ADC #&8C
- STA I
- STA L3688,X
- LDA L0700
- CLC
- ADC #&D0
- STA J
- STA L368A,X
+ LDA L0900              \ Set I = L0900 + 140
+ CLC                    \
+ ADC #140               \ to move the coordinate onto the radar, whose centre
+ STA I                  \ cross on-screen is at (140, 207)
 
- LDA #0
- STA N
+ STA RadarX,X           \ Store the x-coordinate as the X-th byte of RadarX, so
+                        \ we can erase this item from the radar later
 
- LDA Compass
- JSR RadarVector
+ LDA L0700              \ Set J = L0700 + 208
+ CLC                    \
+ ADC #208               \ to move the coordinate onto the radar, whose centre
+ STA J                  \ cross on-screen is at (140, 207)
+
+ STA RadarY,X           \ Store the x-coordinate as the X-th byte of RadarY, so
+                        \ we can erase this item from the radar later
+
+ LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the
+ STA N                  \ new line
+
+ LDA Compass            \ Set A to the current compass setting, for use in the
+                        \ call to GetRadarVector if this is the runway (if this
+                        \ is an alien, this value is ignored)
+
+ JSR GetRadarVector     \ Calculate the vector for the new line on the radar
 
  JSR DrawVectorLine     \ Draw a line from (I, J) as a vector (T, U) with
                         \ direction V
 
-.L2DAB
+.radl4
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11247,7 +11279,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: RadarVector
+\       Name: GetRadarVector
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Calculate the radar line vector for a line (the runway) or a dot
@@ -11257,17 +11289,16 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   A                   The current compass direction, or a previous compass
-\                       direction if we are erasing the line (runway only)
+\   A                   For the runway line only, this is either the current
+\                       compass direction from Compass (if we are drawing the
+\                       radar line), or a previous compass direction (if we are
+\                       erasing the existing radar line)
 \
-\                         * 0 = North
-\                         * 64 = East
-\                         * 128 = South
-\                         * 192 = West
+\   X                   The type of radar line to calculate:
 \
-\   X                   0 = calculate line vector (for the runway)
+\                         * 0 = runway line
 \
-\                       Non-zero = calculate a dot (for an alien)
+\                         * Non-zero = alien (shown as a dot)
 \
 \ Returns:
 \
@@ -11276,22 +11307,31 @@ ORG CODE%
 \   U                   Magnitude of y-coordinate of line's vector |y-delta|
 \
 \   V                   The direction of the line (runway), or an arbitrary
-\                       direction (alien)
+\                       direction for the dot, because it doesn't matter (alien)
+\
+\                         * Bit 7 is the direction of the the x-delta
+\
+\                         * Bit 6 is the direction of the the y-delta
+\
+\                       Direction is like a clock, so positive (clear) is up and
+\                       right
 \
 \ ******************************************************************************
 
-.RadarVector
+.GetRadarVector
 
  CPX #0                 \ If X = 0, jump to rvec1 to calculate the line vector
  BEQ rvec1              \ for the runway
 
-                        \ Otherwise X = 1, so we return the deltas for a dot,
-                        \ i.e. T = U = 1
+                        \ Otherwise we return the deltas for a dot, T = U = 1,
+                        \ and don't worry about setting the direction in V as
+                        \ it gets ignored when drawing dots
 
  LDY #1                 \ Set Y = 1 to return as the y-delta in U
 
- BNE rvec2              \ Jump down to rvec2 to return from the subroutine (this
-                        \ BNE is effectively a JMP as Y is never zero)
+ BNE rvec2              \ Jump down to rvec2 to set X = 1 and return from the
+                        \ subroutine (this BNE is effectively a JMP as Y is
+                        \ never zero)
 
 .rvec1
 
@@ -11299,74 +11339,125 @@ ORG CODE%
                         \ line on the radar
                         \
                         \ The runway runs north-south, so our compass direction
-                        \ in A gives us the direction of the runway line on the
-                        \ radar
+                        \ in A lets us work out the direction of the runway line
+                        \ on the radar. The value of our compass in A is:
                         \
                         \   * 0 = North
-                        \   * 64 = East
-                        \   * 128 = South
-                        \   * 192 = West
+                        \   * &40 = East
+                        \   * &80 = South
+                        \   * &C0 = West
 
- STA PreviousCompass    \ Store A in PreviousCompass, so we can use it to erase
-                        \ the line we are about to draw
+ STA PreviousCompass    \ Store A in PreviousCompass, so we can pass it to this
+                        \ routine again when we want to erase the line we are
+                        \ about to draw
 
- CLC                    \ Set A = A + 16
- ADC #16                \
-                        \ This rotates the compass needle clockwise by 16,
-                        \ giving:
+ CLC                    \ Set A = A + &10
+ ADC #&10               \
+                        \ This rotates the compass needle clockwise by &10, or
+                        \ 22.5 degrees, so if the needle is just anticlockwise
+                        \ of a cardinal compass point (e.g. NNW, ENE) it will be
+                        \ bumped along to the quadrant and will inherit the
+                        \ correct direction bit in bit 7. At the cardinal
+                        \ points, A now contains the following:
                         \
-                        \   * 16 = North    -> bit 7 clear
-                        \   * 80 = East     -> bit 7 set
-                        \   * 146 = South   -> bit 7 set
-                        \   * 208 = West    -> bit 7 set
+                        \   * &10 = North   -> bit 7 clear
+                        \   * &50 = East    -> bit 7 clear
+                        \   * &90 = South   -> bit 7 set
+                        \   * &D0 = West    -> bit 7 set
+                        \
+                        \ So bit 7 contains the direction of the needle along
+                        \ the x-axis, with 0 to the right and 1 to the left
 
- ASL A                  \ Shift bit 7 of the result into the C flag
+ ASL A                  \ Shift bit 7 of the result into the C flag, which we
+                        \ will use below as the direction of the line's x-delta
 
  STA P                  \ Store the result in P, so:
                         \
-                        \   P = (A + 16) << 1
+                        \   P = (A + &10) << 1
                         \
                         \ which looks like this:
                         \
-                        \   * 32 = North
-                        \   * 0 = East
-                        \   * 18 = South
-                        \   * 80 = West
+                        \   * %00100000 = North
+                        \   * %10100000 = East
+                        \   * %00100000 = South
+                        \   * %10100000 = West
                         \
-                        \ We can use this below to work out the length of the
-                        \ line to show
+                        \ We use this below to work out the line's vector
 
  PHP                    \ Store the flags on the stack, in particular the C
-                        \ flag from the above operation, which gives us out x-delta
+                        \ flag from the above operation, which gives us the
+                        \ direction of the line's x-delta
 
- ROR A                  \ Shift the sign of the y-delta into A, so we can return
-                        \ it as bit 6 of V
+ ROR A                  \ Shift the C flag back into bit 7 of A, so bit 7 once
+                        \ again contains the direction of the x-delta
 
- SEC                    \ Set A = A - 48
- SBC #64
+ SEC                    \ Set A = A - &40
+ SBC #&40
+                        \ This rotates the compass needle anticlockwise by &40,
+                        \ or 90 degrees, which will change bit 7 from being the
+                        \ direction of the x-delta to the being the direction of
+                        \ the y-delta
 
- PLP                    \ Retrieve the C flag from above
+ PLP                    \ Retrieve the C flag from above, which contains the
+                        \ direction of the x-delta
 
- ROR A                  \ Shift the sign of the x-delta into A, so we can return
-                        \ it as bit 7 of V
+ ROR A                  \ Shift the direction of the x-delta into bit 7 of A,
+                        \ and at the same time shift the y-delta from bit 7 to
+                        \ bit 6
 
- EOR #%11000000         \ Flip both bits 6 and 7 of A
+ EOR #%11000000         \ Reverse both deltas by flipping bits 6 and 7 of A
+                        \ (I am not sure why this is done)
 
  STA V                  \ Store the result in V to set the direction of the line
                         \ vector
 
- LDX #2                 \ Set X = 2 to return as the x-delta in T
+                        \ Above, we stored a value in P like this:
+                        \
+                        \   * %00100000 = North
+                        \   * %10100000 = East
+                        \   * %00100000 = South
+                        \   * %10100000 = West
+                        \
+                        \ We can use this below to work out the vector of the
+                        \ line to show, as follows:
+                        \
+                        \   * A set bit 6 means the line is between the cardinal
+                        \     points, e.g. northeast, southwest and so on, so
+                        \     the line is diagonal
+                        \
+                        \   * A set bit 7 means the line is generally east-west,
+                        \     which is horizontal
+                        \
+                        \   * A clear bit 7 means the line is generally north-
+                        \     south, which is vertical
+                        \
+                        \ We use this to set the vector in T and U to the
+                        \ following:
+                        \
+                        \   * Diagonal: x-delta = 2, y-delta = 4
+                        \
+                        \   * Horizontal: x-delta = 2, y-delta = 1
+                        \
+                        \   * Vertical: x-delta = 1, y-delta = 4
+                        \
+                        \ The y-delta is twice the x-delta because the pixels
+                        \ in mode 5 are twice as wide as they are tall
 
- LDY #4                 \ Set Y = 4 to return as the y-delta in U
+ LDX #2                 \ Set X = 2 to return as the x-delta in T for a diagonal
+
+ LDY #4                 \ Set Y = 4 to return as the y-delta in U for a diagonal
 
  BIT P                  \ If bit 6 of P is set, jump to rvec3 to return these
- BVS rvec3              \ values as the deltas (i.e. 2 and 4)
+ BVS rvec3              \ values as the deltas (i.e. 2 and 4), as the runway
+                        \ line is diagonal
 
  BPL rvec2              \ If bit 7 of P is clear, jump to rvec2 to return an
-                        \ x-delta of 1 and a y-delta of 4
+                        \ x-delta of 1 and a y-delta of 4, as the runway line is
+                        \ vertical
 
  LDY #1                 \ Otherwise set Y = 1 and jump to rvec3 to return an
- BNE rvec3              \ x-delta of 2 and a y-delta of 1
+ BNE rvec3              \ x-delta of 2 and a y-delta of 1, as the runway line is
+                        \ horizontal
 
 .rvec2
 
@@ -12988,7 +13079,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: RetractFlapsSpeed
+\       Name: RetractFlapsIfFast
 \       Type: Subroutine
 \   Category: Flight
 \    Summary: Retract the flaps if we are going faster than 150 mph
@@ -13001,7 +13092,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.RetractFlapsSpeed
+.RetractFlapsIfFast
 
  CMP #14                \ First we check the high byte of the current airspeed
  BCC rflp1              \ in A to see if it is less than 14, at which point the
@@ -13189,24 +13280,28 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L3688 to HighScoreHi
-\       Type: Variable
+\       Name: RadarX to HighScoreHi
+\       Type: Workspace
 \   Category: 
 \    Summary: 
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
-.L3688
+.RadarX
 
- EQUB &8A, &8A
+ EQUB &8A               \ The x-coordinate of the runway on the radar, stored so
+                        \ we can erase it again
 
-.L368A
+ EQUB &8A               \ The x-coordinate of the alien on the radar, stored so
+                        \ we can erase it again
 
- EQUB &D0, &D0
+.RadarY
+
+ EQUB &D0               \ The y-coordinate of the runway on the radar, stored so
+                        \ we can erase it again
+
+ EQUB &D0               \ The y-coordinate of the alien on the radar, stored so
+                        \ we can erase it again
 
 .L368C
 
@@ -15267,7 +15362,7 @@ NEXT
 
 .L4A00
 
- EQUB &20               \ Set to 1 in Reset, UpdateRadar
+ EQUB &20               \ Set to 1 in Reset, ResetRadar
 
  EQUB &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &58, &41, &4C, &4F, &2C, &59
@@ -16017,7 +16112,7 @@ NEXT
  CPY #&21
  BNE L4D58
 
- JSR UpdateRadar
+ JSR ResetRadar
 
  LDA #3                 \ Set A = 3 and jump down to L4D68 to award 30 points
  BNE L4D68
@@ -18445,9 +18540,9 @@ NEXT
                         \ following checks
 
  PHA                    \ Store A on the stack so we can retrieve it after the
-                        \ following call to RetractFlapsSpeed
+                        \ following call to RetractFlapsIfFast
 
- JSR RetractFlapsSpeed  \ Retract the flaps if we are going too fast
+ JSR RetractFlapsIfFast \ Retract the flaps if we are going too fast
 
  PLA                    \ Retrieve the value of A from the stack
 
@@ -18619,7 +18714,7 @@ NEXT
  CMP #2
  BCC L569D
 
- STA L0CF9
+ STA L0CF9              \ Set L0CF9 = 2 when AltitudeHi >= 2
 
 .L569D
 
