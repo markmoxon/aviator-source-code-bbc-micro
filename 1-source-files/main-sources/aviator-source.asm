@@ -125,7 +125,8 @@ ORG &0070
 .Q
 
  SKIP 1                 \ Temporary storage, used in a number of places
-                        \ Called DTIP in original
+                        \
+                        \ Called DTIP in original source code
 
 .R
 
@@ -190,7 +191,6 @@ ORG &0070
 .QQ
 
  SKIP 1                 \ Temporary storage, used in a number of places
-                        \ Called DTIP in original
 
 .RR
 
@@ -219,7 +219,8 @@ ORG &0070
 .GG
 
  SKIP 1                 \ Temporary storage, used in a number of places
-                        \ Called PP in original
+                        \
+                        \ Called PP in original source code
 
 .HH
 
@@ -842,7 +843,7 @@ ORG &0C00
 
 .L0CCC
 
- SKIP 1                 \ OB in original
+ SKIP 1                 \ Called OB in original source code
 
 .PressingTab            \ Bit 7 determines whether TAB is being pressed
                         \
@@ -939,9 +940,11 @@ ORG &0C00
                         \
                         \ Set to 255 (Theme not enabled) in Reset
 
-.L0CE8                  \ Set to 1 in Reset
+.L0CE8                  \ Set to %01000000 when speed is 0 in L50F7
                         \
  SKIP 1                 \ Gets shifted left with a 1 inserted in bit 0 in L5670
+                        \
+                        \ Set to 1 in Reset
 
 .Engine                 \ Engine status
                         \
@@ -1022,9 +1025,16 @@ ORG &0C00
 
  SKIP 1                 \ Set to 10 in Reset
 
-.L0CF9
+.Reached512ft
 
- SKIP 1                 \ Set to non-zero when AltitudeHi >= 2 (512 feet)
+ SKIP 1                 \ Have we reached 512 feet in altitude since taking off?
+                        \
+                        \   * 0 = no
+                        \   * Non-zero = yes
+                        \
+                        \ The height measured is 512 feet, rather than the 500
+                        \ feet mentioned in the maunal, as this is set to
+                        \ non-zero when AltitudeHi >= 2
 
 .L0CFA
 
@@ -1203,7 +1213,7 @@ ORG CODE%
                         \ so we set up a byte counter in Y
                         \
                         \ Note that this is the same block that was copied from
-                        \ &5800-&5BFF in the Entry routine, so in all we end up
+                        \ &5800-&5BFF by the Entry routine, so in all we end up
                         \ moving code as follows:
                         \
                         \   * &5800-&5BFF is copied to &0400-&07FF
@@ -8925,11 +8935,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Called MOBJ or UOBJ in original source code
 \
 \ ******************************************************************************
 
-.L257B                  \ MOBJ or UOBJ in original
+.L257B
 
  LDA L4400,Y
  CLC
@@ -9573,16 +9583,18 @@ ORG CODE%
 \       Name: MainLoop (Part 7 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Theme main loop
+\    Summary: Enable the Theme if we fire the guns on the runway
 \
 \ ******************************************************************************
 
 .main13
 
- LDA L0CE8              \ If L0CE8 = 0, jump to main17
- BEQ main17
+ LDA L0CE8              \ If L0CE8 = 0, jump to main17 to skip the following
+ BEQ main17             \ (enabling the Theme, filling up with fuel, awarding
+                        \ points for landing)
 
- BMI main16             \ If bit 7 of L0CE8 is set, jump to main16
+ BMI main16             \ If bit 7 of L0CE8 is set, jump to main16 to skip the
+                        \ following (enabling the Theme, filling up with fuel)
 
  LDA Firing             \ If Firing is zero then there are no bullets in the
  BEQ main14             \ air, so jump to main14
@@ -9606,7 +9618,8 @@ ORG CODE%
 \       Name: MainLoop (Part 8 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
+\    Summary: Fill up the tank if the engine is switched off, and process the
+\             volume keys
 \
 \ ******************************************************************************
 
@@ -9627,27 +9640,23 @@ ORG CODE%
 \       Name: MainLoop (Part 9 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Award points for a successful landing
 \
 \ ******************************************************************************
 
 .main16
 
- LDA L0CF9
- BEQ main17
+ LDA Reached512ft       \ If we have not yet reached an altitude of 512 feet
+ BEQ main17             \ since taking off, Reached512ft will be zero, so jump
+                        \ to main17 to skip the following, as we are not
+                        \ eligible for the landing points
 
- LDX #0
- STX L0CF9
+ LDX #0                 \ Set Reached512ft = 0 to reset the 512 feet counter,
+ STX Reached512ft       \ ready for the next landing attempt
 
- LDA #&15               \ Add 150 points to the score and make a beep by calling
- JSR ScorePoints        \ ScorePoints with (X A) = &0015
-                        \
-                        \ This is the score for landing the plane without
-                        \ crashing
+ LDA #&15               \ We have successfully landed the plane without
+ JSR ScorePoints        \ crashing, so add 150 points to the score and make a
+                        \ beep by calling ScorePoints with (X A) = &0015
 
 \ ******************************************************************************
 \
@@ -11792,7 +11801,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ UBUL in original
+\ Called UBUL in original source code
 \
 \ ******************************************************************************
 
@@ -11848,11 +11857,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Called SUTR in original source code
 \
 \ ******************************************************************************
 
-.L2F1C                  \ SUTR in original
+.L2F1C
 
  LDX Theme
  BMI L2F4D
@@ -12330,11 +12339,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Called STIP in original source code
 \
 \ ******************************************************************************
 
-.L3129                  \ STIP in original
+.L3129
 
  LDX #2
 
@@ -12378,11 +12387,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Called HITS in original source code
 \
 \ ******************************************************************************
 
-.L3152                  \ HITS in original
+.L3152
 
  LDX #2
 
@@ -12431,11 +12440,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Called ADIF in original source code
 \
 \ ******************************************************************************
 
-.L3181                  \ ADIF in original
+.L3181
 
  LDA #0
  STA P
@@ -14240,9 +14249,10 @@ NEXT
 
  EQUB &C1
 
-.L4208                  \ ? FLDPTR in original
+.L4208
 
- EQUB &65, &64, &62, &61, &60, &5F, &5E \ Zeroed in Reset
+ EQUB &65, &64, &62, &61, &60, &5F, &5E  \ Called FLDPTR in original source code
+                                         \ Zeroed in Reset
 
 .L420F
 
@@ -14639,9 +14649,9 @@ NEXT
 \
 \ ******************************************************************************
 
-.L4400                  \ XALO in original
+.L4400
 
- EQUB &23
+ EQUB &23               \ Called XALO in original source code
 
 .L4401
 
@@ -14683,7 +14693,7 @@ NEXT
 
 .L4478
 
- EQUB &20                  \ XAHI in original
+ EQUB &20               \ Called XAHI in original source code
 
 .L4479
 
@@ -17547,7 +17557,7 @@ NEXT
 
 .L5123
 
- LDA #&40
+ LDA #%01000000
  BNE L5129
 
 .L5127
@@ -17557,6 +17567,7 @@ NEXT
 .L5129
 
  STA L0CE8
+
  LDA L0C03
  LSR A
  STA P
@@ -18688,7 +18699,8 @@ NEXT
 
  BCC L568F
 
- ASL L0CE8
+ ASL L0CE8              \ Shift L0CE8 left and set bit 0
+
  LDX #&EE
  CLC
  LDY #8
@@ -18714,7 +18726,7 @@ NEXT
  CMP #2
  BCC L569D
 
- STA L0CF9              \ Set L0CF9 = 2 when AltitudeHi >= 2
+ STA Reached512ft       \ Set Reached512ft = 2 when AltitudeHi >= 2
 
 .L569D
 
@@ -19051,8 +19063,6 @@ NEXT
  STA L0C00,X
  STA L0C10,X
  RTS
-
- BRK
 
 \ ******************************************************************************
 \
