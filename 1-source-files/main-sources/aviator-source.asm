@@ -1251,8 +1251,8 @@ ORG CODE%
                         \ The following two calls to ClearRows clear the first
                         \ two character rows on-screen
 
- LDA #&58               \ Set P(1 0) = &5800, so the call to ClearRows starts
- STA P+1                \ clearing from the start of the first character row
+ LDA #&58               \ Set (P Q) = &5800, so the call to ClearRows starts
+ STA Q                  \ clearing from the start of the first character row
  LDA #0                 \ (i.e. row 0)
  STA P
 
@@ -1267,8 +1267,8 @@ ORG CODE%
                         \ the first 32 character blocks (blocks 0 to 31) of the
                         \ top two character rows (rows 0 and 1)
 
- LDA #&58               \ Set P(1 0) = &58FF, so the call to ClearRows starts
- STA P+1                \ clearingfrom character block 32 in the first character
+ LDA #&58               \ Set (P Q) = &58FF, so the call to ClearRows starts
+ STA Q                  \ clearingfrom character block 32 in the first character
  LDA #&FF               \ row on-screen
  STA P
 
@@ -1287,8 +1287,8 @@ ORG CODE%
                         \ 4-pixel-wide column on the left and right edges of the
                         \ screen
 
- LDA #&5A               \ Set P(1 0) = &5A7F, so the call to ClearRows starts
- STA P+1                \ clearing from the start of the third character row
+ LDA #&5A               \ Set (P Q) = &5A7F, so the call to ClearRows starts
+ STA Q                  \ clearing from the start of the third character row
  LDA #&7F               \ (i.e. row 2)
  STA P
 
@@ -1303,8 +1303,8 @@ ORG CODE%
                         \ block (block 0) on all 18 rows, i.e. the first four
                         \ pixels
 
- LDA #&5B               \ Set P(1 0) = &5BB7, so the call to ClearRows starts
- STA P+1                \ clearing from the start of the last character block
+ LDA #&5B               \ Set (P Q) = &5BB7, so the call to ClearRows starts
+ STA Q                  \ clearing from the start of the last character block
  LDA #&B7               \ on the third character row (i.e. row 2)
  STA P
 
@@ -1609,11 +1609,11 @@ ORG CODE%
 \ ------------------------------------------------------------------------------
 \
 \ This routine zeroes a block of Y bytes on R screen rows, starting from screen
-\ address P(1 0) on the first row.
+\ address (P Q) on the first row.
 \
 \ A value of Y = 0 will zero 256 bytes.
 \
-\ In other words, P(1 0) represents the top-left pixel to blank, Y represents
+\ In other words, (P Q) represents the top-left pixel to blank, Y represents
 \ the width of the area to blank (with a value of 8 per character block), and R
 \ contains the number of rows to blank.
 \
@@ -1622,7 +1622,7 @@ ORG CODE%
 \   Y                   The width of each character row to zero (in bytes),
 \                       0 indicates 256 bytes
 \
-\   P(1 0)              The screen address to start zeroing from
+\   (P Q)               The screen address to start zeroing from
 \
 \   R                   The number of character rows to zero
 \
@@ -1642,21 +1642,21 @@ ORG CODE%
 
 .clrw2
 
- STA (P),Y              \ Zero the Y-th byte of the page at P(1 0), which sets 4
+ STA (P),Y              \ Zero the Y-th byte of the page at (P Q), which sets 4
                         \ pixels to black
 
  DEY                    \ Decrement the byte pointer
 
- BNE clrw2              \ Loop back until we have zeroed P(1 0) to P(1 0) + Y
+ BNE clrw2              \ Loop back until we have zeroed (P Q) to (P Q) + Y
 
- LDA P                  \ Set P(1 0) = P(1 0) + 320
+ LDA P                  \ Set (P Q) = (P Q) + 320
  CLC                    \
  ADC #LO(320)           \ starting with the low bytes
  STA P
 
- LDA P+1                \ And then the high bytes
+ LDA Q                  \ And then the high bytes
  ADC #HI(320)
- STA P+1
+ STA Q
 
  DEC R                  \ Decrement the row counter in R
 
@@ -1719,7 +1719,7 @@ ORG CODE%
  LDA L4900,X
  BMI L0D37
 
- STA P+1
+ STA Q
  BEQ L0D2B
 
  LDA L0700,X
@@ -1746,7 +1746,7 @@ ORG CODE%
  STA P
  LDA #0
  SBC L4900,X
- STA P+1
+ STA Q
 
 .L0D46
 
@@ -1801,7 +1801,7 @@ ORG CODE%
 .L0D94
 
  LDA QQ
- CMP P+1
+ CMP Q
  BCC L0DA8
 
  BNE L0DA2
@@ -1819,7 +1819,7 @@ ORG CODE%
 .L0DA8
 
  LDA SS
- CMP P+1
+ CMP Q
  BCC L0DBC
 
  BNE L0DB6
@@ -1837,7 +1837,7 @@ ORG CODE%
 .L0DBC
 
  LDY P
- LDX P+1
+ LDX Q
  JSR L0F48
 
  TAX
@@ -1854,7 +1854,7 @@ ORG CODE%
  LDX QQ
  JSR L0E69
 
- LDA P+1
+ LDA Q
  STA QQ
  LDA P
  STA PP
@@ -1926,7 +1926,7 @@ ORG CODE%
 
 .L0E3F
 
- SBC P+1
+ SBC Q
  STA L0A00,X
  LDA #0
  SBC RR
@@ -1937,7 +1937,7 @@ ORG CODE%
 
  LDA #&60
  CLC
- ADC P+1
+ ADC Q
  STA L0A00,X
  LDA #0
  ADC RR
@@ -1997,7 +1997,7 @@ ORG CODE%
  LDX T
  LDA TimesTable,X
  ADC #1
- STA P+1
+ STA Q
  LDX U
  LDA TimesTable,X
  ADC TimesTable,Y
@@ -2028,7 +2028,7 @@ ORG CODE%
  STA P
  TYA
  ADC Times16Hi,X
- ADC P+1
+ ADC Q
  BCC L0EDB
 
  CLC
@@ -2044,7 +2044,7 @@ ORG CODE%
 
  ROR A
  ROR P
- STA P+1
+ STA Q
  LDA I
  BEQ L0F16
 
@@ -2071,11 +2071,11 @@ ORG CODE%
  STA P
  BCC L0F16
 
- INC P+1
+ INC Q
  BNE L0F16
 
  LDA #&FF
- STA P+1
+ STA Q
  STA P
 
 .L0F16
@@ -2107,7 +2107,7 @@ ORG CODE%
 .L0F34
 
  TAY
- LDX P+1
+ LDX Q
  JSR L1821
 
  STA G
@@ -2117,7 +2117,7 @@ ORG CODE%
  STA P
  BCS L0F47
 
- DEC P+1
+ DEC Q
 
 .L0F47
 
@@ -2230,7 +2230,7 @@ ORG CODE%
  TXS
 
  LDA #0
- STA P+1
+ STA Q
  STA P
  LDX UU
  DEX
@@ -2286,14 +2286,14 @@ ORG CODE%
 
  BPL L0FDE
 
- LDA P+1
+ LDA Q
  BMI L0FE4
 
  JMP L0FE2
 
 .L0FDA
 
- LDA P+1
+ LDA Q
  BMI L0FE4
 
 .L0FDE
@@ -2411,7 +2411,7 @@ ORG CODE%
 
 .L1045
 
- LDA P+1
+ LDA Q
 
 .L1047
 
@@ -2421,7 +2421,7 @@ ORG CODE%
  DEY
  BNE L1047
 
- STA P+1
+ STA Q
  ASL P
  JMP L1064
 
@@ -2431,7 +2431,7 @@ ORG CODE%
  CLC
  ADC #1
  TAY
- LDA P+1
+ LDA Q
 
 .L105E
 
@@ -2439,13 +2439,13 @@ ORG CODE%
  DEY
  BNE L105E
 
- STA P+1
+ STA Q
 
 .L1064
 
  BCC L107A
 
- INC P+1
+ INC Q
  BNE L107A
 
  INC RR
@@ -2456,7 +2456,7 @@ ORG CODE%
  LDA #&3F
  STA RR
  LDA #&FF
- STA P+1
+ STA Q
 
 .L107A
 
@@ -2840,11 +2840,11 @@ ORG CODE%
  ADC YLookupLo,Y        \       = LO(X * 8) + LO(screen address)
  STA P
 
- LDA XLookupHi,X        \ Set P+1 = X-th byte of XLookupHi
- ADC YLookupHi,Y        \           + Y-th byte of YLookupHi
- STA P+1                \         = HI(X * 8) + HI(screen address)
+ LDA XLookupHi,X        \ Set Q = X-th byte of XLookupHi
+ ADC YLookupHi,Y        \         + Y-th byte of YLookupHi
+ STA Q                  \       = HI(X * 8) + HI(screen address)
 
-                        \ So P(1 0) is the screen address of the pixel row
+                        \ So (P Q) is the screen address of the pixel row
                         \ containing (R, S), out by 8 bytes for each row above
                         \ or below the top of the dashboard
 
@@ -3082,7 +3082,7 @@ ORG CODE%
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
- STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
 .dlin25
@@ -3093,7 +3093,7 @@ ORG CODE%
  STA P
  BCC dlin26
 
- INC P+1
+ INC Q
 
 .dlin26
 
@@ -3114,7 +3114,7 @@ ORG CODE%
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
- STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
  LDA P
@@ -3123,7 +3123,7 @@ ORG CODE%
  STA P
  BCS dlin29
 
- DEC P+1
+ DEC Q
 
 .dlin29
 
@@ -3161,7 +3161,7 @@ ORG CODE%
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
- STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
 .dlin33
@@ -3181,12 +3181,12 @@ ORG CODE%
 
  ADC #&38               \ Gets modified by the DrawCanopyLine routine
  STA P
- LDA P+1
+ LDA Q
 
 .dlin36
 
  ADC #1                 \ Gets modified by the DrawCanopyLine routine
- STA P+1
+ STA Q
 
 .dlin37
 
@@ -3334,7 +3334,7 @@ ORG CODE%
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
 
- STA (P),Y              \ Update the Y-th byte of P(1 0) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
  LDA SS
@@ -3363,12 +3363,12 @@ ORG CODE%
 
  ADC #&C8               \ Gets modified by DrawCanopyLine (part 2)
  STA P
- LDA P+1
+ LDA Q
 
 .dlin54
 
  ADC #&FE               \ Gets modified by DrawCanopyLine (part 2)
- STA P+1
+ STA Q
  CPY J
  CLC
  BNE dlin48
@@ -3398,7 +3398,7 @@ ORG CODE%
  LDA #8                 \ Gets modified by the ModifyDrawRoutine routine
  BCC dlin58
 
- INC P+1
+ INC Q
 
 .dlin58
 
@@ -3430,7 +3430,7 @@ ORG CODE%
  LDA #1                 \ Gets modified by the ModifyDrawRoutine routine
  BCS dlin61
 
- DEC P+1
+ DEC Q
 
 .dlin61
 
@@ -3854,14 +3854,14 @@ ORG CODE%
  STA P
  LDA I
  ADC J
- STA P+1
+ STA Q
  LDA P
  CLC
  ADC #2
  STA P
  BCC L1623
 
- INC P+1
+ INC Q
 
 .L1623
 
@@ -3925,13 +3925,13 @@ ORG CODE%
 .L167B
 
  ASL P
- ROL P+1
+ ROL Q
  ASL N
  ROL PP
 
 .L1683
 
- LDA P+1
+ LDA Q
  CMP UU
  BCC L167B
 
@@ -3943,7 +3943,7 @@ ORG CODE%
 
 .L1691
 
- LSR P+1
+ LSR Q
  ROR P
  ROR K
  LSR PP
@@ -3952,7 +3952,7 @@ ORG CODE%
 
 .L169D
 
- LDA P+1
+ LDA Q
  CMP UU
  BCC L16BF
 
@@ -3970,7 +3970,7 @@ ORG CODE%
 
  BEQ L16BF
 
- LDA P+1
+ LDA Q
  ORA P
  ORA K
  BNE L1691
@@ -3997,7 +3997,7 @@ ORG CODE%
  SBC P
  STA TT
  LDA UU
- SBC P+1
+ SBC Q
  STA UU
  BNE L169D
 
@@ -4348,7 +4348,7 @@ ORG CODE%
  LDX G
  JSR L1902
 
- STA P+1
+ STA Q
  STY P
  LDA G
  EOR #&FF
@@ -4366,7 +4366,7 @@ ORG CODE%
 
  BMI L18B3
 
- LDA P+1
+ LDA Q
  STA L0173,Y
  LDA P
  AND #&FE
@@ -4380,7 +4380,7 @@ ORG CODE%
 
 .L18B3
 
- LDA P+1
+ LDA Q
  STA L0173,Y
  LDA P
  ORA #1
@@ -4401,7 +4401,7 @@ ORG CODE%
  LDA R
  AND #&FE
  STA L0163,Y
- LDA P+1
+ LDA Q
  STA L0170,Y
  LDA P
  ORA #1
@@ -4415,7 +4415,7 @@ ORG CODE%
  LDA R
  ORA #1
  STA L0163,Y
- LDA P+1
+ LDA Q
  STA L0170,Y
  LDA P
  AND #&FE
@@ -4617,10 +4617,10 @@ ORG CODE%
 
 .L19F2
 
- STX P+1
+ STX Q
  JSR L1931
 
- LDX P+1
+ LDX Q
  LDY VV
  LDA W
  CLC
@@ -5314,10 +5314,10 @@ ORG CODE%
  STA J
  LDA #0
  STA K
- STX P+1
+ STX Q
  JSR L17E3
 
- LDX P+1
+ LDX Q
  LDY VV
  LDA G
  CLC
@@ -7588,11 +7588,11 @@ ORG CODE%
  ADC XLookupLo,X        \       = LO(screen address) + LO(X * 8)
  STA P
 
- LDA YLookupHi,Y        \ Set P+1 = Y-th byte of YLookupHi
- ADC XLookupHi,X        \           + X-th byte of XLookupHi
- STA P+1                \         = HI(screen address) + HI(X * 8)
+ LDA YLookupHi,Y        \ Set Q = Y-th byte of YLookupHi
+ ADC XLookupHi,X        \         + X-th byte of XLookupHi
+ STA Q                  \       = HI(screen address) + HI(X * 8)
 
-                        \ So P(1 0) is the screen address of the pixel row
+                        \ So (P Q) is the screen address of the pixel row
                         \ containing (I, J), out by 8 bytes for each row above
                         \ or below the top of the dashboard
 
@@ -7614,7 +7614,7 @@ ORG CODE%
  LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
                         \ the X-th pixel set to white
 
- ORA (P),Y              \ OR it with P(1 0) + Y, which is the screen address of
+ ORA (P),Y              \ OR it with (P Q) + Y, which is the screen address of
                         \ the pixel row containing (I, J)
                         \
                         \ This will keep all pixels the same except the X-th
@@ -7632,7 +7632,7 @@ ORG CODE%
  EOR #%11111111         \ Invert all the bits, so A is now a pixel byte that is
                         \ all white except for the X-th pixel, which is black
 
- AND (P),Y              \ AND it with P(1 0) + Y, which is the screen address of
+ AND (P),Y              \ AND it with (P Q) + Y, which is the screen address of
                         \ pixel (I, J)
                         \
                         \ This will keep all pixels the same except the X-th
@@ -7641,7 +7641,7 @@ ORG CODE%
 
 .dvec13
 
- STA (P),Y              \ Store the byte in A in sceen memory at P(1 0) + Y,
+ STA (P),Y              \ Store the byte in A in sceen memory at (P Q) + Y,
                         \ which sets all four pixels to the pixel pattern in A,
                         \ which either draws or erases the pixel at (I, J)
 
@@ -11685,8 +11685,8 @@ ORG CODE%
 
 .FillCanopyRows
 
- STY P+1                \ Set P(1 0) = (Y X)
- STX P
+ STY Q                  \ Set (P Q) = (Y X), so (P Q) is now the screen address
+ STX P                  \ we want to start filling from
 
  STA S                  \ Store the value we want to store into S
 
@@ -11698,32 +11698,32 @@ ORG CODE%
 
 .fcrw2
 
- STA (P),Y              \ Set the Y-th byte of P(1 0) to A, which sets 4 pixels
+ STA (P),Y              \ Set the Y-th byte of (P Q) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
  BNE fcrw2              \ Loop back until we have set 256 bytes, starting at
-                        \ P(1 0), to the value in A
+                        \ (P Q), to the value in A
 
  LDY #47                \ Set a byte counter in Y for 47 bytes
 
- INC P+1                \ Set P(1 0) = P(1 0) + 256
+ INC Q                  \ Set (P Q) = (P Q) + 256
                         \
                         \ so it points to the next byte to fill after the 256
                         \ bytes we just did
 
 .fcrw3
 
- STA (P),Y              \ Set the Y-th byte of P(1 0) to A, which sets 4 pixels
+ STA (P),Y              \ Set the Y-th byte of (P Q) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
  BPL fcrw3              \ Loop back until we have set 47 bytes, starting at
-                        \ P(1 0), to the value in A
+                        \ (P Q), to the value in A
 
- LDA P                  \ Set P(1 0) = P(1 0) + 64
+ LDA P                  \ Set (P Q) = (P Q) + 64
  CLC                    \
  ADC #64                \ starting with the low bytes
  STA P
@@ -11731,10 +11731,10 @@ ORG CODE%
  BCC fcrw4              \ If the above addition didn't overflow, skip the next
                         \ instruction
 
- INC P+1                \ The above addition overflowed, so increment the high
-                        \ byte of P(1 0) to point to the next page in memory
+ INC Q                  \ The above addition overflowed, so increment the high
+                        \ byte of (P Q) to point to the next page in memory
 
-                        \ So now P(1 0) is 320 greater than at the start, so it
+                        \ So now (P Q) is 320 greater than at the start, so it
                         \ points to the next character row in screen memory
 
 .fcrw4
@@ -12173,7 +12173,7 @@ ORG CODE%
  LDA #&7D
  STA QQ
  LDA #&40
- STA P+1
+ STA Q
  LDA #&A0
  STA RR
  STA PP
@@ -12218,7 +12218,7 @@ ORG CODE%
  LSR QQ
  LSR RR
  LSR PP
- LSR P+1
+ LSR Q
  DEX
  BNE L3088
 
@@ -12242,10 +12242,10 @@ ORG CODE%
 
 .L30AD
 
- STY P+1
+ STY Q
  JSR L3181
 
- LDY P+1
+ LDY Q
  STA L0CB8,Y
  LDA V
  STA L0CA8,Y
@@ -12351,7 +12351,7 @@ ORG CODE%
 
  LDA L4400,Y
  CLC
- ADC P+1
+ ADC Q
  STA W,X
  LDA L4478,Y
  ADC #5
@@ -12787,14 +12787,14 @@ ORG CODE%
 
  DEY
  LDA #1
- STA P+1
+ STA Q
  LDX #4
  BNE L331C
 
 .L3316
 
  LDA #2
- STA P+1
+ STA Q
  LDX #3
 
 .L331C
@@ -12815,7 +12815,7 @@ ORG CODE%
  DEX
  BPL L3321
 
- LDX P+1
+ LDX Q
  JSR L1A67
 
 .L333A
@@ -15222,7 +15222,7 @@ NEXT
 \  LDA #&77
 \  STA P
 \  LDA #&88
-\  STA P+1
+\  STA Q
 \  LDA #&EE
 \  STA R
 \  LDA #&11
@@ -15236,7 +15236,7 @@ NEXT
 \ 
 \  LDA Row1_Block0_0,X
 \  AND P
-\  ORA P+1
+\  ORA Q
 \  STA Row1_Block0_0,X
 \  LDA Row1_Block38_0,X
 \  AND R
@@ -15249,7 +15249,7 @@ NEXT
 \  LSR R
 \  LSR S
 \  LSR P
-\  LSR P+1
+\  LSR Q
 \  CPX #&FF
 \  BNE L48B2
 \ 
@@ -15639,14 +15639,14 @@ NEXT
 
 .L4B9B
 
- STA P+1
+ STA Q
  LDY #2
 
 .L4B9F
 
  TYA
  CLC
- ADC P+1
+ ADC Q
  TAX
  SEC
  LDA L0CED,Y
@@ -17368,16 +17368,16 @@ NEXT
  LDX L0C94
  BPL L502B
 
- STX P+1
+ STX Q
  LDA L0C84
  SEC
- ROR P+1
+ ROR Q
  ROR A
  EOR #&FF
  STA L0AFD
  LDA #&FE
  CLC
- SBC P+1
+ SBC Q
 
 .L502B
 
@@ -17579,13 +17579,13 @@ NEXT
  LDA L0C13
  AND #&80
  ORA P
- STA P+1
+ STA Q
  TXA
  SEC
  SBC V
  STA L09FC
  TXA
- SBC P+1
+ SBC Q
  STA L4AFC
 
 .L5151
@@ -17875,19 +17875,19 @@ NEXT
 
 .L52BD
 
- STA P+1
+ STA Q
  CPX #1
  BNE L52D3
 
  LDA P
  STA I
- LDA P+1
+ LDA Q
  ASL I
  ROL A
  ASL I
  ROL A
  STA J
- LDA P+1
+ LDA Q
 
 .L52D3
 
@@ -17900,7 +17900,7 @@ NEXT
  CMP RR
  BCC L52E7
 
- LDA P+1
+ LDA Q
 
 .L52E1
 
@@ -18221,7 +18221,7 @@ NEXT
 .L546E
 
  STY P
- STA P+1
+ STA Q
 
 \ ******************************************************************************
 \
@@ -18255,7 +18255,7 @@ NEXT
 
 .L5474
 
- LDX P+1
+ LDX Q
  BPL L5484
 
  LDA #0
@@ -18263,7 +18263,7 @@ NEXT
  SBC P
  STA P
  LDA #0
- SBC P+1
+ SBC Q
  TAX
 
 .L5484
@@ -18284,7 +18284,7 @@ NEXT
  LDA #0
  ADC G
  STA G
- LDX P+1
+ LDX Q
  BPL L54B8
 
  LDA #0
@@ -18342,9 +18342,9 @@ NEXT
  LDA L0C00,X
  STA P
  LDA L0C10,X
- STA P+1
+ STA Q
  ASL P
- ROL P+1
+ ROL Q
  JSR L5472
 
  LDA VV
@@ -19033,7 +19033,7 @@ NEXT
 
 .L57E4
 
- STY P+1
+ STY Q
  STX P
  LDA AltitudeHi
  EOR #&FF
