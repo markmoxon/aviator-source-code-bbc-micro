@@ -2817,8 +2817,35 @@ ORG CODE%
 \ The code in this routine is modified by the ModifyDrawRoutine routine, and by
 \ the DrawCanopyLine routine itself.
 \
-\ The default code (i.e. the unmodified version in the source) is run when bit 6
-\ of V is clear (y-axis up) and bit 7 is set (x-axis left).
+\ The default code (i.e. the unmodified version in the source) is run when U < T
+\ (shallow horizontal slope), bit 6 of V is clear (y-axis up) and bit 7 is set (x-axis left).
+\
+\ Arguments:
+\
+\   R                   Start point x-coordinate
+\
+\   S                   Start point y-coordinate
+\
+\   T                   Magnitude of x-coordinate of line's vector |x-delta|
+\                       Horizontal width/length of line when V = 0
+\
+\   U                   Magnitude of y-coordinate of line's vector |y-delta|
+\                       Vertical width/length of line when V = 0
+\
+\   V                   Direction of vector (T, U):
+\
+\                         * Bit 7 is the direction of the the x-delta
+\
+\                         * Bit 6 is the direction of the the y-delta
+\
+\                       Direction is like a clock, so positive (clear) is up and
+\                       right
+\
+\                       Also bits 0 and 1 are involved
+\
+\   W
+\
+\   G
 \
 \ ******************************************************************************
 
@@ -2845,14 +2872,14 @@ ORG CODE%
  STA Q                  \       = HI(X * 8) + HI(screen address)
 
                         \ So (P Q) is the screen address of the pixel row
-                        \ containing (R, S), out by 8 bytes for each row above
-                        \ or below the top of the dashboard
+                        \ containing pixel (R, S), out by 8 bytes for each row
+                        \ above or below the top of the dashboard
 
  LDA U                  \ If U < T, the line is a shallow horizontal slope, so
  CMP T                  \ jump down to dlin1 to draw the line
  BCC dlin1
 
- JMP dlin39             \ Otherwise U >= T and the line is a steep vertical
+ JMP dlin41             \ Otherwise U >= T and the line is a steep vertical
                         \ slope, so jump down to part 3 to draw the line
 
 .dlin1
@@ -2866,15 +2893,44 @@ ORG CODE%
                         \ Bit 7 of V is clear, so we step along the x-axis in a
                         \ positive direction, i.e. to the right
  
- LDA #5                 \ Defaults
- STA dlin20+1
- LDA #9
- STA dlin21+1
+ LDA #5                 \ Modify the following instruction at dlin20:
+ STA dlin20+1           \
+                        \   BCC dlin22 -> BCC dlin22
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #9                 \ Modify the following instruction at dlin21:
+ STA dlin21+1           \
+                        \   BNE dlin25 -> BNE dlin25
+                        \
+                        \ i.e. set it back to the default
 
 .dlin2
 
- LDA #&60               \ Gets modified by the ModifyDrawRoutine routine
- STA dlin31+1           \ Default
+ LDA #&60               \ Modify the following instruction at dlin33:
+ STA dlin33+1           \
+                        \   LDA Lookup2E60,X -> LDA Lookup2E60,X
+                        \
+                        \ The LDA #&60 gets modified by the ModifyDrawRoutine
+                        \ routine as follows:
+                        \
+                        \   * &60 when ColourLogic = %01000000
+                        \     so the bit pattern lookup table uses colour 1
+                        \     i.e. LDA Lookup2E60,X
+                        \
+                        \   * &74 when ColourLogic = %01000000
+                        \     so the bit pattern lookup table uses colour 2
+                        \     i.e. LDA Lookup2E74,X
+                        \
+                        \   * &88 when ColourLogic = %00000000
+                        \          and ColourCycle = %00001111
+                        \     so the bit pattern lookup is always %00001111
+                        \     i.e. LDA Lookup2E88,X
+                        \
+                        \   * &92 when ColourLogic = %00000000
+                        \          and ColourCycle = %11110000
+                        \     so the bit pattern lookup is always %11110000
+                        \     i.e. LDA Lookup2E92,X
 
  LDA #39                \ Set I = 39
  STA I
@@ -2887,15 +2943,40 @@ ORG CODE%
                         \ Bit 7 of V is set, so we step along the x-axis in a
                         \ negative direction, i.e. to the left
 
- LDA #&24
- STA dlin20+1
- LDA #&28
- STA dlin21+1
+ LDA #&24               \ Modify the following instruction at dlin20:
+ STA dlin20+1           \
+                        \   BCC dlin22 -> BCC dlin27
+
+ LDA #&28               \ Modify the following instruction at dlin21:
+ STA dlin21+1           \
+                        \   BNE dlin25 -> BNE dlin30
 
 .dlin4
 
- LDA #&6A               \ Gets modified by the ModifyDrawRoutine routine
- STA dlin31+1
+                        \ Modify the following instruction at dlin33:
+ LDA #&6A               \
+ STA dlin33+1           \   LDA Lookup2E60,X -> LDA Lookup2E6A,X
+                        \
+                        \ The LDA #&6A gets modified by the ModifyDrawRoutine
+                        \ routine as follows:
+                        \
+                        \   * &6A when ColourLogic = %01000000
+                        \     so the bit pattern lookup table uses colour 1
+                        \     i.e. LDA Lookup2E6A,X
+                        \
+                        \   * &7E when ColourLogic = %01000000
+                        \     so the bit pattern lookup table uses colour 2
+                        \     i.e. LDA Lookup2E7E,X
+                        \
+                        \   * &88 when ColourLogic = %00000000
+                        \          and ColourCycle = %00001111
+                        \     so the bit pattern lookup is always %00001111
+                        \     i.e. LDA Lookup2E88,X
+                        \
+                        \   * &92 when ColourLogic = %00000000
+                        \          and ColourCycle = %11110000
+                        \     so the bit pattern lookup is always %11110000
+                        \     i.e. LDA Lookup2E92,X
 
  LDA #0                 \ Set I = 0
  STA I
@@ -2908,14 +2989,21 @@ ORG CODE%
                         \ Bit 6 of V is clear, so we step along the y-axis in a
                         \ positive direction, i.e. up the screen
 
- LDA #&98
- STA dlin33
- LDA #&88
- STA dlin34
- LDA #&C8
- STA dlin35+1
- LDA #&FE
- STA dlin36+1
+ LDA #&98               \ Modify the following instruction at dlin35:
+ STA dlin35             \
+                        \   INY -> TYA
+
+ LDA #&88               \ Modify the following instruction at dlin36:
+ STA dlin36             \
+                        \   TYA -> DEY
+
+ LDA #&C8               \ Modify the following instruction at dlin37:
+ STA dlin37+1           \
+                        \   ADC #&38 -> ADC #&C8
+
+ LDA #&FE               \ Modify the following instruction at dlin38:
+ STA dlin38+1           \
+                        \   ADC #1 -> ADC #&FE
 
  LDA #158               \ Set J = 158 - G
  SEC
@@ -2929,14 +3017,29 @@ ORG CODE%
                         \ Bit 6 of V is set, so we step along the y-axis in a
                         \ negative direction, i.e. down the screen
 
- LDA #&C8               \ Defaults
- STA dlin33
- LDA #&98
- STA dlin34
- LDA #&38
- STA dlin35+1
- LDA #1
- STA dlin36+1
+ LDA #&C8               \ Modify the following instruction at dlin35:
+ STA dlin35             \
+                        \   INY -> INY
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #&98               \ Modify the following instruction at dlin36:
+ STA dlin36             \
+                        \   TYA -> TYA
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #&38               \ Modify the following instruction at dlin37:
+ STA dlin37+1           \
+                        \   ADC #&38 -> ADC #&38
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #1                 \ Modify the following instruction at dlin38:
+ STA dlin38+1           \
+                        \   ADC #1 -> ADC #1
+                        \
+                        \ i.e. set it back to the default
 
  LDA #160               \ Set J = 160 - G
  SEC
@@ -2945,37 +3048,42 @@ ORG CODE%
 
 .dlin7
 
- LDA #&9F
+ LDA #&9F               \ Set Y = 159 - S
  SEC
  SBC S
  TAY
- LDA #&FF
+
+ LDA #255               \ Set RR = 255 - T
  SEC
  SBC T
  STA RR
- CLC
+
+ CLC                    \ Set SS = RR = 255 - T + 1
  ADC #1
  STA SS
- LDA V
- AND #3
+
+ LDA V                  \ If bits 0 and 1 of V are both clear, jump to dlin8
+ AND #%00000011
  BEQ dlin8
 
- LDA U
+ LDA U                  \ If U < 2, jump to dlin8
  CMP #2
  BCC dlin8
 
- LDA #&FF
+ LDA #255               \ Set SS = 255
  STA SS
 
 .dlin8
 
- LDA R
- AND #3
+ LDA R                  \ Set X = bits 0 and 1 of R, so X is the pixel number
+ AND #%00000011         \ in the character row for pixel (R, S)
  TAX
- LDA R
- LSR A
- LSR A
- STA QQ
+
+ LDA R                  \ Set QQ = R / 4
+ LSR A                  \
+ LSR A                  \ so QQ is the number of the character block containing
+ STA QQ                 \ pixel (R, S), as each character block is 4 pixels wide
+
  LDA SS
  BIT V
  BMI dlin10
@@ -3025,7 +3133,7 @@ ORG CODE%
  ADC U
  BCC dlin15
 
- JSR dlin30
+ JSR dlin32
 
 .dlin14
 
@@ -3037,7 +3145,7 @@ ORG CODE%
  ADC U
  BCC dlin17
 
- JSR dlin30
+ JSR dlin32
 
 .dlin16
 
@@ -3049,7 +3157,7 @@ ORG CODE%
  ADC U
  BCC dlin19
 
- JSR dlin30
+ JSR dlin32
 
 .dlin18
 
@@ -3062,13 +3170,23 @@ ORG CODE%
 
 .dlin20
 
- BCC dlin22             \ Gets modified by the DrawCanopyLine routine
+ BCC dlin22             \ If the addition did not overflow, jump to dlin22
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * BCC dlin22 when bit 7 of V is clear
+                        \
+                        \   * BCC dlin27 when bit 7 of V is set
 
- JSR dlin30
+ JSR dlin32             \ If the addition overflowed, call dlin32
 
 .dlin21
 
- BNE dlin25             \ Gets modified by the DrawCanopyLine routine
+ BNE dlin25             \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * BNE dlin25 when bit 7 of V is clear
+                        \
+                        \   * BNE dlin30 when bit 7 of V is set
 
 .dlin22
 
@@ -3076,11 +3194,25 @@ ORG CODE%
 
 .dlin23
 
- LDA Lookup2E60,X       \ Gets modified by the ModifyDrawRoutine routine
+ LDA Lookup2E60,X       \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA Lookup2E60,X when ColourLogic = %10000000
+                        \
+                        \   * LDA Lookup2E74,X when ColourLogic = %01000000
+                        \
+                        \   * LDA Lookup2E88,X when ColourLogic = %00000000
+                        \                       and ColourCycle = %00001111
+                        \
+                        \   * LDA Lookup2E92,X when ColourLogic = %00000000
+                        \                       and ColourCycle = %11110000
 
 .dlin24
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \
+                        \   * AND (P),Y when ColourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -3102,37 +3234,55 @@ ORG CODE%
  CMP I
  BNE dlin12
 
- JMP dlin62
-
- STA SS
+ JMP dlin65
 
 .dlin27
 
- LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawRoutine routine
+ STA SS
 
 .dlin28
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
+ LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA Lookup2E6A,X when ColourLogic = %10000000
+                        \
+                        \   * LDA Lookup2E7E,X when ColourLogic = %01000000
+                        \
+                        \   * LDA Lookup2E88,X when ColourLogic = %00000000
+                        \                       and ColourCycle = %00001111
+                        \
+                        \   * LDA Lookup2E92,X when ColourLogic = %00000000
+                        \                       and ColourCycle = %11110000
+
+.dlin29
+
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \
+                        \   * AND (P),Y when ColourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
+
+.dlin30
 
  LDA P
  SEC
  SBC #8
  STA P
- BCS dlin29
+ BCS dlin31
 
  DEC Q
 
-.dlin29
+.dlin31
 
  DEC QQ
  LDA QQ
  CMP I
  BNE dlin12
 
- JMP dlin62
+ JMP dlin65
 
 \ ******************************************************************************
 \
@@ -3148,63 +3298,96 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.dlin30
-
- ADC RR
- STA SS
-
-.dlin31
-
- LDA Lookup2E60,X       \ Gets modified by the DrawCanopyLine routine
-
 .dlin32
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
+ ADC RR                 \ Set SS = A + RR + C
+ STA SS
+
+.dlin33
+
+ LDA Lookup2E60,X       \ Gets modified by the DrawCanopyLine routine, which in
+                        \ turn gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * Lookup2E60 when ColourLogic = %01000000
+                        \
+                        \   * Lookup2E74 when ColourLogic = %01000000
+                        \
+                        \   * Lookup2E88 when ColourLogic = %00000000
+                        \                 and ColourCycle = %00001111
+                        \
+                        \   * Lookup2E92 when ColourLogic = %00000000
+                        \                 and ColourCycle = %11110000
+.dlin34
+
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \
+                        \   * AND (P),Y when ColourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
-.dlin33
+.dlin35
 
- INY                    \ Gets modified by the DrawCanopyLine routine
+ INY                    \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * INY when bit 6 of V is set
+                        \
+                        \   * TYA when bit 6 of V is clear
 
-.dlin34
+.dlin36
 
- TYA                    \ Gets modified by the DrawCanopyLine routine
+ TYA                    \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * TYA when bit 6 of V is set
+                        \
+                        \   * DEY when bit 6 of V is clear
+
  AND #7
- BNE dlin37
+ BNE dlin39
 
  LDA P
  CLC
 
-.dlin35
+.dlin37
 
- ADC #&38               \ Gets modified by the DrawCanopyLine routine
+ ADC #&38               \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * ADC #&38 when bit 6 of V is set
+                        \
+                        \   * ADC #&E8 when bit 6 of V is clear
+
  STA P
  LDA Q
 
-.dlin36
+.dlin38
 
- ADC #1                 \ Gets modified by the DrawCanopyLine routine
+ ADC #1                 \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * ADC #1 when bit 6 of V is set
+                        \
+                        \   * ADC #&FE when bit 6 of V is clear
+
  STA Q
 
-.dlin37
+.dlin39
 
  LDA SS
  CPY J
  CLC
- BEQ dlin38
+ BEQ dlin40
 
  RTS
 
-.dlin38
+.dlin40
 
  TSX                    \ Remove two bytes from the top of the stack
  INX
  INX
  TXS
 
- JMP dlin62
+ JMP dlin65
 
 \ ******************************************************************************
 \
@@ -3223,61 +3406,91 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.dlin39
+.dlin41
 
                         \ If we get here then the line is a steep vertical slope
 
- BIT V
- BVS dlin40
+ BIT V                  \ If bit 6 of V is set, jump to dlin42
+ BVS dlin42
 
- LDA #&98
- STA dlin51
- LDA #&88
- STA dlin52
- LDA #&C8
- STA dlin53+1
- LDA #&FE
- STA dlin54+1
+ LDA #&98               \ Modify the following instruction at dlin53:
+ STA dlin53             \
+                        \   TYA -> TYA
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #&88               \ Modify the following instruction at dlin54:
+ STA dlin54             \
+                        \   DEY -> DEY
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #&C8               \ Modify the following instruction at dlin37:
+ STA dlin55+1           \
+                        \   ADC #&C8 -> ADC #&C8
+                        \
+                        \ i.e. set it back to the default
+
+ LDA #&FE               \ Modify the following instruction at dlin38:
+ STA dlin56+1           \
+                        \   ADC #&FE -> ADC #&FE
+                        \
+                        \ i.e. set it back to the default
+
  LDA #7
  STA J
- BNE dlin41
+ BNE dlin43
 
-.dlin40
+.dlin42
 
- LDA #&C8
- STA dlin51
- LDA #&98
- STA dlin52
- LDA #&38
- STA dlin53+1
- LDA #1
- STA dlin54+1
+ LDA #&C8               \ Modify the following instruction at dlin53:
+ STA dlin53             \
+                        \   TYA -> INY
+
+ LDA #&98               \ Modify the following instruction at dlin54:
+ STA dlin54             \
+                        \   DEY -> TYA
+
+ LDA #&38               \ Modify the following instruction at dlin37:
+ STA dlin55+1           \
+                        \   ADC #&C8 -> ADC #&38
+
+ LDA #1                 \ Modify the following instruction at dlin38:
+ STA dlin56+1           \
+                        \   ADC #&FE -> ADC #1
+
  LDA #&A0
  STA J
 
-.dlin41
+.dlin43
 
- BIT V
- BMI dlin42
+ BIT V                  \ If bit 7 of V is set, jump to dlin44
+ BMI dlin44
 
- LDA #&1D
- STA dlin50+1
+ LDA #&1D               \ Modify the following instruction at dlin52:
+ STA dlin52+1           \
+                        \   BCS dlin57 -> BCS dlin57
+                        \
+                        \ i.e. set it back to the default
+
  LDA W
  CLC
  ADC #1
  STA I
- JMP dlin43
+ JMP dlin45
 
-.dlin42
+.dlin44
 
- LDA #&3F
- STA dlin50+1
+ LDA #&3F               \ Modify the following instruction at dlin52:
+ STA dlin52+1           \
+                        \   BCS dlin57 -> BCS dlin61
+
  LDA W
  SEC
  SBC #1
  STA I
 
-.dlin43
+.dlin45
 
  LDA #&9F
  SEC
@@ -3292,47 +3505,64 @@ ORG CODE%
  STA SS
  LDA V
  AND #3
- BEQ dlin44
+ BEQ dlin46
 
  LDA T
  CMP #2
- BCC dlin44
+ BCC dlin46
 
  LDA #&FF
  STA SS
 
-.dlin44
+.dlin46
 
  LDA R
  AND #3
  TAX
 
-.dlin45
+.dlin47
 
- LDA #8                 \ Gets modified by the ModifyDrawRoutine routine
+ LDA #8                 \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA #8 when ColourLogic = %10000000
+                        \
+                        \   * LDA #&80 when ColourLogic = %01000000
 
  CPX #0
- BEQ dlin47
+ BEQ dlin49
 
-.dlin46
+.dlin48
 
  LSR A
  DEX
- BNE dlin46
+ BNE dlin48
 
-.dlin47
+.dlin49
 
  STA H
  CLC
  LDX R
 
-.dlin48
+.dlin50
 
- LDA H                  \ Gets modified by the ModifyDrawRoutine routine
+ LDA H                  \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA H when ColourLogic = %01000000
+                        \                           or %10000000
+                        \
+                        \   * LDA #%00001111 when ColourLogic = %00000000
+                        \                     and ColourCycle = %00001111
+                        \
+                        \   * LDA #%11110000 when ColourLogic = %00000000
+                        \                     and ColourCycle = %11110000
 
-.dlin49
+.dlin51
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine
+ ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \
+                        \   * AND (P),Y when ColourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -3340,42 +3570,65 @@ ORG CODE%
  LDA SS
  ADC T
 
-.dlin50
+.dlin52
 
- BCS dlin55              \ Gets modified by DrawCanopyLine (part 2)
+ BCS dlin57             \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * BCC dlin57 when bit 7 of V is clear
+                        \
+                        \   * BCC dlin61 when bit 7 of V is set
 
  STA SS
 
-.dlin51
+.dlin53
 
- TYA
+ TYA                    \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * TYA when bit 6 of V is clear
+                        \
+                        \   * INY when bit 6 of V is set
 
-.dlin52
+.dlin54
 
- DEY
+ DEY                    \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * DEY when bit 6 of V is clear
+                        \
+                        \   * TYA when bit 6 of V is set
+
  AND #7
- BNE dlin48
+ BNE dlin50
 
  LDA P
  CLC
 
-.dlin53
+.dlin55
 
- ADC #&C8               \ Gets modified by DrawCanopyLine (part 2)
+ ADC #&C8               \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * ADC #&C8 when bit 6 of V is clear
+                        \
+                        \   * ADC #&38 when bit 6 of V is set
+
  STA P
  LDA Q
 
-.dlin54
+.dlin56
 
- ADC #&FE               \ Gets modified by DrawCanopyLine (part 2)
+ ADC #&FE               \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * ADC #&FE when bit 6 of V is clear
+                        \
+                        \   * ADC #1 when bit 6 of V is set
+
  STA Q
  CPY J
  CLC
- BNE dlin48
+ BNE dlin50
 
- JMP dlin62
+ JMP dlin65
 
-.dlin55
+.dlin57
 
  ADC RR
  STA SS
@@ -3383,31 +3636,42 @@ ORG CODE%
  LDA H
  LSR A
 
-.dlin56
+.dlin58
 
- CMP #0                 \ Gets modified by the ModifyDrawRoutine routine
- BNE dlin58
+ CMP #0                 \ Gets modified by the ModifyDrawRoutine routine:
+ BNE dlin60             \
+                        \   * CMP #0 when ColourLogic = %10000000
+                        \
+                        \   * CMP #8 when ColourLogic = %01000000
+
 
  LDA P
  CLC
  ADC #8
  STA P
 
-.dlin57
+.dlin59
 
- LDA #8                 \ Gets modified by the ModifyDrawRoutine routine
- BCC dlin58
+ LDA #8                 \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA #8 when ColourLogic = %10000000
+                        \
+                        \   * LDA #&80 when ColourLogic = %01000000
+
+ BCC dlin60
 
  INC Q
 
-.dlin58
+.dlin60
 
  STA H
  CPX I
  CLC
- BNE dlin51
+ BNE dlin53
 
- BEQ dlin62
+ BEQ dlin65
+
+.dlin61
 
  ADC RR
  STA SS
@@ -3415,29 +3679,37 @@ ORG CODE%
  LDA H
  ASL A
 
-.dlin59
+.dlin62
 
- CMP #16                \ Gets modified by the ModifyDrawRoutine routine
- BNE dlin61
+ CMP #16                \ Gets modified by the ModifyDrawRoutine routine:
+ BNE dlin64             \
+                        \   * CMP #16 when ColourLogic = %10000000
+                        \
+                        \   * CMP #0 when ColourLogic = %01000000
 
  LDA P
  SEC
  SBC #8
  STA P
 
-.dlin60
+.dlin63
 
- LDA #1                 \ Gets modified by the ModifyDrawRoutine routine
- BCS dlin61
+ LDA #1                 \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA #1 when ColourLogic = %10000000
+                        \
+                        \   * LDA #16 when ColourLogic = %01000000
+
+ BCS dlin64
 
  DEC Q
 
-.dlin61
+.dlin64
 
  STA H
  CPX I
  CLC
- BNE dlin51
+ BNE dlin53
 
 \ ******************************************************************************
 \
@@ -3452,15 +3724,15 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.dlin62
+.dlin65
 
  LDA V
  LSR A
- BCS dlin63
+ BCS dlin66
 
  RTS
 
-.dlin63
+.dlin66
 
  ASL A
  EOR #&C0
@@ -3471,19 +3743,19 @@ ORG CODE%
  STA S
  LDA #4
  BIT V
- BMI dlin64
+ BMI dlin67
 
  LDA #&9B
 
-.dlin64
+.dlin67
 
  STA W
  LDA #0
- BVS dlin65
+ BVS dlin68
 
  LDA #&97
 
-.dlin65
+.dlin68
 
  STA G
 
@@ -3509,7 +3781,7 @@ ORG CODE%
 \     of ColourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
 \     %11110000
 \   * Modify DrawCanopyLine (part 3) so it pokes the value of ColourCycle as a
-\     bit pattern in the screen updating routine at dlin48
+\     bit pattern in the screen updating routine at dlin50
 \
 \ If ColourLogic = %01000000:
 \
@@ -3534,11 +3806,15 @@ ORG CODE%
 
  LDA #&31               \ Set A to the opcode for the AND (P),Y instruction
 
- STA dlin24             \ Modify the screen-poking instructions in
- STA dlin28             \ DrawCanopyLine (part 1) to use AND (P),Y
+ STA dlin24             \ Modify the following instructions in
+ STA dlin29             \ DrawCanopyLine (part 1):
+                        \
+                        \   ORA (P),Y -> AND (P),Y
 
- STA dlin32             \ Modify the screen-poking instructions in
- STA dlin49             \ DrawCanopyLine (part 2) to use AND (P),Y
+ STA dlin34             \ Modify the following instructions in
+ STA dlin51             \ DrawCanopyLine (part 2):
+                        \
+                        \   ORA (P),Y -> AND (P),Y
 
  LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
  BMI mcol1              \ jump down to mcol1
@@ -3547,9 +3823,9 @@ ORG CODE%
                         \ A to &88 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
-                        \   LDA #&88 : STA dlin31+1
+                        \   LDA #&88 : STA dlin33+1
                         \   LDA Lookup2E88,X
-                        \   LDA #&88 : STA dlin31+1
+                        \   LDA #&88 : STA dlin33+1
                         \   LDA Lookup2E88,X
 
  BNE mcol2              \ Jump down to mcol2 (this BNE is effectively a JMP as
@@ -3561,9 +3837,9 @@ ORG CODE%
                         \ A to &92 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
-                        \   LDA #&92 : STA dlin31+1
+                        \   LDA #&92 : STA dlin33+1
                         \   LDA Lookup2E92,X
-                        \   LDA #&92 : STA dlin31+1
+                        \   LDA #&92 : STA dlin33+1
                         \   LDA Lookup2E92,X
 
 .mcol2
@@ -3571,15 +3847,15 @@ ORG CODE%
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1) where aa is the value of A:
                         \
- STA dlin2+1            \   LDA #&60 : STA dlin31+1 -> LDA #&aa : STA dlin31+1
+ STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&aa : STA dlin33+1
  STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2Eaa,X
- STA dlin4+1            \   LDA #&6A : STA dlin31+1 -> LDA #&aa : STA dlin31+1
- STA dlin27+1           \   LDA Lookup2E6A,X        -> LDA Lookup2Eaa,X
+ STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&aa : STA dlin33+1
+ STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2Eaa,X
 
  LDA ColourCycle        \ Modify the following instruction in DrawCanopyLine
- STA dlin48+1           \ (part 2):
+ STA dlin50+1           \ (part 2):
  LDA #&A9               \
- STA dlin48             \   LDA H -> LDA #ColourCycle
+ STA dlin50             \   LDA H -> LDA #ColourCycle
                         \
                         \ as the opcode for the LDA #n instruction is &A9
 
@@ -3592,10 +3868,18 @@ ORG CODE%
  LDA #&11               \ Set A to the opcode for the ORA (P),Y instruction
 
  STA dlin24             \ Modify the screen-poking instructions in
- STA dlin28             \ DrawCanopyLine (part 2) to use ORA (P),Y
+ STA dlin29             \ DrawCanopyLine (part 2):
+                        \
+                        \   ORA (P),Y -> ORA (P),Y
+                        \
+                        \ i.e. set them back to the default
 
- STA dlin32             \ Modify the screen-poking instructions in
- STA dlin49             \ DrawCanopyLine (part 1) to use ORA (P),Y
+ STA dlin34             \ Modify the screen-poking instructions in
+ STA dlin51             \ DrawCanopyLine (part 1):
+                        \
+                        \   ORA (P),Y -> ORA (P),Y
+                        \
+                        \ i.e. set them back to the default
 
  LDA ColourLogic        \ If bit 7 of ColourLogic is set, i.e. %10000000, jump
  BMI mcol4              \ to mcol4
@@ -3605,24 +3889,24 @@ ORG CODE%
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
  LDA #&74               \
- STA dlin2+1            \   LDA #&60 : STA dlin31+1 -> LDA #&74 : STA dlin31+1
+ STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&74 : STA dlin33+1
  STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E74,X
  LDA #&7E               \
- STA dlin4+1            \   LDA #&6A : STA dlin31+1 -> LDA #&74 : STA dlin31+1
- STA dlin27+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E7E,X
+ STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&74 : STA dlin33+1
+ STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E7E,X
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 2):
  LDA #&80               \
- STA dlin45+1           \   LDA #8 -> LDA #&80
+ STA dlin47+1           \   LDA #8 -> LDA #&80
  LDA #8                 \
- STA dlin56+1           \   CMP #0 -> CMP #8
+ STA dlin58+1           \   CMP #0 -> CMP #8
  LDA #&80               \
- STA dlin57+1           \   LDA #8 -> LDA #&80
+ STA dlin59+1           \   LDA #8 -> LDA #&80
  LDA #0                 \
- STA dlin59+1           \   CMP #16 -> CMP #0
+ STA dlin62+1           \   CMP #16 -> CMP #0
  LDA #16                \
- STA dlin60+1           \   LDA #1 -> LDA #16
+ STA dlin63+1           \   LDA #1 -> LDA #16
 
  BNE mcol5              \ Jump down to mcol5 (this BNE is effectively a JMP as
                         \ A is never zero)
@@ -3634,33 +3918,37 @@ ORG CODE%
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
  LDA #&60               \
- STA dlin2+1            \   LDA #&60 : STA dlin31+1 -> LDA #&60 : STA dlin31+1
+ STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&60 : STA dlin33+1
  STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E60,X
  LDA #&6A               \
- STA dlin4+1            \   LDA #&6A : STA dlin31+1 -> LDA #&6A : STA dlin31+1
- STA dlin27+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E6A,X
+ STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&6A : STA dlin33+1
+ STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E6A,X
+                        \
+                        \ i.e. set them back to the default
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 2):
  LDA #8                 \
- STA dlin45+1           \   LDA #8 -> LDA #8
+ STA dlin47+1           \   LDA #8 -> LDA #8
  LDA #0                 \
- STA dlin56+1           \   CMP #0 -> CMP #0
+ STA dlin58+1           \   CMP #0 -> CMP #0
  LDA #8                 \
- STA dlin57+1           \   LDA #8 -> LDA #8
+ STA dlin59+1           \   LDA #8 -> LDA #8
  LDA #16                \
- STA dlin59+1           \   CMP #16 -> CMP #16
+ STA dlin62+1           \   CMP #16 -> CMP #16
  LDA #1                 \
- STA dlin60+1           \   LDA #1 -> LDA #1
+ STA dlin63+1           \   LDA #1 -> LDA #1
+                        \
+                        \ i.e. set them back to the default
 
 .mcol5
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 2):
  LDA #&A5               \
- STA dlin48             \   LDA H -> LDA H
+ STA dlin50             \   LDA H -> LDA H
  LDA #&79               \
- STA dlin48+1           \ as the opcode for the LDA n instruction is &A5
+ STA dlin50+1           \ as the opcode for the LDA n instruction is &A5
 
  RTS                    \ Return from the subroutine
 
@@ -7593,8 +7881,8 @@ ORG CODE%
  STA Q                  \       = HI(screen address) + HI(X * 8)
 
                         \ So (P Q) is the screen address of the pixel row
-                        \ containing (I, J), out by 8 bytes for each row above
-                        \ or below the top of the dashboard
+                        \ containing pixel (I, J), out by 8 bytes for each row
+                        \ above or below the top of the dashboard
 
  LDA #159               \ Set Y = 159 - J
  SEC                    \
@@ -17990,6 +18278,7 @@ NEXT
  LDA SS
  STA S
  LDX #5
+
  LDA #0
  STA L1D46+1
 
@@ -18058,8 +18347,9 @@ NEXT
  DEX
  BPL L5360
 
- LDA #&80
+ LDA #&80               \ Default
  STA L1D46+1
+
  LDA L0C43
  STA L0C46
  LDA L0C53
