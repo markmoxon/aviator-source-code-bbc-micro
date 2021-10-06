@@ -252,7 +252,7 @@ ORG &0070
 
 \ ******************************************************************************
 \
-\       Name: L0100
+\       Name: LineBufferU
 \       Type: Workspace
 \    Address: &0100 to &0175
 \   Category: Workspaces
@@ -260,7 +260,7 @@ ORG &0070
 \
 \ ******************************************************************************
 
-L0100 = &0100
+LineBufferU = &0100
 L0160 = &0160
 L0161 = &0161
 L0162 = &0162
@@ -860,13 +860,31 @@ ORG &0C00
 
  SKIP 1
 
-.L0CD0
+.LineBuffer1Count
 
- SKIP 1                 \ Set to 255 in Reset
+ SKIP 1                 \ Offset of the last line stored in buffer 1
+                        \
+                        \   * -1 = buffer 1 is empty
+                        \
+                        \   * 0 to 46 = buffer 1 contains LineBuffer1Count + 1
+                        \               lines but is not full
+                        \
+                        \   * 47 = buffer 1 is full and contains 48 lines
+                        \
+                        \ Set to -1 in Reset
 
-.L0CD1
+.LineBuffer2Count
 
- SKIP 1                 \ Set to 47 in Reset
+ SKIP 1                 \ Offset of the last line stored in buffer 2
+                        \
+                        \   * 47 = buffer 2 is empty
+                        \
+                        \   * 48 to 94 = buffer 2 contains LineBuffer2Count + 1
+                        \                lines but is not full
+                        \
+                        \   * 95 = buffer 2 is full, contains 48 lines
+                        \
+                        \ Set to 47 in Reset
 
 .PressingUFBS           \ Determines whether any of the following keys are
                         \ being pressed:
@@ -2761,49 +2779,58 @@ ORG CODE%
  INC U
 
  LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
- BMI L11E5              \ jump down to L11E5
+ BMI L11E5              \ jump down to L11E5 to add a line to buffer 1
 
- LDX L0CD1
- CPX #&5F
+ LDX LineBuffer2Count   \ If LineBuffer2Count <> 95, line buffer 2 is not full,
+ CPX #95                \ so jump down to L11DE to add a new line to the buffer
  BNE L11DE
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .L11DE
 
- INX
- STX L0CD1
- JMP L11F1
+ INX                    \ Increment the value in LineBuffer2Count as we are
+ STX LineBuffer2Count   \ about to add a new line to line buffer 2
+
+ JMP L11F1              \ Jump down to L11F1 to buffer the line and draw it
 
 .L11E5
 
- LDX L0CD0
- CPX #&2F
+ LDX LineBuffer1Count   \ If LineBuffer1Count <> 47, line buffer 1 is not full,
+ CPX #47                \ so jump down to L11ED to add a new line to the buffer
  BNE L11ED
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .L11ED
 
- INX
- STX L0CD0
+ INX                    \ Increment the value in LineBuffer1Count as we are
+ STX LineBuffer1Count   \ about to add a new line to line buffer 1
 
 .L11F1
 
- LDA R
- STA L3C00,X
- LDA W
- STA L3C60,X
- LDA S
- STA L3CC0,X
- LDA G
- STA L3D20,X
- LDA T
- STA L3D80,X
- LDA U
- STA L0100,X
- LDA V
- STA L48A0,X
+ LDA R                  \ Save the start x-coordinate in LineBufferR
+ STA LineBufferR,X
+
+ LDA W                  \ Save the ??? in LineBufferW
+ STA LineBufferW,X
+
+ LDA S                  \ Save the start y-coordinate in LineBufferS
+ STA LineBufferS,X
+
+ LDA G                  \ Save the ??? in LineBufferG
+ STA LineBufferG,X
+
+ LDA T                  \ Save the |x-delta| in LineBufferT
+ STA LineBufferT,X
+
+ LDA U                  \ Save the |y-delta| in LineBufferU
+ STA LineBufferU,X
+
+ LDA V                  \ Save the direction in LineBufferV
+ STA LineBufferV,X
+
+                        \ Fall through into DrawCanopyLine to draw the line
 
 \ ******************************************************************************
 \
@@ -3799,8 +3826,8 @@ ORG CODE%
 
 .ModifyDrawRoutine
 
- LDA ColourLogic        \ If ColourLogic is non-zero, jump to mcol3
- BNE mcol3
+ LDA ColourLogic        \ If ColourLogic is non-zero, jump to modd3
+ BNE modd3
 
                         \ If we get here then ColourLogic is %00000000
 
@@ -3817,32 +3844,32 @@ ORG CODE%
                         \   ORA (P),Y -> AND (P),Y
 
  LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
- BMI mcol1              \ jump down to mcol1
+ BMI modd1              \ jump down to modd1
 
  LDA #&88               \ Bit 7 of ColourCycle is clear, i.e. %00001111, so set
                         \ A to &88 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
-                        \   LDA #&88 : STA dlin33+1
-                        \   LDA Lookup2E88,X
-                        \   LDA #&88 : STA dlin33+1
-                        \   LDA Lookup2E88,X
+                        \   LDA #&60 : STA dlin33+1 -> LDA #&88 : STA dlin33+1
+                        \   LDA Lookup2E60,X        -> LDA Lookup2E88,X
+                        \   LDA #&6A : STA dlin33+1 -> LDA #&88 : STA dlin33+1
+                        \   LDA Lookup2E6A,X        -> LDA Lookup2E88,X
 
- BNE mcol2              \ Jump down to mcol2 (this BNE is effectively a JMP as
+ BNE modd2              \ Jump down to modd2 (this BNE is effectively a JMP as
                         \ A is never zero)
 
-.mcol1
+.modd1
 
  LDA #&92               \ Bit 7 of ColourCycle is set, i.e. %11110000, so set
                         \ A to &92 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
-                        \   LDA #&92 : STA dlin33+1
-                        \   LDA Lookup2E92,X
-                        \   LDA #&92 : STA dlin33+1
-                        \   LDA Lookup2E92,X
+                        \   LDA #&60 : STA dlin33+1 -> LDA #&92 : STA dlin33+1
+                        \   LDA Lookup2E60,X        -> LDA Lookup2E92,X
+                        \   LDA #&6A : STA dlin33+1 -> LDA #&92 : STA dlin33+1
+                        \   LDA Lookup2E6A,X        -> LDA Lookup2E92,X
 
-.mcol2
+.modd2
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1) where aa is the value of A:
@@ -3861,7 +3888,7 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
-.mcol3
+.modd3
 
                         \ If we get here then ColourLogic is non-zero
 
@@ -3882,7 +3909,7 @@ ORG CODE%
                         \ i.e. set them back to the default
 
  LDA ColourLogic        \ If bit 7 of ColourLogic is set, i.e. %10000000, jump
- BMI mcol4              \ to mcol4
+ BMI modd4              \ to modd4
 
                         \ If we get here then ColourLogic is %01000000
 
@@ -3908,10 +3935,10 @@ ORG CODE%
  LDA #16                \
  STA dlin63+1           \   LDA #1 -> LDA #16
 
- BNE mcol5              \ Jump down to mcol5 (this BNE is effectively a JMP as
+ BNE modd5              \ Jump down to modd5 (this BNE is effectively a JMP as
                         \ A is never zero)
 
-.mcol4
+.modd4
 
                         \ If we get here then ColourLogic is %10000000
 
@@ -3941,7 +3968,7 @@ ORG CODE%
                         \
                         \ i.e. set them back to the default
 
-.mcol5
+.modd5
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 2):
@@ -4423,75 +4450,100 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLines
+\       Name: EraseCanopyLines
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Draw all the lines from a line buffer
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ We call this with:
+\
+\   * ColourCycle = %00001111, colour 1 is white and colour 2 is black
+\     Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
+\     Colour 2 is %11110000, so AND'ing with %00001111 gives 0
+\     so this will erase all the lines in line buffer 1 from the hidden screen
+\
+\   * ColourCycle = %11110000, colour 1 is black and colour 2 is white
+\     Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
+\     Colour 1 is %00001111, so AND'ing with %11110000 gives 0
+\     so this will erase all the lines in line buffer 2 from the hidden screen
 \
 \ ******************************************************************************
 
-.DrawCanopyLines
+.EraseCanopyLines
 
  LDA #%00000000         \ Set ColourLogic = %00000000
  STA ColourLogic
 
- JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
-                        \ cycle
+ JSR ModifyDrawRoutine  \ Modify the drawing routines to use AND logic and bit
+                        \ patterns that match ColourCycle
 
-.L1795
+.dcal1
 
  LDA ColourCycle        \ If bit 7 of ColourCycle is clear, i.e. %00001111, jump
- BPL L17A8              \ down to L17A8
+ BPL dcal3              \ down to dcal3
 
- LDX L0CD1
- CPX #&2F
- BNE L17A2
+                        \ If we get here, ColourCycle is %11110000
 
- RTS
+ LDX LineBuffer2Count   \ If LineBuffer2Count <> 47, line buffer 2 is not
+ CPX #47                \ empty, so jump down to dcal2 to draw the next line
+ BNE dcal2              \ from the buffer
 
-.L17A2
+ RTS                    \ Return from the subroutine
 
- DEC L0CD1
- JMP L17B3
+.dcal2
 
-.L17A8
+ DEC LineBuffer2Count   \ Decrement the value in LineBuffer2Count as we are
+                        \ about to draw the next line from buffer 2
 
- LDX L0CD0
- CPX #&FF
- BNE L17B0
+ JMP dcal5              \ Jump down to dcal5 to draw the next line from buffer 2
 
- RTS
+.dcal3
 
-.L17B0
+ LDX LineBuffer1Count   \ If LineBuffer1Count <> -1, line buffer 1 is not
+ CPX #255               \ empty, so jump down to dcal4 to draw the next line
+ BNE dcal4              \ from the buffer
 
- DEC L0CD0
+ RTS                    \ Return from the subroutine
 
-.L17B3
+.dcal4
 
- LDA L3C00,X
+ DEC LineBuffer1Count   \ Decrement the value in LineBuffer1Count as we are
+                        \ about to draw the next line from buffer 1
+
+.dcal5
+
+                        \ We now fetch the next line from the line buffer
+
+ LDA LineBufferR,X      \ Set R to the start x-coordinate from LineBufferR
  STA R
+
  STA L0CE0
- LDA L3C60,X
+
+ LDA LineBufferW,X      \ Set W to the ??? from LineBufferW
  STA W
- LDA L3CC0,X
+
+ LDA LineBufferS,X      \ Set S to the start y-coordinate from LineBufferS
  STA S
+
  STA L0CE1
- LDA L3D20,X
+
+ LDA LineBufferG,X      \ Set G to ??? from LineBufferG
  STA G
- LDA L3D80,X
+
+ LDA LineBufferT,X      \ Set T to the |x-delta| from LineBufferT
  STA T
- LDA L0100,X
+
+ LDA LineBufferU,X      \ Set U to the |y-delta| from LineBufferU
  STA U
- LDA L48A0,X
+
+ LDA LineBufferV,X      \ Set V to the direction from LineBufferV
  STA V
 
- JSR DrawCanopyLine
+ JSR DrawCanopyLine     \ Draw the line
 
- JMP L1795
+ JMP dcal1              \ Loop back to dcal1 to draw the next line
 
  EQUB &17
 
@@ -9439,13 +9491,13 @@ ORG CODE%
  LDA #1                 \ Set OnGround = 1 (on the ground)
  STA OnGround
 
- LDA #47                \ Set L0CD1 = 47
- STA L0CD1
+ LDA #47                \ Set LineBuffer2Count = 47
+ STA LineBuffer2Count
 
  LDA #255               \ Set Theme = 255
  STA Theme
 
- STA L0CD0              \ Set L0CD0 = 255
+ STA LineBuffer1Count   \ Set LineBuffer1Count = 255
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
                         \ the rset4 loop
@@ -11159,6 +11211,8 @@ ORG CODE%
  LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
  BMI view4              \ down to view4 to hide colour 1 and show colour 2
 
+                        \ If we get here then ColourCycle is %00001111
+
  LDX #2                 \ Set logical colour 2 to black, to hide the old canopy
  JSR SetColourToBlack   \ view in colour 2
 
@@ -11170,15 +11224,18 @@ ORG CODE%
 
 .view4
 
+                        \ If we get here then ColourCycle is %11110000
+
  LDX #1                 \ Set logical colour 1 to black, to hide the old canopy
  JSR SetColourToBlack   \ view in colour 1
 
- LDX #2                 \ Set logical colour 2 to white,  to show the new
+ LDX #2                 \ Set logical colour 2 to white, to show the new
  JSR SetColourToWhite   \ view that we just drew in colour 2
 
 .view5
 
- JSR DrawCanopyLines
+ JSR EraseCanopyLines   \ Erase the lines that are now hidden, and which are
+                        \ stored in the relevant line buffer
 
 .view6
 
@@ -13971,7 +14028,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3C00
+\       Name: LineBufferR
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -13982,7 +14039,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L3C00
+.LineBufferR
 
  EQUB &64, &6C, &70, &32, &0D, &03, &B4, &19
  EQUB &20, &20, &20, &20, &20, &20, &44, &45
@@ -13999,7 +14056,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3C60
+\       Name: LineBufferW
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14010,7 +14067,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L3C60
+.LineBufferW
 
  EQUB &41, &3A, &43, &4C, &43, &3A, &41, &44
  EQUB &43, &23, &26, &44, &38, &3A, &54, &41
@@ -14027,7 +14084,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3CC0
+\       Name: LineBufferS
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14038,7 +14095,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L3CC0
+.LineBufferS
 
  EQUB &20, &20, &20, &20, &4C, &44, &41, &23
  EQUB &30, &3A, &53, &54, &41, &20, &46, &52
@@ -14055,7 +14112,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3D20
+\       Name: LineBufferG
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14066,7 +14123,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L3D20
+.LineBufferG
 
  EQUB &1A, &24, &2E, &53, &55, &54, &52, &20
  EQUB &4A, &4D, &50, &20, &54, &45, &53, &54
@@ -14083,7 +14140,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3D80
+\       Name: LineBufferT
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14094,7 +14151,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L3D80
+.LineBufferT
 
  EQUB &73, &75, &74, &31, &0D, &04, &38, &0F
  EQUB &20, &20, &20, &20, &20, &20, &84, &41
@@ -15490,7 +15547,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L48A0
+\       Name: LineBufferV
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -15500,7 +15557,6 @@ NEXT
 \ This variable contains workspace noise that disassembles into code that is
 \ never called:
 \
-\ 
 \ .L48A0
 \ 
 \  LDX #7
@@ -15555,7 +15611,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L48A0
+.LineBufferV
 
  EQUB &A2, &07
  EQUB &A9, &77
