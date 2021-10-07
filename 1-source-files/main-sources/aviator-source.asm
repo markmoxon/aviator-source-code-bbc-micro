@@ -226,29 +226,33 @@ ORG &0070
 
  SKIP 1                 \ Temporary storage, used in a number of places
 
-.II
+.InViewListEnd
 
- SKIP 1                 \ Temporary storage, used in a number of places
+ SKIP 1                 \ The index of the first empty entry in the
+                        \ ObjectsInView list
 
-.JJ
+.ObjectID
 
- SKIP 1                 \ Temporary storage, used in a number of places
+ SKIP 1                 \ Temporary storage, typically used to pass an object ID
+                        \ to routines
 
-.KK
+.ObjectIDCounter
 
- SKIP 1                 \ Temporary storage, used in a number of places
+ SKIP 1                 \ Temporary storage, typically used to loop through
+                        \ object IDs
 
 .LL
 
- SKIP 1                 \ Index into L0500 table
+ SKIP 1                 \ Counter that's related to the ObjectsInView list
 
 .MM
 
  SKIP 1                 \ Temporary storage, used in a number of places
 
-.NN
+.NotInViewListEnd
 
- SKIP 1                 \ Index into L0600 table
+ SKIP 1                 \ The index of the last entry in the ObjectsNotInView
+                        \ list
 
 \ ******************************************************************************
 \
@@ -292,7 +296,7 @@ L04F6 = &04F6
 
 \ ******************************************************************************
 \
-\       Name: L0500
+\       Name: ObjectsInView
 \       Type: Workspace
 \    Address: &0500 to &05FF
 \   Category: Workspaces
@@ -300,12 +304,12 @@ L04F6 = &04F6
 \
 \ ******************************************************************************
 
-L0500 = &0500
+ObjectsInView = &0500
 L05C8 = &05C8           \ Zeroed in Reset
 
 \ ******************************************************************************
 \
-\       Name: L0600
+\       Name: ObjectsNotInView
 \       Type: Workspace
 \    Address: &0600 to &06FF
 \   Category: Workspaces
@@ -313,7 +317,7 @@ L05C8 = &05C8           \ Zeroed in Reset
 \
 \ ******************************************************************************
 
-L0600 = &0600
+ObjectsNotInView = &0600
 
 \ ******************************************************************************
 \
@@ -784,12 +788,14 @@ ORG &0C00
 
 .ColourLogic            \ Determines the logic used to draw the canopy view
                         \
- SKIP 1                 \   * %00000000 just after each flip (DrawCanopyLines)
-                        \     AND logic
-                        \   * %01000000 when ColourCycle is %11110000 (FlipColours)
-                        \     ORA logic
-                        \   * %10000000 when ColourCycle is %00001111 (L2BDC, FlipColours)
-                        \     ORA logic
+ SKIP 1                 \   * %00000000 just after each flip
+                        \     Sets AND logic in EraseCanopyLines
+                        \
+                        \   * %01000000 when ColourCycle is %11110000
+                        \     Sets ORA logic in FlipColours
+                        \
+                        \   * %10000000 when ColourCycle is %00001111
+                        \     Sets ORA logic in ResetObjectLists, FlipColours
                         \
                         \ Set to %10000000 for each new game
 
@@ -817,9 +823,11 @@ ORG &0C00
                         \
                         \ Set to 1 in Reset (on the ground)
 
-.MainLoopNN             \ Used to store the value of NN at the start of each
-                        \ iteration of the main loop
- SKIP 1
+.PreviousListEnd        \ Used to store the value of NotInViewListEnd at the
+                        \ start of each iteration of the main loop, so we can
+ SKIP 1                 \ refer to it at the end of the main loop to see if
+                        \ we have added anything to the list during the main
+                        \ loop
 
 .L0CC7
 
@@ -852,9 +860,13 @@ ORG &0C00
                         \
                         \ This value is set in the ToggleJoystick routine
 
-.L0CCE
+.ObjectInView
 
- SKIP 1
+ SKIP 1                 \ Determines whether an object is in view/in front of us
+                        \
+                        \   * 0 = in front of us
+                        \
+                        \   * Negative = behind us
 
 .L0CCF
 
@@ -2495,7 +2507,7 @@ ORG CODE%
 
 .L107B
 
- LDA #2
+ LDA #%00000010
  BNE L1081
 
 \ ******************************************************************************
@@ -2515,72 +2527,128 @@ ORG CODE%
 
  LDA #0
 
+\ ******************************************************************************
+\
+\       Name: L1081
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A               The base value for the direction in V
+\
+\   L               ??? comes from Lookup3F30, used as index into L0900, L4A00,
+\                   L0A00, L0B00
+\
+\   M               ??? comes from Lookup3E00, used as index into L0900, L4A00,
+\                   L0A00, L0B00
+\
+\ ******************************************************************************
+
 .L1081
 
- STA V
- LDA #0
+ STA V                  \ Set V = A to set the base value for the direction in V
+                        \ (we will set bits 6 and 7 later)
+
+ LDA #0                 \ Set TT = 0
  STA TT
- STA UU
- LDX L
- LDY M
- LDA L0900,X
+
+ STA UU                 \ Set UU = 0
+
+ LDX L                  \ Set X to the index passed to the subroutine in L
+
+ LDY M                  \ Set Y to the index passed to the subroutine in M
+
+ LDA L0900,X            \ Set (RR R) = the L-th entry from (L4A00 L0900)
  STA R
  LDA L4A00,X
  STA RR
- LDA L0A00,X
- STA S
- LDA L0B00,X
- STA SS
- LDA L0900,Y
- STA W
- SEC
- SBC R
- STA T
- LDA L4A00,Y
- STA QQ
- SBC RR
- STA I
- BPL L10C9
 
- LDA #&80
+ LDA L0A00,X            \ Set S = the L-th entry from L0A00
+ STA S
+
+ LDA L0B00,X            \ Set SS = the L-th entry from L0B00
+ STA SS
+
+ LDA L0900,Y            \ Set (QQ W) = the M-th entry from (L4A00 L0900),
+ STA W                  \ starting with the low byte
+
+ SEC                    \ Set T = W - R
+ SBC R                  \
+ STA T                  \ to subtract the low bytes
+
+ LDA L4A00,Y            \ Set (QQ W) = the M-th entry from (L4A00 L0900),
+ STA QQ                 \ finishing with the high byte
+
+ SBC RR                 \ Set I = QQ - RR
+ STA I                  \
+                        \ to subtract the high bytes
+
+                        \ So we now have:
+                        \
+                        \   (I T) = (QQ W) - (RR R)
+                        \         = L-th - M-th entry from (L4A00 L0900)
+
+ BPL L10C9              \ If the result is positive, jump to L10C9 to skip the
+                        \ following
+
+ LDA #%10000000         \ Set bit 7 of V to indicate a negative x-delta
  ORA V
  STA V
- LDA #0
+
+ LDA #0                 \ Negate (I T), starting with the low bytes
  SEC
  SBC T
  STA T
- LDA #0
+
+ LDA #0                 \ And then negating the high bytes
  SBC I
  STA I
 
 .L10C9
 
- LDA L0A00,Y
- STA G
- SEC
- SBC S
- STA U
- LDA L0B00,Y
- STA H
- SBC SS
- STA J
- BPL L10F1
+ LDA L0A00,Y            \ Set (H G) = the M-th entry from (L0B00 L0A00),
+ STA G                  \ starting with the low byte
 
- LDA #&40
+ SEC                    \ Set U = G - S
+ SBC S                  \
+ STA U                  \ to subtract the low bytes
+
+ LDA L0B00,Y            \ Set (H G) = the M-th entry from (L0B00 L0A00),
+ STA H                  \ finishing with the high byte
+
+ SBC SS                 \ Set J = H - SS
+ STA J                  \
+                        \ to subtract the high bytes
+
+                        \ So we now have:
+                        \
+                        \   (J U) = (H G) - (SS S)
+                        \         = L-th - M-th entry from (L0B00 L0A00)
+
+ BPL L10F1              \ If the result is positive, jump to L10F1 to skip the
+                        \ following
+
+ LDA #%01000000         \ Set bit 6 of V to indicate a negative y-delta
  ORA V
  STA V
 
- LDA #0
+ LDA #0                 \ Negate (J U), starting with the low bytes
  SEC
  SBC U
  STA U
- LDA #0
+
+ LDA #0                 \ And then negating the high bytes
  SBC J
  STA J
 
 .L10F1
 
  LDA #0
+
  LDX S
  LDY SS
  BEQ L1101
@@ -2599,10 +2667,23 @@ ORG CODE%
 
 .L1102
 
+                        \ If SS = 0, C flag is set and X = S
+                        \ If SS < 0, C flag is clear and X = 0
+                        \ If SS > 0, C flag is set and X = 255
+
  ROR A
- CPX #&98
+ CPX #152
  ROR A
- EOR #&40
+ EOR #%01000000
+
+                        \ If SS = 0, bit 6 clear, and bit 7 clear if S < 152
+                        \            A = %00000000 if S < 152
+                        \            A = %10000000 if S >= 152
+                        \ If SS < 0, bit 6 set and bit 7 clear, A = %01000000
+                        \ If SS > 0, bit 6 clear and bit 7 set, A = %10000000
+
+                        \ A is shifted right below, so bits 7 and 6 become bits
+                        \ 5 and 4
  LDX R
  LDY RR
  BEQ L1115
@@ -2616,13 +2697,29 @@ ORG CODE%
 
 .L1115
 
+                        \ If RR = 0, X = R
+                        \ If RR < 0, X = 0
+                        \ If RR > 0, X = 255
+
  CPX #4
  ROR A
- CPX #&9C
+ CPX #156
  ROR A
- EOR #&40
- STA TT
+ EOR #%01000000
+
+                        \ If RR = 0, bit 6 set if R < 4, bit 7 clear if R < 156
+                        \            A = %01000000 if R < 4
+                        \            A = %00000000 if R >= 4 and R < 156
+                        \            A = %10000000 if R >= 156
+                        \ If RR < 0, bit 6 set and bit 7 clear, A = %01000000
+                        \ If RR > 0, bit 6 clear and bit 7 set, A = %10000000
+
+ STA TT                 \ Store A in TT
+ 
+                        \ 4 to 155 feels a bit like a coordinate range?
+
  LDA #0
+
  LDX G
  LDY H
  BEQ L112F
@@ -2642,9 +2739,10 @@ ORG CODE%
 .L1130
 
  ROR A
- CPX #&98
+ CPX #152
  ROR A
- EOR #&40
+ EOR #%01000000
+
  LDX W
  LDY QQ
  BEQ L1143
@@ -2660,18 +2758,24 @@ ORG CODE%
 
  CPX #4
  ROR A
- CPX #&9C
+ CPX #156
  ROR A
- EOR #&40
- STA UU
- LDX L
- LDY M
+ EOR #%01000000
+ 
+ STA UU                 \ Store A in UU, like TT but with (H G) and (QQ W)
+                        \ instead of (SS S) and (RR R)
+
+ LDX L                  \ Set X to the index passed to the subroutine in L
+
+ LDY M                  \ Set Y to the index passed to the subroutine in M
+
  LDA L4900,Y
  BPL L1162
 
- LDA V
- EOR #&C0
+ LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
+ EOR #%11000000
  STA V
+
  LDA TT
  BEQ L1198
 
@@ -2701,13 +2805,13 @@ ORG CODE%
 
 .L117A
 
- JSR L1598
+ JSR L1598              \ Clipping?
 
  JMP L1198
 
 .L1180
 
- JSR L1554
+ JSR L1554              \ Clipping?
 
  JMP L1198
 
@@ -2716,9 +2820,10 @@ ORG CODE%
  LDA UU
  BNE L1180
 
- LDA V
- EOR #&C0
+ LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
+ EOR #%11000000
  STA V
+
  LDA W
  STA R
  LDA G
@@ -2730,7 +2835,7 @@ ORG CODE%
  BIT V
  BMI L11A0
 
- LDA #&9B
+ LDA #155
 
 .L11A0
 
@@ -2738,7 +2843,7 @@ ORG CODE%
  LDA #0
  BVS L11A8
 
- LDA #&97
+ LDA #151
 
 .L11A8
 
@@ -2845,7 +2950,8 @@ ORG CODE%
 \ the DrawCanopyLine routine itself.
 \
 \ The default code (i.e. the unmodified version in the source) is run when U < T
-\ (shallow horizontal slope), bit 6 of V is clear (y-axis up) and bit 7 is set (x-axis left).
+\ (shallow horizontal slope), bit 6 of V is clear (y-axis up) and bit 7 is set
+\ (x-axis left).
 \
 \ Arguments:
 \
@@ -3994,8 +4100,8 @@ ORG CODE%
 
 .L1554
 
- LDA TT
- AND UU
+ LDA TT                 \ If TT and UU have a set bit in common, jump to L1593
+ AND UU                 \ to abort the drawing of this line
  BNE L1593
 
  LDA SS
@@ -4049,12 +4155,12 @@ ORG CODE%
 
 .L1593
 
- TSX                    \ Remove two bytes from the top of the stack
- INX
- INX
- TXS
+ TSX                    \ Remove two bytes from the top of the stack, so the
+ INX                    \ RTS returns to the caller's caller, i.e. the caller
+ INX                    \ of L107B or L107F, i.e. L3347 or DrawCanopyView, so
+ TXS                    \ this aborts the drawing of this line
 
- RTS
+ RTS                    \ Return to the caller's caller
 
 \ ******************************************************************************
 \
@@ -5669,7 +5775,7 @@ ORG CODE%
  BVC L1E07
 
  LDA #&40
- STA L0CCE
+ STA ObjectInView
 
 .L1E07
 
@@ -9625,7 +9731,7 @@ ORG CODE%
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
- JSR L2BDC
+ JSR ResetObjectLists
 
  JSR IndicatorF         \ Update the flaps indicator
 
@@ -9654,9 +9760,9 @@ ORG CODE%
 
 .MainLoop
 
- LDA NN                 \ Store the value of NN, which appears to be a counter
- STA MainLoopNN         \ of things at L0600, in MainLoopNN, so we can refer to
-                        \ it later
+ LDA NotInViewListEnd   \ Store the size of the ObjectsNotInView list in
+ STA PreviousListEnd    \ PreviousListEnd so we can check it at the end of the
+                        \ main loop
 
  JSR L2F1C
 
@@ -9712,22 +9818,24 @@ ORG CODE%
  CPY #&1E               \ Loop back until we have copied all four bytes
  BCS main1
 
- LDY II                 \ Set Y = the size of the L0500 table from II
+ LDY InViewListEnd      \ Set Y to the first free entry at the end of the
+                        \ ObjectsInView list
 
- LDA #&3C               \ Append &3C to the end of the L0500 table
- STA L0500,Y
-
- INY                    \ Increment Y to point to the next free entry in the
-                        \ table
-
- LDA #&3D               \ Append &3D to the end of the L0500 table
- STA L0500,Y
+ LDA #&3C               \ Append &3C to the end of the ObjectsInView list
+ STA ObjectsInView,Y
 
  INY                    \ Increment Y to point to the next free entry in the
-                        \ table
+                        \ list
 
- STY II                 \ Update II with the new size of the table, which is two
-                        \ more than it was before we added the bullets
+ LDA #&3D               \ Append &3D to the end of the ObjectsInView list
+ STA ObjectsInView,Y
+
+ INY                    \ Increment Y to point to the next free entry in the
+                        \ list
+
+ STY InViewListEnd      \ Update InViewListEnd with the updated index of the
+                        \ next free entry, which is two more than it was
+                        \ before we added the bullets
 
  JMP main3              \ Skip the following instruction, as we have already
                         \ processed the key logger
@@ -10162,19 +10270,21 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ If we have added any objects to the table in L0600 during the main loop (and
-\ therefore incremented NN), we process each of them to add their details to
-\ L0400.
+\ If we have added any objects to ObjectsNotInView list during the main loop
+\ (and therefore incremented NotInViewListEnd), we process each of them to add
+\ their details to L0400.
 \
 \ ******************************************************************************
 
 .main25
 
- LDX MainLoopNN         \ If the value of NN at the start of the main loop,
- CPX NN                 \ which we stored in MainLoopNN, does not equal NN, then
- BNE main26             \ this means the value of NN has changed during this
-                        \ iteration of the main loop, so jump down to main26 to
-                        \ process the change
+ LDX PreviousListEnd    \ If the value of NotInViewListEnd has changed since the
+ CPX NotInViewListEnd   \ start of the main loop - in other words, it is not the
+ BNE main26             \ same as the value we stored in PreviousListEnd - then
+                        \ this means the value of NotInViewListEnd has changed
+                        \ during this iteration of the main loop, so jump down
+                        \ to main26 to process the new additions to the
+                        \ ObjectsNotInView list
 
  JMP MainLoop           \ Otherwise we are done, so jump back up to the top of
                         \ the main loop for the next iteration
@@ -10182,31 +10292,32 @@ ORG CODE%
 .main26
 
                         \ The first time we get here, X contains the size of the
-                        \ L0600 table as it was when we started this iteration of
-                        \ the main loop, and we have added new objects to the
-                        \ table, so now we need to process the new objects
+                        \ ObjectsNotInView table as it was when we started this
+                        \ iteration of the main loop, and we have added new
+                        \ objects to the table, so now we need to process those
+                        \ new objects
 
  INX                    \ Increment X to point to the next object, which will be
                         \ the first new one to process
 
- LDY L0600,X            \ Set Y to this object's handle in L0600
+ LDY ObjectsNotInView,X \ Set Y to this object's ID from ObjectsNotInView
 
- STX MainLoopNN         \ Update the value of MainLoopNN, so if we revisit the
-                        \ main26 loop, we will move on to the next object
+ STX PreviousListEnd    \ Update the value of PreviousListEnd, so if we revisit
+                        \ the main26 loop, we will move on to the next object
 
                         \ Now to process the object
 
- LDX Lookup3F30,Y       \ Set X to the Y-th byte from Lookup3F30
+ LDX Lookup3F30,Y       \ Set X to this object's index from Lookup3F30
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX Lookup3E00,Y       \ Set X to the Y-th byte from Lookup3E00
+ LDX Lookup3E00,Y       \ Set X to this object's index from Lookup3E00
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
  JMP main25             \ Jump back to main25 to repeat this process until we
-                        \ have processed all the new things
+                        \ have zeroed all the new additions to ObjectsNotInView
 
 \ ******************************************************************************
 \
@@ -10223,54 +10334,54 @@ ORG CODE%
 
 .L2873
 
- LDX II
+ LDX InViewListEnd
  BEQ L28B5
 
  LDA #&FF
  STA LL
  LDA #0
- STA KK
+ STA ObjectIDCounter
 
 .L287F
 
- LDX KK
- LDA L0500,X
- STA JJ
+ LDX ObjectIDCounter
+ LDA ObjectsInView,X
+ STA ObjectID
  LDA #1
  STA HH
- JSR L2973
+ JSR IsObjectInView
 
- LDA JJ
+ LDA ObjectID
  BEQ L2896
 
- LDX L0CCE
+ LDX ObjectInView
  BNE L28A0
 
 .L2896
 
  INC LL
  LDX LL
- STA L0500,X
+ STA ObjectsInView,X
  JMP L28A7
 
 .L28A0
 
- INC NN                 \ Increment NN, which contains the number of things at
-                        \ &0600
+ INC NotInViewListEnd   \ Increment NotInViewListEnd to point to the next free
+                        \ entry at the end of the ObjectsNotInView list
 
- LDX NN                 \ Store A at the NN-th byte of L0600, so this adds a new
- STA L0600,X            \ thing to the end of the L0600 table
+ LDX NotInViewListEnd   \ Add the object ID in A to the end of the
+ STA ObjectsNotInView,X \ ObjectsNotInView list
 
 .L28A7
 
- INC KK
- LDA KK
- CMP II
+ INC ObjectIDCounter
+ LDA ObjectIDCounter
+ CMP InViewListEnd
  BCC L287F
 
  LDA LL
  ADC #0
- STA II
+ STA InViewListEnd
 
 .L28B5
 
@@ -10291,19 +10402,19 @@ ORG CODE%
 
 .L28B6
 
- LDA II
+ LDA InViewListEnd
  BEQ L2929
 
  LDA #&FF
  STA LL
  LDA #0
- STA KK
+ STA ObjectIDCounter
 
 .L28C2
 
- LDX KK
- LDY L0500,X
- STY JJ
+ LDX ObjectIDCounter
+ LDY ObjectsInView,X
+ STY ObjectID
  LDX Lookup3F30,Y
  STX GG
  STX L
@@ -10338,31 +10449,31 @@ ORG CODE%
 
  INC LL
  LDX LL
- LDA JJ
- STA L0500,X
+ LDA ObjectID
+ STA ObjectsInView,X
  JMP L291B
 
 .L2910
 
- LDA JJ
+ LDA ObjectID
  BEQ L2904
 
- INC NN                 \ Increment NN, which contains the number of things at
-                        \ &0600
+ INC NotInViewListEnd   \ Increment NotInViewListEnd to point to the next free
+                        \ entry at the end of the ObjectsNotInView list
 
- LDX NN                 \ Store A at the NN-th byte of L0600, so this adds a new
- STA L0600,X            \ thing to the end of the L0600 table
+ LDX NotInViewListEnd   \ Add the object ID in A to the end of the
+ STA ObjectsNotInView,X \ ObjectsNotInView list
 
 .L291B
 
- INC KK
- LDA KK
- CMP II
+ INC ObjectIDCounter
+ LDA ObjectIDCounter
+ CMP InViewListEnd
  BCC L28C2
 
  LDA LL
  ADC #0
- STA II
+ STA InViewListEnd
 
 .L2929
 
@@ -10398,15 +10509,15 @@ ORG CODE%
 .L293A
 
  LDA MM
- CMP NN
+ CMP NotInViewListEnd
  BEQ L2972
 
  CLC
  ADC #1
  STA MM
  TAX
- LDA L0600,X
- STA JJ
+ LDA ObjectsNotInView,X
+ STA ObjectID
  CMP #&3C
  BEQ L293A
 
@@ -10415,62 +10526,58 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2953
+\       Name: AddObjectToList
 \       Type: Subroutine
 \   Category: 
-\    Summary: Populate tables at L0500 and L0600
+\    Summary: Populate tables at ObjectsInView and ObjectsNotInView
 \
 \ ------------------------------------------------------------------------------
 \
-\ Gets called L4207 times by NewGame > L2BDC, with the counter in JJ.
+\ Check the visibility of an object and either add it to the ObjectsInView table
+\ or the ObjectsNotInView table, depending on whether it is visible.
 \
 \ Arguments:
 \
-\   JJ                  A counter that goes from 0 to L4207-1
-\
-\   LL                  A counter that starts at 255 on the first call
-\
-\   L0CCE               0 = add to L0500, otherwise add to L0600
-\
-\
-\ Returns:
-\
-\   II                  Gets incremented from 0 for each addition to L0500
+\   ObjectID            The object ID to process
 \
 \ ******************************************************************************
 
-.L2953
+.AddObjectToList
 
  LDA #0                 \ Set HH = 0
  STA HH
 
- JSR L2973
+ JSR IsObjectInView
 
- LDA JJ                 \ Fetch the counter into A
+ LDA ObjectID           \ Fetch the object ID into A
 
- LDX L0CCE              \ If L0CCE = 0, jump down to L2969
+ LDX ObjectInView       \ If ObjectInView = 0, jump down to L2969
  BEQ L2969
 
- INC NN                 \ Increment NN, so that it counts the number of
-                        \ additions to L0600
+                        \ ObjectInView is non-zero, so we add this object to
+                        \ ObjectsNotInView
 
- LDX NN                 \ Store the counter number in A in the NN-th byte of
- STA L0600,X            \ L0600, so this adds a new byte to the end of the L0600
-                        \ table
+ INC NotInViewListEnd   \ Increment NotInViewListEnd to point to the next free
+                        \ entry at the end of the ObjectsNotInView list
+
+ LDX NotInViewListEnd   \ Add the object ID in A to the end of the
+ STA ObjectsNotInView,X \ ObjectsNotInView list
 
  RTS                    \ Return from the subroutine
 
 .L2969
 
- INC II                 \ Increment II, so that it counts the number of
-                        \ additions to L0500
+                        \ ObjectInView is zero, so we add this object to
+                        \ ObjectsInView
 
- INC LL                 \ Increment LL, so that it's 0 on the first call, 1 on
-                        \ the second and so on
+ INC InViewListEnd      \ Increment InViewListEnd so it still points to the
+                        \ first empty entry in the ObjectsInView list after we
+                        \ add this object
 
- LDX LL                 \ Store the counter number in A in the LL-th byte of
- STA L0500,X            \ L0500, so this adds a new byte to the end of the L0500
-                        \ table
+ INC LL                 \ Increment LL
+
+ LDX LL                 \ Add the object ID in A to the end of the ObjectsInView
+ STA ObjectsInView,X    \ list
 
 .L2972
 
@@ -10478,23 +10585,27 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2973
+\       Name: IsObjectInView
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   ObjectID            The object ID to check
+\
+\   HH                  ???
 \
 \ ******************************************************************************
 
-.L2973
+.IsObjectInView
 
  LDA #0
- STA L0CCE
+ STA ObjectInView
  STA L0CBF
- LDX JJ
+ LDX ObjectID
  LDY Lookup3E00,X
  STY M
  LDY Lookup3F30,X
@@ -10565,7 +10676,7 @@ ORG CODE%
  BMI L29E0
 
  LDA #&80
- STA L0CCE
+ STA ObjectInView
  RTS
 
 .L29E0
@@ -10599,7 +10710,7 @@ ORG CODE%
 .L2A01
 
  LDA #&80
- STA L0CCE
+ STA ObjectInView
 
 .L2A06
 
@@ -10628,7 +10739,7 @@ ORG CODE%
  STA L0CCB
  JSR L19A0
 
- LDA L0CCE
+ LDA ObjectInView
  BNE L2A06
 
  LDY GG
@@ -10646,7 +10757,7 @@ ORG CODE%
  STA L0CCB
  JSR L19A0
 
- LDA L0CCE
+ LDA ObjectInView
  BNE L2A8B
 
 .L2A4D
@@ -10658,10 +10769,10 @@ ORG CODE%
  LDA HH
  BNE L2A5D
 
- LDX JJ
+ LDX ObjectID
  JSR L4B5F
 
- STA L0CCE
+ STA ObjectInView
  BNE L2A8B
 
 .L2A5D
@@ -10685,9 +10796,9 @@ ORG CODE%
  LDA L4900,Y
  BPL L2A8B
 
- LDA L0CCE
+ LDA ObjectInView
  ORA #&80
- STA L0CCE
+ STA ObjectInView
  LDY L0CBF
  JSR L4C96
 
@@ -10861,7 +10972,7 @@ ORG CODE%
  JSR L1D8D
 
  LDY L0CCC
- LDA L0CCE
+ LDA ObjectInView
  BNE L2BB7
 
  LDA #&C0
@@ -10948,10 +11059,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2BDC
+\       Name: ResetObjectLists
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Reset the object lists 
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10959,7 +11070,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L2BDC
+.ResetObjectLists
 
  LDA #%10000000         \ Set ColourLogic = %10000000
  STA ColourLogic
@@ -10970,13 +11081,13 @@ ORG CODE%
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
- LDA #0                 \ Set JJ = 0 to act as a loop counter below
- STA JJ
+ LDA #0                 \ Set ObjectID = 0 to act as a loop counter below
+ STA ObjectID
 
- STA II                 \ Set II = 0
+ STA InViewListEnd      \ Set InViewListEnd = 0
 
- LDA #255               \ Set NN = 255
- STA NN
+ LDA #255               \ Set NotInViewListEnd = 255
+ STA NotInViewListEnd
 
  STA LL                 \ Set LL = 255
 
@@ -10984,12 +11095,13 @@ ORG CODE%
 
 .L2BF7
 
- JSR L2953              \ Append number JJ to either the L0500 or L0600 table
+ JSR AddObjectToList    \ Add the object with ID ObjectID to either the
+                        \ ObjectsInView or ObjectsNotInView list
 
- INC JJ                 \ Increment the loop counter
+ INC ObjectID           \ Increment ObjectID to move on to the next object
 
- LDA JJ                 \ Loop back until JJ = L4207
- CMP L4207
+ LDA ObjectID           \ Loop back until we have processed all the objects
+ CMP NumberOfObjects
  BCC L2BF7
 
  LDX #3                 \ Set logical colour 3 to white so the dashboard display
@@ -11159,47 +11271,54 @@ ORG CODE%
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
- LDA II                 \ If II is non-zero, jump to view1 to skip the following
- BNE view1              \ instruction
+ LDA InViewListEnd      \ If InViewListEnd is non-zero, jump to view1 to skip
+ BNE view1              \ the following instruction, as there are objects in the
+                        \ ObjectsInView list that we need to draw
 
- BEQ view6              \ II is zero, so jump down to view6 to flip the colours
-                        \ as we are done drawing (this BEQ is effectively a JMP
-                        \ as we know A is zero)
+ BEQ view6              \ InViewListEnd is zero, which means the ObjectsInView
+                        \ list is empty, so there is nothing to draw and we
+                        \ jump down to view6 to flip the colours (this BEQ is
+                        \ effectively a JMP as we know A is zero)
 
 .view1
 
- LDA #0                 \ Set KK = 0 to act as a counter in the following loop,
- STA KK                 \ where KK loops from 0 to II - 1
+ LDA #0                 \ Set ObjectIDCounter = 0 to act as a counter in the
+ STA ObjectIDCounter    \ following loop, where ObjectIDCounter loops from 0 to
+                        \ InViewListEnd - 1
 
 .view2
 
- TAX                    \ Set A = KK-th entry from L0500
- LDA L0500,X
+ TAX                    \ Set A to the next object ID from the ObjectsInView
+ LDA ObjectsInView,X    \ list
 
- STA JJ                 \ Store A in JJ so we can retrieve it below
+ STA ObjectID           \ Store the object's ID in ObjectID
 
  BNE view3              \ If A is non-zero, jump to view3
 
  JSR L3347
 
- LDA JJ                 \ Fetch the KK-th entry from L0500 that we stored in JJ
+ LDA ObjectID           \ Retrieve the object's ID
 
 .view3
 
  TAX
  LDY Lookup3E00,X
  STY M
+
  LDA #0
  STA L0400,Y
+
  LDY Lookup3F30,X
  STY L
+
  STA L0400,Y
+
  JSR L107F
 
- INC KK                 \ Increment the loop counter
+ INC ObjectIDCounter    \ Increment the loop counter
 
- LDA KK                 \ Loop back to process the next 
- CMP II
+ LDA ObjectIDCounter    \ Loop back to process the next 
+ CMP InViewListEnd
  BCC view2
 
  JSR DrawGunSights      \ Update the gun sights, if shown
@@ -11253,7 +11372,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Only called for object zero
 \
 \ ******************************************************************************
 
@@ -12167,7 +12286,7 @@ ORG CODE%
  JSR L257B
 
  LDA #0
- STA L0CCE
+ STA ObjectInView
  JSR L2A8C
 
  BPL L2F0A
@@ -12879,12 +12998,12 @@ ORG CODE%
 
 .L31C7
 
- LDA JJ
+ LDA ObjectID
  CMP #5
  BCC L31D3
 
  LDA L0CCA
- STA L0CCE
+ STA ObjectInView
 
 .L31D3
 
@@ -12935,7 +13054,7 @@ ORG CODE%
  LDX #3
  JSR L1A67
 
- LDA L0CCE
+ LDA ObjectInView
  BEQ L3222
 
  LDA #&40
@@ -12954,7 +13073,7 @@ ORG CODE%
 
  JSR L4B5F
 
- STA L0CCE
+ STA ObjectInView
  BNE L323B
 
  CPY #3
@@ -12967,7 +13086,7 @@ ORG CODE%
 
  LDA #&80
  STA L0CCA
- LDA JJ
+ LDA ObjectID
  CMP #5
  BCC L324A
 
@@ -12982,7 +13101,7 @@ ORG CODE%
 
 .L324C
 
- STA L0CCE
+ STA ObjectInView
  RTS
 
 .L3250
@@ -13199,7 +13318,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Only called for object zero, if it's in view
 \
 \ ******************************************************************************
 
@@ -13207,30 +13326,38 @@ ORG CODE%
 
  LDX #&1E
  LDY #&20
+
  LDA L4A00,X
  STA T
+
  LDA L0900,X
  ASL A
  ROL T
  SEC
  SBC L091F
  STA L0900,Y
+
  LDA T
  SBC L4A1F
  STA L4A00,Y
+
  LDA L0B00,X
  STA T
+
  LDA L0A00,X
  ASL A
  ROL T
  SEC
  SBC L0A1F
  STA L0A00,Y
+
  LDA T
  SBC L0B1F
  STA L0B00,Y
+
  STX L
  STY M
+
  JSR L107B
 
  RTS
@@ -14567,7 +14694,10 @@ NEXT
 
 .L41FA
 
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
 
 .L4202
 
@@ -14590,14 +14720,16 @@ NEXT
  EQUB &67               \ The main loop counter, which is incremented every
                         \ iteration of the main loop
 
-.L4207
+.NumberOfObjects
 
- EQUB &C1
+ EQUB 193               \ The total number of 3D objects defined in the game
 
 .L4208
 
- EQUB &65, &64, &62, &61, &60, &5F, &5E  \ Called FLDPTR in original source code
-                                         \ Zeroed in Reset
+ EQUB &65, &64          \ Called FLDPTR in original source code
+ EQUB &62, &61          \ Zeroed in Reset
+ EQUB &60, &5F
+ EQUB &5E  
 
 .L420F
 
@@ -14605,11 +14737,17 @@ NEXT
 
 .L4210
 
- EQUB &5B, &5A, &59, &58, &7D, &7C, &7B, &7A \ Zeroed in Reset
+ EQUB &5B, &5A          \ Zeroed in Reset
+ EQUB &59, &58
+ EQUB &7D, &7C
+ EQUB &7B, &7A
 
 .L4218
 
- EQUB &78, &77, &76, &75, &74, &72, &71, &70 \ Populated when guns are fired in main 1
+ EQUB &78, &77          \ Populated when guns are fired in main 1
+ EQUB &76, &75
+ EQUB &74, &72
+ EQUB &71, &70
 
 .L4220
 
@@ -15932,7 +16070,7 @@ NEXT
 .L4B86
 
  LDA #0
- ORA L0CCE
+ ORA ObjectInView
  RTS
 
 \ ******************************************************************************
@@ -15959,7 +16097,7 @@ NEXT
  BVC L4B97
 
  LDA #&40
- STA L0CCE
+ STA ObjectInView
 
 .L4B97
 
@@ -17003,8 +17141,8 @@ NEXT
 
 .tjoy1
 
- LDA #0                 \ If we get here then TAB is not being pressed, so we set
-                        \ A = 0 to set as the value for PressingTab
+ LDA #0                 \ If we get here then TAB is not being pressed, so we
+                        \ set A = 0 to set as the value for PressingTab
 
 .tjoy2
 
