@@ -230,6 +230,8 @@ ORG &0070
 
  SKIP 1                 \ The index of the first empty entry in the
                         \ ObjectsInView list
+                        \
+                        \ Set to 0 in ResetObjectLists
 
 .ObjectID
 
@@ -244,15 +246,21 @@ ORG &0070
 .LL
 
  SKIP 1                 \ Counter that's related to the ObjectsInView list
+                        \
+                        \ Set to 255 in ResetObjectLists
 
 .MM
 
- SKIP 1                 \ Temporary storage, used in a number of places
+ SKIP 1                 \ Counter that's related to the ObjectsNotInView list
+                        \
+                        \ Set to 255 in ResetObjectLists
 
 .NotInViewListEnd
 
  SKIP 1                 \ The index of the last entry in the ObjectsNotInView
                         \ list
+                        \
+                        \ Set to 255 in ResetObjectLists
 
 \ ******************************************************************************
 \
@@ -288,7 +296,7 @@ L0175 = &0175
 \
 \ ******************************************************************************
 
-L0400 = &0400           \ Whole page zeroed in Reset
+L0400 = &0400           \ Whole page zeroed in ResetVariables
 L04D8 = &04D8
 L04D9 = &04D9
 L04EC = &04EC
@@ -305,7 +313,11 @@ L04F6 = &04F6
 \ ******************************************************************************
 
 ObjectsInView = &0500
-L05C8 = &05C8           \ Zeroed in Reset
+
+L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
+                        \ size in L05C8
+                        \
+                        \ Zeroed in ResetVariables
 
 \ ******************************************************************************
 \
@@ -344,7 +356,7 @@ L07FC = &07FC
 \
 \ ******************************************************************************
 
-L0900 = &0900           \ Set to 80 in Reset, ResetRadar
+L0900 = &0900           \ Set to 80 in ResetVariables, ResetRadar
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
@@ -821,7 +833,7 @@ ORG &0C00
  SKIP 1                 \   * 0 = we are not on the ground
                         \   * 1 = we are on the ground
                         \
-                        \ Set to 1 in Reset (on the ground)
+                        \ Set to 1 in ResetVariables (on the ground)
 
 .PreviousListEnd        \ Used to store the value of NotInViewListEnd at the
                         \ start of each iteration of the main loop, so we can
@@ -883,7 +895,7 @@ ORG &0C00
                         \
                         \   * 47 = buffer 1 is full and contains 48 lines
                         \
-                        \ Set to -1 in Reset
+                        \ Set to -1 in ResetVariables
 
 .LineBuffer2Count
 
@@ -896,7 +908,7 @@ ORG &0C00
                         \
                         \   * 95 = buffer 2 is full, contains 48 lines
                         \
-                        \ Set to 47 in Reset
+                        \ Set to 47 in ResetVariables
 
 .PressingUFBS           \ Determines whether any of the following keys are
                         \ being pressed:
@@ -968,13 +980,13 @@ ORG &0C00
  SKIP 1                 \   * Positive (bit 7 = 0) = the Theme is enabled
                         \   * Negative (bit 7 = 1) = the Theme is not enabled
                         \
-                        \ Set to 255 (Theme not enabled) in Reset
+                        \ Set to 255 (Theme not enabled) in ResetVariables
 
 .L0CE8                  \ Set to %01000000 when speed is 0 in L50F7
                         \
  SKIP 1                 \ Gets shifted left with a 1 inserted in bit 0 in L5670
                         \
-                        \ Set to 1 in Reset
+                        \ Set to 1 in ResetVariables
 
 .Engine                 \ Engine status
                         \
@@ -991,18 +1003,18 @@ ORG &0C00
 
 .L0CED
 
- SKIP 1                 \ Set to 229 in Reset
+ SKIP 1                 \ Set to 229 in ResetVariables
 
 .AltitudeLo             \ Altitude (high byte)
                         \
  SKIP 1                 \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
-                        \ Set to 10 in Reset
+                        \ Set to 10 in ResetVariables
 
 .L0CEF
 
- SKIP 1                 \ Set to 92 in Reset
+ SKIP 1                 \ Set to 92 in ResetVariables
 
 .L0CF0
 
@@ -1023,14 +1035,14 @@ ORG &0C00
  SKIP 1                 \   * 0 = undercarriage is up
                         \   * Non-zero = undercarriage is down
                         \
-                        \ Set to 1 (undercarriage is down) in Reset
+                        \ Set to 1 (undercarriage is down) in ResetVariables
              
 .Flaps                  \ Flaps status
                         \
  SKIP 1                 \   * 0 = flaps are off (raised)
                         \   * Non-zero = flaps are on (dropped)
                         \
-                        \ Set to 0 (flaps are off) in Reset
+                        \ Set to 0 (flaps are off) in ResetVariables
 
  SKIP 1
 
@@ -1039,7 +1051,7 @@ ORG &0C00
  SKIP 1                 \   * 0 = brakes are off
                         \   * Non-zero = brakes are on
                         \
-                        \ Set to 1 (brakes are on) in Reset
+                        \ Set to 1 (brakes are on) in ResetVariables
 
  SKIP 1
 
@@ -1053,7 +1065,7 @@ ORG &0C00
 
 .L0CF8
 
- SKIP 1                 \ Set to 10 in Reset
+ SKIP 1                 \ Set to 10 in ResetVariables
 
 .Reached512ft
 
@@ -1068,7 +1080,7 @@ ORG &0C00
 
 .L0CFA
 
- SKIP 1                 \ Set to 7 in Reset
+ SKIP 1                 \ Set to 7 in ResetVariables
 
 .Compass                \ Compass direction
                         \
@@ -1085,18 +1097,18 @@ ORG &0C00
 
 .L0CFD
 
- SKIP 1                 \ Set to 198 in Reset
+ SKIP 1                 \ Set to 198 in ResetVariables
 
 .AltitudeHi             \ Altitude (high byte)
                         \
  SKIP 1                 \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
-                        \ Set to 0 in Reset
+                        \ Set to 0 in ResetVariables
 
 .L0CFF
 
- SKIP 1                 \ Set to 72 in Reset
+ SKIP 1                 \ Set to 72 in ResetVariables
 
 CLEAR &0C00, &0D00      \ Clear the guard on the &0C00 workspace so we can
                         \ assemble the loader code into this address range
@@ -9498,14 +9510,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: Reset
+\       Name: ResetVariables
 \       Type: Subroutine
 \   Category: Setup
 \    Summary: Reset most variables to prepare for a new flight
 \
 \ ******************************************************************************
 
-.Reset
+.ResetVariables
 
  LDX #0                 \ Set A = 0 to use as our zero value
 
@@ -9714,10 +9726,6 @@ ORG CODE%
 \   Category: Main loop
 \    Summary: Start a new game
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
 .NewGame
@@ -9725,13 +9733,14 @@ ORG CODE%
  JSR ClearCanopy        \ Clear the canopy to black, leaving the canopy edges
                         \ alone
 
- JSR Reset              \ Reset most variables to prepare for a new flight
+ JSR ResetVariables     \ Reset most variables to prepare for a new flight
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
- JSR ResetObjectLists
+ JSR ResetObjectLists   \ Reset the object lists at ObjectsInView and
+                        \ ObjectsNotInView
 
  JSR IndicatorF         \ Update the flaps indicator
 
@@ -10598,213 +10607,268 @@ ORG CODE%
 \
 \   HH                  ???
 \
+\ Returns:
+\
+\   ObjectInView        0 = object is visible
+\                       Non-zero = object is not visible
+\
 \ ******************************************************************************
 
 .IsObjectInView
 
- LDA #0
- STA ObjectInView
- STA L0CBF
- LDX ObjectID
- LDY Lookup3E00,X
- STY M
- LDY Lookup3F30,X
- STY L
- CPX #&0C
- BCS L2999
+ LDA #0                 \ Set ObjectInView = 0 as a starting point for the
+ STA ObjectInView       \ return value
 
- CPX #0
- BNE L2993
+ STA L0CBF              \ Set L0CBF = 0
+
+ LDX ObjectID           \ Set X to the ID of the object to check
+
+ LDY Lookup3E00,X       \ Set M to the object's Lookup3E00 offset
+ STY M
+
+ LDY Lookup3F30,X       \ Set Y and L to the object's Lookup3F30 offset
+ STY L
+
+ CPX #12                \ If the object ID >= 12, jump to invw2
+ BCS invw2
+
+ CPX #0                 \ If the object ID is not zero, jump to invw1
+ BNE invw1
+
+                        \ If we get here then the object ID is 0
 
  JSR L2C95
 
- RTS
+ RTS                    \ Return from the subroutine
 
-.L2993
+.invw1
+
+                        \ If we get here then the object ID is in the range 1 to
+                        \ 11
 
  JSR L31BD
 
- JMP L2A6F
+ JMP invw19
 
-.L2999
+.invw2
 
- LDA #2
+                        \ If we get here, the object ID >= 12 and Y contains the
+                        \ object's Lookup3F30 offset
+
+ LDA #2                 \ Set L0CC8 = 2
  STA L0CC8
 
-.L299E
+.invw3
 
+ LDA L0400,Y            \ If the Y-th L0400 is positive, skip the following
+ BPL invw4              \ instruction
+
+ JMP invw17             \ The Y-th L0400 is negative, so jump to invw17
+
+.invw4
+
+                        \ We get here if object ID >= 12, Y contains the
+                        \ object's Lookup3F30 offset and Y-th L0400 is positive
+
+ TYA                    \ Store the object's Lookup3F30 offset on the stack
+ PHA
+
+ STA L0CC0              \ Set L0CC0 = the object's Lookup3F30 offset
+
+.invw5
+
+ LDA Lookup4600,Y       \ Set A = the Y-th Lookup4600
+
+ CMP #40                \ If A < 40, jump to invw8
+ BCC invw8
+
+ SEC                    \ Set A = A - 40
+ SBC #40
+
+ STA L0CCF              \ Store the value of A in L0CCF
+
+ TAY                    \ Set A = the A-th value of L0400
  LDA L0400,Y
- BPL L29A6
 
- JMP L2A4F
-
-.L29A6
+ BMI invw14
 
  TYA
  PHA
- STA L0CC0
 
-.L29AB
+ LDX L05C8              \ If L05C8 >= 49, then there are 48 values in the L05C8
+ CPX #49                \ list, so jump to invw11
+ BCS invw11
 
- LDA Lookup4600,Y
- CMP #&28
- BCC L29E3
+ INC L05C8              \ L05C8 contains a count of values stored in the L05C8 list
 
- SEC
- SBC #&28
- STA L0CCF
- TAY
- LDA L0400,Y
- BMI L2A14
-
- TYA
- PHA
- LDX L05C8
- CPX #&31
- BCS L2A01
-
- INC L05C8
- LDX L05C8
+ LDX L05C8              \ Add A to the end of the L05C8 list
  STA L05C8,X
- BNE L29AB
 
-.L29D2
+ BNE invw5              \ Loop back to 
+
+.invw6
 
  PLA
  STA GG
+
  LDA L04D8,Y
- BMI L29E0
+ BMI invw7
 
- LDA #&80
+ LDA #%10000000         \ Set ObjectInView so the object is not in view
  STA ObjectInView
- RTS
 
-.L29E0
+ RTS                    \ Return from the subroutine
 
- JMP L2A4D
+.invw7
 
-.L29E3
+ JMP invw16
+
+.invw8
 
  TAY
  STY L0CCC
- CMP #&10
- BCS L29EF
 
- CMP #&0C
- BCS L29D2
+ CMP #16
+ BCS invw9
 
-.L29EF
+ CMP #12
+ BCS invw6
+
+.invw9
 
  LDA L04D8,Y
- AND #&40
- BNE L29F9
+
+ AND #%01000000
+ BNE invw10
 
  JSR L2A8C
 
-.L29F9
+.invw10
 
  LDY L0CCC
+
  LDA L04D8,Y
- BMI L2A0D
+ BMI invw13
 
-.L2A01
+.invw11
 
- LDA #&80
+ LDA #%10000000
  STA ObjectInView
 
-.L2A06
+.invw12
 
  PLA
  CMP L0CC0
- BNE L2A06
+ BNE invw12
 
- RTS
+ RTS                    \ Return from the subroutine
 
-.L2A0D
+.invw13
 
  TYA
  CLC
- ADC #&D8
+ ADC #216
  STA L0CCF
 
-.L2A14
+.invw14
 
  PLA
  CMP L0CC0
- BEQ L2A3B
+ BEQ invw15
 
  STA GG
+
  LDA #0
  STA L0CC4
+
  STA L0CCB
+
  JSR L19A0
 
  LDA ObjectInView
- BNE L2A06
+
+ BNE invw12
 
  LDY GG
  STY L0CCF
- LDA #&80
+
+ LDA #%10000000
  ORA L0400,Y
  STA L0400,Y
- BNE L2A14
 
-.L2A3B
+ BNE invw14
+
+.invw15
 
  STA GG
+
  LDA #0
  STA L0CC4
+
  STA L0CCB
+
  JSR L19A0
 
  LDA ObjectInView
- BNE L2A8B
 
-.L2A4D
+ BNE invw20
+
+.invw16
 
  LDY GG
 
-.L2A4F
+.invw17
+
+                        \ We jump here if object ID >= 12, Y contains the
+                        \ object's Lookup3F30 offset and Y-th L0400 is negative
 
  LDA HH
- BNE L2A5D
+ BNE invw18
 
  LDX ObjectID
+
  JSR L4B5F
 
  STA ObjectInView
- BNE L2A8B
 
-.L2A5D
+ BNE invw20
 
- LDA #&80
+.invw18
+
+ LDA #%10000000
  ORA L0400,Y
  STA L0400,Y
+
  DEC L0CC8
- BEQ L2A6F
+ BEQ invw19
 
  LDY M
- JMP L299E
 
-.L2A6F
+ JMP invw3
+
+.invw19
 
  LDY M
  LDA L4900,Y
- BPL L2A8B
+
+ BPL invw20
 
  LDY L
  LDA L4900,Y
- BPL L2A8B
+
+ BPL invw20
 
  LDA ObjectInView
- ORA #&80
+ ORA #%10000000
  STA ObjectInView
+
  LDY L0CBF
+
  JSR L4C96
 
-.L2A8B
+.invw20
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11062,7 +11126,7 @@ ORG CODE%
 \       Name: ResetObjectLists
 \       Type: Subroutine
 \   Category: 
-\    Summary: Reset the object lists 
+\    Summary: Reset the object lists at ObjectsInView and ObjectsNotInView
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11093,7 +11157,7 @@ ORG CODE%
 
  STA MM                 \ Set MM = 255
 
-.L2BF7
+.rsol1
 
  JSR AddObjectToList    \ Add the object with ID ObjectID to either the
                         \ ObjectsInView or ObjectsNotInView list
@@ -11102,7 +11166,7 @@ ORG CODE%
 
  LDA ObjectID           \ Loop back until we have processed all the objects
  CMP NumberOfObjects
- BCC L2BF7
+ BCC rsol1
 
  LDX #3                 \ Set logical colour 3 to white so the dashboard display
  JSR SetColourToWhite   \ shows up in white
@@ -11372,7 +11436,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Only called for object zero
+\ Only called for object ID = 0
 \
 \ ******************************************************************************
 
@@ -12983,7 +13047,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Only called for object IDs 1 to 11.
 \
 \ ******************************************************************************
 
@@ -13798,7 +13862,7 @@ ORG CODE%
 
 .L368F                  \ EPLO in orginal
 
- EQUB &26               \ Zeroed in Reset
+ EQUB &26               \ Zeroed in ResetVariables
                         \ Can't fire guns if this or Firing are non-zero
 
 .L3690
@@ -14333,7 +14397,20 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Given an object ID in X, Lookup3E00,X contains:
+\
+\ The offset of the byte in L0400 that is zeroed in DrawCanopyView
+\
+\ The offset of the byte in L0400 that is zeroed in MainLoop (Part 14) when the
+\ object has been added to the ObjectsNotInView list
+\
+\ The value of M that is set in in L28B6 and passed to L0D01
+\
+\ The value of M that is set in DrawCanopyView and passed to L107F and used as
+\ an index into L0900, L4A00, L0A00, L0B00
+\
+\ The value of M that is set in IsObjectInView and passed to L2C95 and used as
+\ an index into L0900, L4A00, L0A00, L0B00
 \
 \ ******************************************************************************
 
@@ -14501,7 +14578,20 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Given an object ID in X, Lookup3F30,X contains:
+\
+\ The offset of the byte in L0400 that is zeroed in DrawCanopyView
+\
+\ The offset of the byte in L0400 that is zeroed in MainLoop (Part 14) when the
+\ object has been added to the ObjectsNotInView list
+\
+\ The value of L and GG that is set in in L28B6 and passed to L0D01
+\
+\ The value of L that is set in DrawCanopyView and passed to L107F and used as
+\ an index into L0900, L4A00, L0A00, L0B00
+\
+\ The value of L that is set in IsObjectInView and passed to L2C95 and used as
+\ an index into L0900, L4A00, L0A00, L0B00
 \
 \ ******************************************************************************
 
@@ -14701,19 +14791,19 @@ NEXT
 
 .L4202
 
- EQUB &6C               \ Zeroed in Reset
+ EQUB &6C               \ Zeroed in ResetVariables
 
 .L4203
 
- EQUB &6B               \ Zeroed in Reset
+ EQUB &6B               \ Zeroed in ResetVariables
 
 .L4204
 
- EQUB &6A               \ Zeroed in Reset
+ EQUB &6A               \ Zeroed in ResetVariables
 
 .L4205
 
- EQUB &69               \ Zeroed in Reset
+ EQUB &69               \ Zeroed in ResetVariables
 
 .MainLoopCounter
 
@@ -14727,17 +14817,17 @@ NEXT
 .L4208
 
  EQUB &65, &64          \ Called FLDPTR in original source code
- EQUB &62, &61          \ Zeroed in Reset
+ EQUB &62, &61          \ Zeroed in ResetVariables
  EQUB &60, &5F
  EQUB &5E  
 
 .L420F
 
- EQUB &5C               \ Zeroed in Reset
+ EQUB &5C               \ Zeroed in ResetVariables
 
 .L4210
 
- EQUB &5B, &5A          \ Zeroed in Reset
+ EQUB &5B, &5A          \ Zeroed in ResetVariables
  EQUB &59, &58
  EQUB &7D, &7C
  EQUB &7B, &7A
@@ -15215,7 +15305,7 @@ NEXT
 
 .L44F0
 
- EQUB &FB               \ Zeroed in Reset
+ EQUB &FB               \ Zeroed in ResetVariables
 
 .L44F1
 
@@ -15854,7 +15944,7 @@ NEXT
 
 .L4A00
 
- EQUB &20               \ Set to 1 in Reset, ResetRadar
+ EQUB &20               \ Set to 1 in ResetVariables, ResetRadar
 
  EQUB &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &58, &41, &4C, &4F, &2C, &59
@@ -16439,7 +16529,7 @@ NEXT
  CPY #6
  BCC L4CAE
 
- CPY #&0A
+ CPY #10
  BCS L4CAE
 
  LDA L3EC2,Y
@@ -17597,7 +17687,7 @@ NEXT
                         \ Goes up by 20 if engine is on
                         \ Goes down by 20 if engine is switched off
                         \
-                        \ Set to 198 in Reset
+                        \ Set to 198 in ResetVariables
 
  EQUB &28
 
@@ -17607,7 +17697,7 @@ NEXT
                         \
                         \ Set to 0 if flaps are off, 152 if they are on
                         \
-                        \ Zeroed in Reset
+                        \ Zeroed in ResetVariables
 
  EQUB &00, &00, &FF, &8D, &BE, &00, &05
  EQUB &7D, &FF, &50
