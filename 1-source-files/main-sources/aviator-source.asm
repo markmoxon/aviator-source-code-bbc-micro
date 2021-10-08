@@ -333,7 +333,7 @@ ObjectsNotInView = &0600
 
 \ ******************************************************************************
 \
-\       Name: L0700
+\       Name: ZCoordLo
 \       Type: Workspace
 \    Address: &0700 to &07FF
 \   Category: Workspaces
@@ -341,14 +341,14 @@ ObjectsNotInView = &0600
 \
 \ ******************************************************************************
 
-L0700 = &0700
+ZCoordLo = &0700
 L075F = &075F
 L07E4 = &07E4
 L07FC = &07FC
 
 \ ******************************************************************************
 \
-\       Name: L0900
+\       Name: XCoordLo
 \       Type: Workspace
 \    Address: &0900 to &09FF
 \   Category: Workspaces
@@ -356,14 +356,14 @@ L07FC = &07FC
 \
 \ ******************************************************************************
 
-L0900 = &0900           \ Set to 80 in ResetVariables, ResetRadar
+XCoordLo = &0900           \ Set to 80 in ResetVariables, ResetRadar
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
 
 \ ******************************************************************************
 \
-\       Name: L0A00
+\       Name: YCoordLo
 \       Type: Workspace
 \    Address: &0A00 to &0AFF
 \   Category: Workspaces
@@ -371,7 +371,7 @@ L09FC = &09FC
 \
 \ ******************************************************************************
 
-L0A00 = &0A00
+YCoordLo = &0A00
 L0A1F = &0A1F
 L0A5F = &0A5F
 L0AFC = &0AFC
@@ -379,7 +379,7 @@ L0AFD = &0AFD
 
 \ ******************************************************************************
 \
-\       Name: L0B00
+\       Name: YCoordHi
 \       Type: Workspace
 \    Address: &0B00 to &0BFF
 \   Category: Workspaces
@@ -387,7 +387,7 @@ L0AFD = &0AFD
 \
 \ ******************************************************************************
 
-L0B00 = &0B00
+YCoordHi = &0B00
 L0B1F = &0B1F
 L0BFC = &0BFC
 L0BFD = &0BFD
@@ -944,27 +944,27 @@ ORG &0C00
 
  SKIP 6
 
-.L0CE0
+.xLo
 
  SKIP 1
 
-.L0CE1
+.yLo
 
  SKIP 1
 
-.L0CE2
+.zLo
 
  SKIP 1
 
-.L0CE3
+.xHi
 
  SKIP 1
 
-.L0CE4
+.yHi
 
  SKIP 1
 
-.L0CE5
+.zHi
 
  SKIP 1
 
@@ -1758,19 +1758,19 @@ ORG CODE%
  TYA
  ORA #1
  STA L0400,X
- LDA L4900,X
+ LDA ZCoordHi,X
  BMI L0D37
 
  STA Q
  BEQ L0D2B
 
- LDA L0700,X
+ LDA ZCoordLo,X
  STA P
  JMP L0D46
 
 .L0D2B
 
- LDA L0700,X
+ LDA ZCoordLo,X
  BNE L0D32
 
  LDA #1
@@ -1784,19 +1784,19 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0700,X
+ SBC ZCoordLo,X
  STA P
  LDA #0
- SBC L4900,X
+ SBC ZCoordHi,X
  STA Q
 
 .L0D46
 
- LDA L4A00,X
+ LDA XCoordHi,X
  BMI L0D55
 
  STA QQ
- LDA L0900,X
+ LDA XCoordLo,X
  STA PP
  JMP L0D6A
 
@@ -1804,10 +1804,10 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0900,X
+ SBC XCoordLo,X
  STA PP
  LDA #0
- SBC L4A00,X
+ SBC XCoordHi,X
  STA QQ
  LDA N
  ORA #8
@@ -1815,11 +1815,11 @@ ORG CODE%
 
 .L0D6A
 
- LDA L0B00,X
+ LDA YCoordHi,X
  BMI L0D7C
 
  STA SS
- LDA L0A00,X
+ LDA YCoordLo,X
  ASL A
  ROL SS
  STA RR
@@ -1829,10 +1829,10 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0A00,X
+ SBC YCoordLo,X
  STA RR
  LDA #0
- SBC L0B00,X
+ SBC YCoordHi,X
  ASL RR
  ROL A
  STA SS
@@ -1909,10 +1909,10 @@ ORG CODE%
  JSR L0FA7
 
  LDX GG
- LDA L4900,X
+ LDA ZCoordHi,X
  BMI L0E02
 
- LDA L4A00,X
+ LDA XCoordHi,X
  BPL L0E19
 
 .L0DFF
@@ -1921,7 +1921,7 @@ ORG CODE%
 
 .L0E02
 
- LDA L4A00,X
+ LDA XCoordHi,X
  BMI L0E19
 
 .L0E07
@@ -1929,10 +1929,10 @@ ORG CODE%
  LDA #&50
  SEC
  SBC QQ
- STA L0900,X
+ STA XCoordLo,X
  LDA #0
  SBC SS
- STA L4A00,X
+ STA XCoordHi,X
  JMP L0E28
 
 .L0E19
@@ -1940,25 +1940,25 @@ ORG CODE%
  LDA #&50
  CLC
  ADC QQ
- STA L0900,X
+ STA XCoordLo,X
  LDA #0
  ADC SS
- STA L4A00,X
+ STA XCoordHi,X
 
 .L0E28
 
  LDX GG
- LDA L4900,X
+ LDA ZCoordHi,X
  BMI L0E37
 
- LDA L0B00,X
+ LDA YCoordHi,X
  BPL L0E4E
 
  JMP L0E3C
 
 .L0E37
 
- LDA L0B00,X
+ LDA YCoordHi,X
  BMI L0E4E
 
 .L0E3C
@@ -1969,10 +1969,10 @@ ORG CODE%
 .L0E3F
 
  SBC Q
- STA L0A00,X
+ STA YCoordLo,X
  LDA #0
  SBC RR
- STA L0B00,X
+ STA YCoordHi,X
  JMP L0E5D
 
 .L0E4E
@@ -1980,10 +1980,10 @@ ORG CODE%
  LDA #&60
  CLC
  ADC Q
- STA L0A00,X
+ STA YCoordLo,X
  LDA #0
  ADC RR
- STA L0B00,X
+ STA YCoordHi,X
 
 .L0E5D
 
@@ -2552,11 +2552,11 @@ ORG CODE%
 \
 \   A               The base value for the direction in V
 \
-\   L               ??? comes from Lookup3F30, used as index into L0900, L4A00,
-\                   L0A00, L0B00
+\   L               ??? comes from EndPoint, used as index into XCoordLo, XCoordHi,
+\                   YCoordLo, YCoordHi
 \
-\   M               ??? comes from Lookup3E00, used as index into L0900, L4A00,
-\                   L0A00, L0B00
+\   M               ??? comes from StartPoint, used as index into XCoordLo, XCoordHi,
+\                   YCoordLo, YCoordHi
 \
 \ ******************************************************************************
 
@@ -2574,25 +2574,25 @@ ORG CODE%
 
  LDY M                  \ Set Y to the index passed to the subroutine in M
 
- LDA L0900,X            \ Set (RR R) = the L-th entry from (L4A00 L0900)
+ LDA XCoordLo,X            \ Set (RR R) = the L-th entry from (XCoordHi XCoordLo)
  STA R
- LDA L4A00,X
+ LDA XCoordHi,X
  STA RR
 
- LDA L0A00,X            \ Set S = the L-th entry from L0A00
+ LDA YCoordLo,X            \ Set S = the L-th entry from YCoordLo
  STA S
 
- LDA L0B00,X            \ Set SS = the L-th entry from L0B00
+ LDA YCoordHi,X            \ Set SS = the L-th entry from YCoordHi
  STA SS
 
- LDA L0900,Y            \ Set (QQ W) = the M-th entry from (L4A00 L0900),
+ LDA XCoordLo,Y            \ Set (QQ W) = the M-th entry from (XCoordHi XCoordLo),
  STA W                  \ starting with the low byte
 
  SEC                    \ Set T = W - R
  SBC R                  \
  STA T                  \ to subtract the low bytes
 
- LDA L4A00,Y            \ Set (QQ W) = the M-th entry from (L4A00 L0900),
+ LDA XCoordHi,Y            \ Set (QQ W) = the M-th entry from (XCoordHi XCoordLo),
  STA QQ                 \ finishing with the high byte
 
  SBC RR                 \ Set I = QQ - RR
@@ -2602,7 +2602,7 @@ ORG CODE%
                         \ So we now have:
                         \
                         \   (I T) = (QQ W) - (RR R)
-                        \         = L-th - M-th entry from (L4A00 L0900)
+                        \         = L-th - M-th entry from (XCoordHi XCoordLo)
 
  BPL L10C9              \ If the result is positive, jump to L10C9 to skip the
                         \ following
@@ -2622,14 +2622,14 @@ ORG CODE%
 
 .L10C9
 
- LDA L0A00,Y            \ Set (H G) = the M-th entry from (L0B00 L0A00),
+ LDA YCoordLo,Y            \ Set (H G) = the M-th entry from (YCoordHi YCoordLo),
  STA G                  \ starting with the low byte
 
  SEC                    \ Set U = G - S
  SBC S                  \
  STA U                  \ to subtract the low bytes
 
- LDA L0B00,Y            \ Set (H G) = the M-th entry from (L0B00 L0A00),
+ LDA YCoordHi,Y            \ Set (H G) = the M-th entry from (YCoordHi YCoordLo),
  STA H                  \ finishing with the high byte
 
  SBC SS                 \ Set J = H - SS
@@ -2639,7 +2639,7 @@ ORG CODE%
                         \ So we now have:
                         \
                         \   (J U) = (H G) - (SS S)
-                        \         = L-th - M-th entry from (L0B00 L0A00)
+                        \         = L-th - M-th entry from (YCoordHi YCoordLo)
 
  BPL L10F1              \ If the result is positive, jump to L10F1 to skip the
                         \ following
@@ -2781,7 +2781,7 @@ ORG CODE%
 
  LDY M                  \ Set Y to the index passed to the subroutine in M
 
- LDA L4900,Y
+ LDA ZCoordHi,Y
  BPL L1162
 
  LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
@@ -2795,7 +2795,7 @@ ORG CODE%
 
 .L1162
 
- LDA L4900,X
+ LDA ZCoordHi,X
  BPL L1170
 
  JSR L1778
@@ -3882,9 +3882,9 @@ ORG CODE%
  ASL A
  EOR #&C0
  STA V
- LDA L0CE0
+ LDA xLo
  STA R
- LDA L0CE1
+ LDA yLo
  STA S
  LDA #4
  BIT V
@@ -4530,9 +4530,9 @@ ORG CODE%
  ORA V
  STA V
  LDA R
- STA L0CE0
+ STA xLo
  LDA S
- STA L0CE1
+ STA yLo
  RTS
 
 .L1775
@@ -4637,7 +4637,7 @@ ORG CODE%
  LDA LineBufferR,X      \ Set R to the start x-coordinate from LineBufferR
  STA R
 
- STA L0CE0
+ STA xLo
 
  LDA LineBufferW,X      \ Set W to the ??? from LineBufferW
  STA W
@@ -4645,7 +4645,7 @@ ORG CODE%
  LDA LineBufferS,X      \ Set S to the start y-coordinate from LineBufferS
  STA S
 
- STA L0CE1
+ STA yLo
 
  LDA LineBufferG,X      \ Set G to ??? from LineBufferG
  STA G
@@ -5038,7 +5038,7 @@ ORG CODE%
 
 .L19BE
 
- STA L0CE0,X
+ STA xLo,X
  DEX
  BPL L19BE
 
@@ -5082,11 +5082,11 @@ ORG CODE%
  LDY VV
  LDA W
  CLC
- ADC L0CE0,Y
- STA L0CE0,Y
+ ADC xLo,Y
+ STA xLo,Y
  LDA G
- ADC L0CE3,Y
- STA L0CE3,Y
+ ADC xHi,Y
+ STA xHi,Y
 
 .L1A0C
 
@@ -5113,11 +5113,11 @@ ORG CODE%
  CPY #8
  BCS L1A47
 
- LDA L0CE0,X
+ LDA xLo,X
  STA P
  LDA #0
  STA R
- LDA L0CE3,X
+ LDA xHi,X
  BPL L1A37
 
  DEC R
@@ -5130,9 +5130,9 @@ ORG CODE%
  DEY
  BNE L1A37
 
- STA L0CE0,X
+ STA xLo,X
  LDA R
- STA L0CE3,X
+ STA xHi,X
 
 .L1A47
 
@@ -5145,16 +5145,16 @@ ORG CODE%
 
  LDA #0
  STA R
- LDA L0CE3,X
+ LDA xHi,X
  BPL L1A57
 
  DEC R
 
 .L1A57
 
- STA L0CE0,X
+ STA xLo,X
  LDA R
- STA L0CE3,X
+ STA xHi,X
  JMP L1A47
 
 .L1A62
@@ -5177,29 +5177,29 @@ ORG CODE%
 
 .L1A67
 
- LDA L0CE0
+ LDA xLo
  CLC
- ADC L0900,Y
- STA L0900,X
- LDA L0CE3
- ADC L4A00,Y
- STA L4A00,X
+ ADC XCoordLo,Y
+ STA XCoordLo,X
+ LDA xHi
+ ADC XCoordHi,Y
+ STA XCoordHi,X
  PHP
  CLC
- LDA L0CE1
- ADC L0A00,Y
- STA L0A00,X
- LDA L0CE4
- ADC L0B00,Y
- STA L0B00,X
+ LDA yLo
+ ADC YCoordLo,Y
+ STA YCoordLo,X
+ LDA yHi
+ ADC YCoordHi,Y
+ STA YCoordHi,X
  PHP
  CLC
- LDA L0CE2
- ADC L0700,Y
- STA L0700,X
- LDA L0CE5
- ADC L4900,Y
- STA L4900,X
+ LDA zLo
+ ADC ZCoordLo,Y
+ STA ZCoordLo,X
+ LDA zHi
+ ADC ZCoordHi,Y
+ STA ZCoordHi,X
  JMP L4B8C
 
  NOP
@@ -5440,10 +5440,10 @@ ORG CODE%
  LDY L0CCB
  LDA L4222,Y
  STA I
- STA L0CE0
+ STA xLo
  LDA L4262,Y
  STA J
- STA L0CE3
+ STA xHi
  LDA G
  STA L4222,Y
  LDA H
@@ -5464,9 +5464,9 @@ ORG CODE%
  STA L4220,Y
  LDA S
  STA L4260,Y
- LDA L0CE0
+ LDA xLo
  STA R
- LDA L0CE3
+ LDA xHi
  STA S
  LDX L0CC4
  LDA L0161,X
@@ -5719,24 +5719,24 @@ ORG CODE%
 .L1D8D
 
  LDX GG
- LDA L0900,X
+ LDA XCoordLo,X
  STA PP
- LDA L4A00,X
+ LDA XCoordHi,X
  STA SS
- LDA L0A00,X
+ LDA YCoordLo,X
  STA QQ
- LDA L0B00,X
+ LDA YCoordHi,X
  STA TT
- LDA L0700,X
+ LDA ZCoordLo,X
  STA RR
- LDA L4900,X
+ LDA ZCoordHi,X
  STA UU
  LDX #5
  LDA #0
 
 .L1DB1
 
- STA L0CE0,X
+ STA xLo,X
  DEX
  BPL L1DB1
 
@@ -5779,11 +5779,11 @@ ORG CODE%
  LDY VV
  LDA G
  CLC
- ADC L0CE0,Y
- STA L0CE0,Y
+ ADC xLo,Y
+ STA xLo,Y
  LDA H
- ADC L0CE3,Y
- STA L0CE3,Y
+ ADC xHi,Y
+ STA xHi,Y
  BVC L1E07
 
  LDA #&40
@@ -5821,18 +5821,18 @@ ORG CODE%
 
 .L1E1A
 
- LDA L0CE0
- STA L0900,X
- LDA L0CE3
- STA L4A00,X
- LDA L0CE1
- STA L0A00,X
- LDA L0CE4
- STA L0B00,X
- LDA L0CE2
- STA L0700,X
- LDA L0CE5
- STA L4900,X
+ LDA xLo
+ STA XCoordLo,X
+ LDA xHi
+ STA XCoordHi,X
+ LDA yLo
+ STA YCoordLo,X
+ LDA yHi
+ STA YCoordHi,X
+ LDA zLo
+ STA ZCoordLo,X
+ LDA zHi
+ STA ZCoordHi,X
  RTS
 
  BRK
@@ -9401,24 +9401,24 @@ ORG CODE%
 
  LDA L4400,Y
  CLC
- ADC L0900,X
+ ADC XCoordLo,X
  STA L4400,Y
  LDA L4478,Y
- ADC L4A00,X
+ ADC XCoordHi,X
  STA L4478,Y
  LDA L4428,Y
  CLC
- ADC L0A00,X
+ ADC YCoordLo,X
  STA L4428,Y
  LDA L44A0,Y
- ADC L0B00,X
+ ADC YCoordHi,X
  STA L44A0,Y
  LDA L4450,Y
  CLC
- ADC L0700,X
+ ADC ZCoordLo,X
  STA L4450,Y
  LDA L44C8,Y
- ADC L4900,X
+ ADC ZCoordHi,X
  STA L44C8,Y
  RTS
 
@@ -9681,17 +9681,17 @@ ORG CODE%
 
 .ResetRadar
 
- LDA #80                \ Set L0900 = 80, so we don't draw a new alien on the
- STA L0900              \ radar (as this coordinate is off the radar)
+ LDA #80                \ Set XCoordLo = 80, so we don't draw a new alien on the
+ STA XCoordLo              \ radar (as this coordinate is off the radar)
 
  LDA #1                 \ Set Alien = 1, so we remove the alien from the radar
  STA Alien              \ rather than the runway
 
- STA L4A00              \ Set L4A00 = 1, so the value in L0900 is treated as
+ STA XCoordHi              \ Set XCoordHi = 1, so the value in XCoordLo is treated as
                         \ positive
 
  JSR UpdateRadar        \ Remove the current dot from the radar, but don't draw
-                        \ a new one, as L0900 is off-radar
+                        \ a new one, as XCoordLo is off-radar
 
  LDY #&21
  JSR L25B5
@@ -10316,12 +10316,12 @@ ORG CODE%
 
                         \ Now to process the object
 
- LDX Lookup3F30,Y       \ Set X to this object's index from Lookup3F30
+ LDX EndPoint,Y       \ Set X to this object's index from EndPoint
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX Lookup3E00,Y       \ Set X to this object's index from Lookup3E00
+ LDX StartPoint,Y       \ Set X to this object's index from StartPoint
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
@@ -10424,10 +10424,10 @@ ORG CODE%
  LDX ObjectIDCounter
  LDY ObjectsInView,X
  STY ObjectID
- LDX Lookup3F30,Y
+ LDX EndPoint,Y
  STX GG
  STX L
- LDX Lookup3E00,Y
+ LDX StartPoint,Y
  STX M
  JSR L0D01
 
@@ -10623,10 +10623,10 @@ ORG CODE%
 
  LDX ObjectID           \ Set X to the ID of the object to check
 
- LDY Lookup3E00,X       \ Set M to the object's Lookup3E00 offset
+ LDY StartPoint,X       \ Set M to the object's StartPoint offset
  STY M
 
- LDY Lookup3F30,X       \ Set Y and L to the object's Lookup3F30 offset
+ LDY EndPoint,X       \ Set Y and L to the object's EndPoint offset
  STY L
 
  CPX #12                \ If the object ID >= 12, jump to invw2
@@ -10653,7 +10653,7 @@ ORG CODE%
 .invw2
 
                         \ If we get here, the object ID >= 12 and Y contains the
-                        \ object's Lookup3F30 offset
+                        \ object's EndPoint offset
 
  LDA #2                 \ Set L0CC8 = 2
  STA L0CC8
@@ -10668,12 +10668,12 @@ ORG CODE%
 .invw4
 
                         \ We get here if object ID >= 12, Y contains the
-                        \ object's Lookup3F30 offset and Y-th L0400 is positive
+                        \ object's EndPoint offset and Y-th L0400 is positive
 
- TYA                    \ Store the object's Lookup3F30 offset on the stack
+ TYA                    \ Store the object's EndPoint offset on the stack
  PHA
 
- STA L0CC0              \ Set L0CC0 = the object's Lookup3F30 offset
+ STA L0CC0              \ Set L0CC0 = the object's EndPoint offset
 
 .invw5
 
@@ -10820,7 +10820,7 @@ ORG CODE%
 .invw17
 
                         \ We jump here if object ID >= 12, Y contains the
-                        \ object's Lookup3F30 offset and Y-th L0400 is negative
+                        \ object's EndPoint offset and Y-th L0400 is negative
 
  LDA HH
  BNE invw18
@@ -10849,12 +10849,12 @@ ORG CODE%
 .invw19
 
  LDY M
- LDA L4900,Y
+ LDA ZCoordHi,Y
 
  BPL invw20
 
  LDY L
- LDA L4900,Y
+ LDA ZCoordHi,Y
 
  BPL invw20
 
@@ -10992,10 +10992,10 @@ ORG CODE%
  SEC
  LDA L4400,Y
  SBC L0CED
- STA L0900,X
+ STA XCoordLo,X
  LDA L4478,Y
  SBC L0CFD
- STA L4A00,X
+ STA XCoordHi,X
  STA T
  LDA #0
  SBC L0C6D
@@ -11006,10 +11006,10 @@ ORG CODE%
  SEC
  LDA L4428,Y
  SBC AltitudeLo
- STA L0A00,X
+ STA YCoordLo,X
  LDA L44A0,Y
  SBC AltitudeHi
- STA L0B00,X
+ STA YCoordHi,X
  STA T
  LDA #0
  SBC L0C6E
@@ -11020,10 +11020,10 @@ ORG CODE%
  SEC
  LDA L4450,Y
  SBC L0CEF
- STA L0700,X
+ STA ZCoordLo,X
  LDA L44C8,Y
  SBC L0CFF
- STA L4900,X
+ STA ZCoordHi,X
  STA T
  LDA #0
  SBC L0C6F
@@ -11366,13 +11366,13 @@ ORG CODE%
 .view3
 
  TAX
- LDY Lookup3E00,X
+ LDY StartPoint,X
  STY M
 
  LDA #0
  STA L0400,Y
 
- LDY Lookup3F30,X
+ LDY EndPoint,X
  STY L
 
  STA L0400,Y
@@ -11449,7 +11449,7 @@ ORG CODE%
  JSR L4B4A
 
  LDA #&F0
- STA L4A00,X
+ STA XCoordHi,X
  STX GG
 
 .L2CA6
@@ -11474,7 +11474,7 @@ ORG CODE%
 
 .L2CB5
 
- STA L4900,X
+ STA ZCoordHi,X
  LDA #&80
  ORA L0400,X
  STA L0400,X
@@ -11542,26 +11542,26 @@ ORG CODE%
  STA L0CCB
  JSR L1D8D
 
- LDA L4A00
+ LDA XCoordHi
  STA R
- LDA L4900
+ LDA ZCoordHi
  STA S
  LDX #3
 
 .L2D1A
 
  LSR R
- ROR L0900
+ ROR XCoordLo
  LSR S
- ROR L0700
+ ROR ZCoordLo
  DEX
  BPL L2D1A
 
  LSR R
- LDA L0900
+ LDA XCoordLo
  ROR A
  ADC #0
- STA L0900
+ STA XCoordLo
 
 \ ******************************************************************************
 \
@@ -11574,13 +11574,13 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   L0900               The x-coordinate of the item to display
+\   XCoordLo               The x-coordinate of the item to display
 \
-\   L4A00               Bit 7 denotes the sign of the x-coordinate
+\   XCoordHi               Bit 7 denotes the sign of the x-coordinate
 \
-\   L0700               The y-coordinate of the item to display
+\   ZCoordLo               The y-coordinate of the item to display
 \
-\   L4900               Bit 7 denotes the sign of the y-coordinate
+\   ZCoordHi               Bit 7 denotes the sign of the y-coordinate
 \
 \   Alien               The item to update on the radar:
 \
@@ -11638,13 +11638,13 @@ ORG CODE%
                         \ Now to calculate the position of the new line or dot
                         \ to draw on the radar
 
- LDA L0900              \ Set A = L0900, the x-coordinate of the alien or runway
+ LDA XCoordLo              \ Set A = XCoordLo, the x-coordinate of the alien or runway
 
- BIT L4A00              \ If bit 7 of L4A00 is 0, so L0900 is positive, jump to
+ BIT XCoordHi              \ If bit 7 of XCoordHi is 0, so XCoordLo is positive, jump to
  BPL radl2              \ radl2 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
- CLC                    \ positive, i.e. A = |L0900|
+ CLC                    \ positive, i.e. A = |XCoordLo|
  ADC #1
 
 .radl2
@@ -11652,13 +11652,13 @@ ORG CODE%
  CMP #13                \ If A >= 13, jump to radl4 to return from the
  BCS radl4              \ subroutine, as the item is off the side of the radar
 
- LDA L0700              \ Set A = L0700, the y-coordinate of the alien or runway
+ LDA ZCoordLo              \ Set A = ZCoordLo, the y-coordinate of the alien or runway
 
- BIT L4900              \ If bit 7 of L4900 is 0, so L0700 is positive, jump to
+ BIT ZCoordHi              \ If bit 7 of ZCoordHi is 0, so ZCoordLo is positive, jump to
  BPL radl3              \ radl3 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
- CLC                    \ positive, i.e. A = |L0700|
+ CLC                    \ positive, i.e. A = |ZCoordLo|
  ADC #1
 
 .radl3
@@ -11667,7 +11667,7 @@ ORG CODE%
  BCS radl4              \ subroutine, as the item is off the top or bottom of
                         \ the radar
 
- LDA L0900              \ Set I = L0900 + 140
+ LDA XCoordLo              \ Set I = XCoordLo + 140
  CLC                    \
  ADC #140               \ to move the coordinate onto the radar, whose centre
  STA I                  \ cross on-screen is at (140, 207)
@@ -11675,7 +11675,7 @@ ORG CODE%
  STA RadarX,X           \ Store the x-coordinate as the X-th byte of RadarX, so
                         \ we can erase this item from the radar later
 
- LDA L0700              \ Set J = L0700 + 208
+ LDA ZCoordLo              \ Set J = ZCoordLo + 208
  CLC                    \
  ADC #208               \ to move the coordinate onto the radar, whose centre
  STA J                  \ cross on-screen is at (140, 207)
@@ -12778,7 +12778,7 @@ ORG CODE%
  LDA V
  STA L0CA8,Y
  LDA R
- STA L0CE0,Y
+ STA xLo,Y
  INY
  CPY #3
  BNE L30AD
@@ -12815,7 +12815,7 @@ ORG CODE%
 
 .L30EE
 
- LDA L0CE0,Y
+ LDA xLo,Y
  CLC
  ADC L0CB8,Y
  STA L0CB8,Y
@@ -13088,7 +13088,7 @@ ORG CODE%
 
 .L31E7
 
- STA L0CE0,X
+ STA xLo,X
  DEX
  BPL L31E7
 
@@ -13105,7 +13105,7 @@ ORG CODE%
 
 .L3200
 
- LDA L0CE0,X
+ LDA xLo,X
  STA L0CB8,X
  DEX
  BPL L3200
@@ -13175,7 +13175,7 @@ ORG CODE%
 .L3252
 
  CLC
- LDA L0CE3,X
+ LDA xHi,X
  BPL L3259
 
  SEC
@@ -13183,10 +13183,10 @@ ORG CODE%
 .L3259
 
  ROR A
- STA L0CE3,X
- LDA L0CE0,X
+ STA xHi,X
+ LDA xLo,X
  ROR A
- STA L0CE0,X
+ STA xLo,X
  DEX
  BPL L3252
 
@@ -13202,7 +13202,7 @@ ORG CODE%
 
 .L3277
 
- LDA L0CE0,X
+ LDA xLo,X
  STA L0CDA,X
  DEX
  BPL L3277
@@ -13231,7 +13231,7 @@ ORG CODE%
 
  LSR R
  ROR A
- STA L0CE3,X
+ STA xHi,X
  LDA L0CB8,X
  ROR A
  ROR T,X
@@ -13240,13 +13240,13 @@ ORG CODE%
 .L32A4
 
  LSR R
- ROR L0CE3,X
+ ROR xHi,X
  ROR A
  ROR T,X
  DEY
  BPL L32A4
 
- STA L0CE0,X
+ STA xLo,X
  DEX
  BPL L328B
 
@@ -13265,10 +13265,10 @@ ORG CODE%
  ADC T,X
  STA W,X
  LDA L0CA8,X
- ADC L0CE0,X
+ ADC xLo,X
  STA L0CA8,X
  LDA L0CB8,X
- ADC L0CE3,X
+ ADC xHi,X
  STA L0CB8,X
  DEX
  BPL L32BE
@@ -13288,7 +13288,7 @@ ORG CODE%
 .L32EB
 
  LDA L0CDA,X
- STA L0CE0,X
+ STA xLo,X
  DEX
  BPL L32EB
 
@@ -13298,7 +13298,7 @@ ORG CODE%
 
 .L32FB
 
- LDA L4900,Y
+ LDA ZCoordHi,Y
  EOR P
  BMI L3309
 
@@ -13335,11 +13335,11 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC L0CE0,X
- STA L0CE0,X
+ SBC xLo,X
+ STA xLo,X
  LDA #0
- SBC L0CE3,X
- STA L0CE3,X
+ SBC xHi,X
+ STA xHi,X
  DEX
  BPL L3321
 
@@ -13391,33 +13391,33 @@ ORG CODE%
  LDX #&1E
  LDY #&20
 
- LDA L4A00,X
+ LDA XCoordHi,X
  STA T
 
- LDA L0900,X
+ LDA XCoordLo,X
  ASL A
  ROL T
  SEC
  SBC L091F
- STA L0900,Y
+ STA XCoordLo,Y
 
  LDA T
  SBC L4A1F
- STA L4A00,Y
+ STA XCoordHi,Y
 
- LDA L0B00,X
+ LDA YCoordHi,X
  STA T
 
- LDA L0A00,X
+ LDA YCoordLo,X
  ASL A
  ROL T
  SEC
  SBC L0A1F
- STA L0A00,Y
+ STA YCoordLo,Y
 
  LDA T
  SBC L0B1F
- STA L0B00,Y
+ STA YCoordHi,Y
 
  STX L
  STY M
@@ -14390,14 +14390,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3E00
+\       Name: StartPoint
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given an object ID in X, Lookup3E00,X contains:
+\ Given an object ID in X, StartPoint,X contains:
 \
 \ The offset of the byte in L0400 that is zeroed in DrawCanopyView
 \
@@ -14407,14 +14407,14 @@ NEXT
 \ The value of M that is set in in L28B6 and passed to L0D01
 \
 \ The value of M that is set in DrawCanopyView and passed to L107F and used as
-\ an index into L0900, L4A00, L0A00, L0B00
+\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
 \
 \ The value of M that is set in IsObjectInView and passed to L2C95 and used as
-\ an index into L0900, L4A00, L0A00, L0B00
+\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
 \
 \ ******************************************************************************
 
-.Lookup3E00
+.StartPoint
 
  EQUB &1E, &02, &03, &04, &01, &07, &09, &0B
  EQUB &0D, &0F, &11, &13, &3B, &72, &2A, &2B
@@ -14571,14 +14571,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3F30
+\       Name: EndPoint
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given an object ID in X, Lookup3F30,X contains:
+\ Given an object ID in X, EndPoint,X contains:
 \
 \ The offset of the byte in L0400 that is zeroed in DrawCanopyView
 \
@@ -14588,14 +14588,14 @@ NEXT
 \ The value of L and GG that is set in in L28B6 and passed to L0D01
 \
 \ The value of L that is set in DrawCanopyView and passed to L107F and used as
-\ an index into L0900, L4A00, L0A00, L0B00
+\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
 \
 \ The value of L that is set in IsObjectInView and passed to L2C95 and used as
-\ an index into L0900, L4A00, L0A00, L0B00
+\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
 \
 \ ******************************************************************************
 
-.Lookup3F30
+.EndPoint
 
  EQUB &1F, &01, &02, &03, &04, &06, &08, &0A
  EQUB &0C, &0E, &10, &12, &72, &73, &29, &2A
@@ -15900,7 +15900,7 @@ NEXT
  EQUB &2A, &2E, &73, &74, &69, &31, &20, &4C
  EQUB &44
 
-.L4900
+.ZCoordHi
 
  EQUB &41, &20, &58, &41, &4C, &4F
 
@@ -15942,7 +15942,7 @@ NEXT
 
  EQUB &0D, &09, &7E, &28
 
-.L4A00
+.XCoordHi
 
  EQUB &20               \ Set to 1 in ResetVariables, ResetRadar
 
@@ -16012,17 +16012,17 @@ NEXT
 .CopyFrom0C00
 
  LDA &0C00,X
- STA L0900,Y
+ STA XCoordLo,Y
  LDA &0C01,X
- STA L0A00,Y
+ STA YCoordLo,Y
  LDA &0C02,X
- STA L0700,Y
+ STA ZCoordLo,Y
  LDA &0C10,X
- STA L4A00,Y
+ STA XCoordHi,Y
  LDA &0C11,X
- STA L0B00,Y
+ STA YCoordHi,Y
  LDA &0C12,X
- STA L4900,Y
+ STA ZCoordHi,Y
  RTS
 
 \ ******************************************************************************
@@ -16046,17 +16046,17 @@ NEXT
 
 .CopyTo0C00
 
- LDA L0900,Y
+ LDA XCoordLo,Y
  STA &0C00,X
- LDA L0A00,Y
+ LDA YCoordLo,Y
  STA &0C01,X
- LDA L0700,Y
+ LDA ZCoordLo,Y
  STA &0C02,X
- LDA L4A00,Y
+ LDA XCoordHi,Y
  STA &0C10,X
- LDA L0B00,Y
+ LDA YCoordHi,Y
  STA &0C11,X
- LDA L4900,Y
+ LDA ZCoordHi,Y
  STA &0C12,X
  RTS
 
@@ -16099,12 +16099,12 @@ NEXT
 
 .L4B4C
 
- STA L0900,X
- STA L4A00,X
- STA L0A00,X
- STA L0B00,X
- STA L0700,X
- STA L4900,X
+ STA XCoordLo,X
+ STA XCoordHi,X
+ STA YCoordLo,X
+ STA YCoordHi,X
+ STA ZCoordLo,X
+ STA ZCoordHi,X
  RTS
 
 \ ******************************************************************************
@@ -16122,7 +16122,7 @@ NEXT
 
 .L4B5F
 
- LDA L4A00,Y
+ LDA XCoordHi,Y
  BPL L4B66
 
  EOR #&FF
@@ -16132,7 +16132,7 @@ NEXT
  CMP Lookup3B00,X
  BCS L4B83
 
- LDA L0B00,Y
+ LDA YCoordHi,Y
  BPL L4B72
 
  EOR #&FF
@@ -16142,7 +16142,7 @@ NEXT
  CMP Lookup3B00,X
  BCS L4B83
 
- LDA L4900,Y
+ LDA ZCoordHi,Y
  BPL L4B7E
 
  EOR #&FF
