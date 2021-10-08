@@ -2508,42 +2508,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L107B
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L107B
-
- LDA #%00000010
- BNE L1081
-
-\ ******************************************************************************
-\
 \       Name: L107F
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L107F
-
- LDA #0
-
-\ ******************************************************************************
-\
-\       Name: L1081
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -2552,15 +2517,30 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   A                   The base value for the direction in V
-\
-\   L                   ??? comes from lineEndPoint, used as index into
+\   L                   Comes from lineEndPoint, used as index into
 \                       xLineLo, xLineHi, yLineLo, yLineHi
 \
-\   M                   ??? comes from lineStartPoint, used as index into
+\   M                   Comes from lineStartPoint, used as index into
 \                       xLineLo, xLineHi, yLineLo, yLineHi
+\
+\ Other entry points:
+\
+\   L107B               Use %00000010 as the starting value for the direction
+\                       in V
+\
+\   L1081               Use A as the the starting value for the direction
+\                       in V
 \
 \ ******************************************************************************
+
+.L107B
+
+ LDA #%00000010
+ BNE L1081
+
+.L107F
+
+ LDA #0
 
 .L1081
 
