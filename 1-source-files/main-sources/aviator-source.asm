@@ -41,61 +41,62 @@ CODE% = &0B00           \ The address of the main game code once the code has
                         \ This address points to the start of the executable
                         \ code after all these moves, which is at &0B00
 
-                        \ These are screen address variables with names in the
-                        \ following format:
+                        \ The following configuration variables represent screen
+                        \ addresses, with names in the following format:
                         \
-                        \   Row1_Block2_3 = Row 1, block 2, byte 3
+                        \   row1_block2_3 = Row 1, block 2, byte 3
+                        \
+                        \ The first batch refers to screen addresses in the
+                        \ canopy (character rows 0 to 19)
 
-                        \ These are canopy screen addresses (rows 0 to 19)
+row1_block1_0 = &5948   \ Second block on second row
+row1_block38_0 = &5A68  \ Last block but one on second row
+row1_block39_0 = &5A70  \ Last block on second row
 
-Row1_Block0_0 = &5940   \ First block on second row
-Row1_Block1_0 = &5948   \ Second block on second row
-Row1_Block38_0 = &5A68  \ Last block but one on second row
-Row1_Block39_0 = &5A70  \ Last block on second row
+row3_block1_0 = &5BC8   \ Top-left corner of the on-screen score display
 
-Row3_Block1_0 = &5BC8   \ Top-left corner of the on-screen score display
-
-Row6_Block1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
+row6_block1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
                         \ containing the gun sights on rows 6, 7 and 8
 
-Row6_Block20_0 = &6020  \ Top block of the vertical line in the gun sights
-Row7_Block20_0 = &6160  \ Bottom block of the vertical line in the gun sights
-Row8_Block11_0 = &6258  \ Left end of horizontal bar in the gun sights
+row6_block20_0 = &6020  \ Top block of the vertical line in the gun sights
+row7_block20_0 = &6160  \ Bottom block of the vertical line in the gun sights
+row8_block11_0 = &6258  \ Left end of horizontal bar in the gun sights
 
-                        \ These are dashboard screen addresses (rows 20 to 31)
+                        \ The second batch refers to screen addresses in the
+                        \ dashboard (character rows 20 to 31)
 
-Row21_Block20_7 = &72E7 \ Top block of joystick position display y-axis
-Row22_Block20_7 = &7427 \ Second block of joystick position display y-axis
-Row23_Block20_7 = &7567 \ Third block of joystick position display y-axis
-Row24_Block20_7 = &76A7 \ Fourth block of joystick position display y-axis
-                        \ Right-middle block of joystick position display x-axis
-Row25_Block20_7 = &77E7 \ Fifth block of joystick position display y-axis
-Row26_Block20_7 = &7927 \ Sixth block of joystick position display y-axis
-Row27_Block20_7 = &7A67 \ Bottom block of joystick position display y-axis
+row21_block20_7 = &72E7 \ Top block of joystick position display y-axis
+row22_block20_7 = &7427 \ Second block of joystick position display y-axis
+row23_block20_7 = &7567 \ Third block of joystick position display y-axis
+row24_block20_7 = &76A7 \ Fourth block of joystick position display y-axis and
+                        \ right-middle block of joystick position display x-axis
+row25_block20_7 = &77E7 \ Fifth block of joystick position display y-axis
+row26_block20_7 = &7927 \ Sixth block of joystick position display y-axis
+row27_block20_7 = &7A67 \ Bottom block of joystick position display y-axis
 
-Row24_Block18_7 = &7697 \ Left block of joystick position display x-axis
-Row24_Block19_7 = &769F \ Left-middle block of joystick position display x-axis
-Row24_Block21_7 = &76AF \ Right block of joystick position display x-axis
+row24_block18_7 = &7697 \ Left block of joystick position display x-axis
+row24_block19_7 = &769F \ Left-middle block of joystick position display x-axis
+row24_block21_7 = &76AF \ Right block of joystick position display x-axis
 
-Row23_Block12_4 = &7524 \ Left block of artificial horizon
-Row23_Block13_2 = &752A \ Middle block of artificial horizon
-Row23_Block14_4 = &7534 \ Right block of artificial horizon
+row23_block12_4 = &7524 \ Left block of artificial horizon
+row23_block13_2 = &752A \ Middle block of artificial horizon
+row23_block14_4 = &7534 \ Right block of artificial horizon
 
-Row25_Block31_1 = &77A9 \ Middle of the left edge of the radar
-Row25_Block34_7 = &7857 \ Left spur of the radar's cross
-Row25_Block35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
-Row25_Block35_7 = &785F \ Centre and right spur of the radar's cross
-Row26_Block35_0 = &7998 \ Top pixel of the bottom spur of the radar's cross
-Row26_Block35_1 = &7999 \ Bottom pixel of the bottom spur of the radar's cross
+row25_block31_1 = &77A9 \ Middle of the left edge of the radar
+row25_block34_7 = &7857 \ Left spur of the radar's cross
+row25_block35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
+row25_block35_7 = &785F \ Centre and right spur of the radar's cross
+row26_block35_0 = &7998 \ Top pixel of the bottom spur of the radar's cross
+row26_block35_1 = &7999 \ Bottom pixel of the bottom spur of the radar's cross
 
-Row28_Block26_5 = &7BD5 \ Centre block of the slip-and-turn indicator
+row28_block26_5 = &7BD5 \ Centre block of the slip-and-turn indicator
 
-Row29_Block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
+row29_block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
 
-Row30_Block0_2 = &7D82  \ Theme indicator
-Row30_Block32_2 = &7E82 \ Undercarriage indicator
-Row30_Block35_2 = &7E9A \ Flaps indicator
-Row30_Block37_2 = &7EAA \ Brakes indicator
+row30_block0_2 = &7D82  \ Theme indicator
+row30_block32_2 = &7E82 \ Undercarriage indicator
+row30_block35_2 = &7E9A \ Flaps indicator
+row30_block37_2 = &7EAA \ Brakes indicator
 
 VIA = &FE00             \ Memory-mapped space for accessing internal hardware,
                         \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
@@ -226,45 +227,45 @@ ORG &0070
 
  SKIP 1                 \ Temporary storage, used in a number of places
 
-.InViewListEnd
+.linesShowEnd
 
  SKIP 1                 \ The index of the first empty entry in the
-                        \ ObjectsInView list
+                        \ linesToShow list
                         \
-                        \ Set to 0 in ResetObjectLists
+                        \ Set to 0 in ResetLineLists
 
-.ObjectID
+.lineID
 
- SKIP 1                 \ Temporary storage, typically used to pass an object ID
+ SKIP 1                 \ Temporary storage, typically used to pass a line ID
                         \ to routines
 
-.ObjectIDCounter
+.lineIDCounter
 
  SKIP 1                 \ Temporary storage, typically used to loop through
-                        \ object IDs
+                        \ line IDs
 
 .LL
 
- SKIP 1                 \ Counter that's related to the ObjectsInView list
+ SKIP 1                 \ Counter that's related to the linesToShow list
                         \
-                        \ Set to 255 in ResetObjectLists
+                        \ Set to 255 in ResetLineLists
 
 .MM
 
- SKIP 1                 \ Counter that's related to the ObjectsNotInView list
+ SKIP 1                 \ Counter that's related to the linesToHide list
                         \
-                        \ Set to 255 in ResetObjectLists
+                        \ Set to 255 in ResetLineLists
 
-.NotInViewListEnd
+.linesHideEnd
 
- SKIP 1                 \ The index of the last entry in the ObjectsNotInView
+ SKIP 1                 \ The index of the last entry in the linesToHide
                         \ list
                         \
-                        \ Set to 255 in ResetObjectLists
+                        \ Set to 255 in ResetLineLists
 
 \ ******************************************************************************
 \
-\       Name: LineBufferU
+\       Name: lineBufferU
 \       Type: Workspace
 \    Address: &0100 to &0175
 \   Category: Workspaces
@@ -272,7 +273,7 @@ ORG &0070
 \
 \ ******************************************************************************
 
-LineBufferU = &0100
+lineBufferU = &0100
 L0160 = &0160
 L0161 = &0161
 L0162 = &0162
@@ -304,7 +305,7 @@ L04F6 = &04F6
 
 \ ******************************************************************************
 \
-\       Name: ObjectsInView
+\       Name: linesToShow
 \       Type: Workspace
 \    Address: &0500 to &05FF
 \   Category: Workspaces
@@ -312,7 +313,7 @@ L04F6 = &04F6
 \
 \ ******************************************************************************
 
-ObjectsInView = &0500
+linesToShow = &0500
 
 L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
                         \ size in L05C8
@@ -321,7 +322,7 @@ L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
 
 \ ******************************************************************************
 \
-\       Name: ObjectsNotInView
+\       Name: linesToHide
 \       Type: Workspace
 \    Address: &0600 to &06FF
 \   Category: Workspaces
@@ -329,11 +330,11 @@ L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
 \
 \ ******************************************************************************
 
-ObjectsNotInView = &0600
+linesToHide = &0600
 
 \ ******************************************************************************
 \
-\       Name: ZCoordLo
+\       Name: zLineLo
 \       Type: Workspace
 \    Address: &0700 to &07FF
 \   Category: Workspaces
@@ -341,14 +342,14 @@ ObjectsNotInView = &0600
 \
 \ ******************************************************************************
 
-ZCoordLo = &0700
+zLineLo = &0700
 L075F = &075F
 L07E4 = &07E4
 L07FC = &07FC
 
 \ ******************************************************************************
 \
-\       Name: XCoordLo
+\       Name: xLineLo
 \       Type: Workspace
 \    Address: &0900 to &09FF
 \   Category: Workspaces
@@ -356,14 +357,14 @@ L07FC = &07FC
 \
 \ ******************************************************************************
 
-XCoordLo = &0900           \ Set to 80 in ResetVariables, ResetRadar
+xLineLo = &0900         \ Set to 80 in ResetVariables, ResetRadar
 L091F = &091F
 L095F = &095F
 L09FC = &09FC
 
 \ ******************************************************************************
 \
-\       Name: YCoordLo
+\       Name: yLineLo
 \       Type: Workspace
 \    Address: &0A00 to &0AFF
 \   Category: Workspaces
@@ -371,7 +372,7 @@ L09FC = &09FC
 \
 \ ******************************************************************************
 
-YCoordLo = &0A00
+yLineLo = &0A00
 L0A1F = &0A1F
 L0A5F = &0A5F
 L0AFC = &0AFC
@@ -379,7 +380,7 @@ L0AFD = &0AFD
 
 \ ******************************************************************************
 \
-\       Name: YCoordHi
+\       Name: yLineHi
 \       Type: Workspace
 \    Address: &0B00 to &0BFF
 \   Category: Workspaces
@@ -387,7 +388,7 @@ L0AFD = &0AFD
 \
 \ ******************************************************************************
 
-YCoordHi = &0B00
+yLineHi = &0B00
 L0B1F = &0B1F
 L0BFC = &0BFC
 L0BFD = &0BFD
@@ -408,7 +409,7 @@ ORG &0C00
 
  SKIP 1
 
-.TurnLo                 \ Turn rate (low byte)
+.turnLo                 \ Turn rate (low byte)
                         \
  SKIP 1                 \ Stored as 35 * the turn rate in 180 degrees per minute
                         \ 
@@ -422,7 +423,7 @@ ORG &0C00
 
  SKIP 2
 
-.AirspeedLo             \ Air speed (low byte)
+.airspeedLo             \ Air speed (low byte)
                         \
  SKIP 1                 \ 100 mph is stored as 9.25 * 256 = 2368
                         \
@@ -445,19 +446,19 @@ ORG &0C00
 
  SKIP 3
 
-.Elevator               \ Elevator position (pitch)
+.elevatorPosition       \ Elevator position (pitch)
                         \
  SKIP 1                 \ Shown on indicator 8 or 10 as the joystick y-position
 
-.Rudder                 \ Rudder position (yaw)
+.rudderPosition         \ Rudder position (yaw)
                         \
  SKIP 1                 \ Shown on indicator 9
 
-.Aileron                \ Aileron position (roll)
+.aileronPosition        \ Aileron position (roll)
                         \
  SKIP 1                 \ Shown on indicator 8 or 10 as the joystick x-position
 
-.ThrustLo               \ Thrust (low byte)
+.thrustLo               \ Thrust (low byte)
                         \
  SKIP 1                 \ Thrust is in the range 0 to 1280
                         \
@@ -467,7 +468,7 @@ ORG &0C00
 
  SKIP 1
 
-.TurnHi                 \ Turn rate (low byte)
+.turnHi                 \ Turn rate (low byte)
                         \
  SKIP 1                 \ Stored as 35 * the turn rate in 180 degrees per minute
                         \
@@ -481,7 +482,7 @@ ORG &0C00
 
  SKIP 2
 
-.AirspeedHi             \ Air speed (high byte)
+.airspeedHi             \ Air speed (high byte)
                         \
  SKIP 1                 \ 100 mph is stored as 9.25 * 256 = 2368
                         \
@@ -504,7 +505,7 @@ ORG &0C00
 
  SKIP 6
 
-.ThrustHi               \ Thrust (high byte)
+.thrustHi               \ Thrust (high byte)
                         \
  SKIP 1                 \ Thrust is in the range 0 to 1280
                         \
@@ -522,15 +523,15 @@ ORG &0C00
 
  SKIP 3
 
-.AxisKeyUsage           \ The following locations are updated when keys are
+.axisKeyUsage           \ The following locations are updated when keys are
                         \ pressed in ProcessKeyLogger:
  SKIP 3                 \
-                        \   * AxisKeyUsage   = elevator
-                        \   * AxisKeyUsage+1 = rudder
-                        \   * AxisKeyUsage+2 = aileron
+                        \   * axisKeyUsage   = elevator
+                        \   * axisKeyUsage+1 = rudder
+                        \   * axisKeyUsage+2 = aileron
                         \
                         \ In each case, the value is updated by adding the
-                        \ relevant KeyLoggerLow value, which is 1 in each case,
+                        \ relevant keyLoggerLow value, which is 1 in each case,
                         \ so these count up by 1 every time a relevant axis
                         \ control key is pressed (in any direction), so they
                         \ measure "axis control key usage"
@@ -683,7 +684,7 @@ ORG &0C00
 
  SKIP 1
 
-.VerticalSpeedLo        \ Vertical speed (low byte)
+.verticalSpeedLo        \ Vertical speed (low byte)
                         \
  SKIP 1                 \ Stored as 128/425 * vertical speed in feet per minute,
                         \ so:
@@ -723,21 +724,21 @@ ORG &0C00
 
  SKIP 1
 
-.VerticalSpeedHi         \ Vertical speed (high byte)
-                         \
- SKIP 1                  \ Shown on indicator 4
+.verticalSpeedHi        \ Vertical speed (high byte)
+                        \
+ SKIP 1                 \ Shown on indicator 4
 
  SKIP 1
 
-.Slip                   \ Slip rate
+.slipRate               \ Slip rate
                         \
  SKIP 1                 \ Shown on indicator 6
 
  SKIP 3
 
-.KeyLoggerLow           \ Key logger (low value)
+.keyLoggerLow           \ Key logger (low value)
                         \
- SKIP 6                 \ Populated with values from KeyTable1Lo or KeyTable2Lo
+ SKIP 6                 \ Populated with values from keyTable1Lo or keyTable2Lo
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      =   1 or  1
@@ -753,9 +754,9 @@ ORG &0C00
 
  SKIP 8
 
-.KeyLoggerHigh          \ Key logger (high value)
+.keyLoggerHigh          \ Key logger (high value)
                         \
- SKIP 6                 \ Populated with values from KeyTable1Hi or KeyTable2Hi
+ SKIP 6                 \ Populated with values from keyTable1Hi or keyTable2Hi
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      = -1 or 1
@@ -779,7 +780,7 @@ ORG &0C00
 
  SKIP 3
 
-.GunSights              \ Gun sights status
+.gunSights              \ Gun sights status
                         \
  SKIP 1                 \ Bit 6 = 1 while "I" is being held down
                         \
@@ -798,21 +799,21 @@ ORG &0C00
 
  SKIP 1
 
-.ColourLogic            \ Determines the logic used to draw the canopy view
+.colourLogic            \ Determines the logic used to draw the canopy view
                         \
  SKIP 1                 \   * %00000000 just after each flip
                         \     Sets AND logic in EraseCanopyLines
                         \
-                        \   * %01000000 when ColourCycle is %11110000
+                        \   * %01000000 when colourCycle is %11110000
                         \     Sets ORA logic in FlipColours
                         \
-                        \   * %10000000 when ColourCycle is %00001111
-                        \     Sets ORA logic in ResetObjectLists, FlipColours
+                        \   * %10000000 when colourCycle is %00001111
+                        \     Sets ORA logic in ResetLineLists, FlipColours
                         \
                         \ Set to %10000000 for each new game
 
 
-.ColourCycle            \ Determines which of the two canopy screens we are
+.colourCycle            \ Determines which of the two canopy screens we are
                         \ showing, so we can use colour cycling for smooth
  SKIP 1                 \ animation
                         \
@@ -828,14 +829,14 @@ ORG &0C00
 
  SKIP 1
 
-.OnGround               \ "On the ground" status
+.onGround               \ "On the ground" status
                         \
  SKIP 1                 \   * 0 = we are not on the ground
                         \   * 1 = we are on the ground
                         \
                         \ Set to 1 in ResetVariables (on the ground)
 
-.PreviousListEnd        \ Used to store the value of NotInViewListEnd at the
+.previousListEnd        \ Used to store the value of linesHideEnd at the
                         \ start of each iteration of the main loop, so we can
  SKIP 1                 \ refer to it at the end of the main loop to see if
                         \ we have added anything to the list during the main
@@ -849,7 +850,7 @@ ORG &0C00
 
  SKIP 1
 
-.PressingT              \ Set to 0 in the main loop if "T" is not being pressed,
+.pressingT              \ Set to 0 in the main loop if "T" is not being pressed,
                         \ otherwise set to 1, to prevent holding down "T" from
  SKIP 1                 \ constantly switching the engine on and off
 
@@ -865,78 +866,79 @@ ORG &0C00
 
  SKIP 1                 \ Called OB in original source code
 
-.PressingTab            \ Bit 7 determines whether TAB is being pressed
+.pressingTab            \ Bit 7 determines whether TAB is being pressed
                         \
  SKIP 1                 \   * 0 = not being pressed
                         \   * 128 = being pressed
                         \
                         \ This value is set in the ToggleJoystick routine
 
-.ObjectInView
+.showLine
 
- SKIP 1                 \ Determines whether an object is in view/in front of us
+ SKIP 1                 \ Determines whether a line should be shown (i.e. it is
+                        \ in front of us)
                         \
-                        \   * 0 = in front of us
+                        \   * 0 = show line
                         \
-                        \   * Negative = behind us
+                        \   * Negative = hide line
 
 .L0CCF
 
  SKIP 1
 
-.LineBuffer1Count
+.lineBuffer1Count
 
  SKIP 1                 \ Offset of the last line stored in buffer 1
                         \
                         \   * -1 = buffer 1 is empty
                         \
-                        \   * 0 to 46 = buffer 1 contains LineBuffer1Count + 1
+                        \   * 0 to 46 = buffer 1 contains lineBuffer1Count + 1
                         \               lines but is not full
                         \
                         \   * 47 = buffer 1 is full and contains 48 lines
                         \
                         \ Set to -1 in ResetVariables
 
-.LineBuffer2Count
+.lineBuffer2Count
 
  SKIP 1                 \ Offset of the last line stored in buffer 2
                         \
                         \   * 47 = buffer 2 is empty
                         \
-                        \   * 48 to 94 = buffer 2 contains LineBuffer2Count + 1
+                        \   * 48 to 94 = buffer 2 contains lineBuffer2Count + 1
                         \                lines but is not full
                         \
                         \   * 95 = buffer 2 is full, contains 48 lines
                         \
                         \ Set to 47 in ResetVariables
 
-.PressingUFBS           \ Determines whether any of the following keys are
+.pressingUFBS           \ Determines whether any of the following keys are
                         \ being pressed:
  SKIP 5                 \
-                        \ PressingUFBS = 1 while the undercarriage key "U" is 
+                        \ pressingUFBS = 1 while the undercarriage key "U" is 
                         \ being pressed, 0 otherwise
 
-                        \ PressingUFBS+1 = 1 while the flaps button "F" is being
+                        \ pressingUFBS+1 = 1 while the flaps button "F" is being
                         \ pressed, 0 otherwise
 
-                        \ PressingUFBS+2 is not used
+                        \ pressingUFBS+2 is not used
 
-                        \ PressingUFBS+3 = 1 while the brake key "B" is being
+                        \ pressingUFBS+3 = 1 while the brake key "B" is being
                         \ pressed, 0 otherwise
 
-                        \ PressingUFBS+4 = 1 while the fire key SHIFT is being
+                        \ pressingUFBS+4 = 1 while the fire key SHIFT is being
                         \ pressed, 0 otherwise
 
 .L0CD7
 
  SKIP 1
 
-.ScoreDisplayTimer      \ Counter for removing the score after displaying it
+.scoreDisplayTimer      \ Counter for removing the score after displaying it
                         \ for a fixed amount of time
  SKIP 1
 
 
-.GunSoundCounter        \ Counter for the number of firing sounds we make when
+.gunSoundCounter        \ Counter for the number of firing sounds we make when
                         \ firing our guns (which makes the sound of two shots)
  SKIP 1
 
@@ -968,14 +970,14 @@ ORG &0C00
 
  SKIP 1
 
-.Alien
+.alienFlag
 
  SKIP 1                 \ Used to store a flag when updating the radar, to
                         \ denote whether we are updating the runway or an alien
                         \
                         \ Also used as a counter in L2A8C
 
-.Theme                  \ Theme status
+.themeStatus            \ Theme status
                         \
  SKIP 1                 \   * Positive (bit 7 = 0) = the Theme is enabled
                         \   * Negative (bit 7 = 1) = the Theme is not enabled
@@ -988,7 +990,7 @@ ORG &0C00
                         \
                         \ Set to 1 in ResetVariables
 
-.Engine                 \ Engine status
+.engineStatus           \ Engine status
                         \
  SKIP 1                 \   * 0 = engine is off
                         \   * Non-zero = engine is on
@@ -1005,7 +1007,7 @@ ORG &0C00
 
  SKIP 1                 \ Set to 229 in ResetVariables
 
-.AltitudeLo             \ Altitude (high byte)
+.altitudeLo             \ Altitude (high byte)
                         \
  SKIP 1                 \ Stored as the altitude in feet x 4
                         \
@@ -1021,7 +1023,7 @@ ORG &0C00
  SKIP 1                 \ Set to 5 if undercarriage is up, 10 if it is down in
                         \ IndicatorU
 
-.Firing                 \ Firing status
+.firingStatus           \ Firing status
                         \
  SKIP 1                 \   * 0 = no bullets in the air
                         \   * Non-zero = guns fired, bullets in the air
@@ -1030,14 +1032,14 @@ ORG &0C00
                         \
                         \ Can't fire guns if this or L368F are non-zero
 
-.Undercarriage          \ Undercarriage status
+.ucStatus               \ Undercarriage status
                         \
  SKIP 1                 \   * 0 = undercarriage is up
                         \   * Non-zero = undercarriage is down
                         \
                         \ Set to 1 (undercarriage is down) in ResetVariables
              
-.Flaps                  \ Flaps status
+.flapsStatus            \ Flaps status
                         \
  SKIP 1                 \   * 0 = flaps are off (raised)
                         \   * Non-zero = flaps are on (dropped)
@@ -1046,7 +1048,7 @@ ORG &0C00
 
  SKIP 1
 
-.Brakes                 \ Brakes status
+.brakesStatus           \ Brakes status
                         \
  SKIP 1                 \   * 0 = brakes are off
                         \   * Non-zero = brakes are on
@@ -1055,7 +1057,7 @@ ORG &0C00
 
  SKIP 1
 
-.Propellor              \ Propellor status
+.propellorStatus        \ Propellor status
                         \
  SKIP 1                 \   * 0 = propellor is working
                         \   * Non-zero = propellor is broken
@@ -1067,7 +1069,7 @@ ORG &0C00
 
  SKIP 1                 \ Set to 10 in ResetVariables
 
-.Reached512ft
+.reached512ft
 
  SKIP 1                 \ Have we reached 512 feet in altitude since taking off?
                         \
@@ -1076,13 +1078,13 @@ ORG &0C00
                         \
                         \ The height measured is 512 feet, rather than the 500
                         \ feet mentioned in the maunal, as this is set to
-                        \ non-zero when AltitudeHi >= 2
+                        \ non-zero when altitudeHi >= 2
 
 .L0CFA
 
  SKIP 1                 \ Set to 7 in ResetVariables
 
-.Compass                \ Compass direction
+.compassHeading         \ Direction of the compass (i.e. its heading)
                         \
  SKIP 1                 \   * 0 = North
                         \   * 64 = East
@@ -1099,7 +1101,7 @@ ORG &0C00
 
  SKIP 1                 \ Set to 198 in ResetVariables
 
-.AltitudeHi             \ Altitude (high byte)
+.altitudeHi             \ Altitude (high byte)
                         \
  SKIP 1                 \ Stored as the altitude in feet x 4
                         \
@@ -1110,9 +1112,6 @@ ORG &0C00
 
  SKIP 1                 \ Set to 72 in ResetVariables
 
-CLEAR &0C00, &0D00      \ Clear the guard on the &0C00 workspace so we can
-                        \ assemble the loader code into this address range
-
 \ ******************************************************************************
 \
 \ AVIATOR MAIN GAME CODE
@@ -1120,6 +1119,9 @@ CLEAR &0C00, &0D00      \ Clear the guard on the &0C00 workspace so we can
 \ Produces the binary file AVIA.bin that contains the main game code.
 \
 \ ******************************************************************************
+
+CLEAR &0C00, &0D00      \ Clear the guard on the &0C00 workspace so we can
+                        \ assemble the loader code into this address range
 
 ORG CODE%
 
@@ -1141,11 +1143,11 @@ ORG CODE%
 
  LDY #0                 \ We now want to write the VDU command to disable the
                         \ cursor, whose bytes are in the variable at
-                        \ DisableCursor, so set up a counter in Y
+                        \ disableCursor, so set up a counter in Y
 
 .sscr1
 
- LDA DisableCursor,Y    \ Write the Y-th value from DisableCursor
+ LDA disableCursor,Y    \ Write the Y-th value from disableCursor
  JSR OSWRCH
 
  INY                    \ Increment the loop counter
@@ -1163,11 +1165,11 @@ ORG CODE%
  JSR OSWRCH
 
  LDY #0                 \ We now want to print the "Please wait" message in
-                        \ variable PleaseWaitText, so set up a counter in Y
+                        \ variable pleaseWaitText, so set up a counter in Y
 
 .sscr2
 
- LDA PleaseWaitText,Y   \ Print the Y-th character from PleaseWaitText
+ LDA pleaseWaitText,Y   \ Print the Y-th character from pleaseWaitText
  JSR OSWRCH
 
  INY                    \ Increment the loop counter
@@ -1175,10 +1177,10 @@ ORG CODE%
  CPY #11                \ Loop back to print the next character until we have
  BNE sscr2              \ printed all 11 ("Please wait")
 
- LDX #LO(LoadDashboard) \ Set (Y X) to point to LoadDashboard ("L.DASHBD 7100")
- LDY #HI(LoadDashboard)
+ LDX #LO(loadDashboard) \ Set (Y X) to point to loadDashboard ("L.DASHBD 7100")
+ LDY #HI(loadDashboard)
 
- JSR OSCLI              \ Call OSCLI to run the OS command in LoadDashboard,
+ JSR OSCLI              \ Call OSCLI to run the OS command in loadDashboard,
                         \ which loads the dashboard image into the screen
 
  LDA #129               \ Call OSBYTE with A = 129, X = &FF and Y = 0 to scan
@@ -1190,28 +1192,28 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: LoadDashboard
+\       Name: loadDashboard
 \       Type: Variable
 \   Category: Setup
 \    Summary: The OS command string for loading the dashboard image
 \
 \ ******************************************************************************
 
-.LoadDashboard
+.loadDashboard
 
  EQUS "L.DASHBD 7100"   \ This is short for "*LOAD DASHBD 7100"
  EQUB 13
 
 \ ******************************************************************************
 \
-\       Name: DisableCursor
+\       Name: disableCursor
 \       Type: Variable
 \   Category: Setup
 \    Summary: The VDU command for disabling the cursor
 \
 \ ******************************************************************************
 
-.DisableCursor
+.disableCursor
 
  EQUB 23, 0, 10, 23     \ Set 6845 register R10 = 23
  EQUB 0, 0, 0           \
@@ -1221,14 +1223,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: PleaseWaitText
+\       Name: pleaseWaitText
 \       Type: Variable
 \   Category: Setup
 \    Summary: The "Please wait" message shown when the game loads
 \
 \ ******************************************************************************
 
-.PleaseWaitText
+.pleaseWaitText
 
  EQUS "Please wait"
  EQUB 13
@@ -1758,19 +1760,19 @@ ORG CODE%
  TYA
  ORA #1
  STA L0400,X
- LDA ZCoordHi,X
+ LDA zLineHi,X
  BMI L0D37
 
  STA Q
  BEQ L0D2B
 
- LDA ZCoordLo,X
+ LDA zLineLo,X
  STA P
  JMP L0D46
 
 .L0D2B
 
- LDA ZCoordLo,X
+ LDA zLineLo,X
  BNE L0D32
 
  LDA #1
@@ -1784,19 +1786,19 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC ZCoordLo,X
+ SBC zLineLo,X
  STA P
  LDA #0
- SBC ZCoordHi,X
+ SBC zLineHi,X
  STA Q
 
 .L0D46
 
- LDA XCoordHi,X
+ LDA xLineHi,X
  BMI L0D55
 
  STA QQ
- LDA XCoordLo,X
+ LDA xLineLo,X
  STA PP
  JMP L0D6A
 
@@ -1804,10 +1806,10 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC XCoordLo,X
+ SBC xLineLo,X
  STA PP
  LDA #0
- SBC XCoordHi,X
+ SBC xLineHi,X
  STA QQ
  LDA N
  ORA #8
@@ -1815,11 +1817,11 @@ ORG CODE%
 
 .L0D6A
 
- LDA YCoordHi,X
+ LDA yLineHi,X
  BMI L0D7C
 
  STA SS
- LDA YCoordLo,X
+ LDA yLineLo,X
  ASL A
  ROL SS
  STA RR
@@ -1829,10 +1831,10 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC YCoordLo,X
+ SBC yLineLo,X
  STA RR
  LDA #0
- SBC YCoordHi,X
+ SBC yLineHi,X
  ASL RR
  ROL A
  STA SS
@@ -1909,10 +1911,10 @@ ORG CODE%
  JSR L0FA7
 
  LDX GG
- LDA ZCoordHi,X
+ LDA zLineHi,X
  BMI L0E02
 
- LDA XCoordHi,X
+ LDA xLineHi,X
  BPL L0E19
 
 .L0DFF
@@ -1921,7 +1923,7 @@ ORG CODE%
 
 .L0E02
 
- LDA XCoordHi,X
+ LDA xLineHi,X
  BMI L0E19
 
 .L0E07
@@ -1929,10 +1931,10 @@ ORG CODE%
  LDA #&50
  SEC
  SBC QQ
- STA XCoordLo,X
+ STA xLineLo,X
  LDA #0
  SBC SS
- STA XCoordHi,X
+ STA xLineHi,X
  JMP L0E28
 
 .L0E19
@@ -1940,25 +1942,25 @@ ORG CODE%
  LDA #&50
  CLC
  ADC QQ
- STA XCoordLo,X
+ STA xLineLo,X
  LDA #0
  ADC SS
- STA XCoordHi,X
+ STA xLineHi,X
 
 .L0E28
 
  LDX GG
- LDA ZCoordHi,X
+ LDA zLineHi,X
  BMI L0E37
 
- LDA YCoordHi,X
+ LDA yLineHi,X
  BPL L0E4E
 
  JMP L0E3C
 
 .L0E37
 
- LDA YCoordHi,X
+ LDA yLineHi,X
  BMI L0E4E
 
 .L0E3C
@@ -1969,10 +1971,10 @@ ORG CODE%
 .L0E3F
 
  SBC Q
- STA YCoordLo,X
+ STA yLineLo,X
  LDA #0
  SBC RR
- STA YCoordHi,X
+ STA yLineHi,X
  JMP L0E5D
 
 .L0E4E
@@ -1980,10 +1982,10 @@ ORG CODE%
  LDA #&60
  CLC
  ADC Q
- STA YCoordLo,X
+ STA yLineLo,X
  LDA #0
  ADC RR
- STA YCoordHi,X
+ STA yLineHi,X
 
 .L0E5D
 
@@ -2015,34 +2017,34 @@ ORG CODE%
  STY I
  LDX TT
  LDY J
- LDA HighNibble,X
- ORA Times16Hi,Y
+ LDA highNibble,X
+ ORA times16Hi,Y
  STA T
  AND #&F0
- ORA LowNibble,Y
+ ORA lowNibble,Y
  STA U
  AND #&0F
- ORA Times16Lo,X
+ ORA times16Lo,X
  STA V
  AND #&F0
- ORA Times16Hi,Y
+ ORA times16Hi,Y
  TAY
  LDX S
  AND #&0F
- ORA HighNibble,X
+ ORA highNibble,X
  TAX
- LDA TimesTable,X
+ LDA timesTable,X
  CLC
  LDX V
- ADC TimesTable,X
+ ADC timesTable,X
  STA P
  LDX T
- LDA TimesTable,X
+ LDA timesTable,X
  ADC #1
  STA Q
  LDX U
- LDA TimesTable,X
- ADC TimesTable,Y
+ LDA timesTable,X
+ ADC timesTable,Y
  TAX
  LDY #0
  BCC L0EBB
@@ -2051,7 +2053,7 @@ ORG CODE%
 
 .L0EBB
 
- LDA Times16Lo,X
+ LDA times16Lo,X
  ADC P
  BCC L0EC3
 
@@ -2069,7 +2071,7 @@ ORG CODE%
  ADC S
  STA P
  TYA
- ADC Times16Hi,X
+ ADC times16Hi,X
  ADC Q
  BCC L0EDB
 
@@ -2092,21 +2094,21 @@ ORG CODE%
 
  AND #&F0
  LDX TT
- ORA Times16Hi,X
+ ORA times16Hi,X
  TAY
  AND #&F0
- ORA LowNibble,X
+ ORA lowNibble,X
  TAX
- LDA TimesTable,X
+ LDA timesTable,X
  TAX
  CLC
- LDA Times16Lo,X
+ LDA times16Lo,X
  ADC I
 
 .L0EFE
 
- LDA TimesTable,Y
- ADC Times16Hi,X
+ LDA timesTable,Y
+ ADC times16Hi,X
  ROR A
  CLC
  ADC P
@@ -2213,9 +2215,9 @@ ORG CODE%
 
  TAY
  LDX T
- LDA Times16Hi,X
- ORA Times16Lo,Y
- LDY Times16Lo,X
+ LDA times16Hi,X
+ ORA times16Lo,Y
+ LDY times16Lo,X
  RTS
 
 \ ******************************************************************************
@@ -2261,7 +2263,7 @@ ORG CODE%
  BEQ L0F8D
 
  TAX
- LDA Times16Lo,X
+ LDA times16Lo,X
  RTS
 
 .L0F97
@@ -2550,13 +2552,13 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   A               The base value for the direction in V
+\   A                   The base value for the direction in V
 \
-\   L               ??? comes from EndPoint, used as index into XCoordLo, XCoordHi,
-\                   YCoordLo, YCoordHi
+\   L                   ??? comes from lineEndPoint, used as index into
+\                       xLineLo, xLineHi, yLineLo, yLineHi
 \
-\   M               ??? comes from StartPoint, used as index into XCoordLo, XCoordHi,
-\                   YCoordLo, YCoordHi
+\   M                   ??? comes from lineStartPoint, used as index into
+\                       xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ ******************************************************************************
 
@@ -2574,25 +2576,25 @@ ORG CODE%
 
  LDY M                  \ Set Y to the index passed to the subroutine in M
 
- LDA XCoordLo,X            \ Set (RR R) = the L-th entry from (XCoordHi XCoordLo)
+ LDA xLineLo,X          \ Set (RR R) = the L-th entry from (xLineHi xLineLo)
  STA R
- LDA XCoordHi,X
+ LDA xLineHi,X
  STA RR
 
- LDA YCoordLo,X            \ Set S = the L-th entry from YCoordLo
+ LDA yLineLo,X          \ Set S = the L-th entry from yLineLo
  STA S
 
- LDA YCoordHi,X            \ Set SS = the L-th entry from YCoordHi
+ LDA yLineHi,X          \ Set SS = the L-th entry from yLineHi
  STA SS
 
- LDA XCoordLo,Y            \ Set (QQ W) = the M-th entry from (XCoordHi XCoordLo),
+ LDA xLineLo,Y          \ Set (QQ W) = the M-th entry from (xLineHi xLineLo),
  STA W                  \ starting with the low byte
 
  SEC                    \ Set T = W - R
  SBC R                  \
  STA T                  \ to subtract the low bytes
 
- LDA XCoordHi,Y            \ Set (QQ W) = the M-th entry from (XCoordHi XCoordLo),
+ LDA xLineHi,Y          \ Set (QQ W) = the M-th entry from (xLineHi xLineLo),
  STA QQ                 \ finishing with the high byte
 
  SBC RR                 \ Set I = QQ - RR
@@ -2602,7 +2604,7 @@ ORG CODE%
                         \ So we now have:
                         \
                         \   (I T) = (QQ W) - (RR R)
-                        \         = L-th - M-th entry from (XCoordHi XCoordLo)
+                        \         = L-th - M-th entry from (xLineHi xLineLo)
 
  BPL L10C9              \ If the result is positive, jump to L10C9 to skip the
                         \ following
@@ -2622,14 +2624,14 @@ ORG CODE%
 
 .L10C9
 
- LDA YCoordLo,Y            \ Set (H G) = the M-th entry from (YCoordHi YCoordLo),
+ LDA yLineLo,Y          \ Set (H G) = the M-th entry from (yLineHi yLineLo),
  STA G                  \ starting with the low byte
 
  SEC                    \ Set U = G - S
  SBC S                  \
  STA U                  \ to subtract the low bytes
 
- LDA YCoordHi,Y            \ Set (H G) = the M-th entry from (YCoordHi YCoordLo),
+ LDA yLineHi,Y          \ Set (H G) = the M-th entry from (yLineHi yLineLo),
  STA H                  \ finishing with the high byte
 
  SBC SS                 \ Set J = H - SS
@@ -2639,7 +2641,7 @@ ORG CODE%
                         \ So we now have:
                         \
                         \   (J U) = (H G) - (SS S)
-                        \         = L-th - M-th entry from (YCoordHi YCoordLo)
+                        \         = L-th - M-th entry from (yLineHi yLineLo)
 
  BPL L10F1              \ If the result is positive, jump to L10F1 to skip the
                         \ following
@@ -2781,7 +2783,7 @@ ORG CODE%
 
  LDY M                  \ Set Y to the index passed to the subroutine in M
 
- LDA ZCoordHi,Y
+ LDA zLineHi,Y
  BPL L1162
 
  LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
@@ -2795,7 +2797,7 @@ ORG CODE%
 
 .L1162
 
- LDA ZCoordHi,X
+ LDA zLineHi,X
  BPL L1170
 
  JSR L1778
@@ -2895,10 +2897,10 @@ ORG CODE%
  INC T
  INC U
 
- LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
  BMI L11E5              \ jump down to L11E5 to add a line to buffer 1
 
- LDX LineBuffer2Count   \ If LineBuffer2Count <> 95, line buffer 2 is not full,
+ LDX lineBuffer2Count   \ If lineBuffer2Count <> 95, line buffer 2 is not full,
  CPX #95                \ so jump down to L11DE to add a new line to the buffer
  BNE L11DE
 
@@ -2906,14 +2908,14 @@ ORG CODE%
 
 .L11DE
 
- INX                    \ Increment the value in LineBuffer2Count as we are
- STX LineBuffer2Count   \ about to add a new line to line buffer 2
+ INX                    \ Increment the value in lineBuffer2Count as we are
+ STX lineBuffer2Count   \ about to add a new line to line buffer 2
 
  JMP L11F1              \ Jump down to L11F1 to buffer the line and draw it
 
 .L11E5
 
- LDX LineBuffer1Count   \ If LineBuffer1Count <> 47, line buffer 1 is not full,
+ LDX lineBuffer1Count   \ If lineBuffer1Count <> 47, line buffer 1 is not full,
  CPX #47                \ so jump down to L11ED to add a new line to the buffer
  BNE L11ED
 
@@ -2921,31 +2923,31 @@ ORG CODE%
 
 .L11ED
 
- INX                    \ Increment the value in LineBuffer1Count as we are
- STX LineBuffer1Count   \ about to add a new line to line buffer 1
+ INX                    \ Increment the value in lineBuffer1Count as we are
+ STX lineBuffer1Count   \ about to add a new line to line buffer 1
 
 .L11F1
 
- LDA R                  \ Save the start x-coordinate in LineBufferR
- STA LineBufferR,X
+ LDA R                  \ Save the start x-coordinate in lineBufferR
+ STA lineBufferR,X
 
- LDA W                  \ Save the ??? in LineBufferW
- STA LineBufferW,X
+ LDA W                  \ Save the ??? in lineBufferW
+ STA lineBufferW,X
 
- LDA S                  \ Save the start y-coordinate in LineBufferS
- STA LineBufferS,X
+ LDA S                  \ Save the start y-coordinate in lineBufferS
+ STA lineBufferS,X
 
- LDA G                  \ Save the ??? in LineBufferG
- STA LineBufferG,X
+ LDA G                  \ Save the ??? in lineBufferG
+ STA lineBufferG,X
 
- LDA T                  \ Save the |x-delta| in LineBufferT
- STA LineBufferT,X
+ LDA T                  \ Save the |x-delta| in lineBufferT
+ STA lineBufferT,X
 
- LDA U                  \ Save the |y-delta| in LineBufferU
- STA LineBufferU,X
+ LDA U                  \ Save the |y-delta| in lineBufferU
+ STA lineBufferU,X
 
- LDA V                  \ Save the direction in LineBufferV
- STA LineBufferV,X
+ LDA V                  \ Save the direction in lineBufferV
+ STA lineBufferV,X
 
                         \ Fall through into DrawCanopyLine to draw the line
 
@@ -2988,9 +2990,9 @@ ORG CODE%
 \
 \                       Also bits 0 and 1 are involved
 \
-\   W
+\   W                   ???
 \
-\   G
+\   G                   ???
 \
 \ ******************************************************************************
 
@@ -3007,13 +3009,13 @@ ORG CODE%
  LSR A                  \ pixel (R, S), as each character row is 8 pixels high
  TAY
 
- CLC                    \ Set P = X-th byte of XLookupLo
- LDA XLookupLo,X        \         + Y-th byte of YLookupLo
- ADC YLookupLo,Y        \       = LO(X * 8) + LO(screen address)
+ CLC                    \ Set P = X-th byte of xLookupLo
+ LDA xLookupLo,X        \         + Y-th byte of yLookupLo
+ ADC yLookupLo,Y        \       = LO(X * 8) + LO(screen address)
  STA P
 
- LDA XLookupHi,X        \ Set Q = X-th byte of XLookupHi
- ADC YLookupHi,Y        \         + Y-th byte of YLookupHi
+ LDA xLookupHi,X        \ Set Q = X-th byte of xLookupHi
+ ADC yLookupHi,Y        \         + Y-th byte of yLookupHi
  STA Q                  \       = HI(X * 8) + HI(screen address)
 
                         \ So (P Q) is the screen address of the pixel row
@@ -3059,21 +3061,21 @@ ORG CODE%
                         \ The LDA #&60 gets modified by the ModifyDrawRoutine
                         \ routine as follows:
                         \
-                        \   * &60 when ColourLogic = %01000000
+                        \   * &60 when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 1
                         \     i.e. LDA Lookup2E60,X
                         \
-                        \   * &74 when ColourLogic = %01000000
+                        \   * &74 when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 2
                         \     i.e. LDA Lookup2E74,X
                         \
-                        \   * &88 when ColourLogic = %00000000
-                        \          and ColourCycle = %00001111
+                        \   * &88 when colourLogic = %00000000
+                        \          and colourCycle = %00001111
                         \     so the bit pattern lookup is always %00001111
                         \     i.e. LDA Lookup2E88,X
                         \
-                        \   * &92 when ColourLogic = %00000000
-                        \          and ColourCycle = %11110000
+                        \   * &92 when colourLogic = %00000000
+                        \          and colourCycle = %11110000
                         \     so the bit pattern lookup is always %11110000
                         \     i.e. LDA Lookup2E92,X
 
@@ -3105,21 +3107,21 @@ ORG CODE%
                         \ The LDA #&6A gets modified by the ModifyDrawRoutine
                         \ routine as follows:
                         \
-                        \   * &6A when ColourLogic = %01000000
+                        \   * &6A when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 1
                         \     i.e. LDA Lookup2E6A,X
                         \
-                        \   * &7E when ColourLogic = %01000000
+                        \   * &7E when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 2
                         \     i.e. LDA Lookup2E7E,X
                         \
-                        \   * &88 when ColourLogic = %00000000
-                        \          and ColourCycle = %00001111
+                        \   * &88 when colourLogic = %00000000
+                        \          and colourCycle = %00001111
                         \     so the bit pattern lookup is always %00001111
                         \     i.e. LDA Lookup2E88,X
                         \
-                        \   * &92 when ColourLogic = %00000000
-                        \          and ColourCycle = %11110000
+                        \   * &92 when colourLogic = %00000000
+                        \          and colourCycle = %11110000
                         \     so the bit pattern lookup is always %11110000
                         \     i.e. LDA Lookup2E92,X
 
@@ -3341,23 +3343,23 @@ ORG CODE%
 
  LDA Lookup2E60,X       \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA Lookup2E60,X when ColourLogic = %10000000
+                        \   * LDA Lookup2E60,X when colourLogic = %10000000
                         \
-                        \   * LDA Lookup2E74,X when ColourLogic = %01000000
+                        \   * LDA Lookup2E74,X when colourLogic = %01000000
                         \
-                        \   * LDA Lookup2E88,X when ColourLogic = %00000000
-                        \                       and ColourCycle = %00001111
+                        \   * LDA Lookup2E88,X when colourLogic = %00000000
+                        \                       and colourCycle = %00001111
                         \
-                        \   * LDA Lookup2E92,X when ColourLogic = %00000000
-                        \                       and ColourCycle = %11110000
+                        \   * LDA Lookup2E92,X when colourLogic = %00000000
+                        \                       and colourCycle = %11110000
 
 .dlin24
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \   * ORA (P),Y when colourLogic = %01000000
                         \
-                        \   * AND (P),Y when ColourLogic = %00000000
+                        \   * AND (P),Y when colourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -3389,23 +3391,23 @@ ORG CODE%
 
  LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA Lookup2E6A,X when ColourLogic = %10000000
+                        \   * LDA Lookup2E6A,X when colourLogic = %10000000
                         \
-                        \   * LDA Lookup2E7E,X when ColourLogic = %01000000
+                        \   * LDA Lookup2E7E,X when colourLogic = %01000000
                         \
-                        \   * LDA Lookup2E88,X when ColourLogic = %00000000
-                        \                       and ColourCycle = %00001111
+                        \   * LDA Lookup2E88,X when colourLogic = %00000000
+                        \                       and colourCycle = %00001111
                         \
-                        \   * LDA Lookup2E92,X when ColourLogic = %00000000
-                        \                       and ColourCycle = %11110000
+                        \   * LDA Lookup2E92,X when colourLogic = %00000000
+                        \                       and colourCycle = %11110000
 
 .dlin29
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \   * ORA (P),Y when colourLogic = %01000000
                         \
-                        \   * AND (P),Y when ColourLogic = %00000000
+                        \   * AND (P),Y when colourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -3453,22 +3455,22 @@ ORG CODE%
  LDA Lookup2E60,X       \ Gets modified by the DrawCanopyLine routine, which in
                         \ turn gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * Lookup2E60 when ColourLogic = %01000000
+                        \   * Lookup2E60 when colourLogic = %01000000
                         \
-                        \   * Lookup2E74 when ColourLogic = %01000000
+                        \   * Lookup2E74 when colourLogic = %01000000
                         \
-                        \   * Lookup2E88 when ColourLogic = %00000000
-                        \                 and ColourCycle = %00001111
+                        \   * Lookup2E88 when colourLogic = %00000000
+                        \                 and colourCycle = %00001111
                         \
-                        \   * Lookup2E92 when ColourLogic = %00000000
-                        \                 and ColourCycle = %11110000
+                        \   * Lookup2E92 when colourLogic = %00000000
+                        \                 and colourCycle = %11110000
 .dlin34
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \   * ORA (P),Y when colourLogic = %01000000
                         \
-                        \   * AND (P),Y when ColourLogic = %00000000
+                        \   * AND (P),Y when colourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -3669,9 +3671,9 @@ ORG CODE%
 
  LDA #8                 \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA #8 when ColourLogic = %10000000
+                        \   * LDA #8 when colourLogic = %10000000
                         \
-                        \   * LDA #&80 when ColourLogic = %01000000
+                        \   * LDA #&80 when colourLogic = %01000000
 
  CPX #0
  BEQ dlin49
@@ -3692,22 +3694,22 @@ ORG CODE%
 
  LDA H                  \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA H when ColourLogic = %01000000
+                        \   * LDA H when colourLogic = %01000000
                         \                           or %10000000
                         \
-                        \   * LDA #%00001111 when ColourLogic = %00000000
-                        \                     and ColourCycle = %00001111
+                        \   * LDA #%00001111 when colourLogic = %00000000
+                        \                     and colourCycle = %00001111
                         \
-                        \   * LDA #%11110000 when ColourLogic = %00000000
-                        \                     and ColourCycle = %11110000
+                        \   * LDA #%11110000 when colourLogic = %00000000
+                        \                     and colourCycle = %11110000
 
 .dlin51
 
  ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * ORA (P),Y when ColourLogic = %01000000
+                        \   * ORA (P),Y when colourLogic = %01000000
                         \
-                        \   * AND (P),Y when ColourLogic = %00000000
+                        \   * AND (P),Y when colourLogic = %00000000
 
  STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -3785,9 +3787,9 @@ ORG CODE%
 
  CMP #0                 \ Gets modified by the ModifyDrawRoutine routine:
  BNE dlin60             \
-                        \   * CMP #0 when ColourLogic = %10000000
+                        \   * CMP #0 when colourLogic = %10000000
                         \
-                        \   * CMP #8 when ColourLogic = %01000000
+                        \   * CMP #8 when colourLogic = %01000000
 
 
  LDA P
@@ -3799,9 +3801,9 @@ ORG CODE%
 
  LDA #8                 \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA #8 when ColourLogic = %10000000
+                        \   * LDA #8 when colourLogic = %10000000
                         \
-                        \   * LDA #&80 when ColourLogic = %01000000
+                        \   * LDA #&80 when colourLogic = %01000000
 
  BCC dlin60
 
@@ -3828,9 +3830,9 @@ ORG CODE%
 
  CMP #16                \ Gets modified by the ModifyDrawRoutine routine:
  BNE dlin64             \
-                        \   * CMP #16 when ColourLogic = %10000000
+                        \   * CMP #16 when colourLogic = %10000000
                         \
-                        \   * CMP #0 when ColourLogic = %01000000
+                        \   * CMP #0 when colourLogic = %01000000
 
  LDA P
  SEC
@@ -3841,9 +3843,9 @@ ORG CODE%
 
  LDA #1                 \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA #1 when ColourLogic = %10000000
+                        \   * LDA #1 when colourLogic = %10000000
                         \
-                        \   * LDA #16 when ColourLogic = %01000000
+                        \   * LDA #16 when colourLogic = %01000000
 
  BCS dlin64
 
@@ -3916,25 +3918,25 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ If ColourLogic = %00000000:
+\ If colourLogic = %00000000:
 \
 \   * Modify the drawing logic in DrawCanopyLine to AND
 \   * Modify DrawCanopyLine so they fetch bit patterns from:
-\       * Lookup2E88 if ColourCycle = %00001111
-\       * Lookup2E92 if ColourCycle = %11110000
+\       * Lookup2E88 if colourCycle = %00001111
+\       * Lookup2E92 if colourCycle = %11110000
 \     In other words, the bit pattern they fetch is always the same as the value
-\     of ColourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
+\     of colourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
 \     %11110000
-\   * Modify DrawCanopyLine (part 3) so it pokes the value of ColourCycle as a
+\   * Modify DrawCanopyLine (part 3) so it pokes the value of colourCycle as a
 \     bit pattern in the screen updating routine at dlin50
 \
-\ If ColourLogic = %01000000:
+\ If colourLogic = %01000000:
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
 \   * Modify DrawCanopyLine so it fetches bit patterns from Lookup2E74 and
 \     Lookup2E7E (colour 2) instead of Lookup2E60 and Lookup2E6A (colour 1)
 \
-\ If ColourLogic = %10000000:
+\ If colourLogic = %10000000:
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
 \   * Restore the DrawCanopyLine routine back to its default code, so we draw
@@ -3944,10 +3946,10 @@ ORG CODE%
 
 .ModifyDrawRoutine
 
- LDA ColourLogic        \ If ColourLogic is non-zero, jump to modd3
+ LDA colourLogic        \ If colourLogic is non-zero, jump to modd3
  BNE modd3
 
-                        \ If we get here then ColourLogic is %00000000
+                        \ If we get here then colourLogic is %00000000
 
  LDA #&31               \ Set A to the opcode for the AND (P),Y instruction
 
@@ -3961,10 +3963,10 @@ ORG CODE%
                         \
                         \   ORA (P),Y -> AND (P),Y
 
- LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
  BMI modd1              \ jump down to modd1
 
- LDA #&88               \ Bit 7 of ColourCycle is clear, i.e. %00001111, so set
+ LDA #&88               \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
                         \ A to &88 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
@@ -3978,7 +3980,7 @@ ORG CODE%
 
 .modd1
 
- LDA #&92               \ Bit 7 of ColourCycle is set, i.e. %11110000, so set
+ LDA #&92               \ Bit 7 of colourCycle is set, i.e. %11110000, so set
                         \ A to &92 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
@@ -3997,10 +3999,10 @@ ORG CODE%
  STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&aa : STA dlin33+1
  STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2Eaa,X
 
- LDA ColourCycle        \ Modify the following instruction in DrawCanopyLine
+ LDA colourCycle        \ Modify the following instruction in DrawCanopyLine
  STA dlin50+1           \ (part 2):
  LDA #&A9               \
- STA dlin50             \   LDA H -> LDA #ColourCycle
+ STA dlin50             \   LDA H -> LDA #colourCycle
                         \
                         \ as the opcode for the LDA #n instruction is &A9
 
@@ -4008,7 +4010,7 @@ ORG CODE%
 
 .modd3
 
-                        \ If we get here then ColourLogic is non-zero
+                        \ If we get here then colourLogic is non-zero
 
  LDA #&11               \ Set A to the opcode for the ORA (P),Y instruction
 
@@ -4026,10 +4028,10 @@ ORG CODE%
                         \
                         \ i.e. set them back to the default
 
- LDA ColourLogic        \ If bit 7 of ColourLogic is set, i.e. %10000000, jump
+ LDA colourLogic        \ If bit 7 of colourLogic is set, i.e. %10000000, jump
  BMI modd4              \ to modd4
 
-                        \ If we get here then ColourLogic is %01000000
+                        \ If we get here then colourLogic is %01000000
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
@@ -4058,7 +4060,7 @@ ORG CODE%
 
 .modd4
 
-                        \ If we get here then ColourLogic is %10000000
+                        \ If we get here then colourLogic is %10000000
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
@@ -4577,12 +4579,12 @@ ORG CODE%
 \
 \ We call this with:
 \
-\   * ColourCycle = %00001111, colour 1 is white and colour 2 is black
+\   * colourCycle = %00001111, colour 1 is white and colour 2 is black
 \     Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
 \     Colour 2 is %11110000, so AND'ing with %00001111 gives 0
 \     so this will erase all the lines in line buffer 1 from the hidden screen
 \
-\   * ColourCycle = %11110000, colour 1 is black and colour 2 is white
+\   * colourCycle = %11110000, colour 1 is black and colour 2 is white
 \     Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
 \     Colour 1 is %00001111, so AND'ing with %11110000 gives 0
 \     so this will erase all the lines in line buffer 2 from the hidden screen
@@ -4591,20 +4593,20 @@ ORG CODE%
 
 .EraseCanopyLines
 
- LDA #%00000000         \ Set ColourLogic = %00000000
- STA ColourLogic
+ LDA #%00000000         \ Set colourLogic = %00000000
+ STA colourLogic
 
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use AND logic and bit
-                        \ patterns that match ColourCycle
+                        \ patterns that match colourCycle
 
 .dcal1
 
- LDA ColourCycle        \ If bit 7 of ColourCycle is clear, i.e. %00001111, jump
+ LDA colourCycle        \ If bit 7 of colourCycle is clear, i.e. %00001111, jump
  BPL dcal3              \ down to dcal3
 
-                        \ If we get here, ColourCycle is %11110000
+                        \ If we get here, colourCycle is %11110000
 
- LDX LineBuffer2Count   \ If LineBuffer2Count <> 47, line buffer 2 is not
+ LDX lineBuffer2Count   \ If lineBuffer2Count <> 47, line buffer 2 is not
  CPX #47                \ empty, so jump down to dcal2 to draw the next line
  BNE dcal2              \ from the buffer
 
@@ -4612,14 +4614,14 @@ ORG CODE%
 
 .dcal2
 
- DEC LineBuffer2Count   \ Decrement the value in LineBuffer2Count as we are
+ DEC lineBuffer2Count   \ Decrement the value in lineBuffer2Count as we are
                         \ about to draw the next line from buffer 2
 
  JMP dcal5              \ Jump down to dcal5 to draw the next line from buffer 2
 
 .dcal3
 
- LDX LineBuffer1Count   \ If LineBuffer1Count <> -1, line buffer 1 is not
+ LDX lineBuffer1Count   \ If lineBuffer1Count <> -1, line buffer 1 is not
  CPX #255               \ empty, so jump down to dcal4 to draw the next line
  BNE dcal4              \ from the buffer
 
@@ -4627,36 +4629,36 @@ ORG CODE%
 
 .dcal4
 
- DEC LineBuffer1Count   \ Decrement the value in LineBuffer1Count as we are
+ DEC lineBuffer1Count   \ Decrement the value in lineBuffer1Count as we are
                         \ about to draw the next line from buffer 1
 
 .dcal5
 
                         \ We now fetch the next line from the line buffer
 
- LDA LineBufferR,X      \ Set R to the start x-coordinate from LineBufferR
+ LDA lineBufferR,X      \ Set R to the start x-coordinate from lineBufferR
  STA R
 
  STA xLo
 
- LDA LineBufferW,X      \ Set W to the ??? from LineBufferW
+ LDA lineBufferW,X      \ Set W to the ??? from lineBufferW
  STA W
 
- LDA LineBufferS,X      \ Set S to the start y-coordinate from LineBufferS
+ LDA lineBufferS,X      \ Set S to the start y-coordinate from lineBufferS
  STA S
 
  STA yLo
 
- LDA LineBufferG,X      \ Set G to ??? from LineBufferG
+ LDA lineBufferG,X      \ Set G to ??? from lineBufferG
  STA G
 
- LDA LineBufferT,X      \ Set T to the |x-delta| from LineBufferT
+ LDA lineBufferT,X      \ Set T to the |x-delta| from lineBufferT
  STA T
 
- LDA LineBufferU,X      \ Set U to the |y-delta| from LineBufferU
+ LDA lineBufferU,X      \ Set U to the |y-delta| from lineBufferU
  STA U
 
- LDA LineBufferV,X      \ Set V to the direction from LineBufferV
+ LDA lineBufferV,X      \ Set V to the direction from lineBufferV
  STA V
 
  JSR DrawCanopyLine     \ Draw the line
@@ -4745,24 +4747,24 @@ ORG CODE%
 
 .L1821
 
- LDA LowNibble,X
- ORA HighNibble,Y
+ LDA lowNibble,X
+ ORA highNibble,Y
  STA T
  AND #%11110000
- ORA Times16Hi,X
+ ORA times16Hi,X
  STA U
  AND #%00001111
- ORA Times16Lo,Y
+ ORA times16Lo,Y
  TAY
  AND #%11110000
- ORA LowNibble,X
+ ORA lowNibble,X
  TAX
- LDA TimesTable,X
+ LDA timesTable,X
  STA V
  LDX T
- LDA TimesTable,X
+ LDA timesTable,X
  CLC
- ADC TimesTable,Y
+ ADC timesTable,Y
  ROR A
  ROR A
  ROR A
@@ -4776,7 +4778,7 @@ ORG CODE%
  LDA T
  AND #%00011111
  LDX U
- ADC TimesTable,X
+ ADC timesTable,X
  RTS
 
 \ ******************************************************************************
@@ -4941,28 +4943,28 @@ ORG CODE%
 
  LDX S
  LDY V
- LDA Times16Lo,Y
- ORA Times16Hi,X
+ LDA times16Lo,Y
+ ORA times16Hi,X
  TAY
  AND #&F0
- ORA LowNibble,X
+ ORA lowNibble,X
  STA U
  LDX R
  AND #&F0
- ORA Times16Hi,X
+ ORA times16Hi,X
  TAX
- LDA TimesTable,X
+ LDA timesTable,X
  TAX
  STX T
- LDA TimesTable,Y
+ LDA timesTable,Y
  TAY
- LDA Times16Hi,X
- ORA Times16Lo,Y
+ LDA times16Hi,X
+ ORA times16Lo,Y
  CLC
  LDX U
- ADC TimesTable,X
+ ADC timesTable,X
  STA W
- LDA Times16Hi,Y
+ LDA times16Hi,Y
  ADC #0
  STA G
  BIT K
@@ -4971,12 +4973,12 @@ ORG CODE%
  LDX R
  LDA V
  AND #&0F
- ORA Times16Lo,X
+ ORA times16Lo,X
  TAY
  LDX T
- LDA Times16Lo,X
+ LDA times16Lo,X
  CLC
- ADC TimesTable,Y
+ ADC timesTable,Y
  BCC L1989
 
  INC W
@@ -5029,7 +5031,7 @@ ORG CODE%
  STY QQ
  LDY L35B0,X
  STY RR
- LDA Times16Hi,Y
+ LDA times16Hi,Y
  STA UU
  CMP #9
  ROR K
@@ -5179,27 +5181,27 @@ ORG CODE%
 
  LDA xLo
  CLC
- ADC XCoordLo,Y
- STA XCoordLo,X
+ ADC xLineLo,Y
+ STA xLineLo,X
  LDA xHi
- ADC XCoordHi,Y
- STA XCoordHi,X
+ ADC xLineHi,Y
+ STA xLineHi,X
  PHP
  CLC
  LDA yLo
- ADC YCoordLo,Y
- STA YCoordLo,X
+ ADC yLineLo,Y
+ STA yLineLo,X
  LDA yHi
- ADC YCoordHi,Y
- STA YCoordHi,X
+ ADC yLineHi,Y
+ STA yLineHi,X
  PHP
  CLC
  LDA zLo
- ADC ZCoordLo,Y
- STA ZCoordLo,X
+ ADC zLineLo,Y
+ STA zLineLo,X
  LDA zHi
- ADC ZCoordHi,Y
- STA ZCoordHi,X
+ ADC zLineHi,Y
+ STA zLineHi,X
  JMP L4B8C
 
  NOP
@@ -5719,17 +5721,17 @@ ORG CODE%
 .L1D8D
 
  LDX GG
- LDA XCoordLo,X
+ LDA xLineLo,X
  STA PP
- LDA XCoordHi,X
+ LDA xLineHi,X
  STA SS
- LDA YCoordLo,X
+ LDA yLineLo,X
  STA QQ
- LDA YCoordHi,X
+ LDA yLineHi,X
  STA TT
- LDA ZCoordLo,X
+ LDA zLineLo,X
  STA RR
- LDA ZCoordHi,X
+ LDA zLineHi,X
  STA UU
  LDX #5
  LDA #0
@@ -5787,7 +5789,7 @@ ORG CODE%
  BVC L1E07
 
  LDA #&40
- STA ObjectInView
+ STA showLine
 
 .L1E07
 
@@ -5822,17 +5824,17 @@ ORG CODE%
 .L1E1A
 
  LDA xLo
- STA XCoordLo,X
+ STA xLineLo,X
  LDA xHi
- STA XCoordHi,X
+ STA xLineHi,X
  LDA yLo
- STA YCoordLo,X
+ STA yLineLo,X
  LDA yHi
- STA YCoordHi,X
+ STA yLineHi,X
  LDA zLo
- STA ZCoordLo,X
+ STA zLineLo,X
  LDA zHi
- STA ZCoordHi,X
+ STA zLineHi,X
  RTS
 
  BRK
@@ -6083,8 +6085,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the compass heading from Compass and reduces it to the
-\ range 0 to 73, before passing it to the DrawIndicatorHand to update the
+\ This section takes the compass heading from compassHeading and reduces it to
+\ the range 0 to 73, before passing it to the DrawIndicatorHand to update the
 \ on-screen compass.
 \
 \ ******************************************************************************
@@ -6093,7 +6095,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 0
 
- LDA Compass            \ Set T = Compass
+ LDA compassHeading     \ Set T = compassHeading
  STA T
 
                         \ We now calculate A = T * n / 256 with a hardcoded n,
@@ -6147,7 +6149,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the airspeed from (AirspeedHi AirspeedLo) and reduces it to
+\ This section takes the airspeed from (airspeedHi airspeedLo) and reduces it to
 \ match the scale of the indicator, which is represented by a value of 9 (for
 \ 50 mph) to 74 (for 400 mph). The airspeed value can be outside these limits,
 \ but this shows the scale factor.
@@ -6161,7 +6163,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 1
 
- LDA AirspeedHi         \ If the high byte of the airspeed in AirspeedHi is
+ LDA airspeedHi         \ If the high byte of the airspeed in airspeedHi is
  BPL uind3              \ positive, jump down to uind3 to skip the following
 
  LDA #0                 \ The airspeed is negative, so set A to 0 and jump to
@@ -6170,16 +6172,16 @@ ORG CODE%
 
 .uind3
 
- LDA AirspeedLo         \ Set A = (AirspeedHi AirspeedLo) * 2 / 256
+ LDA airspeedLo         \ Set A = (airspeedHi airspeedLo) * 2 / 256
  ASL A                  \
- LDA AirspeedHi
+ LDA airspeedHi
  ROL A
 
                         \ So by now, A matches the range of the airspeed
                         \ indicator - here's why:
                         \
-                        \ The IndicatorBase for this indicator is 48 and the
-                        \ IndicatorMin/Max range shown on the dial is 57 to 122,
+                        \ The indicatorBase for this indicator is 48 and the
+                        \ indicatorMin/Max range shown on the dial is 57 to 122,
                         \ which represents 50 to 400 mph (according to the game
                         \ manual)
                         \
@@ -6188,7 +6190,7 @@ ORG CODE%
                         \ represents 400 mph (as 48 + 74 = 122), for example
                         \
                         \ These values correspond to the following 16-bit values
-                        \ of (AirspeedHi AirspeedLo):
+                        \ of (airspeedHi airspeedLo):
                         \
                         \   * If A = 9, then Airspeed = (00000100 10100000),
                         \     which is 1184, or 50 mph
@@ -6213,11 +6215,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the altitude from (AltitudeHi AltitudeLo) and reduces it to
+\ This section takes the altitude from (altitudeHi altitudeLo) and reduces it to
 \ the range 0 to 254, before passing it to the DrawIndicatorHand to update the
 \ small hand of the on-screen altimeter.
 \
-\ It also sets AltitudeMinutes to the low byte of the altitude, reduced to the
+\ It also sets altitudeMinutes to the low byte of the altitude, reduced to the
 \ range 0 to 104, so it can be used in part 5 to update the large hand of the
 \ on-screen altimeter.
 \
@@ -6227,16 +6229,16 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 2
 
- LDA AltitudeLo         \ Set (A R) = (AltitudeHi AltitudeLo)
+ LDA altitudeLo         \ Set (A R) = (altitudeHi altitudeLo)
  STA R
- LDA AltitudeHi
+ LDA altitudeHi
 
  LSR A                  \ Set (S R) = (A R) / 4
- ROR R                  \           = (AltitudeHi AltitudeLo) / 4
+ ROR R                  \           = (altitudeHi altitudeLo) / 4
  LSR A                  \           = altitude
  ROR R                  \
  STA S                  \ so (S R) is the altitude in feet, as the value stored
-                        \ in (AltitudeHi AltitudeLo) is the actual altitude x 4
+                        \ in (altitudeHi altitudeLo) is the actual altitude x 4
 
  LDA #0                 \ Set T = 0
  STA T
@@ -6279,7 +6281,7 @@ ORG CODE%
                         \ reduced to a range of 0 to 104 to represent the whole
                         \ dial's range of 0 to 1,000 feet
 
- STA AltitudeMinutes    \ Store the result in AltitudeMinutes, so we can draw
+ STA altitudeMinutes    \ Store the result in altitudeMinutes, so we can draw
                         \ the altimeter's minute hand in indicator 3
 
                         \ We now calculate A = S * n / 256 with a hardcoded n,
@@ -6328,26 +6330,26 @@ ORG CODE%
                         
  STA U                  \ Set U = S * 104 / 256
 
- LDA T                  \ Set (U A) = (U AltitudeMinutes) + (0 T)
+ LDA T                  \ Set (U A) = (U altitudeMinutes) + (0 T)
  CLC                    \
- ADC AltitudeMinutes    \ by adding the low bytes
+ ADC altitudeMinutes    \ by adding the low bytes
 
  BCC uind5              \ And, if the addition overflowed, incrementing the high
  INC U                  \ byte in U
 
                         \ So we have just calculated:
                         \
-                        \   (U A) = (U AltitudeMinutes) + (0 T)
+                        \   (U A) = (U altitudeMinutes) + (0 T)
                         \
                         \ and we already know that:
                         \
                         \   U = S * 104 / 256
                         \
-                        \   AltitudeMinutes = R * 104 / 256
+                        \   altitudeMinutes = R * 104 / 256
                         \
                         \ so plugging these into the above, we get:
                         \
-                        \   (U A) = (U AltitudeMinutes) + (0 T)
+                        \   (U A) = (U altitudeMinutes) + (0 T)
                         \         = (S*104 R*104) / 256 + (0 T)
                         \         = (S R) * 104 / 256
 
@@ -6391,7 +6393,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 3
 
- LDA AltitudeMinutes    \ Fetch the value of the altimeter's minute hand that we
+ LDA altitudeMinutes    \ Fetch the value of the altimeter's minute hand that we
                         \ calculated in part 4
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
@@ -6428,7 +6430,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the vertical speed from (VerticalSpeedHi VerticalSpeedLo)
+\ This section takes the vertical speed from (verticalSpeedHi verticalSpeedLo)
 \ and reduces it to the range -40 to +40, before passing it to the
 \ DrawIndicatorHand to update the on-screen vertical speed indicator.
 \
@@ -6438,9 +6440,9 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 4
 
- LDA VerticalSpeedLo    \ Set (A T) = (VerticalSpeedHi VerticalSpeedLo)
+ LDA verticalSpeedLo    \ Set (A T) = (verticalSpeedHi verticalSpeedLo)
  STA T                  \           = VerticalSpeed
- LDA VerticalSpeedHi
+ LDA verticalSpeedHi
 
  BPL uind9              \ If the vertical speed is positive, jump down to uind9
 
@@ -6452,7 +6454,7 @@ ORG CODE%
                         \ starting with the low bytes
 
  LDA #0                 \ And then the high bytes
- SBC VerticalSpeedHi
+ SBC verticalSpeedHi
 
 .uind9
 
@@ -6520,7 +6522,7 @@ ORG CODE%
 
 .uind11
 
- BIT VerticalSpeedHi    \ If the high byte in VerticalSpeedHi is positive (and
+ BIT verticalSpeedHi    \ If the high byte in verticalSpeedHi is positive (and
  BPL uind12             \ therefore so is the vertical speed), jump to uind12 to
                         \ skip the following
 
@@ -6590,7 +6592,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the turn rate from (TurnHi TurnLo) and reduces it to the
+\ This section takes the turn rate from (turnHi turnLo) and reduces it to the
 \ range -19 to +19, before passing it to the DrawIndicatorHand to update the
 \ bottom part of the on-screen slip-and-turn indicator.
 \
@@ -6600,9 +6602,9 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 5
 
- LDA TurnLo             \ Set (A T) = (TurnHi TurnLo)
+ LDA turnLo             \ Set (A T) = (turnHi turnLo)
  STA T                  \           = Turn
- LDA TurnHi
+ LDA turnHi
 
  BPL uind15             \ If the turn rate is positive, jump down to uind9
 
@@ -6614,7 +6616,7 @@ ORG CODE%
                         \ starting with the low bytes
 
  LDA #0                 \ And then the high bytes
- SBC TurnHi
+ SBC turnHi
 
 .uind15
 
@@ -6676,7 +6678,7 @@ ORG CODE%
                         \ which takes |Turn| in the range 0 to 140 and reduces
                         \ it to the range 0 to 19
 
- BIT TurnHi             \ If the high byte in TurnHi is negative (and therefore
+ BIT turnHi             \ If the high byte in turnHi is negative (and therefore
  BMI uind18             \ so is the turn rate), jump to uind18 to skip the
                         \ following
 
@@ -6712,7 +6714,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 6
 
- LDA Slip               \ Set A = Slip
+ LDA slipRate           \ Set A = slipRate
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
                         \ the indicator on-screen, returning from the subroutine
@@ -6878,8 +6880,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the rudder position from Rudder and reduces it to the
-\ range -8 to +8, before passing it to DrawIndicatorBar to update the rudder
+\ This section takes the rudder position from rudderPosition and reduces it to
+\ the range -8 to +8, before passing it to DrawIndicatorBar to update the rudder
 \ indicator.
 \
 \ ******************************************************************************
@@ -6889,7 +6891,7 @@ ORG CODE%
                         \ If we get here then the indicator number in X is 9
 
  LDX #1                 \ Set X = 1 so the current value of the indicator gets
-                        \ stored in JoyYC+1 in DrawIndicatorBar
+                        \ stored in joyYCoord+1 in DrawIndicatorBar
 
  LDA #128               \ Set S = 128, to denote that when we fall through into
  STA S                  \ DrawIndicatorBar below, JC is the y-coordinate, so
@@ -6899,7 +6901,7 @@ ORG CODE%
  LDA #80                \ Set W = 80 to use as the centre y-coordinate for the
  STA W                  \ rudder indicator (i.e. the centre bar)
 
- LDA Rudder             \ Set A = Rudder
+ LDA rudderPosition     \ Set A = rudderPosition
 
  SEC                    \ Set the C flag so the following call to ScaleSigned
                         \ divides the rudder value by 16
@@ -6931,11 +6933,12 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the joystick position from Aileron and Elevator and reduces
-\ it to -8 to +8 (for the x-position in Aileron) and to -32 to +32 (for the
-\ y-position in Elevator), before passing it to the DrawJoystickCross to
-\ update the cross in the joystick position display. The x-position is reduced
-\ more because the joystick position display is taller than it is wide.
+\ This section takes the joystick position from aileronPosition and
+\ elevatorPosition and reduces it to -8 to +8 (for the x-position in
+\ aileronPosition) and to -32 to +32 (for the y-position in elevatorPosition),
+\ before passing it to the DrawJoystickCross to update the cross in the joystick
+\ position display. The x-position is reduced more because the joystick position
+\ display is taller than it is wide.
 \
 \ Note that this indicator has two IDs, 8 and 10, so that it gets updated twice
 \ as often by UpdateDashboard.
@@ -6951,22 +6954,23 @@ ORG CODE%
  JSR DrawJoystickCross  \ display using EOR logic, which removes it
 
  LDA #%00100010         \ Redraw the joystick position display's x-axis, in case
- STA Row24_Block18_7    \ the old cross was overwriting the axis
- STA Row24_Block21_7
+ STA row24_block18_7    \ the old cross was overwriting the axis
+ STA row24_block21_7
  LDA #%01000100
- STA Row24_Block19_7
+ STA row24_block19_7
 
  LDA #%10011001         \ Redraw the joystick position display's y-axis, in case
- STA Row24_Block20_7    \ the old cross was overwriting the axis
+ STA row24_block20_7    \ the old cross was overwriting the axis
  LDA #%10001000
- STA Row21_Block20_7
- STA Row22_Block20_7
- STA Row23_Block20_7
- STA Row25_Block20_7
- STA Row26_Block20_7
- STA Row27_Block20_7
+ STA row21_block20_7
+ STA row22_block20_7
+ STA row23_block20_7
+ STA row25_block20_7
+ STA row26_block20_7
+ STA row27_block20_7
 
- LDA Aileron            \ Set A = Aileron, the x-position of the joystick
+ LDA aileronPosition    \ Set A = aileronPosition, the x-position of the
+                        \ joystick
 
  SEC                    \ Set the C flag so the following call to ScaleSigned
                         \ divides the joystick x-position by 16 
@@ -6974,12 +6978,13 @@ ORG CODE%
  JSR ScaleSigned        \ Scale the value in A down by a factor of 16, retaining
                         \ the sign and being sensitive to small values
  
- STA JoyXC              \ Store the scaled value of A in JoyXC, so we can pass
-                        \ it to DrawJoystickCross below to draw the new cross,
-                        \ but also so we can erase this cross when we need to
-                        \ update the indicator in the future
+ STA joyXCoord          \ Store the scaled value of A in joyXCoord, so we can
+                        \ pass it to DrawJoystickCross below to draw the new
+                        \ cross, but also so we can erase this cross when we
+                        \ need to update the indicator in the future
 
- LDA Elevator           \ Set A = Elevator, the y-position of the joystick
+ LDA elevatorPosition   \ Set A = elevatorPosition, the y-position of the
+                        \ joystick
 
  CLC                    \ Clear the C flag so the following call to ScaleSigned
                         \ divides the joystick y-position by 4
@@ -6994,10 +6999,10 @@ ORG CODE%
                         \ corresponds to moving the stick down, which should be
                         \ shown lower down the indicator
 
- STA JoyYC              \ Store the scaled value of A in JoyYC, so we can pass
-                        \ it to DrawJoystickCross below to draw the new cross,
-                        \ but also so we can erase this cross when we need to
-                        \ update the indicator in the future
+ STA joyYCoord          \ Store the scaled value of A in joyYCoord, so we can
+                        \ pass it to DrawJoystickCross below to draw the new
+                        \ cross, but also so we can erase this cross when we
+                        \ need to update the indicator in the future
 
  LDA #0                 \ Draw a new cross on the joystick position display
  JSR DrawJoystickCross
@@ -7013,7 +7018,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the thrust from (ThrustHi ThrustLo) and reduces it to the
+\ This section takes the thrust from (thrustHi thrustLo) and reduces it to the
 \ range 0 to 60, before falling througn into DrawIndicatorBar to update the
 \ rudder indicator.
 \
@@ -7032,9 +7037,9 @@ ORG CODE%
  STA W                  \ thrust indicator (i.e. the left end of the bar, as we
                         \ are only showing positive thrust values)
 
- LDA ThrustHi           \ Set (R A) = (ThrustHi ThrustLo)
+ LDA thrustHi           \ Set (R A) = (thrustHi thrustLo)
  STA R                  \           = Thrust
- LDA ThrustLo
+ LDA thrustLo
 
  LDX #3                 \ Set X = 3 to act as a shift counter in the following
                         \ loop, where we right shift (R A) four times
@@ -7069,7 +7074,7 @@ ORG CODE%
                         \ the indicator in DrawIndicatorBar
 
  LDX #3                 \ Set X = 3 so the current value of the indicator gets
-                        \ stored in JoyYC+3 in DrawIndicatorBar
+                        \ stored in joyYCoord+3 in DrawIndicatorBar
 
  LDY #243               \ Set Y = 243 to use as the y-coordinate of the top of
                         \ the vertical bar
@@ -7103,7 +7108,7 @@ ORG CODE%
 \                       As all the vertical bar indicators are horizontal in
 \                       Aviator, only the second option is used
 \
-\   X                   The offset from JoyYC where we store the indicator
+\   X                   The offset from joyYCoord where we store the indicator
 \                       value, so it can be erased when the bar needs to move:
 \
 \                         * 1 = rudder indicator (indicator 9)
@@ -7125,12 +7130,12 @@ ORG CODE%
 
  STY JC                 \ Set JC = Y, the y-coordinate of the top of the bar
 
- LDA JoyYC,X            \ Set G = the X-th byte of JoyYC, which contains the
+ LDA joyYCoord,X        \ Set G = the X-th byte of joyYCoord, which contains the
  STA G                  \ x-coordinate of the current bar, so we can erase it
 
- LDA H                  \ Store H in the X-th byte of JoyYC, so the next time we
- STA JoyYC,X            \ call this routine, we can use this to erase the bar
-                        \ we are about to draw
+ LDA H                  \ Store H in the X-th byte of joyYCoord, so the next
+ STA joyYCoord,X        \ time we call this routine, we can use this to erase
+                        \ the bar we are about to draw
 
  JSR EraseOrthoLine     \ Erase the current vertical bar at x-coordinate G
 
@@ -7171,10 +7176,10 @@ ORG CODE%
                         \   * X = 5: Turn                   A = -19 to  19
                         \   * X = 6: Slip                   A =  ?? to  ??
 
- CLC                    \ Set A = A + the X-th byte of IndicatorBase
- ADC IndicatorBase,X    \
+ CLC                    \ Set A = A + the X-th byte of indicatorBase
+ ADC indicatorBase,X    \
                         \ This adds the relevant indicator's base value from the
-                        \ IndicatorBase table to give the following:
+                        \ indicatorBase table to give the following:
                         \
                         \   * Compass                 +0    A =  0 to  73
                         \   * Airspeed               +48    A = 57 to 122
@@ -7184,11 +7189,11 @@ ORG CODE%
                         \   * Turn                   +53    A = 34 to  72
                         \   * Slip                  +106    A = ?? to  ??
 
- CMP IndicatorMin,X     \ If A >= the X-th byte of IndicatorMin, jump to dinh1
+ CMP indicatorMin,X     \ If A >= the X-th byte of indicatorMin, jump to dinh1
  BCS dinh1              \ to skip the following
 
- LDA IndicatorMin,X     \ Set A to the X-th byte of IndicatorMin, so A is at
-                        \ least the relevant value in IndicatorMin
+ LDA indicatorMin,X     \ Set A to the X-th byte of indicatorMin, so A is at
+                        \ least the relevant value in indicatorMin
 
  BCC dinh2              \ Jump to dinh2 to skip the following, as we don't need
                         \ to check the maximum limit (this BCC is effectively a
@@ -7196,18 +7201,18 @@ ORG CODE%
 
 .dinh1
 
-                        \ If we get here then A >= the X-th byte of IndicatorMin
+                        \ If we get here then A >= the X-th byte of indicatorMin
 
- CMP IndicatorMax,X     \ If A >= the X-th byte of IndicatorMax, jump to dinh2
+ CMP indicatorMax,X     \ If A >= the X-th byte of indicatorMax, jump to dinh2
  BCC dinh2              \ to skip the following
 
- LDA IndicatorMax,X     \ Set A to the X-th byte of IndicatorMax, so A is no
-                        \ more than the relevant value in IndicatorMax
+ LDA indicatorMax,X     \ Set A to the X-th byte of indicatorMax, so A is no
+                        \ more than the relevant value in indicatorMax
 
 .dinh2
 
                         \ A is now clipped to this indicator's range as given in
-                        \ the IndicatorMin and IndicatorMax tables, so the final
+                        \ the indicatorMin and indicatorMax tables, so the final
                         \ ranges are:
                         \
                         \   * Compass                       A =  0 to  73
@@ -7263,19 +7268,19 @@ ORG CODE%
 
 .DrawIndicatorLine
 
- LDA IndicatorLineI,X   \ Set I = x-coordinate of the starting point of the
+ LDA indicatorLineI,X   \ Set I = x-coordinate of the starting point of the
  STA I                  \ current line
 
- LDA IndicatorLineJ,X   \ Set J = y-coordinate of the starting point of the
+ LDA indicatorLineJ,X   \ Set J = y-coordinate of the starting point of the
  STA J                  \ current line
 
- LDA IndicatorLineT,X   \ Set T = x-delta of the current line
+ LDA indicatorLineT,X   \ Set T = x-delta of the current line
  STA T
 
- LDA IndicatorLineU,X   \ Set U = y-delta of the current line
+ LDA indicatorLineU,X   \ Set U = y-delta of the current line
  STA U
 
- LDA IndicatorLineV,X   \ Set V = direction of the current line
+ LDA indicatorLineV,X   \ Set V = direction of the current line
  STA V
 
  LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
@@ -7302,7 +7307,7 @@ ORG CODE%
 
 .dinl1
 
- STA Row23_Block13_2,Y  \ Redraw the Y-th pixel row in the centre block
+ STA row23_block13_2,Y  \ Redraw the Y-th pixel row in the centre block
 
  LDA #%01000100         \ The top two pixel rows of the centre block contain the
                         \ vertical mark at the centre of the indicator, so set A
@@ -7314,10 +7319,10 @@ ORG CODE%
                         \ in the centre block
 
  LDA #%00110011         \ Redraw the two-pixels at the left end of the
- STA Row23_Block12_4    \ artificial horizon's centre line
+ STA row23_block12_4    \ artificial horizon's centre line
 
  LDA #%10001000         \ Redraw the single pixel at the right end of the
- STA Row23_Block14_4    \ artificial horizon's centre line
+ STA row23_block14_4    \ artificial horizon's centre line
 
  LDA S                  \ Fetch the x-coordinate of the the starting point of
                         \ the new line from S
@@ -7325,13 +7330,13 @@ ORG CODE%
  STA I                  \ Set I = the x-coordinate of the starting point of the
                         \ new line to draw
 
- STA IndicatorLineI,X   \ Store the x-coordinate in IndicatorLineI, so we can
+ STA indicatorLineI,X   \ Store the x-coordinate in indicatorLineI, so we can
                         \ use it to erase the line later
 
  LDA H                  \ Set A = the y-coordinate of the starting point of the
                         \ new line to draw
 
- STA IndicatorLineJ,X   \ Store the y-coordinate in IndicatorLineJ, so we can
+ STA indicatorLineJ,X   \ Store the y-coordinate in indicatorLineJ, so we can
                         \ use it to erase the line later
 
  BNE dinl3              \ Jump to dinl3 to draw the new line (this BNE is
@@ -7342,10 +7347,10 @@ ORG CODE%
                         \ If we get here then this is indicator 0-6, so it's a
                         \ hand-based dial
 
- LDA IndicatorLineI,X   \ Set I = x-coordinate of starting point of hand, which
+ LDA indicatorLineI,X   \ Set I = x-coordinate of starting point of hand, which
  STA I                  \ is a fixed value for hand-based dials
 
- LDA IndicatorLineJ,X   \ Set J = y-coordinate of starting point of hand, which
+ LDA indicatorLineJ,X   \ Set J = y-coordinate of starting point of hand, which
                         \ is a fixed value for hand-based dials
 
 .dinl3
@@ -7357,21 +7362,21 @@ ORG CODE%
 
  STA T                  \ Set T = the x-delta of the new line
 
- STA IndicatorLineT,X   \ Store the x-delta in IndicatorLineT, so we can use it
+ STA indicatorLineT,X   \ Store the x-delta in indicatorLineT, so we can use it
                         \ to erase the line later
 
  LDA G                  \ Fetch the y-delta of the new line from G
 
  STA U                  \ Set U = the y-delta of the new line
 
- STA IndicatorLineU,X   \ Store the y-delta in IndicatorLineU, so we can use it
+ STA indicatorLineU,X   \ Store the y-delta in indicatorLineU, so we can use it
                         \ to erase the line later
 
  LDA R                  \ Fetch the direction of the new line from R
 
  STA V                  \ Set V = the direction of the new line
 
- STA IndicatorLineV,X   \ Store the direction in IndicatorLineV, so we can use
+ STA indicatorLineV,X   \ Store the direction in indicatorLineV, so we can use
                         \ it to erase the line later
 
  LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the new
@@ -7402,9 +7407,9 @@ ORG CODE%
 \
 \                         * 128 = Erase (using EOR logic)
 \
-\   JoyXC               The current joystick x-coordinate
+\   joyXCoord           The current joystick x-coordinate
 \
-\   JoyYC               The current joystick y-coordinate
+\   joyYCoord           The current joystick y-coordinate
 \
 \ ******************************************************************************
 
@@ -7415,10 +7420,10 @@ ORG CODE%
                         \ First we draw the 3-pixel horizontal line right from
                         \ (79 + x, 216 + y)
 
- LDA JoyYC              \ Set H = JoyYC
+ LDA joyYCoord          \ Set H = joyYCoord
  STA H
 
- LDA JoyXC              \ Set JC = JoyXC + 79
+ LDA joyXCoord          \ Set JC = joyXCoord + 79
  CLC                    \
  ADC #79                \ to get the x-coordinate of the left end of the
  STA JC                 \ horizontal line at 79 + x
@@ -7442,10 +7447,10 @@ ORG CODE%
                         \ Now we draw the 5-pixel vertical line down from
                         \ (80 + x, 214 + y)
 
- LDA JoyXC              \ Set H = JoyXC
+ LDA joyXCoord          \ Set H = joyXCoord
  STA H
 
- LDA JoyYC              \ Set JC = JoyYC + 214
+ LDA joyYCoord          \ Set JC = joyYCoord + 214
  CLC                    \
  ADC #214               \ to get the y-coordinate of the top end of the vertical
  STA JC                 \ line at 214 + y
@@ -7567,12 +7572,12 @@ ORG CODE%
  STY R                  \ of the hand on the dial (we will change it below if
                         \ required)
 
- LDY DialQuadrant,X     \ Set Y = the DialQuadrant value for this indicator,
+ LDY dialQuadrant,X     \ Set Y = the dialQuadrant value for this indicator,
                         \ which is the size of a quarter of the dial in terms of
                         \ the value in A
 
  INY                    \ Set K = Y + 1
- STY K                  \       = DialQuadrant + 1
+ STY K                  \       = dialQuadrant + 1
                         \
                         \ Doing this enables us to subtract this value below,
                         \ leaving the result in a suitable state for negating
@@ -7583,7 +7588,7 @@ ORG CODE%
 .dhvc1
 
  SBC K                  \ Set A = A - K
-                        \       = A - (DialQuadrant + 1)
+                        \       = A - (dialQuadrant + 1)
                         \
                         \ so we have subtracted a quadrant's worth of value from
                         \ the value we want to show in A
@@ -7603,10 +7608,10 @@ ORG CODE%
 
 .dhvc2
 
- SBC DialQuadrant,X     \ Subtract a second quadrant's worth, so:
+ SBC dialQuadrant,X     \ Subtract a second quadrant's worth, so:
                         \
-                        \   A = A - (DialQuadrant + 1) - DialQuadrant
-                        \     = A - 2 * DialQuadrant - 1
+                        \   A = A - (dialQuadrant + 1) - dialQuadrant
+                        \     = A - 2 * dialQuadrant - 1
                         \
                         \ If we want to negate this value below, then we can do
                         \ this using two's complement by simply inverting all
@@ -7648,7 +7653,7 @@ ORG CODE%
 
 .dhvc4
 
- SBC DialQuadrant,X     \ Subtract a fourth quadrant's worth
+ SBC dialQuadrant,X     \ Subtract a fourth quadrant's worth
 
  BCS dhvc1              \ If the subtraction didn't underflow, jump to dhvc1 to
                         \ start the subtraction process again, as we have now
@@ -7689,7 +7694,7 @@ ORG CODE%
                         \ x correctly with the above EOR, so if we calculate
                         \ y = w - x, it will be correct
 
- LDA DialQuadrant,X     \ Set A = the DialQuadrant value for this indicator,
+ LDA dialQuadrant,X     \ Set A = the dialQuadrant value for this indicator,
                         \ which is the size of a quarter of the dial in terms of
                         \ the value in A. This is what we use for w in the above
 
@@ -7701,11 +7706,11 @@ ORG CODE%
                         \ We now cap the y-delta, which has the effect of
                         \ blunting the points of our diamond
                         
- CMP YDeltaMax,X        \ If A < YDeltaMax for this indicator, jump to dhvc7 to
+ CMP yDeltaMax,X        \ If A < yDeltaMax for this indicator, jump to dhvc7 to
  BCC dhvc7              \ skip the following instruction
 
- LDA YDeltaMax,X        \ Set A = YDeltaMax, so A is never greater than the
-                        \ YDeltaMax value for this indicator
+ LDA yDeltaMax,X        \ Set A = yDeltaMax, so A is never greater than the
+                        \ yDeltaMax value for this indicator
 
 .dhvc7
 
@@ -7723,11 +7728,11 @@ ORG CODE%
  LSR A                  \ because mode 5 pixels are twice as wide as they are
                         \ high, so this scales the x-delta to be a pixel value
 
- CMP XDeltaMax,X        \ If A < XDeltaMax for this indicator, jump to dhvc8 to
+ CMP xDeltaMax,X        \ If A < xDeltaMax for this indicator, jump to dhvc8 to
  BCC dhvc8              \ skip the following instruction
 
- LDA XDeltaMax,X        \ Set A = XDeltaMax, so A is never greater than the
-                        \ XDeltaMax value for this indicator
+ LDA xDeltaMax,X        \ Set A = xDeltaMax, so A is never greater than the
+                        \ xDeltaMax value for this indicator
 
 .dhvc8
 
@@ -8041,13 +8046,13 @@ ORG CODE%
  LSR A                  \ pixel (I, J), as each character row is 8 pixels high
  TAY
 
- LDA YLookupLo,Y        \ Set P = Y-th byte of YLookupLo
- CLC                    \         + X-th byte of XLookupLo
- ADC XLookupLo,X        \       = LO(screen address) + LO(X * 8)
+ LDA yLookupLo,Y        \ Set P = Y-th byte of yLookupLo
+ CLC                    \         + X-th byte of xLookupLo
+ ADC xLookupLo,X        \       = LO(screen address) + LO(X * 8)
  STA P
 
- LDA YLookupHi,Y        \ Set Q = Y-th byte of YLookupHi
- ADC XLookupHi,X        \         + X-th byte of XLookupHi
+ LDA yLookupHi,Y        \ Set Q = Y-th byte of yLookupHi
+ ADC xLookupHi,X        \         + X-th byte of xLookupHi
  STA Q                  \       = HI(screen address) + HI(X * 8)
 
                         \ So (P Q) is the screen address of the pixel row
@@ -8508,7 +8513,7 @@ ORG CODE%
 
 .UpdateDashboard
 
- LDX Indicator0To6      \ Increment the indicator number to point to the next
+ LDX indicator0To6      \ Increment the indicator number to point to the next
  INX                    \ indicator within the range 0 to 6
 
  CPX #7                 \ If X < 7, skip the following instruction
@@ -8519,13 +8524,13 @@ ORG CODE%
 
 .udas1
 
- STX Indicator0To6      \ Store the updated indicator number
+ STX indicator0To6      \ Store the updated indicator number
 
  JSR UpdateIndicator    \ Update indicator X (0 to 6)
 
 .UpdateDash7To11
 
- LDX Indicator7To11     \ Increment the indicator number to point to the next
+ LDX indicator7To11     \ Increment the indicator number to point to the next
  INX                    \ indicator within the range 7 to 11
 
  CPX #11                \ If X < 11, skip the following instruction
@@ -8536,12 +8541,12 @@ ORG CODE%
 
 .udas2
 
- STX Indicator7To11     \ Store the updated indicator number
+ STX indicator7To11     \ Store the updated indicator number
 
  JSR UpdateIndicator    \ Update indicator X (7 to 11)
 
  LDA #%01110111         \ Redraw the small horizontal line in the centre of the
- STA Row28_Block26_5    \ slip-and-turn indicator
+ STA row28_block26_5    \ slip-and-turn indicator
 
  RTS                    \ Return from the subroutine
 
@@ -8558,7 +8563,7 @@ ORG CODE%
 
  LDX #2                 \ We start with the aileron, rudder and elevator key
                         \ pairs, whose values are stored in these key logger
-                        \ offsets in KeyLoggerLow and KeyLoggerHigh:
+                        \ offsets in keyLoggerLow and keyLoggerHigh:
                         \
                         \   * 2 = aileron
                         \   * 1 = rudder
@@ -8571,42 +8576,42 @@ ORG CODE%
 
  CLC                    \ Clear the C flag for the addition below
 
- LDA KeyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
+ LDA keyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
                         \ if a key is being pressed, or 0 if no key is pressed
 
  BEQ pkey4              \ If A = 0 then neither key in this key pair is being
                         \ pressed, so jump down to pkey4
 
- ADC AxisKeyUsage,X     \ Add the low value to the corresponding variable for
- STA AxisKeyUsage,X     \ this key pair in AxisKeyUsage, so we increment the
+ ADC axisKeyUsage,X     \ Add the low value to the corresponding variable for
+ STA axisKeyUsage,X     \ this key pair in axisKeyUsage, so we increment the
                         \ value every time a key from this pair is used
 
- LDA KeyLoggerHigh,X    \ Fetch the high value for this key pair, which will be
+ LDA keyLoggerHigh,X    \ Fetch the high value for this key pair, which will be
                         \ +1 or -1 if a key is being pressed, or 0 if no key is
                         \ pressed
 
  STA P                  \ Store the value in P so we can check its sign below
 
- ADC Elevator,X         \ Set A = A + one of the following axis values:
+ ADC elevatorPosition,X \ Set A = A + one of the following axis values:
                         \
-                        \   * Aileron if this is the aileron key pair
-                        \   * Rudder if this is the rudder key pair
-                        \   * Elevator if this is the elevator key pair
+                        \   * aileronPosition if this is the aileron key pair
+                        \   * rudderPosition if this is the rudder key pair
+                        \   * elevatorPosition if this is the elevator key pair
                         \
                         \ so the relevant value is increased or decreased by 1
                         \ according to the key press
 
- LDY AxisChangeRate,X   \ If this key pair's AxisChangeRate value is already
+ LDY axisChangeRate,X   \ If this key pair's axisChangeRate value is already
  BEQ pkey2              \ zero, skip the following instruction
 
- DEC AxisChangeRate,X   \ Decrement this key pair's AxisChangeRate value
+ DEC axisChangeRate,X   \ Decrement this key pair's axisChangeRate value
 
 .pkey2
 
- BNE pkey3              \ If this key pair's AxisChangeRate value is non-zero,
+ BNE pkey3              \ If this key pair's axisChangeRate value is non-zero,
                         \ skip the following
 
-                        \ If we get here, then this key pair's AxisChangeRate
+                        \ If we get here, then this key pair's axisChangeRate
                         \ value has been reduced down to zero by repeated calls
                         \ to ProcessKeyLogger with the key being held down, so
                         \ the relavant control is now fully engaged and we bump
@@ -8643,8 +8648,8 @@ ORG CODE%
                         \ If we get here then neither key was pressed from this
                         \ key pair
 
- LDA #6                 \ Set the AxisChangeRate value for this key pair to 6,
- STA AxisChangeRate,X   \ so the rate of change goes back to 1 until we fully
+ LDA #6                 \ Set the axisChangeRate value for this key pair to 6,
+ STA axisChangeRate,X   \ so the rate of change goes back to 1 until we fully
                         \ engage the control once again
 
  BNE pkey7              \ Jump down to pkey7 to move on to the next key pair
@@ -8664,12 +8669,12 @@ ORG CODE%
 
 .pkey6
 
- STA Elevator,X         \ Store the adjusted axis value in the relevant axis
+ STA elevatorPosition,X \ Store the adjusted axis value in the relevant axis
                         \ variable:
                         \
-                        \   * Aileron if this is the aileron key pair
-                        \   * Rudder if this is the rudder key pair
-                        \   * Elevator if this is the elevator key pair
+                        \   * aileronPosition if this is the aileron key pair
+                        \   * rudderPosition if this is the rudder key pair
+                        \   * elevatorPosition if this is the elevator key pair
 
 .pkey7
 
@@ -8695,7 +8700,7 @@ ORG CODE%
 
  CLC                    \ Clear the C flag for the addition below
 
- LDA KeyLoggerLow+3     \ Fetch the low value for the throttle key
+ LDA keyLoggerLow+3     \ Fetch the low value for the throttle key
 
  BEQ pkey11             \ If A = 0 then neither key in this key pair is being
                         \ pressed, so jump down to pkey11 to skip the throttle
@@ -8704,15 +8709,15 @@ ORG CODE%
                         \ We now want to add the key logger value to the current
                         \ thrust value, which we do like this:
                         \
-                        \   (Y X) = (KeyLoggerHigh+3 KeyLoggerLow+3)
-                        \           +  (ThrustHi ThrustLo)
+                        \   (Y X) = (keyLoggerHigh+3 keyLoggerLow+3)
+                        \           +  (thrustHi thrustLo)
 
- ADC ThrustLo           \ We start by adding the low bytes
+ ADC thrustLo           \ We start by adding the low bytes
  TAX
 
 
- LDA KeyLoggerHigh+3    \ And then add the high bytes, so now (Y X) contains the
- ADC ThrustHi           \ updated thrust value
+ LDA keyLoggerHigh+3    \ And then add the high bytes, so now (Y X) contains the
+ ADC thrustHi           \ updated thrust value
  TAY
 
  BMI pkey8              \ If the result is negative, jump to pkey8 to set both X
@@ -8740,8 +8745,8 @@ ORG CODE%
 
 .pkey10
 
- STX ThrustLo           \ Store the thrust value in (ThrustHi ThrustLo) to the
- STY ThrustHi           \ updated thrust value in (Y X)
+ STX thrustLo           \ Store the thrust value in (thrustHi thrustLo) to the
+ STY thrustHi           \ updated thrust value in (Y X)
 
  LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
@@ -8875,18 +8880,18 @@ ORG CODE%
 
 .ProcessOtherKeys
 
- LDA KeyLoggerLow,X     \ Fetch the low value for this key pair
+ LDA keyLoggerLow,X     \ Fetch the low value for this key pair
 
  BNE poth2              \ If A is non-zero then a key from this key pair is
                         \ being pressed, so jump down to poth2 to process the
                         \ key press
 
- STA PressingUFBS-4,X   \ Zero the relevant value in PressingUFBS (for U) or
-                        \ PressingUFBS+1 (for F) to indicate that the first key
+ STA pressingUFBS-4,X   \ Zero the relevant value in pressingUFBS (for U) or
+                        \ pressingUFBS+1 (for F) to indicate that the first key
                         \ from this pair is not being held down
 
- STA PressingUFBS-4+3,X \ Zero the relevant value in PressingUFBS+3 (for B) or
-                        \ PressingUFBS+4 (for SHIFT) to indicate that the second
+ STA pressingUFBS-4+3,X \ Zero the relevant value in pressingUFBS+3 (for B) or
+                        \ pressingUFBS+4 (for SHIFT) to indicate that the second
                         \ key from this pair is not being held down
 
 .poth1
@@ -8904,24 +8909,24 @@ ORG CODE%
                         \   * Y = 7 if "B" is being pressed (brakes)
                         \   * Y = 8 if SHIFT is being pressed (fire)
 
- LDA PressingUFBS-4,Y   \ Fetch the relevant value from PressingUFBS to see if
+ LDA pressingUFBS-4,Y   \ Fetch the relevant value from pressingUFBS to see if
  BNE poth1              \ the key press has already been processed, and if it is
                         \ non-zero, this indicates that it is still being held
                         \ down from a previous visit to this routine, so jump to
                         \ poth1 to return a value of 0, so we can ignore the key
                         \ press
 
- LDA Undercarriage-4,Y  \ Flip the value of the relevant status byte, as
+ LDA ucStatus-4,Y       \ Flip the value of the relevant status byte, as
  EOR #1                 \ follows:
- STA Undercarriage-4,Y  \
-                        \   * Flip Undercarriage if "U" is being pressed
-                        \   * Flip Flaps if "F" is being pressed
-                        \   * Flip Brakes if "B" is being pressed
-                        \   * Flip Brakes+1 if SHIFT is being pressed (which has
-                        \     no effect
+ STA ucStatus-4,Y       \
+                        \   * Flip ucStatus if "U" is being pressed
+                        \   * Flip flapsStatus if "F" is being pressed
+                        \   * Flip brakesStatus if "B" is being pressed
+                        \   * Flip brakesStatus+1 if SHIFT is being pressed
+                        \      (which has no effect)
 
- LDA #1                 \ Set the relevant value in PressingUFBS to denote that
- STA PressingUFBS-4,Y   \ this key is being pressed, so if we revisit this
+ LDA #1                 \ Set the relevant value in pressingUFBS to denote that
+ STA pressingUFBS-4,Y   \ this key is being pressed, so if we revisit this
                         \ routine before the key is released, we don't keep on
                         \ flipping the status byte
 
@@ -8952,7 +8957,7 @@ ORG CODE%
 
  LDA L4F85              \ Set A = L4F85
 
- LDY Undercarriage      \ If Undercarriage is non-zero then the undercarriage is
+ LDY ucStatus           \ If ucStatus is non-zero then the undercarriage is
  BNE indu1              \ down, so jump to indu1
 
                         \ If we get here then the undercarriage is up
@@ -8973,7 +8978,7 @@ ORG CODE%
 
                         \ If we get here then the undercarriage is down
 
- LDY OnGround           \ If OnGround is non-zero, then we are on the ground, so
+ LDY onGround           \ If onGround is non-zero, then we are on the ground, so
  BNE indu4              \ jump to indu4 to set the undercarriage to up and
                         \ return from the subroutine
 
@@ -9001,7 +9006,7 @@ ORG CODE%
 
 .indu3
 
- STA Row30_Block32_2,X  \ Update pixel row X of the undercarriage indicator to
+ STA row30_block32_2,X  \ Update pixel row X of the undercarriage indicator to
                         \ the pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -9012,8 +9017,8 @@ ORG CODE%
 
 .indu4
 
- LDA #0                 \ Set Undercarriage = 0 to set the undercarriage to up
- STA Undercarriage
+ LDA #0                 \ Set ucStatus = 0 to set the undercarriage to up
+ STA ucStatus
 
  RTS                    \ Return from the subroutine
 
@@ -9030,8 +9035,8 @@ ORG CODE%
 
  LDA L4F85              \ Set A = L4F85
  
- LDY Flaps              \ If Flaps is non-zero then the flaps are on, so jump
- BNE indf1              \ to indf1
+ LDY flapsStatus        \ If flapsStatus is non-zero then the flaps are on, so
+ BNE indf1              \ jump to indf1
 
                         \ If we get here then the flaps are off
 
@@ -9075,7 +9080,7 @@ ORG CODE%
 
 .indf3
 
- STA Row30_Block35_2,X  \ Update pixel row X of the flaps indicator to the pixel
+ STA row30_block35_2,X  \ Update pixel row X of the flaps indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -9101,14 +9106,14 @@ ORG CODE%
 
 .FireGuns
 
- LDA Firing             \ If either Firing or L368F are non-zero, return from
- ORA L368F              \ the subroutine (as FireGuns-1 contains an RTS)
+ LDA firingStatus       \ If either firingStatus or L368F are non-zero, return
+ ORA L368F              \ from the subroutine (as FireGuns-1 contains an RTS)
  BNE FireGuns-1
 
  LDX #&E4
  JSR L4B4A
 
- LDA AirspeedHi
+ LDA airspeedHi
  CLC
  ADC #&C8
  STA L07E4
@@ -9127,8 +9132,8 @@ ORG CODE%
  LDA #9
  STA L0CCB
 
- STA Firing             \ Set Firing = 9, which is a non-zero value, to indicate
-                        \ that there are bullets are in the air
+ STA firingStatus       \ Set firingStatus = 9, which is a non-zero value, to
+                        \ indicate that there are bullets are in the air
 
  JSR L1D8D
 
@@ -9209,7 +9214,7 @@ ORG CODE%
                         \ white, to act as the centre of the brakes indicator
                         \ when turned on
 
- LDX Brakes             \ If Brakes is non-zero then the brakes are on, so
+ LDX brakesStatus       \ If brakesStatus is non-zero then the brakes are on, so
  BNE indb1              \ jump to indb1
 
  LDA #%01010101         \ Set A to a four-pixel block with pixels 0 and 2 in
@@ -9223,7 +9228,7 @@ ORG CODE%
 
 .indb2
 
- STA Row30_Block37_2,X  \ Update pixel row X of the brakes indicator to the
+ STA row30_block37_2,X  \ Update pixel row X of the brakes indicator to the
                         \ pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -9247,8 +9252,8 @@ ORG CODE%
                         \ white, to act as the centre of the Theme indicator
                         \ when turned on
 
- LDX Theme              \ If Theme is positive then the Theme is enabled, so
- BPL indt1              \ jump to indt1
+ LDX themeStatus        \ If themeStatus is positive then the Theme is enabled,
+ BPL indt1              \ so jump to indt1
 
  LDA #%01010101         \ Set A to a four-pixel block with pixels 0 and 2 in
                         \ white, to act as the centre of the Theme indicator
@@ -9261,7 +9266,7 @@ ORG CODE%
 
 .indt2
 
- STA Row30_Block0_2,X   \ Update pixel row X of the Theme indicator to the pixel
+ STA row30_block0_2,X   \ Update pixel row X of the Theme indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -9315,32 +9320,32 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine updates the key logger, which is stored in KeyLoggerHigh and
-\ KeyLoggerLow. If a key is pressed, then the corresponding 16-bit value in the
+\ This routine updates the key logger, which is stored in keyLoggerHigh and
+\ keyLoggerLow. If a key is pressed, then the corresponding 16-bit value in the
 \ key logger is set to the corresponding value from the KeyTable tables, which
-\ are stored in KeyTable1Lo/KeyTable1Hi and KeyTable2Lo/KeyTable2Hi.
+\ are stored in keyTable1Lo/keyTable1Hi and keyTable2Lo/keyTable2Hi.
 \
 \ ******************************************************************************
 
 .UpdateKeyLogger
 
  LDA #5                 \ Set V = 5 to act as an offset as we work our way
- STA V                  \ through the six keys in KeyTable1
+ STA V                  \ through the six keys in keyTable1
 
 .sckt1
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
- LDX KeyTable1,Y        \ Scan the keyboard to see if the Y-th key in KeyTable1
+ LDX keyTable1,Y        \ Scan the keyboard to see if the Y-th key in keyTable1
  JSR ScanKeyboard       \ is being pressed
 
  BNE sckt2              \ If the key is not being pressed, jump down to sckt2 to
-                        \ check the Y-th key in KeyTable1
+                        \ check the Y-th key in keyTable1
 
  LDX V                  \ Set X = the offset of the key we are processing
  
- LDY KeyTable1Lo,X      \ Fetch the key logger value for this key press into
- LDA KeyTable1Hi,X      \ (A Y)
+ LDY keyTable1Lo,X      \ Fetch the key logger value for this key press into
+ LDA keyTable1Hi,X      \ (A Y)
  
  JMP sckt4              \ Jump down to sckt4 to store (A Y) in the key logger
 
@@ -9348,7 +9353,7 @@ ORG CODE%
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
- LDX KeyTable2,Y        \ Scan the keyboard to see if the Y-th key in KeyTable2
+ LDX keyTable2,Y        \ Scan the keyboard to see if the Y-th key in keyTable2
  JSR ScanKeyboard       \ is being pressed
 
  BNE sckt3              \ If the key is not being pressed, jump down to sckt3 to
@@ -9356,8 +9361,8 @@ ORG CODE%
 
  LDX V                  \ Set X = the offset of the key we are processing
 
- LDY KeyTable2Lo,X      \ Fetch the key logger value for this key press into
- LDA KeyTable2Hi,X      \ (A Y)
+ LDY keyTable2Lo,X      \ Fetch the key logger value for this key press into
+ LDA keyTable2Hi,X      \ (A Y)
 
  JMP sckt4              \ Jump down to sckt4 to store (A Y) in the key logger
 
@@ -9371,11 +9376,11 @@ ORG CODE%
 
 .sckt4
 
- STA KeyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
-                        \ in the X-th byte of KeyLoggerHigh
+ STA keyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
+                        \ in the X-th byte of keyLoggerHigh
 
  TYA                    \ Store the low byte of the key logger value in (A Y)
- STA KeyLoggerLow,X     \ in the X-th byte of KeyLoggerLow
+ STA keyLoggerLow,X     \ in the X-th byte of keyLoggerLow
 
  DEC V                  \ Decrement the offset to point to the next key to
                         \ process
@@ -9401,24 +9406,24 @@ ORG CODE%
 
  LDA L4400,Y
  CLC
- ADC XCoordLo,X
+ ADC xLineLo,X
  STA L4400,Y
  LDA L4478,Y
- ADC XCoordHi,X
+ ADC xLineHi,X
  STA L4478,Y
  LDA L4428,Y
  CLC
- ADC YCoordLo,X
+ ADC yLineLo,X
  STA L4428,Y
  LDA L44A0,Y
- ADC YCoordHi,X
+ ADC yLineHi,X
  STA L44A0,Y
  LDA L4450,Y
  CLC
- ADC ZCoordLo,X
+ ADC zLineLo,X
  STA L4450,Y
  LDA L44C8,Y
- ADC ZCoordHi,X
+ ADC zLineHi,X
  STA L44C8,Y
  RTS
 
@@ -9532,9 +9537,9 @@ ORG CODE%
 
  STA L44F0              \ Set L44F0 = 0
 
- STA ScoreLo            \ Set ScoreLo = 0
+ STA scoreLo            \ Set scoreLo = 0
 
- STA ScoreHi            \ Set ScoreHi = 0
+ STA scoreHi            \ Set scoreHi = 0
 
 .rset1
 
@@ -9551,7 +9556,7 @@ ORG CODE%
 
  STA L05C8              \ Set L05C8 = 0
 
- STA MainLoopCounter    \ Set MainLoopCounter = 0
+ STA mainLoopCounter    \ Set mainLoopCounter = 0
 
 .rset2
 
@@ -9589,33 +9594,33 @@ ORG CODE%
  LDA #229               \ Set L0CED = 229
  STA L0CED
 
- LDA #10                \ Set AltitudeLo = 10
- STA AltitudeLo
+ LDA #10                \ Set altitudeLo = 10
+ STA altitudeLo
 
  STA L0CF8              \ Set L0CF8 = 10
 
  LDA #242               \ Set L4F85 = 242
  STA L4F85
 
- LDA #1                 \ Set Undercarriage = 1 (undercarriage is down)
- STA Undercarriage
+ LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
+ STA ucStatus
 
- STA Brakes             \ Set Brakes = 1 (brakes on)
+ STA brakesStatus       \ Set brakesStatus = 1 (brakes on)
 
  STA L0CE8              \ Set L0CE8 = 1
 
  JSR IndicatorU         \ Update the undercarriage indicator
 
- LDA #1                 \ Set OnGround = 1 (on the ground)
- STA OnGround
+ LDA #1                 \ Set onGround = 1 (on the ground)
+ STA onGround
 
- LDA #47                \ Set LineBuffer2Count = 47
- STA LineBuffer2Count
+ LDA #47                \ Set lineBuffer2Count = 47
+ STA lineBuffer2Count
 
- LDA #255               \ Set Theme = 255
- STA Theme
+ LDA #255               \ Set themeStatus = 255
+ STA themeStatus
 
- STA LineBuffer1Count   \ Set LineBuffer1Count = 255
+ STA lineBuffer1Count   \ Set lineBuffer1Count = 255
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
                         \ the rset4 loop
@@ -9650,21 +9655,21 @@ ORG CODE%
  LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
 
- LDA #65                \ Set FuelLevel = 65, which indicates a full tank
- STA FuelLevel
+ LDA #65                \ Set fuelLevel = 65, which indicates a full tank
+ STA fuelLevel
 
                         \ We now drain the fuel tank one point at a time,
                         \ updating the fuel gauge as we go so the fuel gauge
                         \ gets cleared down to empty at the same time as
-                        \ the value in FuelLevel
+                        \ the value in fuelLevel
 
 .rset6
 
- DEC FuelLevel          \ Decrement the counter in FuelLevel
+ DEC fuelLevel          \ Decrement the counter in fuelLevel
 
  JSR UpdateFuelGauge    \ Update the fuel gauge
 
- LDA FuelLevel          \ Loop back until FuelLevel = 0, by which point we have
+ LDA fuelLevel          \ Loop back until fuelLevel = 0, by which point we have
  BNE rset6              \ reset the fuel tanks and cleared the fuel gauge
 
                         \ Fall through into ResetRadar to reset the radar
@@ -9681,17 +9686,17 @@ ORG CODE%
 
 .ResetRadar
 
- LDA #80                \ Set XCoordLo = 80, so we don't draw a new alien on the
- STA XCoordLo              \ radar (as this coordinate is off the radar)
+ LDA #80                \ Set xLineLo = 80, so we don't draw a new alien on the
+ STA xLineLo            \ radar (as this coordinate is off the radar)
 
- LDA #1                 \ Set Alien = 1, so we remove the alien from the radar
- STA Alien              \ rather than the runway
+ LDA #1                 \ Set alienFlag = 1, so we remove the alien from the
+ STA alienFlag          \ radar rather than the runway
 
- STA XCoordHi              \ Set XCoordHi = 1, so the value in XCoordLo is treated as
+ STA xLineHi            \ Set xLineHi = 1, so the value in xLineLo is treated as
                         \ positive
 
  JSR UpdateRadar        \ Remove the current dot from the radar, but don't draw
-                        \ a new one, as XCoordLo is off-radar
+                        \ a new one, as xLineLo is off-radar
 
  LDY #&21
  JSR L25B5
@@ -9710,9 +9715,9 @@ ORG CODE%
 
 .StartGame
 
- LDA #0                 \ Set the high score in (HighScoreHi HighScoreLo) to 0
- STA HighScoreHi
- STA HighScoreLo
+ LDA #0                 \ Set the high score in (highScoreHi highScoreLo) to 0
+ STA highScoreHi
+ STA highScoreLo
 
  LDA #14                \ Call DefineEnvelope with A = 14 to set up the second
  JSR DefineEnvelope     \ sound envelope
@@ -9739,8 +9744,7 @@ ORG CODE%
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
- JSR ResetObjectLists   \ Reset the object lists at ObjectsInView and
-                        \ ObjectsNotInView
+ JSR ResetLineLists     \ Reset the line lists at linesToShow and linesToHide
 
  JSR IndicatorF         \ Update the flaps indicator
 
@@ -9769,8 +9773,8 @@ ORG CODE%
 
 .MainLoop
 
- LDA NotInViewListEnd   \ Store the size of the ObjectsNotInView list in
- STA PreviousListEnd    \ PreviousListEnd so we can check it at the end of the
+ LDA linesHideEnd       \ Store the size of the linesToHide list in
+ STA previousListEnd    \ previousListEnd so we can check it at the end of the
                         \ main loop
 
  JSR L2F1C
@@ -9790,24 +9794,24 @@ ORG CODE%
 \
 \ ******************************************************************************
 
- LDA Firing             \ If Firing is non-zero, then we have already fired our
- BNE main2              \ gun and the bullets are still in the air, so jump to
-                        \ main2 to skip firing bullets, as we can't fire any
-                        \ more bullets until the current ones expire
+ LDA firingStatus       \ If firingStatus is non-zero, then we have already
+ BNE main2              \ fired our gun and the bullets are still in the air, so
+                        \ jump to main2 to skip firing bullets, as we can't fire
+                        \ any more bullets until the current ones expire
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
- LDA Firing             \ If the call to ProcessKeyLogger has left Firing set to
- BEQ main3              \ zero, then the fire key is not being pressed, so jump
-                        \ to main3 to skip firing bullets
+ LDA firingStatus       \ If the call to ProcessKeyLogger has left firingStatus
+ BEQ main3              \ set to zero, then the fire key is not being pressed,
+                        \ so jump to main3 to skip firing bullets
 
-                        \ The call to ProcessKeyLogger had changed Firing from
-                        \ zero to non-zero, which means the fire key is being
-                        \ pressed, so we now need to add two bullets to the
-                        \ scene
+                        \ The call to ProcessKeyLogger had changed firingStatus
+                        \ from zero to non-zero, which means the fire key is
+                        \ being pressed, so we now need to add two bullets to
+                        \ the scene
 
- LDA #2                 \ Set GunSoundCounter = 2, so we make two firing sounds
- STA GunSoundCounter    \ below, one for each bullet
+ LDA #2                 \ Set gunSoundCounter = 2, so we make two firing sounds
+ STA gunSoundCounter    \ below, one for each bullet
 
  LDY #&21               \ We now copy four bytes from L04D8 to L41FA, between
                         \ offset &1E and &21, so set up a counter in Y that can
@@ -9827,22 +9831,22 @@ ORG CODE%
  CPY #&1E               \ Loop back until we have copied all four bytes
  BCS main1
 
- LDY InViewListEnd      \ Set Y to the first free entry at the end of the
-                        \ ObjectsInView list
+ LDY linesShowEnd       \ Set Y to the first free entry at the end of the
+                        \ linesToShow list
 
- LDA #&3C               \ Append &3C to the end of the ObjectsInView list
- STA ObjectsInView,Y
-
- INY                    \ Increment Y to point to the next free entry in the
-                        \ list
-
- LDA #&3D               \ Append &3D to the end of the ObjectsInView list
- STA ObjectsInView,Y
+ LDA #&3C               \ Append &3C to the end of the linesToShow list
+ STA linesToShow,Y
 
  INY                    \ Increment Y to point to the next free entry in the
                         \ list
 
- STY InViewListEnd      \ Update InViewListEnd with the updated index of the
+ LDA #&3D               \ Append &3D to the end of the linesToShow list
+ STA linesToShow,Y
+
+ INY                    \ Increment Y to point to the next free entry in the
+                        \ list
+
+ STY linesShowEnd       \ Update linesShowEnd with the updated index of the
                         \ next free entry, which is two more than it was
                         \ before we added the bullets
 
@@ -9873,17 +9877,17 @@ ORG CODE%
 
  BPL main4              \ Loop back until we have zeroed from L04D8 to &04FF
 
- LDA Firing             \ If Firing is zero then there are no bullets in the
- BEQ main5              \ air, so jump to main5 to skip updating the bullet
+ LDA firingStatus       \ If firingStatus is zero then there are no bullets in
+ BEQ main5              \ the air, so jump to main5 to skip updating the bullet
                         \ positions
 
  JSR UpdateBullets      \ Update the bullet positions
 
- LDA GunSoundCounter    \ If GunSoundCounter = 0 then we don't have any gun
+ LDA gunSoundCounter    \ If gunSoundCounter = 0 then we don't have any gun
  BEQ main5              \ firing sounds to make, so jump to main5 to skip the
                         \ gun sounds code
 
- DEC GunSoundCounter    \ Decrement the sound counter in GunSoundCounter
+ DEC gunSoundCounter    \ Decrement the sound counter in gunSoundCounter
 
  LDA #6                 \ Make sound #6, the sound of our guns firing
  JSR MakeSound
@@ -9903,7 +9907,7 @@ ORG CODE%
 
 .main5
 
- LDA Theme              \ If bit 7 of Theme is set, then the Theme is not
+ LDA themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
  BMI main6              \ enabled, so jump to main6
 
  JSR L2DAC
@@ -9933,9 +9937,9 @@ ORG CODE%
  LDY #&22
  JSR L4244
 
- INC MainLoopCounter
+ INC mainLoopCounter
 
- LDA MainLoopCounter
+ LDA mainLoopCounter
  CLC
  ADC #4
  AND #7
@@ -9969,11 +9973,11 @@ ORG CODE%
 
 .main7
 
- LDA Theme
+ LDA themeStatus
  BNE main12
 
- LDA Firing             \ If Firing is zero then there are no bullets in the
- BEQ main11             \ air, so jump to main11
+ LDA firingStatus       \ If firingStatus is zero then there are no bullets in
+ BEQ main11             \ the air, so jump to main11
 
  LDA #&21
  STA L0CCC
@@ -10002,7 +10006,7 @@ ORG CODE%
 
  STA L368C
  LDA #0
- STA Firing
+ STA firingStatus
 
 .main11
 
@@ -10019,7 +10023,7 @@ ORG CODE%
 
 .main12
 
- LDA OnGround           \ If OnGround is zero, we are in the air and can't
+ LDA onGround           \ If onGround is zero, we are in the air and can't
  BEQ main13             \ terminate the game with the right arrow key, so jump
                         \ to main13 to skip the following
 
@@ -10053,10 +10057,10 @@ ORG CODE%
  BMI main16             \ If bit 7 of L0CE8 is set, jump to main16 to skip the
                         \ following (enabling the Theme, filling up with fuel)
 
- LDA Firing             \ If Firing is zero then there are no bullets in the
- BEQ main14             \ air, so jump to main14
+ LDA firingStatus       \ If firingStatus is zero then there are no bullets in
+ BEQ main14             \ the air, so jump to main14
 
- LDA Theme              \ If Theme is positive then the Theme is already
+ LDA themeStatus        \ If themeStatus is positive then the Theme is already
  BPL main14             \ enabled, so jump to main14
 
                         \ If we get here then there are bullets in the air and
@@ -10065,8 +10069,8 @@ ORG CODE%
                         \ we are stationary and on the runway with the brakes
                         \ on)
 
- LDA #8                 \ Set Theme = 8 to enable the Theme
- STA Theme
+ LDA #8                 \ Set themeStatus = 8 to enable the Theme
+ STA themeStatus
 
  JSR IndicatorT         \ Update the Theme indicator
 
@@ -10082,7 +10086,7 @@ ORG CODE%
 
 .main14
 
- LDA Engine             \ If the Engine is on, jump to main15 to skip the
+ LDA engineStatus       \ If the engine is on, jump to main15 to skip the
  BNE main15             \ following instruction
 
  JSR FillUpFuelTank     \ Fill up the fuel tank by one unit
@@ -10103,13 +10107,13 @@ ORG CODE%
 
 .main16
 
- LDA Reached512ft       \ If we have not yet reached an altitude of 512 feet
- BEQ main17             \ since taking off, Reached512ft will be zero, so jump
+ LDA reached512ft       \ If we have not yet reached an altitude of 512 feet
+ BEQ main17             \ since taking off, reached512ft will be zero, so jump
                         \ to main17 to skip the following, as we are not
                         \ eligible for the landing points
 
- LDX #0                 \ Set Reached512ft = 0 to reset the 512 feet counter,
- STX Reached512ft       \ ready for the next landing attempt
+ LDX #0                 \ Set reached512ft = 0 to reset the 512 feet counter,
+ STX reached512ft       \ ready for the next landing attempt
 
  LDA #&15               \ We have successfully landed the plane without
  JSR ScorePoints        \ crashing, so add 150 points to the score and make a
@@ -10133,38 +10137,38 @@ ORG CODE%
 
  BNE main18             \ If "T" is not being pressed, jump to main18
 
- LDA PressingT          \ If PressingT is non-zero, then we are still pressing
+ LDA pressingT          \ If pressingT is non-zero, then we are still pressing
  BNE main19             \ "T" having already toggled the engine, so jump down
                         \ to main19 so we don't keep switching the engine on and
                         \ off by accident
 
- LDA Propellor          \ If Propellor is non-zero, then the propellor is broken
- BNE main20             \ and we can't turn on the engine, so jump to main20 to
-                        \ skip the following
+ LDA propellorStatus    \ If propellorStatus is non-zero, then the propellor is
+ BNE main20             \ broken and we can't turn on the engine, so jump to
+                        \ main20 to skip the following
 
                         \ At this point, we know that "T" is being pressed,
-                        \ PressingT is zero (so we haven't yet acted on the key
-                        \ press), and Propellor is zero (so the propellor is
-                        \ working), so now we toggle the engine status to switch
-                        \ it on or off
+                        \ pressingT is zero (so we haven't yet acted on the key
+                        \ press), and propellorStatus is zero (so the propellor
+                        \ is working), so now we toggle the engine status to
+                        \ switch it on or off
 
- LDA Engine             \ Fetch the value of Engine and invert bit 0 so it
+ LDA engineStatus       \ Fetch the value of engineStatus and invert bit 0 so it
  EOR #1                 \ changes to the opposite state
 
  JSR SetEngine          \ Set the engine status to the value in A
 
- LDA #1                 \ Set A = 1 to use as the new value of PressingT below,
+ LDA #1                 \ Set A = 1 to use as the new value of pressingT below,
  BNE main19             \ so that holding down "T" won't keep toggling the
                         \ engine status
 
 .main18
 
  LDA #0                 \ "T" is not being pressed, so set A = 0 to use as the
-                        \ new value of PressingT
+                        \ new value of pressingT
 
 .main19
 
- STA PressingT          \ Set PressingT = A, so we don't try toggling the engine
+ STA pressingT          \ Set pressingT = A, so we don't try toggling the engine
                         \ again until we release the "T" key
 
 \ ******************************************************************************
@@ -10231,14 +10235,14 @@ ORG CODE%
 \
 \ ******************************************************************************
 
- LDA ScoreDisplayTimer  \ If ScoreDisplayTimer = 0, jump to main22 to skip the
+ LDA scoreDisplayTimer  \ If scoreDisplayTimer = 0, jump to main22 to skip the
  BEQ main22             \ following three instructions, as we are not currently
                         \ displaying the score
 
- CMP #220               \ If ScoreDisplayTimer <> 220, jump down to main23 to
+ CMP #220               \ If scoreDisplayTimer <> 220, jump down to main23 to
  BNE main23             \ decrement the timer and keep displaying the score
 
- BEQ main24             \ If ScoreDisplayTimer = 220, it's time to remove the
+ BEQ main24             \ If scoreDisplayTimer = 220, it's time to remove the
                         \ score from the screen, so jump down to main24
 
 .main22
@@ -10255,7 +10259,7 @@ ORG CODE%
                         \ score is already being displayed, so in either case we
                         \ should update the timer and display the score
 
- DEC ScoreDisplayTimer  \ Decrement the score timer
+ DEC scoreDisplayTimer  \ Decrement the score timer
 
  JSR DisplayScore       \ Display the score, so we show it for the first time if
                         \ we just pressed "P", or update it if it changes while
@@ -10267,33 +10271,33 @@ ORG CODE%
 
  JSR RemoveScore        \ Remove the score from the screen
 
- LDA #0                 \ Set ScoreDisplayTimer = 0 as we are no longer showing
- STA ScoreDisplayTimer  \ the score on-screeen
+ LDA #0                 \ Set scoreDisplayTimer = 0 as we are no longer showing
+ STA scoreDisplayTimer  \ the score on-screeen
 
 \ ******************************************************************************
 \
 \       Name: MainLoop (Part 14 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Add new objects to L0400
+\    Summary: Add new lines to L0400
 \
 \ ------------------------------------------------------------------------------
 \
-\ If we have added any objects to ObjectsNotInView list during the main loop
-\ (and therefore incremented NotInViewListEnd), we process each of them to add
+\ If we have added any lines to linesToHide list during the main loop
+\ (and therefore incremented linesHideEnd), we process each of them to add
 \ their details to L0400.
 \
 \ ******************************************************************************
 
 .main25
 
- LDX PreviousListEnd    \ If the value of NotInViewListEnd has changed since the
- CPX NotInViewListEnd   \ start of the main loop - in other words, it is not the
- BNE main26             \ same as the value we stored in PreviousListEnd - then
-                        \ this means the value of NotInViewListEnd has changed
+ LDX previousListEnd    \ If the value of linesHideEnd has changed since the
+ CPX linesHideEnd       \ start of the main loop - in other words, it is not the
+ BNE main26             \ same as the value we stored in previousListEnd - then
+                        \ this means the value of linesHideEnd has changed
                         \ during this iteration of the main loop, so jump down
                         \ to main26 to process the new additions to the
-                        \ ObjectsNotInView list
+                        \ linesToHide list
 
  JMP MainLoop           \ Otherwise we are done, so jump back up to the top of
                         \ the main loop for the next iteration
@@ -10301,32 +10305,32 @@ ORG CODE%
 .main26
 
                         \ The first time we get here, X contains the size of the
-                        \ ObjectsNotInView table as it was when we started this
+                        \ linesToHide list as it was when we started this
                         \ iteration of the main loop, and we have added new
-                        \ objects to the table, so now we need to process those
-                        \ new objects
+                        \ lines to the list, so now we need to process those
+                        \ new lines
 
- INX                    \ Increment X to point to the next object, which will be
+ INX                    \ Increment X to point to the next line, which will be
                         \ the first new one to process
 
- LDY ObjectsNotInView,X \ Set Y to this object's ID from ObjectsNotInView
+ LDY linesToHide,X      \ Set Y to this line's ID from linesToHide
 
- STX PreviousListEnd    \ Update the value of PreviousListEnd, so if we revisit
-                        \ the main26 loop, we will move on to the next object
+ STX previousListEnd    \ Update the value of previousListEnd, so if we revisit
+                        \ the main26 loop, we will move on to the next line
 
-                        \ Now to process the object
+                        \ Now to process the line
 
- LDX EndPoint,Y       \ Set X to this object's index from EndPoint
+ LDX lineEndPoint,Y     \ Set X to this line's index from lineEndPoint
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX StartPoint,Y       \ Set X to this object's index from StartPoint
+ LDX lineStartPoint,Y   \ Set X to this line's index from lineStartPoint
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
  JMP main25             \ Jump back to main25 to repeat this process until we
-                        \ have zeroed all the new additions to ObjectsNotInView
+                        \ have zeroed all the new additions to linesToHide
 
 \ ******************************************************************************
 \
@@ -10343,54 +10347,54 @@ ORG CODE%
 
 .L2873
 
- LDX InViewListEnd
+ LDX linesShowEnd
  BEQ L28B5
 
  LDA #&FF
  STA LL
  LDA #0
- STA ObjectIDCounter
+ STA lineIDCounter
 
 .L287F
 
- LDX ObjectIDCounter
- LDA ObjectsInView,X
- STA ObjectID
+ LDX lineIDCounter
+ LDA linesToShow,X
+ STA lineID
  LDA #1
  STA HH
- JSR IsObjectInView
+ JSR IsLineVisible
 
- LDA ObjectID
+ LDA lineID
  BEQ L2896
 
- LDX ObjectInView
+ LDX showLine
  BNE L28A0
 
 .L2896
 
  INC LL
  LDX LL
- STA ObjectsInView,X
+ STA linesToShow,X
  JMP L28A7
 
 .L28A0
 
- INC NotInViewListEnd   \ Increment NotInViewListEnd to point to the next free
-                        \ entry at the end of the ObjectsNotInView list
+ INC linesHideEnd       \ Increment linesHideEnd to point to the next free
+                        \ entry at the end of the linesToHide list
 
- LDX NotInViewListEnd   \ Add the object ID in A to the end of the
- STA ObjectsNotInView,X \ ObjectsNotInView list
+ LDX linesHideEnd       \ Add the line ID in A to the end of the
+ STA linesToHide,X      \ linesToHide list
 
 .L28A7
 
- INC ObjectIDCounter
- LDA ObjectIDCounter
- CMP InViewListEnd
+ INC lineIDCounter
+ LDA lineIDCounter
+ CMP linesShowEnd
  BCC L287F
 
  LDA LL
  ADC #0
- STA InViewListEnd
+ STA linesShowEnd
 
 .L28B5
 
@@ -10411,23 +10415,23 @@ ORG CODE%
 
 .L28B6
 
- LDA InViewListEnd
+ LDA linesShowEnd
  BEQ L2929
 
  LDA #&FF
  STA LL
  LDA #0
- STA ObjectIDCounter
+ STA lineIDCounter
 
 .L28C2
 
- LDX ObjectIDCounter
- LDY ObjectsInView,X
- STY ObjectID
- LDX EndPoint,Y
+ LDX lineIDCounter
+ LDY linesToShow,X
+ STY lineID
+ LDX lineEndPoint,Y
  STX GG
  STX L
- LDX StartPoint,Y
+ LDX lineStartPoint,Y
  STX M
  JSR L0D01
 
@@ -10458,31 +10462,31 @@ ORG CODE%
 
  INC LL
  LDX LL
- LDA ObjectID
- STA ObjectsInView,X
+ LDA lineID
+ STA linesToShow,X
  JMP L291B
 
 .L2910
 
- LDA ObjectID
+ LDA lineID
  BEQ L2904
 
- INC NotInViewListEnd   \ Increment NotInViewListEnd to point to the next free
-                        \ entry at the end of the ObjectsNotInView list
+ INC linesHideEnd       \ Increment linesHideEnd to point to the next free
+                        \ entry at the end of the linesToHide list
 
- LDX NotInViewListEnd   \ Add the object ID in A to the end of the
- STA ObjectsNotInView,X \ ObjectsNotInView list
+ LDX linesHideEnd       \ Add the line ID in A to the end of the
+ STA linesToHide,X      \ linesToHide list
 
 .L291B
 
- INC ObjectIDCounter
- LDA ObjectIDCounter
- CMP InViewListEnd
+ INC lineIDCounter
+ LDA lineIDCounter
+ CMP linesShowEnd
  BCC L28C2
 
  LDA LL
  ADC #0
- STA InViewListEnd
+ STA linesShowEnd
 
 .L2929
 
@@ -10518,15 +10522,15 @@ ORG CODE%
 .L293A
 
  LDA MM
- CMP NotInViewListEnd
- BEQ L2972
+ CMP linesHideEnd
+ BEQ IsLineVisible-1
 
  CLC
  ADC #1
  STA MM
  TAX
- LDA ObjectsNotInView,X
- STA ObjectID
+ LDA linesToHide,X
+ STA lineID
  CMP #&3C
  BEQ L293A
 
@@ -10535,66 +10539,64 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: AddObjectToList
+\       Name: AddLineToList
 \       Type: Subroutine
 \   Category: 
-\    Summary: Populate tables at ObjectsInView and ObjectsNotInView
+\    Summary: Populate tables at linesToShow and linesToHide
 \
 \ ------------------------------------------------------------------------------
 \
-\ Check the visibility of an object and either add it to the ObjectsInView table
-\ or the ObjectsNotInView table, depending on whether it is visible.
+\ Check the visibility of a line and either add it to the linesToShow list
+\ or the linesToHide list, depending on whether it is visible.
 \
 \ Arguments:
 \
-\   ObjectID            The object ID to process
+\   lineID              The line ID to process
 \
 \ ******************************************************************************
 
-.AddObjectToList
+.AddLineToList
 
  LDA #0                 \ Set HH = 0
  STA HH
 
- JSR IsObjectInView
+ JSR IsLineVisible
 
- LDA ObjectID           \ Fetch the object ID into A
+ LDA lineID             \ Fetch the line ID into A
 
- LDX ObjectInView       \ If ObjectInView = 0, jump down to L2969
- BEQ L2969
+ LDX showLine           \ If showLine = 0, jump down to addl1
+ BEQ addl1
 
-                        \ ObjectInView is non-zero, so we add this object to
-                        \ ObjectsNotInView
+                        \ showLine is non-zero, so we add this line to
+                        \ linesToHide
 
- INC NotInViewListEnd   \ Increment NotInViewListEnd to point to the next free
-                        \ entry at the end of the ObjectsNotInView list
+ INC linesHideEnd       \ Increment linesHideEnd to point to the next free
+                        \ entry at the end of the linesToHide list
 
- LDX NotInViewListEnd   \ Add the object ID in A to the end of the
- STA ObjectsNotInView,X \ ObjectsNotInView list
+ LDX linesHideEnd       \ Add the line ID in A to the end of the
+ STA linesToHide,X      \ linesToHide list
 
  RTS                    \ Return from the subroutine
 
-.L2969
+.addl1
 
-                        \ ObjectInView is zero, so we add this object to
-                        \ ObjectsInView
+                        \ showLine is zero, so we add this line to
+                        \ linesToShow
 
- INC InViewListEnd      \ Increment InViewListEnd so it still points to the
-                        \ first empty entry in the ObjectsInView list after we
-                        \ add this object
+ INC linesShowEnd       \ Increment linesShowEnd so it still points to the
+                        \ first empty entry in the linesToShow list after we
+                        \ add this line
 
  INC LL                 \ Increment LL
 
- LDX LL                 \ Add the object ID in A to the end of the ObjectsInView
- STA ObjectsInView,X    \ list
-
-.L2972
+ LDX LL                 \ Add the line ID in A to the end of the linesToShow
+ STA linesToShow,X      \ list
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: IsObjectInView
+\       Name: IsLineVisible
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -10603,39 +10605,43 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   ObjectID            The object ID to check
+\   lineID              The line ID to check
 \
 \   HH                  ???
 \
 \ Returns:
 \
-\   ObjectInView        0 = object is visible
-\                       Non-zero = object is not visible
+\   showLine            0 = line is visible
+\                       Non-zero = line is not visible
+\
+\ Other entry points:
+\
+\   IsLineVisible-1     Contains an RTS
 \
 \ ******************************************************************************
 
-.IsObjectInView
+.IsLineVisible
 
- LDA #0                 \ Set ObjectInView = 0 as a starting point for the
- STA ObjectInView       \ return value
+ LDA #0                 \ Set showLine = 0 as a starting point for the
+ STA showLine           \ return value
 
  STA L0CBF              \ Set L0CBF = 0
 
- LDX ObjectID           \ Set X to the ID of the object to check
+ LDX lineID             \ Set X to the ID of the line to check
 
- LDY StartPoint,X       \ Set M to the object's StartPoint offset
+ LDY lineStartPoint,X   \ Set M to the line's lineStartPoint offset
  STY M
 
- LDY EndPoint,X       \ Set Y and L to the object's EndPoint offset
+ LDY lineEndPoint,X     \ Set Y and L to the line's lineEndPoint offset
  STY L
 
- CPX #12                \ If the object ID >= 12, jump to invw2
+ CPX #12                \ If the line ID >= 12, jump to invw2
  BCS invw2
 
- CPX #0                 \ If the object ID is not zero, jump to invw1
+ CPX #0                 \ If the line ID is not zero, jump to invw1
  BNE invw1
 
-                        \ If we get here then the object ID is 0
+                        \ If we get here then the line ID is 0
 
  JSR L2C95
 
@@ -10643,7 +10649,7 @@ ORG CODE%
 
 .invw1
 
-                        \ If we get here then the object ID is in the range 1 to
+                        \ If we get here then the line ID is in the range 1 to
                         \ 11
 
  JSR L31BD
@@ -10652,8 +10658,8 @@ ORG CODE%
 
 .invw2
 
-                        \ If we get here, the object ID >= 12 and Y contains the
-                        \ object's EndPoint offset
+                        \ If we get here, the line ID >= 12 and Y contains the
+                        \ line's lineEndPoint offset
 
  LDA #2                 \ Set L0CC8 = 2
  STA L0CC8
@@ -10667,13 +10673,13 @@ ORG CODE%
 
 .invw4
 
-                        \ We get here if object ID >= 12, Y contains the
-                        \ object's EndPoint offset and Y-th L0400 is positive
+                        \ We get here if line ID >= 12, Y contains the
+                        \ line's lineEndPoint offset and Y-th L0400 is positive
 
- TYA                    \ Store the object's EndPoint offset on the stack
+ TYA                    \ Store the line's lineEndPoint offset on the stack
  PHA
 
- STA L0CC0              \ Set L0CC0 = the object's EndPoint offset
+ STA L0CC0              \ Set L0CC0 = the line's lineEndPoint offset
 
 .invw5
 
@@ -10699,7 +10705,8 @@ ORG CODE%
  CPX #49                \ list, so jump to invw11
  BCS invw11
 
- INC L05C8              \ L05C8 contains a count of values stored in the L05C8 list
+ INC L05C8              \ L05C8 contains a count of values stored in the L05C8
+                        \ list
 
  LDX L05C8              \ Add A to the end of the L05C8 list
  STA L05C8,X
@@ -10714,8 +10721,8 @@ ORG CODE%
  LDA L04D8,Y
  BMI invw7
 
- LDA #%10000000         \ Set ObjectInView so the object is not in view
- STA ObjectInView
+ LDA #%10000000         \ Set showLine so the line is not in view
+ STA showLine
 
  RTS                    \ Return from the subroutine
 
@@ -10753,7 +10760,7 @@ ORG CODE%
 .invw11
 
  LDA #%10000000
- STA ObjectInView
+ STA showLine
 
 .invw12
 
@@ -10785,7 +10792,7 @@ ORG CODE%
 
  JSR L19A0
 
- LDA ObjectInView
+ LDA showLine
 
  BNE invw12
 
@@ -10809,7 +10816,7 @@ ORG CODE%
 
  JSR L19A0
 
- LDA ObjectInView
+ LDA showLine
 
  BNE invw20
 
@@ -10819,17 +10826,17 @@ ORG CODE%
 
 .invw17
 
-                        \ We jump here if object ID >= 12, Y contains the
-                        \ object's EndPoint offset and Y-th L0400 is negative
+                        \ We jump here if line ID >= 12, Y contains the
+                        \ line's lineEndPoint offset and Y-th L0400 is negative
 
  LDA HH
  BNE invw18
 
- LDX ObjectID
+ LDX lineID
 
  JSR L4B5F
 
- STA ObjectInView
+ STA showLine
 
  BNE invw20
 
@@ -10849,18 +10856,18 @@ ORG CODE%
 .invw19
 
  LDY M
- LDA ZCoordHi,Y
+ LDA zLineHi,Y
 
  BPL invw20
 
  LDY L
- LDA ZCoordHi,Y
+ LDA zLineHi,Y
 
  BPL invw20
 
- LDA ObjectInView
+ LDA showLine
  ORA #%10000000
- STA ObjectInView
+ STA showLine
 
  LDY L0CBF
 
@@ -10921,7 +10928,7 @@ ORG CODE%
  BCS L2AD8
 
  LDA #8
- STA Alien
+ STA alienFlag
 
 .L2AC6
 
@@ -10942,11 +10949,11 @@ ORG CODE%
 
  BNE L2B09
 
- LDA Theme
+ LDA themeStatus
  BNE L2B1D
 
  LDA #8
- STA Alien
+ STA alienFlag
 
 .L2AEC
 
@@ -10992,10 +10999,10 @@ ORG CODE%
  SEC
  LDA L4400,Y
  SBC L0CED
- STA XCoordLo,X
+ STA xLineLo,X
  LDA L4478,Y
  SBC L0CFD
- STA XCoordHi,X
+ STA xLineHi,X
  STA T
  LDA #0
  SBC L0C6D
@@ -11005,11 +11012,11 @@ ORG CODE%
 
  SEC
  LDA L4428,Y
- SBC AltitudeLo
- STA YCoordLo,X
+ SBC altitudeLo
+ STA yLineLo,X
  LDA L44A0,Y
- SBC AltitudeHi
- STA YCoordHi,X
+ SBC altitudeHi
+ STA yLineHi,X
  STA T
  LDA #0
  SBC L0C6E
@@ -11020,10 +11027,10 @@ ORG CODE%
  SEC
  LDA L4450,Y
  SBC L0CEF
- STA ZCoordLo,X
+ STA zLineLo,X
  LDA L44C8,Y
  SBC L0CFF
- STA ZCoordHi,X
+ STA zLineHi,X
  STA T
  LDA #0
  SBC L0C6F
@@ -11036,7 +11043,7 @@ ORG CODE%
  JSR L1D8D
 
  LDY L0CCC
- LDA ObjectInView
+ LDA showLine
  BNE L2BB7
 
  LDA #&C0
@@ -11048,7 +11055,7 @@ ORG CODE%
 
  BCC L2BA0
 
- DEC Alien
+ DEC alienFlag
  BEQ L2BB7
 
  JMP L2AC6
@@ -11063,7 +11070,7 @@ ORG CODE%
  ADC #1
  AND #7
  STA L4202
- DEC Alien
+ DEC alienFlag
  BEQ L2BB7
 
  JMP L2AEC
@@ -11123,10 +11130,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ResetObjectLists
+\       Name: ResetLineLists
 \       Type: Subroutine
 \   Category: 
-\    Summary: Reset the object lists at ObjectsInView and ObjectsNotInView
+\    Summary: Reset the line lists at linesToShow and linesToHide
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11134,24 +11141,24 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.ResetObjectLists
+.ResetLineLists
 
- LDA #%10000000         \ Set ColourLogic = %10000000
- STA ColourLogic
+ LDA #%10000000         \ Set colourLogic = %10000000
+ STA colourLogic
 
- LDA #%00001111         \ Set ColourCycle = %00001111, so we show colour 1 and
- STA ColourCycle        \ hide colour 2 in the canopy view
+ LDA #%00001111         \ Set colourCycle = %00001111, so we show colour 1 and
+ STA colourCycle        \ hide colour 2 in the canopy view
 
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
- LDA #0                 \ Set ObjectID = 0 to act as a loop counter below
- STA ObjectID
+ LDA #0                 \ Set lineID = 0 to act as a loop counter below
+ STA lineID
 
- STA InViewListEnd      \ Set InViewListEnd = 0
+ STA linesShowEnd       \ Set linesShowEnd = 0
 
- LDA #255               \ Set NotInViewListEnd = 255
- STA NotInViewListEnd
+ LDA #255               \ Set linesHideEnd = 255
+ STA linesHideEnd
 
  STA LL                 \ Set LL = 255
 
@@ -11159,20 +11166,20 @@ ORG CODE%
 
 .rsol1
 
- JSR AddObjectToList    \ Add the object with ID ObjectID to either the
-                        \ ObjectsInView or ObjectsNotInView list
+ JSR AddLineToList      \ Add the line with ID lineID to either the
+                        \ linesToShow or linesToHide list
 
- INC ObjectID           \ Increment ObjectID to move on to the next object
+ INC lineID             \ Increment lineID to move on to the next line
 
- LDA ObjectID           \ Loop back until we have processed all the objects
- CMP NumberOfObjects
+ LDA lineID             \ Loop back until we have processed all the lines
+ CMP numberOfLines
  BCC rsol1
 
  LDX #3                 \ Set logical colour 3 to white so the dashboard display
  JSR SetColourToWhite   \ shows up in white
 
                         \ Fall through into FlipColours to flip the values of
-                        \ ColourCycle and ColourLogic to cycle to the next
+                        \ colourCycle and colourLogic to cycle to the next
                         \ colour state
 
 \ ******************************************************************************
@@ -11180,21 +11187,21 @@ ORG CODE%
 \       Name: FlipColours
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Flip the values of ColourCycle and ColourLogic to cycle to the
+\    Summary: Flip the values of colourCycle and colourLogic to cycle to the
 \             next colour state
 \
 \ ------------------------------------------------------------------------------
 \
-\ Thie routine flips the ColourCycle and ColourLogic variables between these two
+\ Thie routine flips the colourCycle and colourLogic variables between these two
 \ states:
 \
-\   * ColourLogic = %10000000 = ORA logic
-\     ColourCycle = %00001111 = show colour 1, hide colour 2
+\   * colourLogic = %10000000 = ORA logic
+\     colourCycle = %00001111 = show colour 1, hide colour 2
 \
-\   * ColourLogic = %01000000 = ORA logic
-\     ColourCycle = %11110000 = show colour 2, hide colour 1
+\   * colourLogic = %01000000 = ORA logic
+\     colourCycle = %11110000 = show colour 2, hide colour 1
 \
-\ The routine only checks the value of Colour Cycle, so if ColourLogic is
+\ The routine only checks the value of Colour Cycle, so if colourLogic is
 \ %00000000 on entry, it will be set to one of %10000000 and %01000000.
 \
 \ ******************************************************************************
@@ -11202,25 +11209,25 @@ ORG CODE%
 .FlipColours
 
  LDX #%00001111         \ Set the values of X and Y to use if bit 7 of
- LDY #%10000000         \ ColourCycle is set, i.e. %11110000
+ LDY #%10000000         \ colourCycle is set, i.e. %11110000
 
- LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
  BMI cycl1              \ down to cycl1
 
- LDX #%11110000         \ Set X and Y for when bit 7 of ColourCycle is clear,
+ LDX #%11110000         \ Set X and Y for when bit 7 of colourCycle is clear,
  LDY #%01000000         \ i.e. %00001111
 
 .cycl1
 
- STX ColourCycle        \ Store X in ColourCycle, so ColourCycle is now:
+ STX colourCycle        \ Store X in colourCycle, so colourCycle is now:
                         \
-                        \   * %11110000 if the old ColourCycle was %00001111
-                        \   * %00001111 if the old ColourCycle was %11110000
+                        \   * %11110000 if the old colourCycle was %00001111
+                        \   * %00001111 if the old colourCycle was %11110000
 
- STY ColourLogic        \ Store Y in ColourLogic, so ColourLogic is now:
+ STY colourLogic        \ Store Y in colourLogic, so colourLogic is now:
                         \
-                        \   * %01000000 if the old ColourCycle was %00001111
-                        \   * %10000000 if the old ColourCycle was %11110000
+                        \   * %01000000 if the old colourCycle was %00001111
+                        \   * %10000000 if the old colourCycle was %11110000
 
  RTS                    \ Return from the subroutine
 
@@ -11335,54 +11342,54 @@ ORG CODE%
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
- LDA InViewListEnd      \ If InViewListEnd is non-zero, jump to view1 to skip
- BNE view1              \ the following instruction, as there are objects in the
-                        \ ObjectsInView list that we need to draw
+ LDA linesShowEnd       \ If linesShowEnd is non-zero, jump to view1 to skip
+ BNE view1              \ the following instruction, as there are lines in the
+                        \ linesToShow list that we need to draw
 
- BEQ view6              \ InViewListEnd is zero, which means the ObjectsInView
+ BEQ view6              \ linesShowEnd is zero, which means the linesToShow
                         \ list is empty, so there is nothing to draw and we
                         \ jump down to view6 to flip the colours (this BEQ is
                         \ effectively a JMP as we know A is zero)
 
 .view1
 
- LDA #0                 \ Set ObjectIDCounter = 0 to act as a counter in the
- STA ObjectIDCounter    \ following loop, where ObjectIDCounter loops from 0 to
-                        \ InViewListEnd - 1
+ LDA #0                 \ Set lineIDCounter = 0 to act as a counter in the
+ STA lineIDCounter      \ following loop, where lineIDCounter loops from 0 to
+                        \ linesShowEnd - 1
 
 .view2
 
- TAX                    \ Set A to the next object ID from the ObjectsInView
- LDA ObjectsInView,X    \ list
+ TAX                    \ Set A to the next line ID from the linesToShow
+ LDA linesToShow,X      \ list
 
- STA ObjectID           \ Store the object's ID in ObjectID
+ STA lineID             \ Store the line's ID in lineID
 
  BNE view3              \ If A is non-zero, jump to view3
 
  JSR L3347
 
- LDA ObjectID           \ Retrieve the object's ID
+ LDA lineID             \ Retrieve the line's ID
 
 .view3
 
  TAX
- LDY StartPoint,X
+ LDY lineStartPoint,X
  STY M
 
  LDA #0
  STA L0400,Y
 
- LDY EndPoint,X
+ LDY lineEndPoint,X
  STY L
 
  STA L0400,Y
 
  JSR L107F
 
- INC ObjectIDCounter    \ Increment the loop counter
+ INC lineIDCounter      \ Increment the loop counter
 
- LDA ObjectIDCounter    \ Loop back to process the next 
- CMP InViewListEnd
+ LDA lineIDCounter      \ Loop back to process the next 
+ CMP linesShowEnd
  BCC view2
 
  JSR DrawGunSights      \ Update the gun sights, if shown
@@ -11391,10 +11398,10 @@ ORG CODE%
                         \ is being shown in white) and the new one (which we
                         \ just drew in black)
 
- LDA ColourCycle        \ If bit 7 of ColourCycle is set, i.e. %11110000, jump
+ LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
  BMI view4              \ down to view4 to hide colour 1 and show colour 2
 
-                        \ If we get here then ColourCycle is %00001111
+                        \ If we get here then colourCycle is %00001111
 
  LDX #2                 \ Set logical colour 2 to black, to hide the old canopy
  JSR SetColourToBlack   \ view in colour 2
@@ -11407,7 +11414,7 @@ ORG CODE%
 
 .view4
 
-                        \ If we get here then ColourCycle is %11110000
+                        \ If we get here then colourCycle is %11110000
 
  LDX #1                 \ Set logical colour 1 to black, to hide the old canopy
  JSR SetColourToBlack   \ view in colour 1
@@ -11422,7 +11429,7 @@ ORG CODE%
 
 .view6
 
- JSR FlipColours        \ Flip the values of ColourCycle and ColourLogic to
+ JSR FlipColours        \ Flip the values of colourCycle and colourLogic to
                         \ cycle to the next colour state
 
  RTS                    \ Return from the subroutine
@@ -11436,7 +11443,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Only called for object ID = 0
+\ Only called for line ID = 0
 \
 \ ******************************************************************************
 
@@ -11449,7 +11456,7 @@ ORG CODE%
  JSR L4B4A
 
  LDA #&F0
- STA XCoordHi,X
+ STA xLineHi,X
  STX GG
 
 .L2CA6
@@ -11474,7 +11481,7 @@ ORG CODE%
 
 .L2CB5
 
- STA ZCoordHi,X
+ STA zLineHi,X
  LDA #&80
  ORA L0400,X
  STA L0400,X
@@ -11509,12 +11516,12 @@ ORG CODE%
 .L2CD3
 
  LDX #0
- STX Alien
+ STX alienFlag
  CPY #&21
  BNE L2CE1
 
  LDA #1
- STA Alien
+ STA alienFlag
 
 .L2CE1
 
@@ -11542,26 +11549,26 @@ ORG CODE%
  STA L0CCB
  JSR L1D8D
 
- LDA XCoordHi
+ LDA xLineHi
  STA R
- LDA ZCoordHi
+ LDA zLineHi
  STA S
  LDX #3
 
 .L2D1A
 
  LSR R
- ROR XCoordLo
+ ROR xLineLo
  LSR S
- ROR ZCoordLo
+ ROR zLineLo
  DEX
  BPL L2D1A
 
  LSR R
- LDA XCoordLo
+ LDA xLineLo
  ROR A
  ADC #0
- STA XCoordLo
+ STA xLineLo
 
 \ ******************************************************************************
 \
@@ -11574,15 +11581,15 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   XCoordLo               The x-coordinate of the item to display
+\   xLineLo             The x-coordinate of the item to display
 \
-\   XCoordHi               Bit 7 denotes the sign of the x-coordinate
+\   xLineHi             Bit 7 denotes the sign of the x-coordinate
 \
-\   ZCoordLo               The y-coordinate of the item to display
+\   zLineLo             The y-coordinate of the item to display
 \
-\   ZCoordHi               Bit 7 denotes the sign of the y-coordinate
+\   zLineHi             Bit 7 denotes the sign of the y-coordinate
 \
-\   Alien               The item to update on the radar:
+\   alienFlag           The item to update on the radar:
 \
 \                         * 0 = update the runway
 \
@@ -11592,19 +11599,19 @@ ORG CODE%
 
 .UpdateRadar
 
- LDX Alien              \ Set X = Alien to point to the item to update on the
-                        \ radar (0 for the runway, 1 for the alien)
+ LDX alienFlag          \ Set X = alienFlag to point to the item to update on
+                        \ the radar (0 for the runway, 1 for the alien)
 
- LDA RadarX,X           \ Set I = the X-th byte of RadarX, the x-coordinate of
+ LDA radarX,X           \ Set I = the X-th byte of radarX, the x-coordinate of
  STA I                  \ the current line or dot on the radar
 
- LDA RadarY,X           \ Set J = the X-th byte of RadarY, the y-coordinate of
+ LDA radarY,X           \ Set J = the X-th byte of radarY, the y-coordinate of
  STA J                  \ the current line or dot on the radar
 
  LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
  STA N                  \ current line
 
- LDA PreviousCompass    \ Set A = PreviousCompass, so it contains the value of A
+ LDA previousCompass    \ Set A = previousCompass, so it contains the value of A
                         \ from the last call to GetRadarVector, i.e. for the
                         \ current line on the radar
 
@@ -11613,38 +11620,39 @@ ORG CODE%
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- LDX Alien              \ If Alien is non-zero then we just erased a dot from
- BNE radl1              \ the radar, so jump to radl1 as we don't need to redraw
-                        \ the cross at the centre of the radar
+ LDX alienFlag          \ If alienFlag is non-zero then we just erased a dot
+ BNE radl1              \ from the radar, so jump to radl1 as we don't need to
+                        \ redraw the cross at the centre of the radar
                         
                         \ If we get here then we just erased a line from the
                         \ radar, which may have corrupted the cross in the
                         \ centre, so we redraw it
 
  LDA #%10001000         \ Redraw the top-but-one pixel of the cross (though,
- STA Row25_Block35_6    \ oddly, not the very top pixel)
+ STA row25_block35_6    \ oddly, not the very top pixel)
 
- STA Row26_Block35_0    \ Redraw the bottom two pixels of the cross
- STA Row26_Block35_1
+ STA row26_block35_0    \ Redraw the bottom two pixels of the cross
+ STA row26_block35_1
 
  LDA #%00010001         \ Redraw the left pixel of the cross
- STA Row25_Block34_7
+ STA row25_block34_7
 
  LDA #%11001100         \ Redraw the centre and right pixels of the cross
- STA Row25_Block35_7
+ STA row25_block35_7
 
 .radl1
 
                         \ Now to calculate the position of the new line or dot
                         \ to draw on the radar
 
- LDA XCoordLo              \ Set A = XCoordLo, the x-coordinate of the alien or runway
+ LDA xLineLo            \ Set A = xLineLo, the x-coordinate of the alien or
+                        \ runway
 
- BIT XCoordHi              \ If bit 7 of XCoordHi is 0, so XCoordLo is positive, jump to
- BPL radl2              \ radl2 to skip the following three instructions
+ BIT xLineHi            \ If bit 7 of xLineHi is 0, so xLineLo is positive, jump
+ BPL radl2              \ to radl2 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
- CLC                    \ positive, i.e. A = |XCoordLo|
+ CLC                    \ positive, i.e. A = |xLineLo|
  ADC #1
 
 .radl2
@@ -11652,13 +11660,14 @@ ORG CODE%
  CMP #13                \ If A >= 13, jump to radl4 to return from the
  BCS radl4              \ subroutine, as the item is off the side of the radar
 
- LDA ZCoordLo              \ Set A = ZCoordLo, the y-coordinate of the alien or runway
+ LDA zLineLo            \ Set A = zLineLo, the y-coordinate of the alien or
+                        \ runway
 
- BIT ZCoordHi              \ If bit 7 of ZCoordHi is 0, so ZCoordLo is positive, jump to
- BPL radl3              \ radl3 to skip the following three instructions
+ BIT zLineHi            \ If bit 7 of zLineHi is 0, so zLineLo is positive, jump
+ BPL radl3              \ to radl3 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
- CLC                    \ positive, i.e. A = |ZCoordLo|
+ CLC                    \ positive, i.e. A = |zLineLo|
  ADC #1
 
 .radl3
@@ -11667,26 +11676,26 @@ ORG CODE%
  BCS radl4              \ subroutine, as the item is off the top or bottom of
                         \ the radar
 
- LDA XCoordLo              \ Set I = XCoordLo + 140
+ LDA xLineLo            \ Set I = xLineLo + 140
  CLC                    \
  ADC #140               \ to move the coordinate onto the radar, whose centre
  STA I                  \ cross on-screen is at (140, 207)
 
- STA RadarX,X           \ Store the x-coordinate as the X-th byte of RadarX, so
+ STA radarX,X           \ Store the x-coordinate as the X-th byte of radarX, so
                         \ we can erase this item from the radar later
 
- LDA ZCoordLo              \ Set J = ZCoordLo + 208
+ LDA zLineLo            \ Set J = zLineLo + 208
  CLC                    \
  ADC #208               \ to move the coordinate onto the radar, whose centre
  STA J                  \ cross on-screen is at (140, 207)
 
- STA RadarY,X           \ Store the x-coordinate as the X-th byte of RadarY, so
+ STA radarY,X           \ Store the x-coordinate as the X-th byte of radarY, so
                         \ we can erase this item from the radar later
 
  LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the
  STA N                  \ new line
 
- LDA Compass            \ Set A to the current compass setting, for use in the
+ LDA compassHeading     \ Set A to the current compass heading, for use in the
                         \ call to GetRadarVector if this is the runway (if this
                         \ is an alien, this value is ignored)
 
@@ -11827,9 +11836,9 @@ ORG CODE%
 \ Arguments:
 \
 \   A                   For the runway line only, this is either the current
-\                       compass direction from Compass (if we are drawing the
-\                       radar line), or a previous compass direction (if we are
-\                       erasing the existing radar line)
+\                       compass direction from compassHeading (if we are drawing
+\                       the radar line), or a previous compass direction (if we
+\                       are erasing the existing radar line)
 \
 \   X                   The type of radar line to calculate:
 \
@@ -11884,7 +11893,7 @@ ORG CODE%
                         \   * &80 = South
                         \   * &C0 = West
 
- STA PreviousCompass    \ Store A in PreviousCompass, so we can pass it to this
+ STA previousCompass    \ Store A in previousCompass, so we can pass it to this
                         \ routine again when we want to erase the line we are
                         \ about to draw
 
@@ -12113,15 +12122,15 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: PreviousCompass
+\       Name: previousCompass
 \       Type: Variable
 \   Category: Dashboard
-\    Summary: Stores the value of Compass when we draw the runway on the radar,
-\             so we can erase the line later
+\    Summary: Stores the value of compassHeading when we draw the runway on the
+\             radar, so we can erase the line later
 \
 \ ******************************************************************************
 
-.PreviousCompass
+.previousCompass
 
  EQUB &20
 
@@ -12184,8 +12193,8 @@ ORG CODE%
  STX R                  \ canopy view except for the top row containing the
                         \ canopy edge)
 
- LDY #HI(Row1_Block1_0) \ Set (Y X) to the screen address for row 1, block 1
- LDX #LO(Row1_Block1_0)
+ LDY #HI(row1_block1_0) \ Set (Y X) to the screen address for row 1, block 1
+ LDX #LO(row1_block1_0)
 
                         \ Fall through into FillCanopyRows to fill the canopy
                         \ view, from the top row to the bottom, avoiding the top
@@ -12350,7 +12359,7 @@ ORG CODE%
  JSR L257B
 
  LDA #0
- STA ObjectInView
+ STA showLine
  JSR L2A8C
 
  BPL L2F0A
@@ -12364,7 +12373,7 @@ ORG CODE%
 .L2F0A
 
  LDA #0
- STA Firing
+ STA firingStatus
 
 .L2F0F
 
@@ -12391,12 +12400,12 @@ ORG CODE%
 
 .L2F1C
 
- LDX Theme
+ LDX themeStatus
  BMI L2F4D
 
  BEQ L2F4D
 
- LDA OnGround
+ LDA onGround
  BNE L2F4D
 
  STA L420F,X
@@ -12410,13 +12419,13 @@ ORG CODE%
  BCS L2F4D
 
  ORA #&10
- DEC Theme
+ DEC themeStatus
  LDX #8
 
 .L2F3B
 
  DEX
- CPX Theme
+ CPX themeStatus
  BNE L2F45
 
  STA L4208,X
@@ -12427,7 +12436,7 @@ ORG CODE%
  CMP L4208,X
  BNE L2F3B
 
- INC Theme
+ INC themeStatus
 
 .L2F4D
 
@@ -12448,7 +12457,7 @@ ORG CODE%
 
 .L2F4E
 
- LDA MainLoopCounter
+ LDA mainLoopCounter
  AND #127
  BNE L2F6A
 
@@ -12575,7 +12584,7 @@ ORG CODE%
 
 .L2FE3
 
- LDA MainLoopCounter
+ LDA mainLoopCounter
  AND #127
  BNE L302B
 
@@ -12615,7 +12624,7 @@ ORG CODE%
  BPL L300A
 
  LDA #8
- STA Theme
+ STA themeStatus
 
  LDX #&00               \ Add 500 points to the score and make a beep by calling
  LDA #&50               \ ScorePoints with (X A) = &0050
@@ -13035,7 +13044,7 @@ ORG CODE%
 
 .L31B9
 
- STA Row25_Block31_1
+ STA row25_block31_1
  RTS
 
 \ ******************************************************************************
@@ -13047,7 +13056,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Only called for object IDs 1 to 11.
+\ Only called for line IDs 1 to 11.
 \
 \ ******************************************************************************
 
@@ -13062,12 +13071,12 @@ ORG CODE%
 
 .L31C7
 
- LDA ObjectID
+ LDA lineID
  CMP #5
  BCC L31D3
 
  LDA L0CCA
- STA ObjectInView
+ STA showLine
 
 .L31D3
 
@@ -13118,7 +13127,7 @@ ORG CODE%
  LDX #3
  JSR L1A67
 
- LDA ObjectInView
+ LDA showLine
  BEQ L3222
 
  LDA #&40
@@ -13137,7 +13146,7 @@ ORG CODE%
 
  JSR L4B5F
 
- STA ObjectInView
+ STA showLine
  BNE L323B
 
  CPY #3
@@ -13150,7 +13159,7 @@ ORG CODE%
 
  LDA #&80
  STA L0CCA
- LDA ObjectID
+ LDA lineID
  CMP #5
  BCC L324A
 
@@ -13165,7 +13174,7 @@ ORG CODE%
 
 .L324C
 
- STA ObjectInView
+ STA showLine
  RTS
 
 .L3250
@@ -13298,7 +13307,7 @@ ORG CODE%
 
 .L32FB
 
- LDA ZCoordHi,Y
+ LDA zLineHi,Y
  EOR P
  BMI L3309
 
@@ -13382,7 +13391,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Only called for object zero, if it's in view
+\ Only called for line zero, if it's in view
 \
 \ ******************************************************************************
 
@@ -13391,33 +13400,33 @@ ORG CODE%
  LDX #&1E
  LDY #&20
 
- LDA XCoordHi,X
+ LDA xLineHi,X
  STA T
 
- LDA XCoordLo,X
+ LDA xLineLo,X
  ASL A
  ROL T
  SEC
  SBC L091F
- STA XCoordLo,Y
+ STA xLineLo,Y
 
  LDA T
  SBC L4A1F
- STA XCoordHi,Y
+ STA xLineHi,Y
 
- LDA YCoordHi,X
+ LDA yLineHi,X
  STA T
 
- LDA YCoordLo,X
+ LDA yLineLo,X
  ASL A
  ROL T
  SEC
  SBC L0A1F
- STA YCoordLo,Y
+ STA yLineLo,Y
 
  LDA T
  SBC L0B1F
- STA YCoordHi,Y
+ STA yLineHi,Y
 
  STX L
  STY M
@@ -13438,7 +13447,7 @@ ORG CODE%
 
 .FillUpFuelTank
 
- LDA MainLoopCounter    \ If the MainLoopCounter is a multiple of 4, jump to
+ LDA mainLoopCounter    \ If the mainLoopCounter is a multiple of 4, jump to
  AND #3                 \ fuel1 to add some fuel to the tank (so we do this
  BEQ fuel1              \ every four iterations of the main loop)
 
@@ -13448,11 +13457,11 @@ ORG CODE%
 
  TAX                    \ We got here because A = 0, so this sets X = 0
 
- LDA FuelLevel          \ If FuelLevel >= 65, then the tank is already full, so
+ LDA fuelLevel          \ If fuelLevel >= 65, then the tank is already full, so
  CMP #65                \ jump to fuel2 to skip filling it up any more
  BCS fuel2
 
- INC FuelLevel          \ FuelLevel < 65, so increment the fuel level by 1, to
+ INC fuelLevel          \ fuelLevel < 65, so increment the fuel level by 1, to
                         \ fill up the fuel tank by 1/65th of a full tank
 
  JMP DrawFuelPixel      \ Draw an extra pixel at the top of the fuel level, so
@@ -13478,7 +13487,7 @@ ORG CODE%
 
 .UpdateFuelGauge
 
- LDA MainLoopCounter    \ If the MainLoopCounter is a multiple of 16, jump to
+ LDA mainLoopCounter    \ If the mainLoopCounter is a multiple of 16, jump to
  AND #15                \ upfu1 to update the fuel gauge
  BEQ upfu1
 
@@ -13489,12 +13498,12 @@ ORG CODE%
  LDX #128               \ Set X = 128, so we erase a pixel from the top of the
                         \ fuel gauge in DrawFuelPixel below, if there is one
 
- LDA FuelLevel          \ Set A = FuelLevel
+ LDA fuelLevel          \ Set A = fuelLevel
 
                         \ Fall through into DrawFuelPixel to erase a pixel from
                         \ the fuel gauge at the top of the gauge if there is
                         \ one, which will set the amount shown on the fuel gauge
-                        \ to FuelLevel
+                        \ to fuelLevel
 
 \ ******************************************************************************
 \
@@ -13590,7 +13599,7 @@ ORG CODE%
                         \ is the quietest
 
  CLC                    \ Add A to byte #3 of sound #1 (low byte of amplitude)
- ADC Sounds+10
+ ADC soundData+10
 
  BMI volk3              \ If the result is negative, then jump to volk3 to
                         \ update the volume
@@ -13609,10 +13618,10 @@ ORG CODE%
                         \ changing the volume, as it is already at the loudest
                         \ setting
 
- STA Sounds+10          \ The new volume is valid, so update byte #3 of sound #1
+ STA soundData+10       \ The new volume is valid, so update byte #3 of sound #1
                         \ (low byte of amplitude) with the new volume
 
- INC Sounds+60          \ Increment byte #5 of sound #7 (low byte of engine
+ INC soundData+60       \ Increment byte #5 of sound #7 (low byte of engine
                         \ pitch) to make the engine pitch jump up a bit, so we
                         \ can hear the engine noise changing while adjusting the
                         \ volume (the MakeEngineSound routine will bring it back
@@ -13649,11 +13658,11 @@ ORG CODE%
                         \ rflp1 to return from the subroutine without changing
                         \ the flaps
 
- LDA Flaps              \ If the flaps are already retracted, jump to rflp1 to
+ LDA flapsStatus        \ If the flaps are already retracted, jump to rflp1 to
  BEQ rflp1              \ return from the subroutine without changing anything
 
  LDA #0                 \ The speed is at least 151 mph and the flaps are on,
- STA Flaps              \ so we retract them by setting Flaps to 0
+ STA flapsStatus        \ so we retract them by setting flapsStatus to 0
 
  JSR IndicatorF         \ Update the flaps indicator
 
@@ -13825,14 +13834,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: RadarX to HighScoreHi
+\       Name: radarX to highScoreHi
 \       Type: Workspace
 \   Category: 
 \    Summary: 
 \
 \ ******************************************************************************
 
-.RadarX
+.radarX
 
  EQUB &8A               \ The x-coordinate of the runway on the radar, stored so
                         \ we can erase it again
@@ -13840,7 +13849,7 @@ ORG CODE%
  EQUB &8A               \ The x-coordinate of the alien on the radar, stored so
                         \ we can erase it again
 
-.RadarY
+.radarY
 
  EQUB &D0               \ The y-coordinate of the runway on the radar, stored so
                         \ we can erase it again
@@ -13863,7 +13872,7 @@ ORG CODE%
 .L368F                  \ EPLO in orginal
 
  EQUB &26               \ Zeroed in ResetVariables
-                        \ Can't fire guns if this or Firing are non-zero
+                        \ Can't fire guns if this or firingStatus are non-zero
 
 .L3690
 
@@ -13873,7 +13882,7 @@ ORG CODE%
 
  EQUB &34
 
-.FuelLevel
+.fuelLevel
 
  EQUB &41               \ Current fuel level
                         \
@@ -13882,28 +13891,28 @@ ORG CODE%
 
  EQUB &B2, &B7, &BC, &C1, &0F, &B4, &BA, &BF, &C8
 
-.ScoreLo
+.scoreLo
 
  EQUB &49               \ Score (high byte of a BCD number)
                         \
                         \ The score is displayed with an extra "0" added to the
                         \ end, so this contains the score divided by 10
 
-.ScoreHi
+.scoreHi
 
  EQUB &3D               \ Score (low byte of a BCD number)
                         \
                         \ The score is displayed with an extra "0" added to the
                         \ end, so this contains the score divided by 10
 
-.HighScoreLo
+.highScoreLo
 
  EQUB &26               \ High score (high byte of a BCD number)
                         \
                         \ The high score is displayed with an extra "0" added to
                         \ the end, so this contains the high score divided by 10
 
-.HighScoreHi
+.highScoreHi
 
  EQUB &34               \ High score (low byte of a BCD number)
                         \
@@ -13931,17 +13940,18 @@ ORG CODE%
 
 .SetEngine
 
- CMP Engine             \ If the value of Engine is already the same as A, jump
- BEQ seng3              \ to seng3 to return from the subroutine
+ CMP engineStatus       \ If the value of engineStatus is already the same as A,
+ BEQ seng3              \ jump to seng3 to return from the subroutine
 
- STA Engine             \ Update the value of Engine to the new status in A
+ STA engineStatus       \ Update the value of engineStatus to the new status in
+                        \ A
 
  TAX                    \ Either turn the engine sound off (if A = 0) or turn it
  JSR ToggleEngineSound  \ on (if A is non-zero)
 
  LDA L4F85              \ Set A = L4F85
 
- LDX Engine             \ If the engine is now on, jump to seng1
+ LDX engineStatus       \ If the engine is now on, jump to seng1
  BNE seng1
 
  CLC                    \ Set A = A + 20
@@ -14022,18 +14032,18 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: Times16Hi
+\       Name: times16Hi
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for the high byte of a value * 16
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, Times16Hi,X contains the high byte of X * 16.
+\ In the table below, times16Hi,X contains the high byte of X * 16.
 \
 \ ******************************************************************************
 
-.Times16Hi
+.times16Hi
 
 FOR I%, 0, 255
 
@@ -14043,18 +14053,18 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Times16Lo
+\       Name: times16Lo
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for the low byte of a value * 16
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, Times16Lo,X contains the low byte of X * 16.
+\ In the table below, times16Lo,X contains the low byte of X * 16.
 \
 \ ******************************************************************************
 
-.Times16Lo
+.times16Lo
 
 FOR I%, 0, 255
 
@@ -14118,26 +14128,26 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: TimesTable
+\       Name: timesTable
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for multiplication times tables
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, TimesTable+X*16,Y contains X * Y.
+\ In the table below, timesTable+X*16,Y contains X * Y.
 \
 \ To put it another way, X and Y are both in the range 0 to 15, so they are
 \ 4-bit values. If, in binary, they are X = %xxxx and Y = %yyyy, then:
 \
-\   TimesTable,%xxxxyyyy contains X * Y.
+\   timesTable,%xxxxyyyy contains X * Y.
 \
-\ This table is used in conjunction with the HighNibble and LowNibble tables to
+\ This table is used in conjunction with the highNibble and lowNibble tables to
 \ look up multiplication results.
 \
 \ ******************************************************************************
 
-.TimesTable
+.timesTable
 
 FOR I%, 0, 15
 
@@ -14219,7 +14229,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LineBufferR
+\       Name: lineBufferR
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14230,7 +14240,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.LineBufferR
+.lineBufferR
 
  EQUB &64, &6C, &70, &32, &0D, &03, &B4, &19
  EQUB &20, &20, &20, &20, &20, &20, &44, &45
@@ -14247,7 +14257,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LineBufferW
+\       Name: lineBufferW
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14258,7 +14268,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.LineBufferW
+.lineBufferW
 
  EQUB &41, &3A, &43, &4C, &43, &3A, &41, &44
  EQUB &43, &23, &26, &44, &38, &3A, &54, &41
@@ -14275,7 +14285,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LineBufferS
+\       Name: lineBufferS
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14286,7 +14296,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.LineBufferS
+.lineBufferS
 
  EQUB &20, &20, &20, &20, &4C, &44, &41, &23
  EQUB &30, &3A, &53, &54, &41, &20, &46, &52
@@ -14303,7 +14313,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LineBufferG
+\       Name: lineBufferG
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14314,7 +14324,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.LineBufferG
+.lineBufferG
 
  EQUB &1A, &24, &2E, &53, &55, &54, &52, &20
  EQUB &4A, &4D, &50, &20, &54, &45, &53, &54
@@ -14331,7 +14341,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LineBufferT
+\       Name: lineBufferT
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14342,7 +14352,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.LineBufferT
+.lineBufferT
 
  EQUB &73, &75, &74, &31, &0D, &04, &38, &0F
  EQUB &20, &20, &20, &20, &20, &20, &84, &41
@@ -14361,7 +14371,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ScoreText
+\       Name: scoreText
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14372,7 +14382,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.ScoreText
+.scoreText
 
  EQUB 31, 1, 3          \ VDU 31, 1, 3 moves the text cursor to column 1, row 3
  EQUS "HIGH SCORE:  "
@@ -14390,31 +14400,31 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: StartPoint
+\       Name: lineStartPoint
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given an object ID in X, StartPoint,X contains:
+\ Given a line ID in X, lineStartPoint,X contains:
 \
 \ The offset of the byte in L0400 that is zeroed in DrawCanopyView
 \
 \ The offset of the byte in L0400 that is zeroed in MainLoop (Part 14) when the
-\ object has been added to the ObjectsNotInView list
+\ line has been added to the linesToHide list
 \
 \ The value of M that is set in in L28B6 and passed to L0D01
 \
 \ The value of M that is set in DrawCanopyView and passed to L107F and used as
-\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
+\ an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
-\ The value of M that is set in IsObjectInView and passed to L2C95 and used as
-\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
+\ The value of M that is set in IsLineVisible and passed to L2C95 and used as
+\ an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ ******************************************************************************
 
-.StartPoint
+.lineStartPoint
 
  EQUB &1E, &02, &03, &04, &01, &07, &09, &0B
  EQUB &0D, &0F, &11, &13, &3B, &72, &2A, &2B
@@ -14571,31 +14581,31 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: EndPoint
+\       Name: lineEndPoint
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given an object ID in X, EndPoint,X contains:
+\ Given a line ID in X, lineEndPoint,X contains:
 \
 \ The offset of the byte in L0400 that is zeroed in DrawCanopyView
 \
 \ The offset of the byte in L0400 that is zeroed in MainLoop (Part 14) when the
-\ object has been added to the ObjectsNotInView list
+\ line has been added to the linesToHide list
 \
 \ The value of L and GG that is set in in L28B6 and passed to L0D01
 \
 \ The value of L that is set in DrawCanopyView and passed to L107F and used as
-\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
+\ an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
-\ The value of L that is set in IsObjectInView and passed to L2C95 and used as
-\ an index into XCoordLo, XCoordHi, YCoordLo, YCoordHi
+\ The value of L that is set in IsLineVisible and passed to L2C95 and used as
+\ an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ ******************************************************************************
 
-.EndPoint
+.lineEndPoint
 
  EQUB &1F, &01, &02, &03, &04, &06, &08, &0A
  EQUB &0C, &0E, &10, &12, &72, &73, &29, &2A
@@ -14626,14 +14636,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: AlienScore
+\       Name: alienScore
 \       Type: Variable
 \   Category: Theme
 \    Summary: The scores for killing aliens in the various feeding stages
 \
 \ ******************************************************************************
 
-.AlienScore
+.alienScore
 
  EQUB &05               \ The score for a large feeding alien (50 points)
  EQUB &10               \ The score for a medium feeding alien (100 points)
@@ -14644,14 +14654,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: DormantAlienScore
+\       Name: dormantAlienScore
 \       Type: Variable
 \   Category: Theme
 \    Summary: The score for killing a dormant alien
 \
 \ ******************************************************************************
 
-.DormantAlienScore
+.dormantAlienScore
 
  EQUB &40               \ The score for a dormant alien (400 points)
 
@@ -14805,14 +14815,14 @@ NEXT
 
  EQUB &69               \ Zeroed in ResetVariables
 
-.MainLoopCounter
+.mainLoopCounter
 
  EQUB &67               \ The main loop counter, which is incremented every
                         \ iteration of the main loop
 
-.NumberOfObjects
+.numberOfLines
 
- EQUB 193               \ The total number of 3D objects defined in the game
+ EQUB 193               \ The total number of 3D lines defined in the game
 
 .L4208
 
@@ -15098,7 +15108,7 @@ NEXT
  JSR L4B9B
  BCC L42DF
  LDA #&20
- LDX Row25_Block31_1
+ LDX row25_block31_1
  BNE L42EB
 
 .L42B3
@@ -15117,7 +15127,7 @@ NEXT
  LDA #&00
  JSR L4B9B
  BCC L42D5
- LDX Row25_Block31_1
+ LDX row25_block31_1
  BNE L42B3
  LDA #&05
  BNE L42EB
@@ -15188,20 +15198,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LowNibble
+\       Name: lowNibble
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for the low nibble of a value
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, LowNibble,X contains the low nibble of X:
+\ In the table below, lowNibble,X contains the low nibble of X:
 \
 \   X AND %00001111
 \
 \ ******************************************************************************
 
-.LowNibble
+.lowNibble
 
 FOR I%, 0, 255
 
@@ -15314,20 +15324,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: HighNibble
+\       Name: highNibble
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for the high nibble of a value
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, HighNibble,X contains the high nibble of X:
+\ In the table below, highNibble,X contains the high nibble of X:
 \
 \   X AND %11110000
 \
 \ ******************************************************************************
 
-.HighNibble
+.highNibble
 
 FOR I%, 0, 255
 
@@ -15394,17 +15404,17 @@ NEXT
 
 .ReadJoystick
 
- LDA Row29_Block20_4    \ If the screen byte at row 29, block 20, pixel row 4 is
+ LDA row29_block20_4    \ If the screen byte at row 29, block 20, pixel row 4 is
  BEQ rjoy1              \ zero (i.e. black) then the joystick is not enabled, so
                         \ jump to rjoy1 to return from the subroutine
 
- LDX #1                 \ Set Aileron to the value from ADC channel 1, the
- JSR ReadADCChannel     \ joystick's x-position, inverted and clipped to the
- STA Aileron            \ range -118 to +116
+ LDX #1                 \ Set aileronPosition to the value from ADC channel 1,
+ JSR ReadADCChannel     \ the joystick's x-position, inverted and clipped to the
+ STA aileronPosition    \ range -118 to +116
 
- LDX #2                 \ Set Elevator to the value from ADC channel 2, the
- JSR ReadADCChannel     \ joystick's y-position, inverted and clipped to the
- STA Elevator           \ range -118 to +116
+ LDX #2                 \ Set elevatorPosition to the value from ADC channel 2,
+ JSR ReadADCChannel     \ the joystick's y-position, inverted and clipped to the
+ STA elevatorPosition   \ range -118 to +116
 
  LDX #0                 \ Call OSBYTE with A = 128 and X = 0 to read the status
  LDA #128               \ of the joystick's fire button into X
@@ -15415,9 +15425,9 @@ NEXT
  BEQ rjoy1
 
  LDA #8                 \ The fire button is being pressed, so update the key
- STA KeyLoggerLow+5     \ logger at KeyLoggerLow+5, which corresponds to the
+ STA keyLoggerLow+5     \ logger at keyLoggerLow+5, which corresponds to the
                         \ flaps and fire keys. We set the value to 8, the value
-                        \ from KeyTable2Lo for the fire button
+                        \ from keyTable2Lo for the fire button
 
 .rjoy1
 
@@ -15475,7 +15485,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: YLookupLo
+\       Name: yLookupLo
 \       Type: Variable
 \   Category: Graphics
 \    Summary: Lookup table for converting pixel y-coordinate to low byte of
@@ -15483,12 +15493,11 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ See YLookupHi for an explanation of this table.
+\ See yLookupHi for an explanation of this table.
 \
 \ ******************************************************************************
 
-
-.YLookupLo
+.yLookupLo
 
 FOR I%, 19, 0, -1
 
@@ -15504,7 +15513,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: YLookupHi
+\       Name: yLookupHi
 \       Type: Variable
 \   Category: Graphics
 \    Summary: Lookup table for converting pixel y-coordinate to high byte of
@@ -15524,26 +15533,26 @@ NEXT
 \     entry, which is for the top row of the dashboard. To be more explicit,
 \     the first 20 entries cover the canopy:
 \
-\        * Entry 0 = &6F28 = Row18_Block21
-\        * Entry 1 = &6DF0 = Row17_Block22
-\        * Entry 2 = &6CB8 = Row16_Block23
-\        * Entry 3 = &6B80 = Row15_Block24
+\        * Entry 0 = &6F28 = row18_block21
+\        * Entry 1 = &6DF0 = row17_block22
+\        * Entry 2 = &6CB8 = row16_block23
+\        * Entry 3 = &6B80 = row15_block24
 \
 \          ...
 \
-\        * Entry 17 = &5A70 = Row1_Block38
-\        * Entry 18 = &5938 = Row0_Block39
-\        * Entry 19 = &5800 = Row0_Block0
+\        * Entry 17 = &5A70 = row1_block38
+\        * Entry 18 = &5938 = row0_block39
+\        * Entry 19 = &5800 = row0_block0
 \
 \     while the last 12 entries cover the dashboard:
 \
-\        * Entry 20 = &7DC8 = Row30_Block9
-\        * Entry 21 = &7C90 = Row29_Block10
+\        * Entry 20 = &7DC8 = row30_block9
+\        * Entry 21 = &7C90 = row29_block10
 \
 \          ...
 \
-\        * Entry 30 = &7198 = Row20_Block19
-\        * Entry 31 = &7060 = Row19_Block20
+\        * Entry 30 = &7198 = row20_block19
+\        * Entry 31 = &7060 = row19_block20
 \
 \   * The start addresses for each character row are offset by one character
 \     block (8 bytes) per row, so instead of being a simple lookup table for
@@ -15559,8 +15568,7 @@ NEXT
 \
 \ ******************************************************************************
 
-
-.YLookupHi
+.yLookupHi
 
 FOR I%, 19, 0, -1
 
@@ -15618,7 +15626,7 @@ NEXT
 
 .corn2
 
- LDA Row1_Block1_0,X    \ We want to update the X-th pixel row in the character
+ LDA row1_block1_0,X    \ We want to update the X-th pixel row in the character
                         \ block in the top-left corner of the canopy, so fetch
                         \ the current contents of the row
 
@@ -15628,13 +15636,13 @@ NEXT
  ORA Q                  \ Set the pixel pointed to by Q, which on the first
                         \ iteration round the loop will be the first pixel
 
- STA Row1_Block1_0,X    \ Store the updated pixel row back in screen memory, so
+ STA row1_block1_0,X    \ Store the updated pixel row back in screen memory, so
                         \ on the first iteration round the loop, we just set the
                         \ first pixel in the bottom pixel row, which is the
                         \ bottom-left pixel of the diagonal in the top-left
                         \ corner of the canopy
 
- LDA Row1_Block39_0,X   \ We want to update the X-th pixel row in the character
+ LDA row1_block39_0,X   \ We want to update the X-th pixel row in the character
                         \ block in the top-right corner of the canopy, so fetch
                         \ the current contents of the row
 
@@ -15644,7 +15652,7 @@ NEXT
  ORA S                  \ Set the pixel pointed to by S, which on the first
                         \ iteration round the loop will be the last pixel
 
- STA Row1_Block39_0,X   \ Store the updated pixel row back in screen memory, so
+ STA row1_block39_0,X   \ Store the updated pixel row back in screen memory, so
                         \ on the first iteration round the loop, we just set the
                         \ last pixel in the bottom pixel row, which is the
                         \ bottom-right pixel of the diagonal in the top-right
@@ -15744,8 +15752,8 @@ NEXT
 
 .RemoveScore
 
- LDY #HI(Row3_Block1_0) \ Set (Y X) to the screen address for row 3, block 1
- LDX #LO(Row3_Block1_0)
+ LDY #HI(row3_block1_0) \ Set (Y X) to the screen address for row 3, block 1
+ LDX #LO(row3_block1_0)
 
  LDA #8                 \ Set R = 19, so we clear 8 character rows
  STA R
@@ -15775,7 +15783,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: LineBufferV
+\       Name: lineBufferV
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -15806,14 +15814,14 @@ NEXT
 \ 
 \ .L48B4
 \ 
-\  LDA Row1_Block0_0,X
+\  LDA row01_block00_0,X
 \  AND P
 \  ORA Q
-\  STA Row1_Block0_0,X
-\  LDA Row1_Block38_0,X
+\  STA row01_block00_0,X
+\  LDA row1_block38_0,X
 \  AND R
 \  ORA S
-\  STA Row1_Block38_0,X
+\  STA row1_block38_0,X
 \  DEX
 \  DEY
 \  BPL L48B4
@@ -15839,7 +15847,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.LineBufferV
+.lineBufferV
 
  EQUB &A2, &07
  EQUB &A9, &77
@@ -15900,7 +15908,7 @@ NEXT
  EQUB &2A, &2E, &73, &74, &69, &31, &20, &4C
  EQUB &44
 
-.ZCoordHi
+.zLineHi
 
  EQUB &41, &20, &58, &41, &4C, &4F
 
@@ -15942,7 +15950,7 @@ NEXT
 
  EQUB &0D, &09, &7E, &28
 
-.XCoordHi
+.xLineHi
 
  EQUB &20               \ Set to 1 in ResetVariables, ResetRadar
 
@@ -16012,17 +16020,17 @@ NEXT
 .CopyFrom0C00
 
  LDA &0C00,X
- STA XCoordLo,Y
+ STA xLineLo,Y
  LDA &0C01,X
- STA YCoordLo,Y
+ STA yLineLo,Y
  LDA &0C02,X
- STA ZCoordLo,Y
+ STA zLineLo,Y
  LDA &0C10,X
- STA XCoordHi,Y
+ STA xLineHi,Y
  LDA &0C11,X
- STA YCoordHi,Y
+ STA yLineHi,Y
  LDA &0C12,X
- STA ZCoordHi,Y
+ STA zLineHi,Y
  RTS
 
 \ ******************************************************************************
@@ -16046,17 +16054,17 @@ NEXT
 
 .CopyTo0C00
 
- LDA XCoordLo,Y
+ LDA xLineLo,Y
  STA &0C00,X
- LDA YCoordLo,Y
+ LDA yLineLo,Y
  STA &0C01,X
- LDA ZCoordLo,Y
+ LDA zLineLo,Y
  STA &0C02,X
- LDA XCoordHi,Y
+ LDA xLineHi,Y
  STA &0C10,X
- LDA YCoordHi,Y
+ LDA yLineHi,Y
  STA &0C11,X
- LDA ZCoordHi,Y
+ LDA zLineHi,Y
  STA &0C12,X
  RTS
 
@@ -16099,12 +16107,12 @@ NEXT
 
 .L4B4C
 
- STA XCoordLo,X
- STA XCoordHi,X
- STA YCoordLo,X
- STA YCoordHi,X
- STA ZCoordLo,X
- STA ZCoordHi,X
+ STA xLineLo,X
+ STA xLineHi,X
+ STA yLineLo,X
+ STA yLineHi,X
+ STA zLineLo,X
+ STA zLineHi,X
  RTS
 
 \ ******************************************************************************
@@ -16122,7 +16130,7 @@ NEXT
 
 .L4B5F
 
- LDA XCoordHi,Y
+ LDA xLineHi,Y
  BPL L4B66
 
  EOR #&FF
@@ -16132,7 +16140,7 @@ NEXT
  CMP Lookup3B00,X
  BCS L4B83
 
- LDA YCoordHi,Y
+ LDA yLineHi,Y
  BPL L4B72
 
  EOR #&FF
@@ -16142,7 +16150,7 @@ NEXT
  CMP Lookup3B00,X
  BCS L4B83
 
- LDA ZCoordHi,Y
+ LDA zLineHi,Y
  BPL L4B7E
 
  EOR #&FF
@@ -16160,7 +16168,7 @@ NEXT
 .L4B86
 
  LDA #0
- ORA ObjectInView
+ ORA showLine
  RTS
 
 \ ******************************************************************************
@@ -16187,7 +16195,7 @@ NEXT
  BVC L4B97
 
  LDA #&40
- STA ObjectInView
+ STA showLine
 
 .L4B97
 
@@ -16295,12 +16303,12 @@ NEXT
                         \ we set the D flag to switch arithmetic to decimal
 
  CLC                    \ We now want to add (X A) points to the score in
- ADC ScoreLo            \ (ScoreHi ScoreLo), so we start by adding the low bytes
- STA ScoreLo            \ and store the result in ScoreLo
+ ADC scoreLo            \ (scoreHi scoreLo), so we start by adding the low bytes
+ STA scoreLo            \ and store the result in scoreLo
 
  TXA                    \ And then we add the high bytes and store the result
- ADC ScoreHi            \ in ScoreHi
- STA ScoreHi
+ ADC scoreHi            \ in scoreHi
+ STA scoreHi
 
  BCS upsc1              \ If the addition overflowed (so the high byte is
                         \ greater than &99), jump to upsc1 to return from the
@@ -16311,8 +16319,8 @@ NEXT
                         \ called with X = 0, so we should never get here)
 
  LDA #0                 \ If we get here then X = &99 and the addition of the
- STA ScoreLo            \ high bytes overflowed, so reset the score to zero
- STA ScoreHi
+ STA scoreLo            \ high bytes overflowed, so reset the score to zero
+ STA scoreHi
 
 .upsc1
 
@@ -16331,25 +16339,25 @@ NEXT
 
 .UpdateHighScore
 
- LDA ScoreHi            \ If ScoreHi < HighScoreHi then we have not achieved a
- CMP HighScoreHi        \ high score, so jump to uphs3 to return from the
+ LDA scoreHi            \ If scoreHi < highScoreHi then we have not achieved a
+ CMP highScoreHi        \ high score, so jump to uphs3 to return from the
  BCC uphs3              \ subroutine
 
  BNE uphs1              \ If the high byte of the score and high score are not
-                        \ equal, then we know ScoreHi > HighScoreHi, so jump to
+                        \ equal, then we know scoreHi > highScoreHi, so jump to
                         \ uphs1 to update the high score
 
- LDA ScoreLo            \ If we get here then ScoreHi = HighScoreHi, so now we
- CMP HighScoreLo        \ check the low bytes. If ScoreHLo < HighScoreLo then we
+ LDA scoreLo            \ If we get here then scoreHi = highScoreHi, so now we
+ CMP highScoreLo        \ check the low bytes. If ScoreHLo < highScoreLo then we
  BCC uphs3              \ have not achieved a high score, so jump to uphs3 to
                         \ return from the subroutine
 
 .uphs1
 
- LDA ScoreLo            \ (ScoreHi ScoreLo) > (HighScoreHi HighScoreLo), so this
- STA HighScoreLo        \ is a new high score, so update the 16-bit high score
- LDA ScoreHi            \ to the new score
- STA HighScoreHi
+ LDA scoreLo            \ (scoreHi scoreLo) > (highScoreHi highScoreLo), so this
+ STA highScoreLo        \ is a new high score, so update the 16-bit high score
+ LDA scoreHi            \ to the new score
+ STA highScoreHi
 
 .uphs3
 
@@ -16366,28 +16374,28 @@ NEXT
 
 .DisplayScore
 
- LDX #0                 \ Print characters 0-15 from ScoreText, which moves the
+ LDX #0                 \ Print characters 0-15 from scoreText, which moves the
  LDY #16                \ text cursor to column 1, row 3 and prints
- JSR PrintScoreText     \ "HIGH SCORE:  "
+ JSR PrintscoreText     \ "HIGH SCORE:  "
 
- LDA HighScoreHi        \ Print the high byte of the high score
+ LDA highScoreHi        \ Print the high byte of the high score
  JSR PrintScore
 
- LDA HighScoreLo        \ Print the low byte of the high score
+ LDA highScoreLo        \ Print the low byte of the high score
  JSR PrintScore
 
- LDX #16                \ Print characters 16-19 from ScoreText, which prints a
+ LDX #16                \ Print characters 16-19 from scoreText, which prints a
  LDY #20                \ "0" and moves the text cursor to column 3, row 10
- JSR PrintScoreText
+ JSR PrintscoreText
 
- LDX #8                 \ Print characters 8-15 from ScoreText, which prints
+ LDX #8                 \ Print characters 8-15 from scoreText, which prints
  LDY #16                \ "SCORE:  "
- JSR PrintScoreText
+ JSR PrintscoreText
 
- LDA ScoreHi            \ Print the high byte of the score
+ LDA scoreHi            \ Print the high byte of the score
  JSR PrintScore
 
- LDA ScoreLo            \ Print the low byte of the score
+ LDA scoreLo            \ Print the low byte of the score
  JSR PrintScore
 
  LDA #'0'               \ Print a "0"
@@ -16435,7 +16443,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: PrintScoreText
+\       Name: PrintscoreText
 \       Type: Subroutine
 \   Category: Scoring
 \    Summary: Print text when showing the scores on-screen
@@ -16444,21 +16452,21 @@ NEXT
 \
 \ Arguments:
 \
-\   X                   Offset of the first character to print from ScoreText
+\   X                   Offset of the first character to print from scoreText
 \
 \   Y                   Offset of the character that's just after the end of the
-\                       string that we want to print from ScoreText
+\                       string that we want to print from scoreText
 \
 \ ******************************************************************************
 
-.PrintScoreText
+.PrintscoreText
 
  STY T                  \ Set Y to the offset of the character that's just after
                         \ the end of the string to print
 
 .L4C5E
 
- LDA ScoreText,X        \ Print the X-th character from ScoreText
+ LDA scoreText,X        \ Print the X-th character from scoreText
  JSR OSWRCH
 
  INX                    \ Increment X to point to the next character
@@ -16705,12 +16713,12 @@ NEXT
  CPY #&1F
  BCS L4D65
 
- LDA DormantAlienScore  \ Fetch the score for killing a dormant alien (400
+ LDA dormantAlienScore  \ Fetch the score for killing a dormant alien (400
  JMP L4D68              \ points) and jump down to L4D68 to increase the score
 
 .L4D65
 
- LDA AlienScore,X
+ LDA alienScore,X
 
 .L4D68
 
@@ -16781,7 +16789,7 @@ NEXT
 \
 \ Arguments:
 \
-\   A                   The sound number from the Sounds table (0 to 7)
+\   A                   The sound number from the soundData table (0 to 7)
 \
 \ ******************************************************************************
 
@@ -16789,11 +16797,11 @@ NEXT
 
  ASL A                  \ Set A = A * 8
  ASL A                  \
- ASL A                  \ so we can use it as an index into the Sounds table,
+ ASL A                  \ so we can use it as an index into the soundData table,
                         \ which has 8 bytes per entry
 
- CLC                    \ Set (Y X) = Sounds + A
- ADC #LO(Sounds)        \
+ CLC                    \ Set (Y X) = soundData + A
+ ADC #LO(soundData)     \
  TAX                    \ starting with the low byte in X
 
  LDA #7                 \ Set A = 7 for the OSWORD command to make a sound
@@ -16841,7 +16849,7 @@ NEXT
 \
 \ Arguments:
 \
-\   A                   The offset of the sound envelope data in Envelopes:
+\   A                   The offset of the sound envelope data in envelopeData:
 \
 \                         * A = 0 for the first envelope definition
 \
@@ -16851,8 +16859,8 @@ NEXT
 
 .DefineEnvelope
 
- CLC                    \ Set (Y X) = Envelopes + A
- ADC #LO(Envelopes)     \
+ CLC                    \ Set (Y X) = envelopeData + A
+ ADC #LO(envelopeData)  \
  TAX                    \ starting with the low byte
 
  LDA #8                 \ Set A = 8 for the OSWORD command to define an envelope
@@ -16886,9 +16894,9 @@ NEXT
 
 .SoundEnvelope
 
- LDY #HI(Envelopes)     \ Set y to the high byte of the Envelopes block address,
-                        \ so (Y X) now points to the relevant envelope or sound
-                        \ data block
+ LDY #HI(envelopeData)  \ Set y to the high byte of the envelopeData block
+                        \ address, so (Y X) now points to the relevant envelope
+                        \ or sound data block
 
  BCC senv1              \ If the addition we did before calling SoundEnvelope
                         \ didn't overflow, skip the next instruction
@@ -16947,7 +16955,7 @@ NEXT
 .ResetEngineSound
 
  LDA #255               \ Set byte #5 of sound #7 (low byte of engine pitch) to
- STA Sounds+60          \ 255, which is the default setting
+ STA soundData+60       \ 255, which is the default setting
 
  RTS                    \ Return from the subroutine
 
@@ -16963,12 +16971,13 @@ NEXT
 
 .MakeEngineSound
 
- LDA Engine             \ If Engine is zero, then the engine is not running, so
- BEQ engs4              \ jump to engs4 to return from the subroutine
+ LDA engineStatus       \ If engineStatus is zero, then the engine is not
+ BEQ engs4              \ running, so jump to engs4 to return from the
+                        \ subroutine
 
- LDA ThrustHi           \ Set (K A) = (Thrusthi ThrustLo)
+ LDA thrustHi           \ Set (K A) = (Thrusthi thrustLo)
  STA K                  \           = Thrust
- LDA ThrustLo
+ LDA thrustLo
 
  LDY #3                 \ Set Y = 3 to act as a shift counter in the following
                         \ loop, where we right shift (K A) four times
@@ -16989,12 +16998,12 @@ NEXT
                         \ We now ignore the high byte in K, so presumably it is
                         \ zero
 
- CLC                    \ Set K = A + AirspeedHi
- ADC AirspeedHi         \       = (Thrust / 8) + AirspeedHi
+ CLC                    \ Set K = A + airspeedHi
+ ADC airspeedHi         \       = (Thrust / 8) + airspeedHi
  STA K
 
  LDA #50                \ Set A = 50 - K
- SEC                    \       = 50 - ((Thrust / 8) + AirspeedHi)
+ SEC                    \       = 50 - ((Thrust / 8) + airspeedHi)
  SBC K
 
  BEQ engs2              \ If A = 0, jump to engs2 to set the engine choppiness
@@ -17027,31 +17036,31 @@ NEXT
                         \ amount of pitch change, and hence more choppiness in
                         \ the engine sound
 
- STA Envelopes+2        \ Set the third and fifth values of sound envelope 1 to
- STA Envelopes+4        \ the value in A, and set the fourth value to the
+ STA envelopeData+2     \ Set the third and fifth values of sound envelope 1 to
+ STA envelopeData+4     \ the value in A, and set the fourth value to the
  EOR #&FF               \ inverse of A, which is -(A + 1) as this is a signed
- STA Envelopes+3        \ value
+ STA envelopeData+3     \ value
 
                         \ We now want to set the pitch of the engine sound so
                         \ that higher thrust and airspeed give us a higher
                         \ pitch, making our Spitfire scream through the air
                         \
                         \ The engine pitch is controlled by byte #5 of sound #7,
-                        \ at Sounds+60, which contains the low byte of the
+                        \ at soundData+60, which contains the low byte of the
                         \ engine pitch, so we now need to calculate a suitable
                         \ pitch value
 
  LDA K                  \ Set A = K + 80
- CLC                    \       = (Thrust / 8) + AirspeedHi + 50
+ CLC                    \       = (Thrust / 8) + airspeedHi + 50
  ADC #80                \
                         \ so A is a higher value when we have higher thrust and
                         \ airspeed, which is what we want
 
- CMP Sounds+60          \ If the pitch in byte #5 of sound #7 is already at this
+ CMP soundData+60       \ If the pitch in byte #5 of sound #7 is already at this
  BEQ engs4              \ value, jump to engs4 to return from the subroutine, as
                         \ we don't need to change the pitch
 
- STA Sounds+60          \ Otherwise set byte #5 of sound #7 to our new pitch in
+ STA soundData+60       \ Otherwise set byte #5 of sound #7 to our new pitch in
                         \ A, so the pitch of the engine sound goes up with our
                         \ thrust and airspeed
 
@@ -17087,27 +17096,27 @@ NEXT
 
  BNE guns1              \ If "I" is not being pressed, jump to guns1
 
- BIT GunSights          \ If bit 6 of GunSights is set, then "I" is still being
+ BIT gunSights          \ If bit 6 of gunSights is set, then "I" is still being
  BVS guns3              \ held down from a previous call to this routine, so
                         \ jump to guns3 to move on from the subroutine
 
- LDA #%11000000         \ Set A = GunSights with bits 6 and 7 flipped, which we
- EOR GunSights          \ will set as the new value of GunSights below
+ LDA #%11000000         \ Set A = gunSights with bits 6 and 7 flipped, which we
+ EOR gunSights          \ will set as the new value of gunSights below
 
  BMI guns2              \ If the result has bit 7 set, that means that bit 7 of
-                        \ GunSights is currently clear, so jump to guns2 as the
+                        \ gunSights is currently clear, so jump to guns2 as the
                         \ sights are not already being shown, so we don't need
                         \ to remove them
 
-                        \ If we get here then bit 7 of GunSights is set, so the
+                        \ If we get here then bit 7 of gunSights is set, so the
                         \ sights are already on-screen, and we aren't still
                         \ holding down "I" from a previous call, so now we
                         \ remove the sights
 
  PHA                    \ Store A on the stack so we can retrieve it below
 
- LDY #HI(Row6_Block1_0) \ Set (Y X) to the screen address for row 6, block 0
- LDX #LO(Row6_Block1_0)
+ LDY #HI(row6_block1_0) \ Set (Y X) to the screen address for row 6, block 0
+ LDX #LO(row6_block1_0)
 
  LDA #3                 \ Set R = 3, so we clear 3 character rows for the sights
  STA R
@@ -17119,27 +17128,27 @@ NEXT
 
  PLA                    \ Retrieve A from the stack
 
- JMP guns2              \ Jump down to guns2 to set GunSights to the value in A
+ JMP guns2              \ Jump down to guns2 to set gunSights to the value in A
 
 .guns1
 
                         \ If we get here then "I" is not being pressed
 
- LDA #%10000000         \ Extract bit 7 from GunSights into A, which clears bit
- AND GunSights          \ 6 to indicate that "I" is not being pressed, while
+ LDA #%10000000         \ Extract bit 7 from gunSights into A, which clears bit
+ AND gunSights          \ 6 to indicate that "I" is not being pressed, while
                         \ leaving the current state of bit 7 alone
 
 .guns2
 
- STA GunSights          \ Update GunSights to the new value in A
+ STA gunSights          \ Update gunSights to the new value in A
 
 .guns3
 
- BPL ToggleJoystick     \ If bit 7 of the new value of GunSights is clear, then
+ BPL ToggleJoystick     \ If bit 7 of the new value of gunSights is clear, then
                         \ the sights are no longer being shown, so jump down to
                         \ ToggleJoystick to move onto the next routine
 
-                        \ If we get here, then bit 7 of GunSights is set, so we
+                        \ If we get here, then bit 7 of gunSights is set, so we
                         \ need to draw the sights
 
  LDY #7                 \ First we draw the vertical bar in the middle of the
@@ -17150,12 +17159,12 @@ NEXT
 .guns4
 
  LDA #%10001000         \ Draw a vertical bar in the first pixel of the Y-th
- ORA Row6_Block20_0,Y   \ pixel row in block 20 on row 6, keeping whatever is
- STA Row6_Block20_0,Y   \ already on screen
+ ORA row6_block20_0,Y   \ pixel row in block 20 on row 6, keeping whatever is
+ STA row6_block20_0,Y   \ already on screen
 
  LDA #%10001000         \ Draw a vertical bar in the first pixel of the Y-th
- ORA Row7_Block20_0,Y   \ pixel row in block 20 on row 7, keeping whatever is
- STA Row7_Block20_0,Y   \ already on screen
+ ORA row7_block20_0,Y   \ pixel row in block 20 on row 7, keeping whatever is
+ STA row7_block20_0,Y   \ already on screen
 
  DEY                    \ Decrement the pixel row counter
 
@@ -17165,8 +17174,8 @@ NEXT
                         \ Now to draw the horizontal bar of the gun sights
 
  LDA #%01110111         \ First we draw the left end of the horizontal bar,
- ORA Row8_Block11_0     \ which is starts with the three rightmost pixels in
- STA Row8_Block11_0     \ block 11 on row 8
+ ORA row8_block11_0     \ which is starts with the three rightmost pixels in
+ STA row8_block11_0     \ block 11 on row 8
 
  SEC                    \ Set the C flag for the subtraction below
 
@@ -17179,7 +17188,7 @@ NEXT
 .guns5
 
  LDA #%11111111         \ Draw a horizontal bar of four pixels starting at the
- STA Row8_Block11_0,Y   \ Y-th offset from the start of block 11 on row 8
+ STA row8_block11_0,Y   \ Y-th offset from the start of block 11 on row 8
 
  TYA                    \ Set Y = Y - 8, so Y now points to the four pixels to
  SBC #8                 \ the left, as we work or way along the line
@@ -17200,7 +17209,7 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ Note that the game uses Row29_Block20_4 to check the joystick status, so it
+\ Note that the game uses row29_block20_4 to check the joystick status, so it
 \ is not only an on-screen indicator, it's also the joystick status variable.
 \
 \ ******************************************************************************
@@ -17212,18 +17221,18 @@ NEXT
 
  BNE tjoy1              \ If TAB is not being pressed, jump to tjoy1
 
- LDA PressingTab        \ If PressingTab is non-zero, then we are still pressing
+ LDA pressingTab        \ If pressingTab is non-zero, then we are still pressing
  BNE tjoy3              \ TAB from a previous visit to this routine, so jump to
                         \ tjoy3 to return from the subroutine
 
                         \ This is a new press of TAB, so now we want to toggle
                         \ the joystick setting
 
- LDA Row29_Block20_4    \ Toggle the joystick indicator pixel above the middle
+ LDA row29_block20_4    \ Toggle the joystick indicator pixel above the middle
  EOR #%10001000         \ of the rudder indicator
- STA Row29_Block20_4
+ STA row29_block20_4
 
- LDA #128               \ Set A = 128 to use as the value for PressingTab below,
+ LDA #128               \ Set A = 128 to use as the value for pressingTab below,
                         \ to indicate that TAB is being pressed
 
  BNE tjoy2              \ Jump to tjoy2 to skip the following instruction (this
@@ -17232,11 +17241,11 @@ NEXT
 .tjoy1
 
  LDA #0                 \ If we get here then TAB is not being pressed, so we
-                        \ set A = 0 to set as the value for PressingTab
+                        \ set A = 0 to set as the value for pressingTab
 
 .tjoy2
 
- STA PressingTab        \ Set PressingTab to the value in A, which will be 0 if
+ STA pressingTab        \ Set pressingTab to the value in A, which will be 0 if
                         \ TAB is not being pressed, or 128 if it is being
                         \ pressed
 
@@ -17248,29 +17257,29 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Envelopes
+\       Name: envelopeData
 \       Type: Variable
 \   Category: Sound
-\    Summary: Data for two sound Envelopes
+\    Summary: Data for two sound envelopes
 \
 \ ------------------------------------------------------------------------------
 \
 \ There are two sound envelopes defined in Aviator.
 \
 \   * Envelope 1 defines the engine sound. The third, fourth and fifth values
-\     (Envelopes+2, Envelopes+3 and Envelopes+4) control the choppiness of the
-\     engine sound and get altered by the MakeEngineSound routine, depending on
-\     the thrust and airspeed. These values control the change of pitch per step
-\     in the three stages of the sound envelope, so higher values make the sound
-\     jump up and down more in terms of pitch, which makes the sound more
-\     choppy and less smooth.
+\     (envelopeData+2, envelopeData+3 and envelopeData+4) control the choppiness
+\     of the engine sound and get altered by the MakeEngineSound routine,
+\     depending on the thrust and airspeed. These values control the change of
+\     pitch per step in the three stages of the sound envelope, so higher values
+\     make the sound jump up and down more in terms of pitch, which makes the
+\     sound more choppy and less smooth.
 \
 \   * Envelope 2 defines the sound of gunfire, both for our Spitfire and for the
 \     Theme aliens.
 \
 \ ******************************************************************************
 
-.Envelopes
+.envelopeData
 
  EQUB 1, 1, 50, -50, 50, 1, 2, 1, 0, 0, 0, 0, 0, 0
 
@@ -17278,7 +17287,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Sounds
+\       Name: soundData
 \       Type: Variable
 \   Category: Sound
 \    Summary: OSWORD blocks for making the various game sounds
@@ -17316,7 +17325,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.Sounds
+.soundData
 
  EQUB &10, &00          \ Sound #0: Stop engine sound  (SOUND &10, 0, 0, 0)
  EQUB &00, &00
@@ -17325,7 +17334,7 @@ NEXT
 
  EQUB &10, &00          \ Sound #1: Engine amplitude (SOUND &10, -5, 3, 255)
  EQUB &FB, &FF          \ 
- EQUB &03, &00          \ Second parameter (Sounds+10) gets changed in the
+ EQUB &03, &00          \ Second parameter (soundData+10) gets changed in the
  EQUB &FF, &00          \ VolumeKeys routine to alter the volume
 
  EQUB &13, &00          \ Sound #2: Gunfire hitting ??? (SOUND &13, 2, 220, 2)
@@ -17357,7 +17366,7 @@ NEXT
  EQUB &01, &00          \
  EQUB &FF, &00          \ Uses sound envelope 1 
  EQUB &FF, &00          \
-                        \ The fifth byte (Sounds+60) is the low byte of the
+                        \ The fifth byte (soundData+60) is the low byte of the
                         \ sound's pitch and gets changed in various places
                         \ to change the pitch of the engine sound
 
@@ -17377,11 +17386,11 @@ NEXT
 
 .late1
 
- LDA TooLateText,X      \ Print the X-th character from PleaseWaitText
+ LDA tooLateText,X      \ Print the X-th character from pleaseWaitText
  JSR OSWRCH
 
  DEX                    \ Decrement the loop counter, as the characters are
-                        \ stored backwards in the PleaseWaitText variable
+                        \ stored backwards in the pleaseWaitText variable
 
  BPL late1              \ Loop back to print the next character until we have
                         \ printed all 11
@@ -17390,7 +17399,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: TooLateText
+\       Name: tooLateText
 \       Type: Variable
 \   Category: Text
 \    Summary: The "TOO LATE!" message shown when the aliens land in Acornville
@@ -17402,7 +17411,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.TooLateText
+.tooLateText
 
  EQUB "!ETAL OOT"       \ "TOO LATE!", stored backwards
 
@@ -17410,7 +17419,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: XLookupLo
+\       Name: xLookupLo
 \       Type: Variable
 \   Category: Graphics
 \    Summary: Lookup table for converting pixel x-coordinate to low byte of
@@ -17418,11 +17427,11 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ See XLookupHi for an explanation of this table.
+\ See xLookupHi for an explanation of this table.
 \
 \ ******************************************************************************
 
-.XLookupLo
+.xLookupLo
 
 FOR I%, 0, 39
 
@@ -17432,7 +17441,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: XLookupHi
+\       Name: xLookupHi
 \       Type: Variable
 \   Category: Graphics
 \    Summary: Lookup table for converting pixel x-coordinate to high byte of
@@ -17448,7 +17457,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.XLookupHi
+.xLookupHi
 
 FOR I%, 0, 39
 
@@ -17459,7 +17468,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: KeyTable1
+\       Name: keyTable1
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: 
@@ -17468,15 +17477,15 @@ NEXT
 \
 \ Keys in this table are scanned for first. If pressed, the corresponding value
 \ in the key logger is set to the 16-bit value, with the high byte coming from
-\ KeyTable1Hi and the low byte from KeyTable1Lo.
+\ keyTable1Hi and the low byte from keyTable1Lo.
 \
-\ If the key in KeyTable1 is not being pressed, we then check the corresponding
-\ key in KeyTable2. This contains the other key in this key pair, which is
+\ If the key in keyTable1 is not being pressed, we then check the corresponding
+\ key in keyTable2. This contains the other key in this key pair, which is
 \ normally the opposite key, e.g. up vs down, left vs right and so on.
 \
 \ ******************************************************************************
 
-.KeyTable1
+.keyTable1
 
  EQUB &A9               \ L         Elevator (stick forwards, dive)
  EQUB &BE               \ A         Left rudder
@@ -17487,21 +17496,21 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: KeyTable2
+\       Name: keyTable2
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Keys in this table are scanned only if the corresponding key in KeyTable1 is
+\ Keys in this table are scanned only if the corresponding key in keyTable1 is
 \ not being pressed. If pressed, the corresponding value in the key logger is
-\ set to the 16-bit value, with the high byte coming from KeyTable2Hi and the
-\ low byte from KeyTable2Lo.
+\ set to the 16-bit value, with the high byte coming from keyTable2Hi and the
+\ low byte from keyTable2Lo.
 \
 \ ******************************************************************************
 
-.KeyTable2
+.keyTable2
 
  EQUB &99               \ <         Elevator (stick backwards, ascend)
  EQUB &A8               \ +         Right rudder
@@ -17512,7 +17521,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: AxisChangeRate
+\       Name: axisChangeRate
 \       Type: Variable
 \   Category: Flight
 \    Summary: Stores the amount by which the three axes of movement change when
@@ -17522,14 +17531,14 @@ NEXT
 \
 \ If an axis control key is held down (e.g. dive, yaw left, roll right and so
 \ on), then it will change that axis value by 1 in the relevant direction (by
-\ updating Elevator, Rudder or Aileron). If the key is held down, then after six
-\ calls to ProcessKeyLogger without the key being released, the relevant control
-\ is fully engaged, and the rate of change increases to 4 in the relevant
-\ direction.
+\ updating elevatorPosition, rudderPosition or aileronPosition). If the key is
+\ held down, then after six calls to ProcessKeyLogger without the key being
+\ released, the relevant control is fully engaged, and the rate of change
+\ increases to 4 in the relevant direction.
 \
 \ ******************************************************************************
 
-.AxisChangeRate
+.axisChangeRate
 
  EQUB 0                 \ The rate of change of the elevator (pitch)
  EQUB 0                 \ The rate of change of the rudder (yaw)
@@ -17539,20 +17548,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: KeyTable2Lo
+\       Name: keyTable2Lo
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: Key logger value (low byte) for key presses in KeyTable2
+\    Summary: Key logger value (low byte) for key presses in keyTable2
 \
 \ ------------------------------------------------------------------------------
 \
-\ When a key in KeyTable2 is pressed (and assuming the corresponding key in
-\ KeyTable1 is not being pressed), the low byte of the key logger for this key
+\ When a key in keyTable2 is pressed (and assuming the corresponding key in
+\ keyTable1 is not being pressed), the low byte of the key logger for this key
 \ pair is set to the value in this table.
 \
 \ ******************************************************************************
 
-.KeyTable2Lo
+.keyTable2Lo
 
  EQUB 1                 \ <         Elevator (stick backwards, ascend)
  EQUB 1                 \ +         Right rudder
@@ -17563,20 +17572,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: KeyTable2Hi
+\       Name: keyTable2Hi
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: Key logger value (high byte) for key presses in KeyTable2
+\    Summary: Key logger value (high byte) for key presses in keyTable2
 \
 \ ------------------------------------------------------------------------------
 \
-\ When a key in KeyTable2 is pressed (and assuming the corresponding key in
-\ KeyTable1 is not being pressed), the high byte of the key logger for this key
+\ When a key in keyTable2 is pressed (and assuming the corresponding key in
+\ keyTable1 is not being pressed), the high byte of the key logger for this key
 \ pair is set to the value in this table.
 \
 \ ******************************************************************************
 
-.KeyTable2Hi
+.keyTable2Hi
 
  EQUB 1                 \ <         Elevator (stick backwards, ascend)
  EQUB 1                 \ +         Right rudder
@@ -17587,20 +17596,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: KeyTable1Lo
+\       Name: keyTable1Lo
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: Key logger value (low byte) for key presses in KeyTable1
+\    Summary: Key logger value (low byte) for key presses in keyTable1
 \
 \ ------------------------------------------------------------------------------
 \
-\ When a key in KeyTable1 is pressed (and assuming the corresponding key in
-\ KeyTable1 is not being pressed), the low byte of the key logger for this key
+\ When a key in keyTable1 is pressed (and assuming the corresponding key in
+\ keyTable1 is not being pressed), the low byte of the key logger for this key
 \ pair is set to the value in this table.
 \
 \ ******************************************************************************
 
-.KeyTable1Lo
+.keyTable1Lo
 
  EQUB 1                 \ L         Elevator (stick forwards, dive)
  EQUB 1                 \ A         Left rudder
@@ -17611,20 +17620,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: KeyTable1Hi
+\       Name: keyTable1Hi
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: Key logger value (high byte) for key presses in KeyTable1
+\    Summary: Key logger value (high byte) for key presses in keyTable1
 \
 \ ------------------------------------------------------------------------------
 \
-\ When a key in KeyTable1 is pressed (and assuming the corresponding key in
-\ KeyTable1 is not being pressed), the high byte of the key logger for this key
+\ When a key in keyTable1 is pressed (and assuming the corresponding key in
+\ keyTable1 is not being pressed), the high byte of the key logger for this key
 \ pair is set to the value in this table.
 \
 \ ******************************************************************************
 
-.KeyTable1Hi
+.keyTable1Hi
 
  EQUB 255               \ L         Elevator (stick forwards, dive)
  EQUB 255               \ A         Left rudder
@@ -17635,7 +17644,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Sound26
+\       Name: soundData26
 \       Type: Variable
 \   Category: Sound
 \    Summary: The sound of us making contact with the ground without the
@@ -17643,12 +17652,12 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ This location is at Sounds + (26 * 8), so this block is contains the details
-\ for sound #26.
+\ This location is at soundData + (26 * 8), so this block is contains the
+\ details for sound #26.
 \
 \ ******************************************************************************
 
-.Sound26
+.soundData26
 
  EQUB &10, &00          \ Sound #26: Ground contact (SOUND &10, -13, 6, 3)
  EQUB &F3, &FF
@@ -17702,7 +17711,7 @@ NEXT
  EQUB &00, &00, &FF, &8D, &BE, &00, &05
  EQUB &7D, &FF, &50
 
-.DialQuadrant
+.dialQuadrant
 
                         \ The value range of a quadrant in each indicator
 
@@ -17716,7 +17725,7 @@ NEXT
 
  EQUB &41
 
-.XDeltaMax
+.xDeltaMax
 
                         \ The maximum x-delta for the hand in each indicator
 
@@ -17730,7 +17739,7 @@ NEXT
 
  EQUB &0D
 
-.YDeltaMax
+.yDeltaMax
 
                         \ The maximum y-delta for the hand in each indicator
 
@@ -17744,7 +17753,7 @@ NEXT
 
  EQUB &20
 
-.IndicatorLineI
+.indicatorLineI
 
                         \ Storage for the x-coordinate of the starting point of
                         \ of the current hand on indicators 0-7, so we can erase
@@ -17760,7 +17769,7 @@ NEXT
  EQUB 106               \ Start x-coordinate for indicator 6 (slip)
  EQUB 84                \ Start x-coordinate for indicator 7 (horizon)
 
-.IndicatorLineJ
+.indicatorLineJ
 
                         \ Storage for the y-coordinate of the starting point of
                         \ of the current hand on indicators 0-6, so we can erase
@@ -17783,7 +17792,7 @@ NEXT
 
  EQUB 88                \ Start y-coordinate for indicator 7 (horizon) ???
 
-.IndicatorBase
+.indicatorBase
 
  EQUB 0                 \ Base value for indicator 0 (compass)
  EQUB 48                \ Base value for indicator 1 (airspeed)
@@ -17795,7 +17804,7 @@ NEXT
 
  EQUB &4C
 
-.IndicatorMin
+.indicatorMin
 
  EQUB 0                 \ Minimum value shown on indicator 0 (compass)
  EQUB 57                \ Minimum value shown on indicator 1 (airspeed)
@@ -17807,7 +17816,7 @@ NEXT
 
  EQUB &F4
 
-.IndicatorMax
+.indicatorMax
 
  EQUB 255               \ Maximum value shown on indicator 0 (compass)
  EQUB 122               \ Maximum value shown on indicator 1 (airspeed)
@@ -17819,7 +17828,7 @@ NEXT
 
  EQUB &4C
 
-.IndicatorLineT
+.indicatorLineT
 
                         \ Storage for the x-delta of the current line on
                         \ indicators 0-7, so we can erase it again (this value
@@ -17834,7 +17843,7 @@ NEXT
  EQUB 2                 \ Line x-delta for indicator 6 (slip)
  EQUB 2                 \ Line x-delta for indicator 7 (artificial horizon)
 
-.IndicatorLineU
+.indicatorLineU
 
                         \ Storage for the y-delta of the current line on
                         \ indicators 0-7, so we can erase it again (this value
@@ -17849,7 +17858,7 @@ NEXT
  EQUB 2                 \ Line y-delta for indicator 6 (slip)
  EQUB 2                 \ Line y-delta for indicator 7 (artificial horizon)
 
-.IndicatorLineV
+.indicatorLineV
 
                         \ Storage for the direction of the current line on
                         \ indicators 0-7, so we can erase it again (this value
@@ -17864,7 +17873,7 @@ NEXT
  EQUB 0                 \ Direction for indicator 6 (slip)
  EQUB 0                 \ Direction for indicator 7 (artificial horizon)
 
-.JoyYC
+.joyYCoord
 
  EQUB 0                 \ Temporary storage, typically used for storing
                         \ y-coordinates when drawing indicators
@@ -17873,7 +17882,7 @@ NEXT
                         \ bar for indicator 9 (rudder), so we can erase it when
                         \ required
 
-.JoyXC
+.joyXCoord
 
  EQUB 0                 \ Temporary storage, typically used for storing
                         \ x-coordinates when drawing indicators
@@ -17885,13 +17894,13 @@ NEXT
  EQUB &4D, &0D, &0C, &08, &15, &20
  EQUB &20, &20, &20, &20, &20, &4C
 
-.Indicator0To6
+.indicator0To6
 
  EQUB &44               \ The first indicator counter, which cycles through
                         \ indicators 0 to 6, and is used to denote the first
                         \ indicator that gets refreshed in UpdateDashboard
 
-.Indicator7To11
+.indicator7To11
 
  EQUB &59               \ The first indicator counter, which cycles through
                         \ indicators 7 to 10, and is used to denote the second
@@ -17905,7 +17914,7 @@ NEXT
 
  EQUB &31, &3A
 
-.AltitudeMinutes
+.altitudeMinutes
 
  EQUB &4C               \ The value of the altimeter's large "minute" hand,
                         \ in the range 0 to 104 to match the 1,000 feet range
@@ -17930,11 +17939,11 @@ NEXT
  JSR L4B4A
 
  LDA #&FE
- LDX OnGround
+ LDX onGround
  STX L
  BEQ L502B
 
- LDX Undercarriage
+ LDX ucStatus
  BEQ L502B
 
  LDX L0C94
@@ -18014,7 +18023,7 @@ NEXT
  ASL A
  LDA #0
  SBC L4AFC
- STA Slip
+ STA slipRate
  LDA L
  BNE L5099
 
@@ -18024,41 +18033,41 @@ NEXT
 
  LDX #0
  LDY #0
- LDA AirspeedHi
+ LDA airspeedHi
  BMI L50B1
 
  BNE L50AB
 
- LDA AirspeedLo
+ LDA airspeedLo
  CMP #&14
  BCC L50B1
 
 .L50AB
 
- LDY Rudder
+ LDY rudderPosition
  BPL L50B1
 
  DEX
 
 .L50B1
 
- STY TurnLo
+ STY turnLo
  TXA
  LDX #1
 
 .L50B7
 
- ASL TurnLo
+ ASL turnLo
  ROL A
  DEX
  BPL L50B7
 
- STA TurnHi
+ STA turnHi
  LDX #&82
  JSR L57F6
 
  STA L0C32
- LDY Undercarriage
+ LDY ucStatus
  BNE L50E7
 
  LDA L0CFA
@@ -18081,7 +18090,7 @@ NEXT
 
 .L50E7
 
- LDX Brakes
+ LDX brakesStatus
  BNE L50DE
 
  JSR L564D
@@ -18097,12 +18106,12 @@ NEXT
 
 .L50F7
 
- LDX AirspeedHi
+ LDX airspeedHi
  BMI L5113
 
  BNE L5115
 
- LDX AirspeedLo
+ LDX airspeedLo
  BEQ L5123
 
  CPX #&0B
@@ -18144,7 +18153,7 @@ NEXT
  LSR A
  STA P
  LDX #0
- STX Slip
+ STX slipRate
  TXA
  ROR A
  STA V
@@ -18202,15 +18211,15 @@ NEXT
 
  JSR L31AC
 
- LDA FuelLevel
+ LDA fuelLevel
  BEQ L51D1
 
- LDA Engine
+ LDA engineStatus
  BEQ L51D6
 
- LDA ThrustHi
+ LDA thrustHi
  STA R
- LDA ThrustLo
+ LDA thrustLo
  LDX #3
 
 .L51AD
@@ -18231,10 +18240,10 @@ NEXT
  STA L3691
  BCC L51D6
 
- LDA FuelLevel
+ LDA fuelLevel
  BEQ L51D1
 
- DEC FuelLevel
+ DEC fuelLevel
  BNE L51D6
 
 .L51D1
@@ -18387,9 +18396,9 @@ NEXT
 
 .L5278
 
- LDA Compass,X
+ LDA compassHeading,X
  EOR #&80
- STA Compass,X
+ STA compassHeading,X
  DEX
  BPL L5278
 
@@ -18497,28 +18506,28 @@ NEXT
  CMP #&27
  BNE L5307
 
- LDA AirspeedHi
+ LDA airspeedHi
  CMP #&0B
  BCC L533A
 
 .L5307
 
  LDA J
- CMP AirspeedHi
+ CMP airspeedHi
  BCC L5347
 
  BNE L5317
 
  LDA I
- CMP AirspeedLo
+ CMP airspeedLo
  BCC L5347
 
 .L5317
 
- LDA AltitudeHi
+ LDA altitudeHi
  BNE L5323
 
- LDA AltitudeLo
+ LDA altitudeLo
  CMP #&14
  BCC L533A
 
@@ -18528,7 +18537,7 @@ NEXT
  CMP #&27
  BEQ L533A
 
- LDA TurnHi
+ LDA turnHi
  ASL A
  LDY #4
  LDX #2
@@ -18648,7 +18657,7 @@ NEXT
  LDA L0C45
  STA L0C47
  LDX #2
- LDA Flaps
+ LDA flapsStatus
  PHP
  BEQ L53E7
 
@@ -18965,10 +18974,10 @@ NEXT
 
 .L5502
 
- LDA Elevator,X
+ LDA elevatorPosition,X
  BEQ L552F
 
- LDY KeyLoggerLow,X
+ LDY keyLoggerLow,X
  BNE L551B
 
  TAY
@@ -18998,7 +19007,7 @@ NEXT
 
 .L5525
 
- EOR KeyLoggerHigh,X
+ EOR keyLoggerHigh,X
  BPL L552F
 
 .L552A
@@ -19007,11 +19016,11 @@ NEXT
 
 .L552C
 
- STA Elevator,X
+ STA elevatorPosition,X
 
 .L552F
 
- LDA Elevator,X
+ LDA elevatorPosition,X
  BPL L5539
 
  EOR #&FF
@@ -19026,7 +19035,7 @@ NEXT
  JSR L546E
 
  LDX VV
- LDY Elevator,X
+ LDY elevatorPosition,X
  BPL L554F
 
  SEC
@@ -19119,7 +19128,7 @@ NEXT
  SBC L0C74
  STA L0BFC
 
- LDA AirspeedHi         \ Set A to the high byte of our airspeed
+ LDA airspeedHi         \ Set A to the high byte of our airspeed
 
  BMI L55F3              \ If it is negative, jump down to L55F3 to skip the
                         \ following checks
@@ -19143,12 +19152,12 @@ NEXT
 
 .L55F5
 
- LDX Engine
+ LDX engineStatus
  BEQ L5636
 
  STA H
  STA G
- LDA AirspeedLo
+ LDA airspeedLo
  LDX #3
 
 .L5603
@@ -19159,9 +19168,9 @@ NEXT
  BPL L5603
 
  STA W
- LDY ThrustHi
+ LDY thrustHi
  STY R
- LDA ThrustLo
+ LDA thrustLo
  LDX L
  BEQ L562B
 
@@ -19292,7 +19301,7 @@ NEXT
 
 .L568F
 
- LDA AltitudeHi
+ LDA altitudeHi
  BMI L56A3
 
  BEQ L56A8
@@ -19300,12 +19309,12 @@ NEXT
  CMP #2
  BCC L569D
 
- STA Reached512ft       \ Set Reached512ft = 2 when AltitudeHi >= 2
+ STA reached512ft       \ Set reached512ft = 2 when altitudeHi >= 2
 
 .L569D
 
  LDA #0
- STA OnGround
+ STA onGround
  RTS
 
 .L56A3
@@ -19316,14 +19325,14 @@ NEXT
 .L56A8
 
  LDA L0CF0
- CMP AltitudeLo
+ CMP altitudeLo
  BCC L569D
 
  LDX L
  BEQ L5701
 
- STA AltitudeLo
- LDX VerticalSpeedHi
+ STA altitudeLo
+ LDX verticalSpeedHi
  BPL L56C1
 
  LDX #&8A
@@ -19337,7 +19346,7 @@ NEXT
  LDX #2
  JSR L57F6
 
- LDX Undercarriage
+ LDX ucStatus
  BNE L56E8
 
  LDX L0CE8
@@ -19382,41 +19391,41 @@ NEXT
 .L5701
 
  SEC
- SBC AltitudeLo
+ SBC altitudeLo
  LSR A
  CLC
  ADC L0CF0
- STA AltitudeLo
- LDA VerticalSpeedHi
+ STA altitudeLo
+ LDA verticalSpeedHi
  BPL L5720
 
  SEC
  LDA #0
- SBC VerticalSpeedLo
- STA VerticalSpeedLo
+ SBC verticalSpeedLo
+ STA verticalSpeedLo
  LDA #0
- SBC VerticalSpeedHi
+ SBC verticalSpeedHi
 
 .L5720
 
- STA VerticalSpeedHi
+ STA verticalSpeedHi
  LSR A
  BNE L573D
 
- LDA VerticalSpeedLo
+ LDA verticalSpeedLo
  ROR A
  STA R
 
- LDX Undercarriage      \ If Undercarriage is non-zero, then the undercarriage
+ LDX ucStatus           \ If ucStatus is non-zero, then the undercarriage
  BNE L5739              \ is down, so jump to L5739
 
                         \ If we get here then the undercarriage is up and
-                        \ VerticalSpeedHi / 2 = 0, so we are in the process of
+                        \ verticalSpeedHi / 2 = 0, so we are in the process of
                         \ making a crash landing (or we've pulled up the
                         \ undercarriage when still on the runway)
 
- DEX                    \ Set Propellor = 255 to denote that the propellor is
- STX Propellor          \ broken, so we can't turn the engine on again
+ DEX                    \ Set propellorStatus = 255 to denote that the propellor
+ STX propellorStatus    \ is broken, so we can't turn the engine on again
 
  CMP #&A0
  BCC L5740
@@ -19442,8 +19451,8 @@ NEXT
  BCC L575A
 
  LDA R
- STA VerticalSpeedLo
- LDX Undercarriage
+ STA verticalSpeedLo
+ LDX ucStatus
  BEQ L575A
 
  CMP #&50
@@ -19495,7 +19504,7 @@ NEXT
  LDA L0CFA
  BPL L579F
 
- LDA Undercarriage
+ LDA ucStatus
  BNE L579F
 
  LDX #&EA
@@ -19507,12 +19516,12 @@ NEXT
  CMP #&0C
  BCS L57B2
 
- LDA AltitudeLo
+ LDA altitudeLo
  CMP L0CF0
  BNE L57B2
 
- LDA #1                 \ Set OnGround = 1 to denote that we are on the ground
- STA OnGround
+ LDA #1                 \ Set onGround = 1 to denote that we are on the ground
+ STA onGround
 
 .L57B2
 
@@ -19533,7 +19542,7 @@ NEXT
 
 .L57B3
 
- LDA AirspeedHi
+ LDA airspeedHi
  BMI L57E3
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
@@ -19609,7 +19618,7 @@ NEXT
 
  STY Q
  STX P
- LDA AltitudeHi
+ LDA altitudeHi
  EOR #&FF
  STA R
  JSR L5474
