@@ -2508,7 +2508,28 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L107F
+\       Name: DrawClippedHorizon
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Like DrawClippedLine but using %00000010 as the starting value for the
+\ direction in V
+\
+\ Only called for the horizon (line 0)
+\
+\ ******************************************************************************
+
+.DrawClippedHorizon
+
+ LDA #%00000010
+ BNE L1081
+
+\ ******************************************************************************
+\
+\       Name: DrawClippedLine
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -2517,28 +2538,15 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   L                   Comes from lineEndPoint, used as index into
+\   L                   Comes from lineStartPoint, used as index into
 \                       xLineLo, xLineHi, yLineLo, yLineHi
 \
-\   M                   Comes from lineStartPoint, used as index into
+\   M                   Comes from lineEndPoint, used as index into
 \                       xLineLo, xLineHi, yLineLo, yLineHi
-\
-\ Other entry points:
-\
-\   L107B               Use %00000010 as the starting value for the direction
-\                       in V
-\
-\   L1081               Use A as the the starting value for the direction
-\                       in V
 \
 \ ******************************************************************************
 
-.L107B
-
- LDA #%00000010
- BNE L1081
-
-.L107F
+.DrawClippedLine
 
  LDA #0
 
@@ -2561,10 +2569,9 @@ ORG CODE%
  LDA xLineHi,X
  STA RR
 
- LDA yLineLo,X          \ Set S = the L-th entry from yLineLo
+ LDA yLineLo,X          \ Set (SS S) = the L-th entry from (yLineHi yLineLo)
  STA S
-
- LDA yLineHi,X          \ Set SS = the L-th entry from yLineHi
+ LDA yLineHi,X
  STA SS
 
  LDA xLineLo,Y          \ Set (QQ W) = the M-th entry from (xLineHi xLineLo),
@@ -2665,7 +2672,7 @@ ORG CODE%
                         \ If SS < 0, C flag is clear and X = 0
                         \ If SS > 0, C flag is set and X = 255
 
- ROR A
+ ROR A                  \ x-coordinate range for clipping to the canopy?
  CPX #152
  ROR A
  EOR #%01000000
@@ -2676,8 +2683,12 @@ ORG CODE%
                         \ If SS < 0, bit 6 set and bit 7 clear, A = %01000000
                         \ If SS > 0, bit 6 clear and bit 7 set, A = %10000000
 
-                        \ A is shifted right below, so bits 7 and 6 become bits
-                        \ 5 and 4
+                        \ A is shifted right below, so bits 6 and 7 become bits
+                        \ 4 and 5
+
+                        \ SS indicates the clipping required along the x-axis
+                        \ (bits 4 and 5)
+
  LDX R
  LDY RR
  BEQ L1115
@@ -2695,7 +2706,7 @@ ORG CODE%
                         \ If RR < 0, X = 0
                         \ If RR > 0, X = 255
 
- CPX #4
+ CPX #4                 \ y-coordinate range for clipping to the canopy?
  ROR A
  CPX #156
  ROR A
@@ -2708,9 +2719,14 @@ ORG CODE%
                         \ If RR < 0, bit 6 set and bit 7 clear, A = %01000000
                         \ If RR > 0, bit 6 clear and bit 7 set, A = %10000000
 
+                        \ RR indicates the clipping required along the y-axis
+                        \ (bits 6 and 7)
+
  STA TT                 \ Store A in TT
- 
-                        \ 4 to 155 feels a bit like a coordinate range?
+                        \
+                        \ So TT contains the clipping requirements along both
+                        \ axes for the point with coordinates (SS S) and (RR R),
+                        \ i.e. the start point of the line
 
  LDA #0
 
@@ -2756,8 +2772,13 @@ ORG CODE%
  ROR A
  EOR #%01000000
  
- STA UU                 \ Store A in UU, like TT but with (H G) and (QQ W)
-                        \ instead of (SS S) and (RR R)
+ STA UU                 \ Store A in UU, which is like TT but with (H G) and
+                        \ (QQ W) instead of (SS S) and (RR R), so the end point
+                        \ rather than the start point
+                        \
+                        \ So UU contains the clipping requirements along both
+                        \ axes for the point with coordinates (H G) and (QQ W),
+                        \ i.e. the end point of the line
 
  LDX L                  \ Set X to the index passed to the subroutine in L
 
@@ -2780,7 +2801,7 @@ ORG CODE%
  LDA zLineHi,X
  BPL L1170
 
- JSR L1778
+ JSR SwapLinePoints
 
  LDA TT
  BEQ L1198
@@ -2799,13 +2820,13 @@ ORG CODE%
 
 .L117A
 
- JSR L1598              \ Clipping?
+ JSR ClipStartOfLine    \ Clipping when TT is non-zero (x-axis)
 
  JMP L1198
 
 .L1180
 
- JSR L1554              \ Clipping?
+ JSR ClipEndOfLine      \ Clipping when UU is non-zero (y-axis)
 
  JMP L1198
 
@@ -4081,7 +4102,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1554
+\       Name: ClipEndOfLine
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -4092,7 +4113,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1554
+.ClipEndOfLine
 
  LDA TT                 \ If TT and UU have a set bit in common, jump to L1593
  AND UU                 \ to abort the drawing of this line
@@ -4128,7 +4149,7 @@ ORG CODE%
 .L1577
 
  CMP L0CC1
- BCS L1598
+ BCS ClipStartOfLine
 
  LDA H
  BPL L1582
@@ -4138,27 +4159,27 @@ ORG CODE%
 .L1582
 
  CMP L0CC1
- BCS L1598
+ BCS ClipStartOfLine
 
- JSR L1778
+ JSR SwapLinePoints
 
  LDA V
  EOR #&C0
  STA V
- JMP L1598
+ JMP ClipStartOfLine
 
 .L1593
 
  TSX                    \ Remove two bytes from the top of the stack, so the
  INX                    \ RTS returns to the caller's caller, i.e. the caller
- INX                    \ of L107B or L107F, i.e. L3347 or DrawCanopyView, so
- TXS                    \ this aborts the drawing of this line
+ INX                    \ of DrawClippedLine (DrawCanopyView or DrawHalfHorizon)
+ TXS                    \ so this aborts the drawing of this line
 
  RTS                    \ Return to the caller's caller
 
 \ ******************************************************************************
 \
-\       Name: L1598
+\       Name: ClipStartOfLine
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -4169,7 +4190,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1598
+.ClipStartOfLine
 
  LDA S
  CLC
@@ -4523,7 +4544,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1778
+\       Name: SwapLinePoints
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -4534,19 +4555,22 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L1778
+.SwapLinePoints
 
- LDA W
+ LDA W                  \ Set (RR R) = (QQ W)
  STA R
  LDA QQ
  STA RR
- LDA G
+
+ LDA G                  \ Set (SS S) = (H G)
  STA S
  LDA H
  STA SS
- LDA UU
+
+ LDA UU                 \ Set TT = UU
  STA TT
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4579,40 +4603,40 @@ ORG CODE%
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use AND logic and bit
                         \ patterns that match colourCycle
 
-.dcal1
+.ecal1
 
  LDA colourCycle        \ If bit 7 of colourCycle is clear, i.e. %00001111, jump
- BPL dcal3              \ down to dcal3
+ BPL ecal3              \ down to ecal3
 
                         \ If we get here, colourCycle is %11110000
 
  LDX lineBuffer2Count   \ If lineBuffer2Count <> 47, line buffer 2 is not
- CPX #47                \ empty, so jump down to dcal2 to draw the next line
- BNE dcal2              \ from the buffer
+ CPX #47                \ empty, so jump down to ecal2 to draw the next line
+ BNE ecal2              \ from the buffer
 
  RTS                    \ Return from the subroutine
 
-.dcal2
+.ecal2
 
  DEC lineBuffer2Count   \ Decrement the value in lineBuffer2Count as we are
                         \ about to draw the next line from buffer 2
 
- JMP dcal5              \ Jump down to dcal5 to draw the next line from buffer 2
+ JMP ecal5              \ Jump down to ecal5 to draw the next line from buffer 2
 
-.dcal3
+.ecal3
 
  LDX lineBuffer1Count   \ If lineBuffer1Count <> -1, line buffer 1 is not
- CPX #255               \ empty, so jump down to dcal4 to draw the next line
- BNE dcal4              \ from the buffer
+ CPX #255               \ empty, so jump down to ecal4 to draw the next line
+ BNE ecal4              \ from the buffer
 
  RTS                    \ Return from the subroutine
 
-.dcal4
+.ecal4
 
  DEC lineBuffer1Count   \ Decrement the value in lineBuffer1Count as we are
                         \ about to draw the next line from buffer 1
 
-.dcal5
+.ecal5
 
                         \ We now fetch the next line from the line buffer
 
@@ -4641,9 +4665,9 @@ ORG CODE%
  LDA lineBufferV,X      \ Set V to the direction from lineBufferV
  STA V
 
- JSR DrawCanopyLine     \ Draw the line
+ JSR DrawCanopyLine     \ Draw the line (to erase it)
 
- JMP dcal1              \ Loop back to dcal1 to draw the next line
+ JMP ecal1              \ Loop back to ecal1 to erase the next line
 
  EQUB &17
 
@@ -10300,12 +10324,12 @@ ORG CODE%
 
                         \ Now to process the line
 
- LDX lineEndPoint,Y     \ Set X to this line's index from lineEndPoint
+ LDX lineStartPoint,Y   \ Set X to this line's index from lineStartPoint
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX lineStartPoint,Y   \ Set X to this line's index from lineStartPoint
+ LDX lineEndPoint,Y     \ Set X to this line's index from lineEndPoint
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
@@ -10408,10 +10432,10 @@ ORG CODE%
  LDX lineIDCounter
  LDY linesToShow,X
  STY lineID
- LDX lineEndPoint,Y
+ LDX lineStartPoint,Y
  STX GG
  STX L
- LDX lineStartPoint,Y
+ LDX lineEndPoint,Y
  STX M
  JSR L0D01
 
@@ -10609,17 +10633,17 @@ ORG CODE%
 
  LDX lineID             \ Set X to the ID of the line to check
 
- LDY lineStartPoint,X   \ Set M to the line's lineStartPoint offset
+ LDY lineEndPoint,X     \ Set M to the line's lineEndPoint offset
  STY M
 
- LDY lineEndPoint,X     \ Set Y and L to the line's lineEndPoint offset
+ LDY lineStartPoint,X   \ Set Y and L to the line's lineStartPoint offset
  STY L
 
- CPX #12                \ If the line ID >= 12, jump to invw2
- BCS invw2
+ CPX #12                \ If the line ID >= 12, jump to lvis2
+ BCS lvis2
 
- CPX #0                 \ If the line ID is not zero, jump to invw1
- BNE invw1
+ CPX #0                 \ If the line ID is not zero, jump to lvis1
+ BNE lvis1
 
                         \ If we get here then the line ID is 0
 
@@ -10627,46 +10651,46 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
-.invw1
+.lvis1
 
                         \ If we get here then the line ID is in the range 1 to
                         \ 11
 
  JSR L31BD
 
- JMP invw19
+ JMP lvis19
 
-.invw2
+.lvis2
 
                         \ If we get here, the line ID >= 12 and Y contains the
-                        \ line's lineEndPoint offset
+                        \ line's lineStartPoint offset
 
  LDA #2                 \ Set L0CC8 = 2
  STA L0CC8
 
-.invw3
+.lvis3
 
  LDA L0400,Y            \ If the Y-th L0400 is positive, skip the following
- BPL invw4              \ instruction
+ BPL lvis4              \ instruction
 
- JMP invw17             \ The Y-th L0400 is negative, so jump to invw17
+ JMP lvis17             \ The Y-th L0400 is negative, so jump to lvis17
 
-.invw4
+.lvis4
 
-                        \ We get here if line ID >= 12, Y contains the
-                        \ line's lineEndPoint offset and Y-th L0400 is positive
+                        \ We get here if line ID >= 12, Y contains the line's
+                        \ lineStartPoint offset and Y-th L0400 is positive
 
- TYA                    \ Store the line's lineEndPoint offset on the stack
+ TYA                    \ Store the line's lineStartPoint offset on the stack
  PHA
 
- STA L0CC0              \ Set L0CC0 = the line's lineEndPoint offset
+ STA L0CC0              \ Set L0CC0 = the line's lineStartPoint offset
 
-.invw5
+.lvis5
 
  LDA Lookup4600,Y       \ Set A = the Y-th Lookup4600
 
- CMP #40                \ If A < 40, jump to invw8
- BCC invw8
+ CMP #40                \ If A < 40, jump to lvis8
+ BCC lvis8
 
  SEC                    \ Set A = A - 40
  SBC #40
@@ -10676,14 +10700,14 @@ ORG CODE%
  TAY                    \ Set A = the A-th value of L0400
  LDA L0400,Y
 
- BMI invw14
+ BMI lvis14
 
  TYA
  PHA
 
  LDX L05C8              \ If L05C8 >= 49, then there are 48 values in the L05C8
- CPX #49                \ list, so jump to invw11
- BCS invw11
+ CPX #49                \ list, so jump to lvis11
+ BCS lvis11
 
  INC L05C8              \ L05C8 contains a count of values stored in the L05C8
                         \ list
@@ -10691,77 +10715,77 @@ ORG CODE%
  LDX L05C8              \ Add A to the end of the L05C8 list
  STA L05C8,X
 
- BNE invw5              \ Loop back to 
+ BNE lvis5              \ Loop back to 
 
-.invw6
+.lvis6
 
  PLA
  STA GG
 
  LDA L04D8,Y
- BMI invw7
+ BMI lvis7
 
  LDA #%10000000         \ Set showLine so the line is not in view
  STA showLine
 
  RTS                    \ Return from the subroutine
 
-.invw7
+.lvis7
 
- JMP invw16
+ JMP lvis16
 
-.invw8
+.lvis8
 
  TAY
  STY L0CCC
 
  CMP #16
- BCS invw9
+ BCS lvis9
 
  CMP #12
- BCS invw6
+ BCS lvis6
 
-.invw9
+.lvis9
 
  LDA L04D8,Y
 
  AND #%01000000
- BNE invw10
+ BNE lvis10
 
  JSR L2A8C
 
-.invw10
+.lvis10
 
  LDY L0CCC
 
  LDA L04D8,Y
- BMI invw13
+ BMI lvis13
 
-.invw11
+.lvis11
 
  LDA #%10000000
  STA showLine
 
-.invw12
+.lvis12
 
  PLA
  CMP L0CC0
- BNE invw12
+ BNE lvis12
 
  RTS                    \ Return from the subroutine
 
-.invw13
+.lvis13
 
  TYA
  CLC
  ADC #216
  STA L0CCF
 
-.invw14
+.lvis14
 
  PLA
  CMP L0CC0
- BEQ invw15
+ BEQ lvis15
 
  STA GG
 
@@ -10774,7 +10798,7 @@ ORG CODE%
 
  LDA showLine
 
- BNE invw12
+ BNE lvis12
 
  LDY GG
  STY L0CCF
@@ -10783,9 +10807,9 @@ ORG CODE%
  ORA L0400,Y
  STA L0400,Y
 
- BNE invw14
+ BNE lvis14
 
-.invw15
+.lvis15
 
  STA GG
 
@@ -10798,19 +10822,19 @@ ORG CODE%
 
  LDA showLine
 
- BNE invw20
+ BNE lvis20
 
-.invw16
+.lvis16
 
  LDY GG
 
-.invw17
+.lvis17
 
-                        \ We jump here if line ID >= 12, Y contains the
-                        \ line's lineEndPoint offset and Y-th L0400 is negative
+                        \ We jump here if line ID >= 12, Y contains the line's
+                        \ lineStartPoint offset and Y-th L0400 is negative
 
  LDA HH
- BNE invw18
+ BNE lvis18
 
  LDX lineID
 
@@ -10818,32 +10842,32 @@ ORG CODE%
 
  STA showLine
 
- BNE invw20
+ BNE lvis20
 
-.invw18
+.lvis18
 
  LDA #%10000000
  ORA L0400,Y
  STA L0400,Y
 
  DEC L0CC8
- BEQ invw19
+ BEQ lvis19
 
  LDY M
 
- JMP invw3
+ JMP lvis3
 
-.invw19
+.lvis19
 
  LDY M
  LDA zLineHi,Y
 
- BPL invw20
+ BPL lvis20
 
  LDY L
  LDA zLineHi,Y
 
- BPL invw20
+ BPL lvis20
 
  LDA showLine
  ORA #%10000000
@@ -10853,7 +10877,7 @@ ORG CODE%
 
  JSR L4C96
 
-.invw20
+.lvis20
 
  RTS                    \ Return from the subroutine
 
@@ -11144,7 +11168,7 @@ ORG CODE%
 
  STA MM                 \ Set MM = 255
 
-.rsol1
+.rell1
 
  JSR AddLineToList      \ Add the line with ID lineID to either the
                         \ linesToShow or linesToHide list
@@ -11153,7 +11177,7 @@ ORG CODE%
 
  LDA lineID             \ Loop back until we have processed all the lines
  CMP numberOfLines
- BCC rsol1
+ BCC rell1
 
  LDX #3                 \ Set logical colour 3 to white so the dashboard display
  JSR SetColourToWhite   \ shows up in white
@@ -11192,12 +11216,12 @@ ORG CODE%
  LDY #%10000000         \ colourCycle is set, i.e. %11110000
 
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
- BMI cycl1              \ down to cycl1
+ BMI flip1              \ down to flip1
 
  LDX #%11110000         \ Set X and Y for when bit 7 of colourCycle is clear,
  LDY #%01000000         \ i.e. %00001111
 
-.cycl1
+.flip1
 
  STX colourCycle        \ Store X in colourCycle, so colourCycle is now:
                         \
@@ -11346,25 +11370,26 @@ ORG CODE%
 
  BNE view3              \ If A is non-zero, jump to view3
 
- JSR L3347
+ JSR DrawHalfHorizon    \ The line ID is 0, which is the horizon, so draw the
+                        \ first half of the horizon line
 
  LDA lineID             \ Retrieve the line's ID
 
 .view3
 
  TAX
- LDY lineStartPoint,X
+ LDY lineEndPoint,X
  STY M
 
  LDA #0
  STA L0400,Y
 
- LDY lineEndPoint,X
+ LDY lineStartPoint,X
  STY L
 
  STA L0400,Y
 
- JSR L107F
+ JSR DrawClippedLine
 
  INC lineIDCounter      \ Increment the loop counter
 
@@ -13364,7 +13389,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L3347
+\       Name: DrawHalfHorizon
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13375,7 +13400,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L3347
+.DrawHalfHorizon
 
  LDX #&1E
  LDY #&20
@@ -13411,7 +13436,7 @@ ORG CODE%
  STX L
  STY M
 
- JSR L107B
+ JSR DrawClippedHorizon
 
  RTS
 
@@ -14380,14 +14405,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: lineStartPoint
+\       Name: lineEndPoint
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given a line ID in X, lineStartPoint,X contains:
+\ Given a line ID in X, lineEndPoint,X contains:
 \
 \ The offset of the byte in L0400 that is zeroed in DrawCanopyView
 \
@@ -14396,15 +14421,15 @@ NEXT
 \
 \ The value of M that is set in in L28B6 and passed to L0D01
 \
-\ The value of M that is set in DrawCanopyView and passed to L107F and used as
-\ an index into xLineLo, xLineHi, yLineLo, yLineHi
+\ The value of M that is set in DrawCanopyView and passed to DrawClippedLine and
+\ used as an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ The value of M that is set in IsLineVisible and passed to L2C95 and used as
 \ an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ ******************************************************************************
 
-.lineStartPoint
+.lineEndPoint
 
  EQUB &1E, &02, &03, &04, &01, &07, &09, &0B
  EQUB &0D, &0F, &11, &13, &3B, &72, &2A, &2B
@@ -14561,14 +14586,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: lineEndPoint
+\       Name: lineStartPoint
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given a line ID in X, lineEndPoint,X contains:
+\ Given a line ID in X, lineStartPoint,X contains:
 \
 \ The offset of the byte in L0400 that is zeroed in DrawCanopyView
 \
@@ -14577,15 +14602,15 @@ NEXT
 \
 \ The value of L and GG that is set in in L28B6 and passed to L0D01
 \
-\ The value of L that is set in DrawCanopyView and passed to L107F and used as
-\ an index into xLineLo, xLineHi, yLineLo, yLineHi
+\ The value of L that is set in DrawCanopyView and passed to DrawClippedLine and
+\ used as an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ The value of L that is set in IsLineVisible and passed to L2C95 and used as
 \ an index into xLineLo, xLineHi, yLineLo, yLineHi
 \
 \ ******************************************************************************
 
-.lineEndPoint
+.lineStartPoint
 
  EQUB &1F, &01, &02, &03, &04, &06, &08, &0A
  EQUB &0C, &0E, &10, &12, &72, &73, &29, &2A
