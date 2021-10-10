@@ -236,8 +236,13 @@ ORG &0070
 
 .lineID
 
- SKIP 1                 \ Temporary storage, typically used to pass a line ID
-                        \ to routines
+ SKIP 1                 \ The line ID, used to pass lines to routines
+                        \
+                        \ Line 0 is the horizon
+                        \ Lines 1-11 are the runway
+                        \ Lines 12-15 are bullets
+                        \
+                        \ Lines are mapped to objects via lineIdToObjectId
 
 .lineIDCounter
 
@@ -862,9 +867,15 @@ ORG &0C00
 
  SKIP 1
 
-.L0CCC
+.objectId
 
- SKIP 1                 \ Called OB in original source code
+ SKIP 1                 \ The object ID (i.e. type of object), 0x-39
+                        \
+                        \ Called OB in original source code
+                        \
+                        \   * 30 to 33 = bullets
+                        \
+                        \ Lines are mapped to objects via lineIdToObjectId
 
 .pressingTab            \ Bit 7 determines whether TAB is being pressed
                         \
@@ -1003,20 +1014,25 @@ ORG &0C00
 
  SKIP 1
 
-.L0CED
+.xPlaneLo
 
- SKIP 1                 \ Set to 229 in ResetVariables
+ SKIP 1                 \ Plane longitude/x-coordinate (high byte)
+                        \
+                        \ Set to (198 229) in ResetVariables
 
-.altitudeLo             \ Altitude (high byte)
+.altitudeLo             \ Plane altitude/y-coordinate (high byte)
                         \
  SKIP 1                 \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
-                        \ Set to 10 in ResetVariables
+                        \
+                        \ Set to (0 10) in ResetVariables
 
-.L0CEF
+.zPlaneLo
 
- SKIP 1                 \ Set to 92 in ResetVariables
+ SKIP 1                 \ Plane latitude/z-coordinate (low byte)
+                        \
+                        \ Set to (72 92) in ResetVariables
 
 .L0CF0
 
@@ -1097,20 +1113,25 @@ ORG &0C00
 
  SKIP 1
 
-.L0CFD
+.xPlaneHi
 
- SKIP 1                 \ Set to 198 in ResetVariables
+ SKIP 1                 \ Plane longitude/x-coordinate (high byte)
+                        \
+                        \ Set to (198 229) in ResetVariables
 
-.altitudeHi             \ Altitude (high byte)
+.altitudeHi             \ Plane altitude/y-coordinate (high byte)
                         \
  SKIP 1                 \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
-                        \ Set to 0 in ResetVariables
+                        \
+                        \ Set to (0 10) in ResetVariables
 
-.L0CFF
+.zPlaneHi
 
- SKIP 1                 \ Set to 72 in ResetVariables
+ SKIP 1                 \ Plane latitude/z-coordinate (high byte)
+                        \
+                        \ Set to (72 92) in ResetVariables
 
 \ ******************************************************************************
 \
@@ -2525,7 +2546,7 @@ ORG CODE%
 .DrawClippedHorizon
 
  LDA #%00000010
- BNE L1081
+ BNE dcln1
 
 \ ******************************************************************************
 \
@@ -2550,7 +2571,7 @@ ORG CODE%
 
  LDA #0
 
-.L1081
+.dcln1
 
  STA V                  \ Set V = A to set the base value for the direction in V
                         \ (we will set bits 6 and 7 later)
@@ -2593,7 +2614,7 @@ ORG CODE%
                         \   (I T) = (QQ W) - (RR R)
                         \         = L-th - M-th entry from (xLineHi xLineLo)
 
- BPL L10C9              \ If the result is positive, jump to L10C9 to skip the
+ BPL dcln2              \ If the result is positive, jump to dcln2 to skip the
                         \ following
 
  LDA #%10000000         \ Set bit 7 of V to indicate a negative x-delta
@@ -2609,7 +2630,7 @@ ORG CODE%
  SBC I
  STA I
 
-.L10C9
+.dcln2
 
  LDA yLineLo,Y          \ Set (H G) = the M-th entry from (yLineHi yLineLo),
  STA G                  \ starting with the low byte
@@ -2630,7 +2651,7 @@ ORG CODE%
                         \   (J U) = (H G) - (SS S)
                         \         = L-th - M-th entry from (yLineHi yLineLo)
 
- BPL L10F1              \ If the result is positive, jump to L10F1 to skip the
+ BPL dcln3              \ If the result is positive, jump to dcln3 to skip the
                         \ following
 
  LDA #%01000000         \ Set bit 6 of V to indicate a negative y-delta
@@ -2646,27 +2667,27 @@ ORG CODE%
  SBC J
  STA J
 
-.L10F1
+.dcln3
 
  LDA #0
 
  LDX S
  LDY SS
- BEQ L1101
+ BEQ dcln4
 
  PHP
  LDX #0
  PLP
  CLC
- BMI L1102
+ BMI dcln5
 
  DEX
 
-.L1101
+.dcln4
 
  SEC
 
-.L1102
+.dcln5
 
                         \ If SS = 0, C flag is set and X = S
                         \ If SS < 0, C flag is clear and X = 0
@@ -2691,16 +2712,16 @@ ORG CODE%
 
  LDX R
  LDY RR
- BEQ L1115
+ BEQ dcln6
 
  PHP
  LDX #0
  PLP
- BMI L1115
+ BMI dcln6
 
  DEX
 
-.L1115
+.dcln6
 
                         \ If RR = 0, X = R
                         \ If RR < 0, X = 0
@@ -2732,21 +2753,21 @@ ORG CODE%
 
  LDX G
  LDY H
- BEQ L112F
+ BEQ dcln7
 
  PHP
  LDX #0
  PLP
  CLC
- BMI L1130
+ BMI dcln8
 
  DEX
 
-.L112F
+.dcln7
 
  SEC
 
-.L1130
+.dcln8
 
  ROR A
  CPX #152
@@ -2755,16 +2776,16 @@ ORG CODE%
 
  LDX W
  LDY QQ
- BEQ L1143
+ BEQ dcln9
 
  PHP
  LDX #0
  PLP
- BMI L1143
+ BMI dcln9
 
  DEX
 
-.L1143
+.dcln9
 
  CPX #4
  ROR A
@@ -2785,55 +2806,55 @@ ORG CODE%
  LDY M                  \ Set Y to the index passed to the subroutine in M
 
  LDA zLineHi,Y
- BPL L1162
+ BPL dcln10
 
  LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
  EOR #%11000000
  STA V
 
  LDA TT
- BEQ L1198
+ BEQ dcln15
 
- BNE L117A
+ BNE dcln12
 
-.L1162
+.dcln10
 
  LDA zLineHi,X
- BPL L1170
+ BPL dcln11
 
  JSR SwapLinePoints
 
  LDA TT
- BEQ L1198
+ BEQ dcln15
 
- BNE L117A
+ BNE dcln12
 
-.L1170
+.dcln11
 
  LDA TT
- BNE L1186
+ BNE dcln14
 
  LDA UU
- BNE L1198
+ BNE dcln15
 
- BEQ L11CD
+ BEQ dcln21
 
-.L117A
+.dcln12
 
  JSR ClipStartOfLine    \ Clipping when TT is non-zero (x-axis)
 
- JMP L1198
+ JMP dcln15
 
-.L1180
+.dcln13
 
  JSR ClipEndOfLine      \ Clipping when UU is non-zero (y-axis)
 
- JMP L1198
+ JMP dcln15
 
-.L1186
+.dcln14
 
  LDA UU
- BNE L1180
+ BNE dcln13
 
  LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
  EOR #%11000000
@@ -2844,90 +2865,90 @@ ORG CODE%
  LDA G
  STA S
 
-.L1198
+.dcln15
 
  LDA #4
  BIT V
- BMI L11A0
+ BMI dcln16
 
  LDA #155
 
-.L11A0
+.dcln16
 
  STA W
  LDA #0
- BVS L11A8
+ BVS dcln17
 
  LDA #151
 
-.L11A8
+.dcln17
 
  STA G
- JMP L11B5
+ JMP dcln19
 
-.L11AD
+.dcln18
 
  LSR I
  ROR T
  LSR J
  ROR U
 
-.L11B5
+.dcln19
 
  LDA I
  ORA J
- BNE L11AD
+ BNE dcln18
 
  LDA #&FF
  CMP T
- BNE L11C5
+ BNE dcln20
 
  LSR T
  LSR U
 
-.L11C5
+.dcln20
 
  CMP U
- BNE L11CD
+ BNE dcln21
 
  LSR T
  LSR U
 
-.L11CD
+.dcln21
 
  INC T
  INC U
 
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
- BMI L11E5              \ jump down to L11E5 to add a line to buffer 1
+ BMI dcln23              \ jump down to dcln23 to add a line to buffer 1
 
  LDX lineBuffer2Count   \ If lineBuffer2Count <> 95, line buffer 2 is not full,
- CPX #95                \ so jump down to L11DE to add a new line to the buffer
- BNE L11DE
+ CPX #95                \ so jump down to dcln22 to add a new line to the buffer
+ BNE dcln22
 
  RTS                    \ Return from the subroutine
 
-.L11DE
+.dcln22
 
  INX                    \ Increment the value in lineBuffer2Count as we are
  STX lineBuffer2Count   \ about to add a new line to line buffer 2
 
- JMP L11F1              \ Jump down to L11F1 to buffer the line and draw it
+ JMP dcln25              \ Jump down to dcln25 to buffer the line and draw it
 
-.L11E5
+.dcln23
 
  LDX lineBuffer1Count   \ If lineBuffer1Count <> 47, line buffer 1 is not full,
- CPX #47                \ so jump down to L11ED to add a new line to the buffer
- BNE L11ED
+ CPX #47                \ so jump down to dcln24 to add a new line to the buffer
+ BNE dcln24
 
  RTS                    \ Return from the subroutine
 
-.L11ED
+.dcln24
 
  INX                    \ Increment the value in lineBuffer1Count as we are
  STX lineBuffer1Count   \ about to add a new line to line buffer 1
 
-.L11F1
+.dcln25
 
  LDA R                  \ Save the start x-coordinate in lineBufferR
  STA lineBufferR,X
@@ -4110,53 +4131,56 @@ ORG CODE%
 \ ------------------------------------------------------------------------------
 \
 \ 
+\ Other entry points:
+\
+\  AbortLine            Abort drawing this line
 \
 \ ******************************************************************************
 
 .ClipEndOfLine
 
- LDA TT                 \ If TT and UU have a set bit in common, jump to L1593
+ LDA TT                 \ If TT and UU have a set bit in common, jump to AbortLine
  AND UU                 \ to abort the drawing of this line
- BNE L1593
+ BNE AbortLine
 
  LDA SS
- BPL L1560
+ BPL clen1
 
  EOR #&FF
 
-.L1560
+.clen1
 
  STA L0CC1
  LDA RR
- BPL L1569
+ BPL clen2
 
  EOR #&FF
 
-.L1569
+.clen2
 
  CMP L0CC1
- BCC L1571
+ BCC clen3
 
  STA L0CC1
 
-.L1571
+.clen3
 
  LDA QQ
- BPL L1577
+ BPL clen4
 
  EOR #&FF
 
-.L1577
+.clen4
 
  CMP L0CC1
  BCS ClipStartOfLine
 
  LDA H
- BPL L1582
+ BPL clen5
 
  EOR #&FF
 
-.L1582
+.clen5
 
  CMP L0CC1
  BCS ClipStartOfLine
@@ -4168,7 +4192,7 @@ ORG CODE%
  STA V
  JMP ClipStartOfLine
 
-.L1593
+.AbortLine
 
  TSX                    \ Remove two bytes from the top of the stack, so the
  INX                    \ RTS returns to the caller's caller, i.e. the caller
@@ -4196,49 +4220,49 @@ ORG CODE%
  CLC
  ADC #4
  STA S
- BCC L15A3
+ BCC clip1
 
  INC SS
 
-.L15A3
+.clip1
 
  LDA TT
  BIT V
- BPL L15AF
+ BPL clip2
 
  AND #&40
- BNE L1593
+ BNE AbortLine
 
- BEQ L15B5
+ BEQ clip3
 
-.L15AF
+.clip2
 
  AND #&80
- BNE L1593
+ BNE AbortLine
 
- BEQ L15B5
+ BEQ clip3
 
-.L15B5
+.clip3
 
  LDA TT
- BVC L15BF
+ BVC clip4
 
  AND #&10
- BNE L1593
+ BNE AbortLine
 
- BEQ L15C3
+ BEQ clip5
 
-.L15BF
+.clip4
 
  AND #&20
- BNE L1593
+ BNE AbortLine
 
-.L15C3
+.clip5
 
  LDA V
  ASL A
  EOR V
- BMI L15EB
+ BMI clip6
 
  LDA #0
  STA WW
@@ -4256,9 +4280,9 @@ ORG CODE%
  LDA UU
  SBC #0
  STA UU
- JMP L15FC
+ JMP clip7
 
-.L15EB
+.clip6
 
  LDA #&80
  STA WW
@@ -4270,9 +4294,9 @@ ORG CODE%
  SBC RR
  STA UU
 
-.L15FC
+.clip7
 
- BPL L160B
+ BPL clip8
 
  LDA #0
  SEC
@@ -4282,7 +4306,7 @@ ORG CODE%
  SBC UU
  STA UU
 
-.L160B
+.clip8
 
  LDA T
  CLC
@@ -4295,25 +4319,25 @@ ORG CODE%
  CLC
  ADC #2
  STA P
- BCC L1623
+ BCC clip9
 
  INC Q
 
-.L1623
+.clip9
 
  LDA #0
  STA K
  LDA I
  CMP J
- BCC L1649
+ BCC clip11
 
- BNE L1635
+ BNE clip10
 
  LDA T
  CMP U
- BCC L1649
+ BCC clip11
 
-.L1635
+.clip10
 
  LDA V
  STA HH
@@ -4324,9 +4348,9 @@ ORG CODE%
  LDA I
  ADC #0
  STA PP
- JMP L1669
+ JMP clip12
 
-.L1649
+.clip11
 
  LDA V
  ASL A
@@ -4346,7 +4370,7 @@ ORG CODE%
  LDA SS
  STA RR
 
-.L1669
+.clip12
 
  LDA #&80
  STA W
@@ -4356,28 +4380,28 @@ ORG CODE%
  STA H
  STA QQ
  STA G
- BEQ L1683
+ BEQ clip14
 
-.L167B
+.clip13
 
  ASL P
  ROL Q
  ASL N
  ROL PP
 
-.L1683
+.clip14
 
  LDA Q
  CMP UU
- BCC L167B
+ BCC clip13
 
- BNE L1691
+ BNE clip15
 
  LDA P
  CMP TT
- BCC L167B
+ BCC clip13
 
-.L1691
+.clip15
 
  LSR Q
  ROR P
@@ -4386,34 +4410,34 @@ ORG CODE%
  ROR N
  ROR VV
 
-.L169D
+.clip16
 
  LDA Q
  CMP UU
- BCC L16BF
+ BCC clip17
 
- BNE L1691
+ BNE clip15
 
  LDA P
  CMP TT
- BCC L16BF
+ BCC clip17
 
- BNE L1691
+ BNE clip15
 
  LDA K
  CMP H
- BCC L16BF
+ BCC clip17
 
- BEQ L16BF
+ BEQ clip17
 
  LDA Q
  ORA P
  ORA K
- BNE L1691
+ BNE clip15
 
- BEQ L16F1
+ BEQ clip18
 
-.L16BF
+.clip17
 
  LDA W
  CLC
@@ -4435,29 +4459,29 @@ ORG CODE%
  LDA UU
  SBC Q
  STA UU
- BNE L169D
+ BNE clip16
 
  LDA TT
- BNE L169D
+ BNE clip16
 
  LDA H
  CMP #2
- BCS L169D
+ BCS clip16
 
-.L16F1
+.clip18
 
  LDA G
  ROL W
  ADC #0
  STA G
- BCC L16FD
+ BCC clip19
 
  INC QQ
 
-.L16FD
+.clip19
 
  LDA HH
- BMI L1715
+ BMI clip20
 
  LDA R
  CLC
@@ -4468,9 +4492,9 @@ ORG CODE%
  ADC QQ
  STA RR
  STA SS
- JMP L1726
+ JMP clip21
 
-.L1715
+.clip20
 
  LDA R
  SEC
@@ -4482,12 +4506,12 @@ ORG CODE%
  STA RR
  STA SS
 
-.L1726
+.clip21
 
  BIT WW
- BMI L1749
+ BMI clip23
 
- BVS L173C
+ BVS clip22
 
  LDA #&9F
  SEC
@@ -4496,9 +4520,9 @@ ORG CODE%
  LDA #0
  SBC RR
  STA SS
- JMP L1749
+ JMP clip23
 
-.L173C
+.clip22
 
  LDA #&9F
  SEC
@@ -4508,26 +4532,26 @@ ORG CODE%
  SBC SS
  STA RR
 
-.L1749
+.clip23
 
  LDA RR
- BNE L1775
+ BNE clip24
 
  LDA R
  CMP #&9C
- BCS L1775
+ BCS clip24
 
  CMP #4
- BCC L1775
+ BCC clip24
 
  LDA S
  SEC
  SBC #4
  STA S
- BCC L1775
+ BCC clip24
 
  CMP #&98
- BCS L1775
+ BCS clip24
 
  LDA #1
  ORA V
@@ -4538,9 +4562,9 @@ ORG CODE%
  STA yLo
  RTS
 
-.L1775
+.clip24
 
- JMP L1593
+ JMP AbortLine
 
 \ ******************************************************************************
 \
@@ -9143,13 +9167,13 @@ ORG CODE%
 
  LDX #&E5
 
-.L24BC
+.fire1
 
  JSR L1E1A
 
  INX
  CPX #&E8
- BNE L24BC
+ BNE fire1
 
  LDA #&5F
  STA GG
@@ -9162,7 +9186,7 @@ ORG CODE%
  LDY #&0C
  LDX #&60
 
-.L24D6
+.fire2
 
  JSR L25B5
 
@@ -9170,7 +9194,7 @@ ORG CODE%
 
  INY
  CPY #&10
- BNE L24D6
+ BNE fire2
 
  LDY #&0C
  LDX #&5F
@@ -9192,14 +9216,14 @@ ORG CODE%
  LDY #&0F
  LDX #&62
 
-.L2504
+.fire3
 
  JSR L257B
 
  DEX
  DEY
  CPY #&0C
- BNE L2504
+ BNE fire3
 
  RTS
 
@@ -9404,31 +9428,46 @@ ORG CODE%
 \
 \ Called MOBJ or UOBJ in original source code
 \
+\ Called with:
+\   from FireGuns:
+\   LDY #12, LDX #96
+\   LDY #12, LDX #95
+\   LDY #15, LDX #&62 to LDY #13, LDX #96
+\
+\   from UpdateBullets:
+\    LDY #15 to 12, X = Y+216
+\
+\   from L3053:
+\     LDX #0, LDY #0
+\
 \ ******************************************************************************
 
 .L257B
 
- LDA L4400,Y
+ LDA xObjectLo,Y
  CLC
  ADC xLineLo,X
- STA L4400,Y
- LDA L4478,Y
+ STA xObjectLo,Y
+ LDA xObjectHi,Y
  ADC xLineHi,X
- STA L4478,Y
- LDA L4428,Y
+ STA xObjectHi,Y
+
+ LDA yObjectLo,Y
  CLC
  ADC yLineLo,X
- STA L4428,Y
- LDA L44A0,Y
+ STA yObjectLo,Y
+ LDA yObjectHi,Y
  ADC yLineHi,X
- STA L44A0,Y
- LDA L4450,Y
+ STA yObjectHi,Y
+
+ LDA zObjectLo,Y
  CLC
  ADC zLineLo,X
- STA L4450,Y
- LDA L44C8,Y
+ STA zObjectLo,Y
+ LDA zObjectHi,Y
  ADC zLineHi,X
- STA L44C8,Y
+ STA zObjectHi,Y
+
  RTS
 
 \ ******************************************************************************
@@ -9449,14 +9488,14 @@ ORG CODE%
 .L25B5
 
  LDA #0
- STA L4400,Y
- STA L4478,Y
+ STA xObjectLo,Y
+ STA xObjectHi,Y
 
- STA L4400+&28,Y
- STA L4478+&28,Y
+ STA xObjectLo+40,Y
+ STA xObjectHi+40,Y
 
- STA L4400+&50,Y
- STA L4478+&50,Y
+ STA xObjectLo+80,Y
+ STA xObjectHi+80,Y
 
  RTS
 
@@ -9586,17 +9625,17 @@ ORG CODE%
 
  BPL rset3              \ Loop back until we have zeroed L4210 to L4210+7
 
- LDA #72                \ Set L0CFF = 72
- STA L0CFF
+ LDA #72                \ Set zPlaneHi = 72
+ STA zPlaneHi
 
- LDA #92                \ Set L0CEF = 92
- STA L0CEF
+ LDA #92                \ Set zPlaneLo = 92
+ STA zPlaneLo
 
- LDA #198               \ Set L0CFD = 198
- STA L0CFD
+ LDA #198               \ Set xPlaneHi = 198
+ STA xPlaneHi
 
- LDA #229               \ Set L0CED = 229
- STA L0CED
+ LDA #229               \ Set xPlaneLo = 229
+ STA xPlaneLo
 
  LDA #10                \ Set altitudeLo = 10
  STA altitudeLo
@@ -9984,11 +10023,11 @@ ORG CODE%
  BEQ main11             \ the air, so jump to main11
 
  LDA #&21
- STA L0CCC
+ STA objectId
 
 .main8
 
- LDY L0CCC
+ LDY objectId
  LDA L41FA,Y
  BPL main9
 
@@ -9999,8 +10038,8 @@ ORG CODE%
 
 .main9
 
- DEC L0CCC
- LDA L0CCC
+ DEC objectId
+ LDA objectId
  CMP #&1E
  BCS main8
 
@@ -10687,18 +10726,19 @@ ORG CODE%
 
 .lvis5
 
- LDA Lookup4600,Y       \ Set A = the Y-th Lookup4600
+ LDA lineIdToObjectId,Y \ Set A = the Y-th lineIdToObjectId
 
  CMP #40                \ If A < 40, jump to lvis8
  BCC lvis8
 
- SEC                    \ Set A = A - 40
+ SEC                    \ Set A = Y-th lineIdToObjectId - 40
  SBC #40
 
  STA L0CCF              \ Store the value of A in L0CCF
 
- TAY                    \ Set A = the A-th value of L0400
- LDA L0400,Y
+ TAY                    \ Set Y = Y-th lineIdToObjectId - 40
+
+ LDA L0400,Y            \ Set A = the A-th value of L0400
 
  BMI lvis14
 
@@ -10715,7 +10755,7 @@ ORG CODE%
  LDX L05C8              \ Add A to the end of the L05C8 list
  STA L05C8,X
 
- BNE lvis5              \ Loop back to 
+ BNE lvis5              \ Loop back to ???
 
 .lvis6
 
@@ -10737,7 +10777,7 @@ ORG CODE%
 .lvis8
 
  TAY
- STY L0CCC
+ STY objectId
 
  CMP #16
  BCS lvis9
@@ -10756,7 +10796,7 @@ ORG CODE%
 
 .lvis10
 
- LDY L0CCC
+ LDY objectId
 
  LDA L04D8,Y
  BMI lvis13
@@ -10838,7 +10878,7 @@ ORG CODE%
 
  LDX lineID
 
- JSR L4B5F
+ JSR CheckDistance
 
  STA showLine
 
@@ -10890,13 +10930,17 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   objectId            Object ID/type, comes from lineIdToObjectId or
+\                       15 for bullets in UpdateBullets
+\                       1 for runway when called from L31BD
 \
 \ ******************************************************************************
 
 .L2A8C
 
- LDY L0CCC
+ LDY objectId
  STY L0CBF
  TYA
  CLC
@@ -10912,7 +10956,7 @@ ORG CODE%
 
  LDA #0
  STA K
- LDA L44A0,Y
+ LDA yObjectHi,Y
  BPL L2AD8
 
  TYA
@@ -10938,9 +10982,9 @@ ORG CODE%
 
  LDX L3EC2,Y
  LDA L3ED0,X
- STA L4478,Y
+ STA xObjectHi,Y
  LDA L3EF0,X
- STA L44C8,Y
+ STA zObjectHi,Y
  JMP L2B20
 
 .L2AD8
@@ -10971,10 +11015,10 @@ ORG CODE%
 .L2AF9
 
  TAX
- LDA L4478,X
- STA L4478,Y
- LDA L44C8,X
- STA L44C8,Y
+ LDA xObjectHi,X
+ STA xObjectHi,Y
+ LDA zObjectHi,X
+ STA zObjectHi,Y
  JMP L2B20
 
 .L2B09
@@ -11001,11 +11045,11 @@ ORG CODE%
 
  LDX GG
  SEC
- LDA L4400,Y
- SBC L0CED
+ LDA xObjectLo,Y
+ SBC xPlaneLo
  STA xLineLo,X
- LDA L4478,Y
- SBC L0CFD
+ LDA xObjectHi,Y
+ SBC xPlaneHi
  STA xLineHi,X
  STA T
  LDA #0
@@ -11015,10 +11059,10 @@ ORG CODE%
  BNE L2B93
 
  SEC
- LDA L4428,Y
+ LDA yObjectLo,Y
  SBC altitudeLo
  STA yLineLo,X
- LDA L44A0,Y
+ LDA yObjectHi,Y
  SBC altitudeHi
  STA yLineHi,X
  STA T
@@ -11029,11 +11073,11 @@ ORG CODE%
  BNE L2B93
 
  SEC
- LDA L4450,Y
- SBC L0CEF
+ LDA zObjectLo,Y
+ SBC zPlaneLo
  STA zLineLo,X
- LDA L44C8,Y
- SBC L0CFF
+ LDA zObjectHi,Y
+ SBC zPlaneHi
  STA zLineHi,X
  STA T
  LDA #0
@@ -11046,7 +11090,7 @@ ORG CODE%
  STA L0CCB
  JSR L1D8D
 
- LDY L0CCC
+ LDY objectId
  LDA showLine
  BNE L2BB7
 
@@ -11530,9 +11574,9 @@ ORG CODE%
 
 .L2CE1
 
- LDA L4478,Y
+ LDA xObjectHi,Y
  SEC
- SBC L0CFD,X
+ SBC xPlaneHi,X
  STA L0CA8,X
  LDA #0
  SBC L0C6D,X
@@ -11735,16 +11779,16 @@ ORG CODE%
  CMP #&1B
  BNE L2DFA
 
- LDA L44C1
+ LDA yObjectHi+33
  CMP #&0C
  BCS L2DCD
 
- LDA L4449
+ LDA yObjectLo+33
  ADC #&0A
- STA L4449
+ STA yObjectLo+33
  BCC L2DCC
 
- INC L44C1
+ INC yObjectHi+33
 
 .L2DCC
 
@@ -11757,16 +11801,16 @@ ORG CODE%
 
 .L2DD1
 
- LDA L4499,X
+ LDA xObjectHi+33,X
  BEQ L2DE9
 
- LDA L4421,X
+ LDA xObjectLo+33,X
  SEC
  SBC L0CF8
- STA L4421,X
+ STA xObjectLo+33,X
  BCS L2DE5
 
- DEC L4499,X
+ DEC xObjectHi+33,X
 
 .L2DE5
 
@@ -11797,20 +11841,20 @@ ORG CODE%
  LDA L368F
  BNE L2DCC
 
- LDA L4449
+ LDA yObjectLo+33
  SEC
  SBC #&0A
- STA L4449
+ STA yObjectLo+33
  BCS L2E11
 
- DEC L44C1
+ DEC yObjectHi+33
 
 .L2E11
 
- LDA L44C1
+ LDA yObjectHi+33
  BNE L2DCC
 
- LDA L4449
+ LDA yObjectLo+33
  CMP #&0A
  BCS L2DCC
 
@@ -12350,7 +12394,7 @@ ORG CODE%
 .UpdateBullets
 
  LDY #&0F
- STY L0CCC
+ STY objectId
 
  LDA #&62
  STA GG
@@ -12371,7 +12415,7 @@ ORG CODE%
 
  LDY GG
  LDX #&3C
- JSR L4B5F
+ JSR CheckDistance
 
  BEQ L2F0F
 
@@ -12383,8 +12427,8 @@ ORG CODE%
 .L2F0F
 
  DEC GG
- DEC L0CCC
- LDY L0CCC
+ DEC objectId
+ LDY objectId
  CPY #&0C
  BCS L2EEF
 
@@ -12769,7 +12813,7 @@ ORG CODE%
  STA L368D
  LDA #0
  STA L368F
- LDY L0CCC
+ LDY objectId
  JSR L3129
 
  LDX #&E4
@@ -12805,7 +12849,7 @@ ORG CODE%
  JSR L3152
 
  LDY VV
- LDX #&D8
+ LDX #&D8               \ X goes: 0, &28, &50, &78, &C8
 
 .L30D6
 
@@ -12817,15 +12861,15 @@ ORG CODE%
  CLC
  ADC #&28
  TAX
- LDA L4400,Y
- STA L4400,X
+ LDA xObjectLo,Y
+ STA xObjectLo,X        \ Store in first byte of all the coord tables
  CPX #&C8
  BNE L30D6
 
 .L30EA
 
- LDY #2
- LDX #&50
+ LDY #2                 \ Y goes: 2,   1,   0
+ LDX #&50               \ X goes: &50, &28, 0
 
 .L30EE
 
@@ -12835,10 +12879,10 @@ ORG CODE%
  STA L0CB8,Y
  BCC L3102
 
- INC L4400,X
+ INC xObjectLo,X
  BNE L3102
 
- INC L4478,X
+ INC xObjectHi,X
 
 .L3102
 
@@ -12891,11 +12935,11 @@ ORG CODE%
 
 .L312B
 
- LDA L4400,Y
+ LDA xObjectLo,Y
  CLC
  ADC Q
  STA W,X
- LDA L4478,Y
+ LDA xObjectHi,Y
  ADC #5
  STA I,X
 
@@ -12914,9 +12958,9 @@ ORG CODE%
 
  BEQ L312B
 
- LDA L4400,Y
+ LDA xObjectLo,Y
  STA W,X
- LDA L4478,Y
+ LDA xObjectHi,Y
  STA I,X
  JMP L313A
 
@@ -12943,11 +12987,11 @@ ORG CODE%
  CLC
  ADC #&28
  TAY
- LDA L4400,Y
+ LDA xObjectLo,Y
  SEC
  SBC W,X
  STA T
- LDA L4478,Y
+ LDA xObjectHi,Y
  SBC I,X
  BNE L3180
 
@@ -12958,7 +13002,7 @@ ORG CODE%
  DEX
  BPL L3154
 
- LDA L0CCC
+ LDA objectId
  STA L368E
 
  TSX                    \ Remove two bytes from the top of the stack
@@ -12995,12 +13039,12 @@ ORG CODE%
  CLC
  ADC #&28
  TAX
- LDA L4401,X
+ LDA xObjectLo+1,X
  SEC
- SBC L4400,X
+ SBC xObjectLo,X
  STA V
- LDA L4479,X
- SBC L4478,X
+ LDA xObjectHi+1,X
+ SBC xObjectHi,X
  BPL L319F
 
  DEC P
@@ -13092,7 +13136,7 @@ ORG CODE%
  LDA #0
  STA L0CCB
  LDA #1
- STA L0CCC
+ STA objectId
  JSR L2A8C
 
  BPL L3246
@@ -13149,7 +13193,7 @@ ORG CODE%
 
 .L322B
 
- JSR L4B5F
+ JSR CheckDistance
 
  STA showLine
  BNE L323B
@@ -14166,7 +14210,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3B00
+\       Name: visibleDistance
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -14177,7 +14221,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.Lookup3B00
+.visibleDistance
 
  EQUB &10, &7D, &7D, &7D, &7D, &10, &10, &10
  EQUB &10, &10, &28, &10, &50, &50, &32, &32
@@ -14953,9 +14997,9 @@ NEXT
 
 .L4244
 
- LDA L0CFD
+ LDA xPlaneHi
  SEC
- SBC L4478,Y
+ SBC xObjectHi,Y
  BPL L424F
  EOR #&FF
 
@@ -14970,9 +15014,9 @@ NEXT
 
 .L4254
 
- LDA L0CFF
+ LDA zPlaneHi
  SEC
- SBC L44C8,Y
+ SBC zObjectHi,Y
  JMP L4284
 
 \ ******************************************************************************
@@ -15226,7 +15270,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4400 to L44F1
+\       Name: xObjectLo to L44F1
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -15237,81 +15281,54 @@ NEXT
 \
 \ ******************************************************************************
 
-.L4400
+.xObjectLo
 
  EQUB &23               \ Called XALO in original source code
-
-.L4401
-
  EQUB &66, &18, &DD, &33, &EF, &00, &00, &00
  EQUB &00, &4F, &58, &00, &00, &00, &00, &EE
  EQUB &AA, &88, &55, &77, &33, &77, &33, &66
  EQUB &88, &DE, &66, &66, &55, &00, &00, &00
-
-.L4421
-
  EQUB &00, &40, &23, &33, &31, &3A, &42
 
-.L4428
+.yObjectLo
 
  EQUB &43, &00, &00, &00, &00, &00
-
-.L442E
-
  EQUB &00, &00, &00, &00, &27, &20, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00
-
-.L4449
-
  EQUB &00, &00, &23, &34, &3A, &4A, &4D
 
-.L4450
+.zObjectLo
 
  EQUB &50
-
-.L4451
-
  EQUB &5C, &66, &33, &00, &11, &00, &00, &00
  EQUB &00, &2E, &73, &00, &00, &00, &00, &A6
  EQUB &52, &55, &99, &55, &BC, &56, &99, &F8
  EQUB &77, &11, &CD, &55, &44, &00, &00, &00
  EQUB &00, &40, &20, &20, &20, &20, &20
 
-.L4478
+.xObjectHi
 
  EQUB &20               \ Called XAHI in original source code
-
-.L4479
-
  EQUB &C6, &4B, &45, &53, &8E, &00, &00, &00
  EQUB &00, &4D, &50, &00, &00, &00, &00, &8E
  EQUB &EA, &08, &25, &57, &13, &87, &E3, &86
  EQUB &D8, &ED, &46, &86, &B5, &00, &00, &00
-
-.L4499
-
  EQUB &00, &04, &41, &20, &53, &49, &5A
 
-.L44A0
+.yObjectHi
 
  EQUB &45, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &0D, &07, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00
-
-.L44C1
-
  EQUB &00, &00, &38, &0D, &07, &76, &1A
 
-.L44C8
+.zObjectHi
 
  EQUB &2E
-
-.L44C9
-
  EQUB &44, &86, &63, &C0, &C1, &00, &00, &00
  EQUB &00, &5A, &52, &00, &00, &00, &00, &EA
  EQUB &D5, &65, &E9, &E5, &AB, &95, &99, &4D
@@ -15320,7 +15337,8 @@ NEXT
 
 .L44F0
 
- EQUB &FB               \ Zeroed in ResetVariables
+ EQUB &FB               \ List with list size in byte #0
+                        \ Zeroed in ResetVariables
 
 .L44F1
 
@@ -15352,7 +15370,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup4600
+\       Name: lineIdToObjectId
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -15363,7 +15381,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.Lookup4600
+.lineIdToObjectId
 
  EQUB &31, &01, &01, &01, &01, &01, &01, &01
  EQUB &01, &01, &01, &01, &01, &01, &01, &01
@@ -16122,7 +16140,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4B5F
+\       Name: CheckDistance
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -16133,7 +16151,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L4B5F
+.CheckDistance
 
  LDA xLineHi,Y
  BPL L4B66
@@ -16142,7 +16160,7 @@ NEXT
 
 .L4B66
 
- CMP Lookup3B00,X
+ CMP visibleDistance,X
  BCS L4B83
 
  LDA yLineHi,Y
@@ -16152,7 +16170,7 @@ NEXT
 
 .L4B72
 
- CMP Lookup3B00,X
+ CMP visibleDistance,X
  BCS L4B83
 
  LDA zLineHi,Y
@@ -16162,7 +16180,7 @@ NEXT
 
 .L4B7E
 
- CMP Lookup3B00,X
+ CMP visibleDistance,X
  BCC L4B86
 
 .L4B83
@@ -16234,10 +16252,10 @@ NEXT
  ADC Q
  TAX
  SEC
- LDA L0CED,Y
+ LDA xPlaneLo,Y
  SBC Lookup36C0,X
  STA P
- LDA L0CFD,Y
+ LDA xPlaneHi,Y
  SBC Lookup36D5,X
  BMI L4BC9
 
@@ -18375,11 +18393,11 @@ NEXT
 
 .L5244
 
- ADC L0CED,X
- STA L0CED,X
- LDA L0CFD,X
+ ADC xPlaneLo,X
+ STA xPlaneLo,X
+ LDA xPlaneHi,X
  ADC R
- STA L0CFD,X
+ STA xPlaneHi,X
  LDA L0C6D,X
  ADC R
  STA L0C6D,X
@@ -19243,18 +19261,18 @@ NEXT
 
 .L564D
 
- LDA L0CED
+ LDA xPlaneLo
  SEC
- SBC L4401
- LDA L0CFD
- SBC L4479
+ SBC xObjectLo+1
+ LDA xPlaneHi
+ SBC xObjectHi+1
  BNE L566E
 
- LDA L0CEF
+ LDA zPlaneLo
  SEC
- SBC L4451
- LDA L0CFF
- SBC L44C9
+ SBC zObjectLo+1
+ LDA zPlaneHi
+ SBC zObjectHi+1
  BMI L566E
 
  CMP #&18
