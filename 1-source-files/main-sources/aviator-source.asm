@@ -800,9 +800,10 @@ ORG &0C00
 
  SKIP 1
 
-.L0CC1
+.maxCoord
 
- SKIP 1
+ SKIP 1                 \ Temporary storage, used to store the maximum start
+                        \ point coordinate when clipping lines
 
 .colourLogic            \ Determines the logic used to draw the canopy view
                         \
@@ -957,27 +958,27 @@ ORG &0C00
 
  SKIP 6
 
-.xLo
+.xTempLo
 
  SKIP 1
 
-.yLo
+.yTempLo
 
  SKIP 1
 
-.zLo
+.zTempLo
 
  SKIP 1
 
-.xHi
+.xTempHi
 
  SKIP 1
 
-.yHi
+.yTempHi
 
  SKIP 1
 
-.zHi
+.zTempHi
 
  SKIP 1
 
@@ -2529,96 +2530,103 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawClippedHorizon
+\       Name: DrawClippedLine (Part 1 of 6)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ Like DrawClippedLine but using %00000010 as the starting value for the
-\ direction in V
-\
-\ Only called for the horizon (line 0)
-\
-\ ******************************************************************************
-
-.DrawClippedHorizon
-
- LDA #%00000010
- BNE dcln1
-
-\ ******************************************************************************
-\
-\       Name: DrawClippedLine
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Calculate the line deltas
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   L                   Comes from lineStartPoint, used as index into
+\   L                   The table index for the line's start point, taken from
+\                       lineStartPoint, which is used as index into
 \                       xLineLo, xLineHi, yLineLo, yLineHi
 \
-\   M                   Comes from lineEndPoint, used as index into
+\   M                   The table index for the line's end point, taken from
+\                       lineEndPoint, which is used as index into
 \                       xLineLo, xLineHi, yLineLo, yLineHi
+\
+\ Other entry points:
+\
+\   DrawClippedHorizon  Set bit 1 of the line direction in V (for the horizon)
 \
 \ ******************************************************************************
 
+.DrawClippedHorizon
+
+ LDA #%00000010         \ For the horizon, set bit 1 of A to use as the starting
+ BNE dcln1              \ value for the line direction in V (so bit 1 of V gets
+                        \ set)
+
 .DrawClippedLine
 
- LDA #0
+ LDA #0                 \ Set A = 0 to use as the starting value for the line
+                        \ direction in V
 
 .dcln1
 
- STA V                  \ Set V = A to set the base value for the direction in V
-                        \ (we will set bits 6 and 7 later)
+ STA V                  \ Set V = A to set the starting value for the line
+                        \ direction in V (we will set bits 6 and 7 later)
 
- LDA #0                 \ Set TT = 0
- STA TT
+ LDA #0                 \ Set TT = 0, which we will use to store information
+ STA TT                 \ about whether the line's start point fits on screen
 
- STA UU                 \ Set UU = 0
+ STA UU                 \ Set UU = 0, which we will use to store information
+                        \ about whether the line's end point fits on screen
 
- LDX L                  \ Set X to the index passed to the subroutine in L
+                        \ The first step is to calculate the line's |x-delta|
+                        \ and |y-delta| values, updating the line direction
+                        \ information in V as we do so
 
- LDY M                  \ Set Y to the index passed to the subroutine in M
+ LDX L                  \ Set X to the table index for the line's start point
 
- LDA xLineLo,X          \ Set (RR R) = the L-th entry from (xLineHi xLineLo)
- STA R
- LDA xLineHi,X
+ LDY M                  \ Set Y to the table index for the line's end point
+
+ LDA xLineLo,X          \ Set (RR R) = the X-th entry from (xLineHi xLineLo)
+ STA R                  \
+ LDA xLineHi,X          \ i.e. the x-coordinate of the line's start point
  STA RR
 
- LDA yLineLo,X          \ Set (SS S) = the L-th entry from (yLineHi yLineLo)
- STA S
- LDA yLineHi,X
+ LDA yLineLo,X          \ Set (SS S) = the X-th entry from (yLineHi yLineLo)
+ STA S                  \
+ LDA yLineHi,X          \ i.e. the y-coordinate of the line's start point
  STA SS
 
- LDA xLineLo,Y          \ Set (QQ W) = the M-th entry from (xLineHi xLineLo),
- STA W                  \ starting with the low byte
+ LDA xLineLo,Y          \ Set (QQ W) = the Y-th entry from (xLineHi xLineLo)
+ STA W                  \
+                        \ starting with the low byte in W
 
  SEC                    \ Set T = W - R
  SBC R                  \
- STA T                  \ to subtract the low bytes
+ STA T                  \ which is the low byte of the calculation:
+                        \
+                        \   (I T) = (QQ W) - (RR R)
 
- LDA xLineHi,Y          \ Set (QQ W) = the M-th entry from (xLineHi xLineLo),
- STA QQ                 \ finishing with the high byte
+ LDA xLineHi,Y          \ Set (QQ W) = the Y-th entry from (xLineHi xLineLo)
+ STA QQ                 \
+                        \ i.e. the x-coordinate of the line's end point
 
  SBC RR                 \ Set I = QQ - RR
  STA I                  \
-                        \ to subtract the high bytes
-
-                        \ So we now have:
+                        \ so we now have:
                         \
                         \   (I T) = (QQ W) - (RR R)
-                        \         = L-th - M-th entry from (xLineHi xLineLo)
+                        \         = x-coordinate of the line's end point
+                        \           - x-coordinate of the line's start point
+                        \
+                        \ so (I T) is the line's x-delta
 
- BPL dcln2              \ If the result is positive, jump to dcln2 to skip the
-                        \ following
+ BPL dcln2              \ If the high byte in I is positive, then so is (I T),
+                        \ so jump to dcln2 to skip the following, as the x-delta
+                        \ is positive
 
- LDA #%10000000         \ Set bit 7 of V to indicate a negative x-delta
- ORA V
+                        \ Otherwise the x-delta is negative, so we need to set
+                        \ the x-direction in V and negate x-delta so it is
+                        \ positive (as we want to calculate |x-delta|)
+
+ LDA #%10000000         \ Set bit 7 of V to indicate a negative x-delta in the
+ ORA V                  \ line direction in V
  STA V
 
  LDA #0                 \ Negate (I T), starting with the low bytes
@@ -2627,35 +2635,45 @@ ORG CODE%
  STA T
 
  LDA #0                 \ And then negating the high bytes
- SBC I
- STA I
+ SBC I                  \
+ STA I                  \ so now (I T) is positive, and contains |x-delta|
 
 .dcln2
 
- LDA yLineLo,Y          \ Set (H G) = the M-th entry from (yLineHi yLineLo),
- STA G                  \ starting with the low byte
+ LDA yLineLo,Y          \ Set (H G) = the Y-th entry from (yLineHi yLineLo)
+ STA G                  \
+                        \ starting with the low byte in G
 
  SEC                    \ Set U = G - S
  SBC S                  \
- STA U                  \ to subtract the low bytes
+ STA U                  \ which is the low byte of the calculation:
+                        \
+                        \   (J U) = (H G) - (SS S)
 
- LDA yLineHi,Y          \ Set (H G) = the M-th entry from (yLineHi yLineLo),
- STA H                  \ finishing with the high byte
+ LDA yLineHi,Y          \ Set (H G) = the Y-th entry from (yLineHi yLineLo)
+ STA H                  \
+                        \ i.e. the y-coordinate of the line's end point
 
  SBC SS                 \ Set J = H - SS
  STA J                  \
-                        \ to subtract the high bytes
-
-                        \ So we now have:
+                        \ so we now have:
                         \
                         \   (J U) = (H G) - (SS S)
-                        \         = L-th - M-th entry from (yLineHi yLineLo)
+                        \         = y-coordinate of the line's end point
+                        \           - y-coordinate of the line's start point
+                        \
+                        \ so (J U) is the line's y-delta
 
- BPL dcln3              \ If the result is positive, jump to dcln3 to skip the
-                        \ following
+ BPL dcln3              \ If the high byte in J is positive, then so is (J U),
+                        \ so jump to dcln3 to skip the following, as the y-delta
+                        \ is positive
 
- LDA #%01000000         \ Set bit 6 of V to indicate a negative y-delta
- ORA V
+                        \ Otherwise the y-delta is negative, so we need to set
+                        \ the y-direction in V and negate y-delta so it is
+                        \ positive (as we want to calculate |y-delta|)
+
+ LDA #%01000000         \ Set bit 6 of V to indicate a negative y-delta in the
+ ORA V                  \ line direction in V
  STA V
 
  LDA #0                 \ Negate (J U), starting with the low bytes
@@ -2664,263 +2682,530 @@ ORG CODE%
  STA U
 
  LDA #0                 \ And then negating the high bytes
- SBC J
- STA J
+ SBC J                  \
+ STA J                  \ so now (J U) is positive, and contains |y-delta|
+
+\ ******************************************************************************
+\
+\       Name: DrawClippedLine (Part 2 of 6)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Work out whether the line's start point is on-screen
+\
+\ ******************************************************************************
 
 .dcln3
 
- LDA #0
+ LDA #0                 \ The next step is to work out where the line's
+                        \ coordinates lie in relation to the visible screen,
+                        \ i.e. are the coordinates to the right or left of the
+                        \ screen bounds, or above or below
+                        \
+                        \ We will capture this information for a single
+                        \ coordinate in the top 4 bits of A, so we start by
+                        \ setting A = 0 so we can populate it with information
+                        \ of how the line's coordinates relate to the screen
+                        \ edges
 
- LDX S
- LDY SS
- BEQ dcln4
+                        \ We start by looking at the y-coordinate for the start
+                        \ point, and will store the result in bits 4 and 5 of
+                        \ the final result in A
 
- PHP
- LDX #0
- PLP
- CLC
- BMI dcln5
+ LDX S                  \ Set (Y X) = (SS S)
+ LDY SS                 \           = the y-coordinate of the line's start point
 
- DEX
+ BEQ dcln4              \ If the high byte in Y is zero, jump to dcln4
+
+ PHP                    \ Set X = 0, but without affecting the processor flags,
+ LDX #0                 \ which will still be set according to the value of the
+ PLP                    \ high byte in Y
+
+ CLC                    \ Clear the C flag
+
+ BMI dcln5              \ If the high byte in Y is negative, jump to dcln5
+
+ DEX                    \ Decrement X from 0 to 255
 
 .dcln4
 
- SEC
+ SEC                    \ Set the C flag
 
 .dcln5
 
-                        \ If SS = 0, C flag is set and X = S
-                        \ If SS < 0, C flag is clear and X = 0
-                        \ If SS > 0, C flag is set and X = 255
+                        \ By this point we have the following, depending on the
+                        \ value of the high byte of the start point's
+                        \ y-coordinate:
+                        \
+                        \   * If SS < 0, C = 0 and X = 0
+                        \   * If SS = 0, C = 1 and X = S
+                        \   * If SS > 0, C = 1 and X = 255
 
- ROR A                  \ x-coordinate range for clipping to the canopy?
- CPX #152
- ROR A
- EOR #%01000000
+ ROR A                  \ Put the C flag into bit 7 of A, which will end up
+                        \ being bit 4 in the final result (as we are going to
+                        \ shift three more bits into A). Note that we flip this
+                        \ bit in the EOR below
 
-                        \ If SS = 0, bit 6 clear, and bit 7 clear if S < 152
-                        \            A = %00000000 if S < 152
-                        \            A = %10000000 if S >= 152
-                        \ If SS < 0, bit 6 set and bit 7 clear, A = %01000000
-                        \ If SS > 0, bit 6 clear and bit 7 set, A = %10000000
+ CPX #152               \ The result of this comparison depends on the value
+                        \ that we gave to X above:
+                        \
+                        \   * If SS < 0, X = 0 and 0 < 152, so C = 0
+                        \   * If SS = 0, X = S, so if S < 152, C = 0 
+                        \                          if S >= 152, C = 1
+                        \   * If SS > 0, X = 255 and 255 >= 152, so C = 1
 
-                        \ A is shifted right below, so bits 6 and 7 become bits
-                        \ 4 and 5
+ ROR A                  \ Rotate the C flag into bit 7 of A, which will end up
+                        \ being bit 5 in the final result (as we are going to
+                        \ shift two more bits into A)
 
-                        \ SS indicates the clipping required along the x-axis
-                        \ (bits 4 and 5)
+ EOR #%01000000         \ Flip bit 6
 
- LDX R
- LDY RR
- BEQ dcln6
+                        \ We now have the following in bits 6 and 7, which will
+                        \ be shifted down to bits 4 and 5 in the final result:
+                        \
+                        \   * Bit 6 (4) is set   if SS < 0
+                        \                  clear if SS >= 0
+                        \
+                        \   * Bit 7 (5) is clear if SS < 0
+                        \                        or SS = 0 and S < 152
+                        \                    set if SS = 0 and S >= 152
+                        \                        or SS > 0
+                        \
+                        \ The visible part of the canopy screen has its origin
+                        \ (0, 0) at the bottom-left corner of the canopy, just
+                        \ above the dashboard, and it is 19 character blocks
+                        \ high, which is 8 * 19 = 152 pixels high, so this sets
+                        \ bits 0 and 1 in the final result depending on whether
+                        \ the start y-coordinate is within this range, and if
+                        \ not, whether it is above or below the range - in other
+                        \ words, it determines whether this coordinate is
+                        \ on-screen or off-screen, as follows:
+                        \
+                        \                             Bit 6 (4)     Bit 7 (5)
+                        \   Off top of screen            0             1
+                        \   On-screen                    0             0
+                        \   Off bottom of screen         1             0
+                        \
+                        \ We never have both bits set
 
- PHP
- LDX #0
- PLP
- BMI dcln6
+                        \ We now repeat the above process for the start point's
+                        \ x-coordinate in (RR R), putting the result into bits 6
+                        \ and 7 of A while shifting the above result into bits 4
+                        \ and 5
+                        \
+                        \ The process is slightly different as this time the
+                        \ on-screen x-coordinate range is 4 to 155
 
- DEX
+ LDX R                  \ Set (Y X) = (RR R)
+ LDY RR                 \           = the x-coordinate of the line's start point
+
+ BEQ dcln6              \ If the high byte in Y is zero, jump to dcln6
+
+ PHP                    \ Set X = 0, but without affecting the processor flags,
+ LDX #0                 \ which will still be set according to the value of the
+ PLP                    \ high byte in Y
+
+ BMI dcln6              \ If the high byte in Y is negative, jump to dcln6
+
+ DEX                    \ Decrement X from 0 to 255
 
 .dcln6
 
-                        \ If RR = 0, X = R
-                        \ If RR < 0, X = 0
-                        \ If RR > 0, X = 255
+                        \ By this point we have the following, depending on the
+                        \ value of the high byte of the start point's
+                        \ y-coordinate:
+                        \
+                        \   * If RR < 0, X = 0
+                        \   * If RR = 0, X = R
+                        \   * If RR > 0, X = 255
 
- CPX #4                 \ y-coordinate range for clipping to the canopy?
- ROR A
- CPX #156
- ROR A
- EOR #%01000000
+ CPX #4                 \ The result of this comparison depends on the value
+                        \ that we gave X above:
+                        \
+                        \   * If RR < 0, X = 0 and 0 < 4, so C = 0
+                        \   * If RR = 0, X = R, so if R < 4, C = 0
+                        \                          if R >= 4, C = 1
+                        \   * If RR > 0, X = 255 and 255 >= 4, so C = 1
 
-                        \ If RR = 0, bit 6 set if R < 4, bit 7 clear if R < 156
-                        \            A = %01000000 if R < 4
-                        \            A = %00000000 if R >= 4 and R < 156
-                        \            A = %10000000 if R >= 156
-                        \ If RR < 0, bit 6 set and bit 7 clear, A = %01000000
-                        \ If RR > 0, bit 6 clear and bit 7 set, A = %10000000
+ ROR A                  \ Rotate the C flag into bit 7 of A, which will end up
+                        \ being bit 6 in the final result (as we are going to
+                        \ shift one more bit into A). Note that we flip this
+                        \ bit in the EOR below
 
-                        \ RR indicates the clipping required along the y-axis
-                        \ (bits 6 and 7)
+ CPX #156               \ The result of this comparison depends on the value
+                        \ that we gave X above:
+                        \
+                        \   * If RR < 0, X = 0 and 0 < 156, so C = 0
+                        \   * If RR = 0, X = R, so C = 0 if R < 156,
+                        \                          C = 1 if R >= 156
+                        \   * If RR > 0, X = 255 and 255 >= 156, so C = 1
+
+ ROR A                  \ Rotate the C flag into bit 7 of A, which is where it
+                        \ will stay
+
+ EOR #%01000000         \ Flip bit 6
+
+                        \ We now have the following in bits 6 and 7:
+                        \
+                        \   * Bit 6 is clear if RR > 0
+                        \                    or RR = 0 and R >= 4
+                        \                    i.e. if (RR R) >= 4
+                        \              set   if RR < 0
+                        \                    or RR = 0 and R < 4
+                        \                    i.e. if (RR R) < 4
+                        \
+                        \   * Bit 7 is clear if RR < 0
+                        \                    or RR = 0 and R < 156
+                        \                    i.e. if (RR R) < 156
+                        \                set if RR = 0 and R >= 156
+                        \                    or RR > 0
+                        \                    i.e. if (RR R) >= 156
+                        \
+                        \ The visible part of the canopy screen has its origin
+                        \ (0, 0) at the bottom-left corner of the canopy, just
+                        \ above the dashboard, but the rivets and the left edge
+                        \ of the canopy take up the first four pixels, so the
+                        \ leftmost x-coordinate inside the canopy is 4
+                        \
+                        \ Similarly, the right edge of the canopy is four pixels
+                        \ wide, and the whole screen is 160 pixels wide, so the
+                        \ rightmost x-coordinate inside the canopy is 155
+                        \
+                        \ So the above sets bits 6 and 7 in the final result
+                        \ depending on whether the start x-coordinate is within
+                        \ this range, and if not, whether it is to the left or
+                        \ right of the range - in other words, it determines
+                        \ whether this coordinate is on-screen or off-screen,
+                        \ as follows:
+                        \
+                        \                             Bit 6     Bit 7
+                        \   Off right of screen         0        1
+                        \   On-screen                   0        0
+                        \   Off left of screen          1        0
+                        \
+                        \ We never have both bits set
 
  STA TT                 \ Store A in TT
                         \
-                        \ So TT contains the clipping requirements along both
-                        \ axes for the point with coordinates (SS S) and (RR R),
-                        \ i.e. the start point of the line
+                        \ So TT contains the clipping requirements for the start
+                        \ point, in bits 4 to 7, as follows:
+                        \
+                        \                             Bit 4     Bit 5
+                        \   Off top of screen           0         1
+                        \   On-screen                   0         0
+                        \   Off bottom of screen        1         0
+                        \
+                        \                             Bit 6     Bit 7
+                        \   Off right of screen         0        1
+                        \   On-screen                   0        0
+                        \   Off left of screen          1        0
 
- LDA #0
+\ ******************************************************************************
+\
+\       Name: DrawClippedLine (Part 3 of 6)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Work out whether the line's end point is on-screen
+\
+\ ******************************************************************************
 
- LDX G
+                        \ We now repeat the above process, but for the line's
+                        \ end point, whose y-coordinate is in (H G) and
+                        \ x-coordinate is in (QQ W). Refer to the previous part
+                        \ for a detailed description
+
+ LDA #0                 \ Set A = 0 so we can capture bits 4 to 7 for the end
+                        \ point
+
+ LDX G                  \ Set (Y X) to the end point's y-coordinate in (H G)
  LDY H
- BEQ dcln7
 
- PHP
- LDX #0
- PLP
- CLC
+ BEQ dcln7              \ This section sets the following:
+ PHP                    \
+ LDX #0                 \   * If H < 0, C = 0 and X = 0
+ PLP                    \   * If H = 0, C = 1 and X = G
+ CLC                    \   * If H > 0, C = 1 and X = 255
  BMI dcln8
-
  DEX
 
 .dcln7
 
- SEC
+ SEC                    \ See above
 
 .dcln8
 
- ROR A
- CPX #152
- ROR A
- EOR #%01000000
+ ROR A                  \ This section sets bits 6 and 7, which will become
+ CPX #152               \ bits 4 and 5 of the final result:
+ ROR A                  \
+ EOR #%01000000         \                             Bit 6 (4)     Bit 7 (5)
+                        \   Off top of screen            0             1
+                        \   On-screen                    0             0
+                        \   Off bottom of screen         1             0
 
- LDX W
+ LDX W                  \ Set (Y X) to the end point's x-coordinate in (QQ W)
  LDY QQ
- BEQ dcln9
 
- PHP
- LDX #0
- PLP
- BMI dcln9
-
+ BEQ dcln9              \ This section sets the following:
+ PHP                    \
+ LDX #0                 \   * If QQ < 0, X = 0
+ PLP                    \   * If QQ = 0, X = W
+ BMI dcln9              \   * If QQ > 0, X = 255
  DEX
 
 .dcln9
 
- CPX #4
- ROR A
- CPX #156
- ROR A
- EOR #%01000000
+ CPX #4                 \ This section sets bits 6 and 7:
+ ROR A                  \
+ CPX #156               \                             Bit 6     Bit 7
+ ROR A                  \   Off right of screen         0        1
+ EOR #%01000000         \   On-screen                   0        0
+                        \   Off left of screen          1        0
  
- STA UU                 \ Store A in UU, which is like TT but with (H G) and
-                        \ (QQ W) instead of (SS S) and (RR R), so the end point
-                        \ rather than the start point
+ STA UU                 \ Store A in UU
                         \
-                        \ So UU contains the clipping requirements along both
-                        \ axes for the point with coordinates (H G) and (QQ W),
-                        \ i.e. the end point of the line
+                        \ So UU contains the clipping requirements for the end
+                        \ point, in bits 4 to 7, as follows:
+                        \
+                        \                             Bit 4     Bit 5
+                        \   Off top of screen           0         1
+                        \   On-screen                   0         0
+                        \   Off bottom of screen        1         0
+                        \
+                        \                             Bit 6     Bit 7
+                        \   Off right of screen         0        1
+                        \   On-screen                   0        0
+                        \   Off left of screen          1        0
 
- LDX L                  \ Set X to the index passed to the subroutine in L
+\ ******************************************************************************
+\
+\       Name: DrawClippedLine (Part 4 of 6)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Calculate the starting point and direction for our clipped vector
+\             line
+\
+\ ******************************************************************************
 
- LDY M                  \ Set Y to the index passed to the subroutine in M
+                        \ In this part, the end-goal is to calculate the start
+                        \ point and direction for an on-screen vector line,
+                        \ which we can pass them to the DrawCanopyLine routine
+                        \ later on
+                        \
+                        \ This means we want to calculate a pixel coordinate in
+                        \ (R, S) and a direction in V, by clipping the current
+                        \ start and end points to fit on-screen, if necessary
 
- LDA zLineHi,Y
- BPL dcln10
+ LDX L                  \ Set X to the table index for the line's start point
 
- LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
- EOR #%11000000
+ LDY M                  \ Set Y to the table index for the line's end point
+
+ LDA zLineHi,Y          \ If the z-coordinate for the line's end point is
+ BPL dcln10             \ positive, then it's in front of us, so jump to dcln10
+
+ LDA V                  \ The end point is behind us, so flip bits 6 and 7 in V
+ EOR #%11000000         \ to reverse the line direction in both axes
  STA V
 
- LDA TT
- BEQ dcln15
+                        \ The end point is behind us, so we can't use the end
+                        \ point as our vector line's starting point, so now we
+                        \ check whether we can use the start point
 
- BNE dcln12
+ LDA TT                 \ If TT is zero then the start point is on-screen, so
+ BEQ dcln15             \ jump to dcln15 to use the current values of (R, S) as
+                        \ our pixel coordinate, which works because RR and SS
+                        \ have to be zero for the start point to be on-screen,
+                        \ so (RR R) = (0 R) = R and (SS S) = (0 S) = S, so we
+                        \ can just use the low bytes as the two coordinates,
+                        \ i.e. (R, S)
+
+ BNE dcln12             \ TT is non-zero, so the start point is off-screen, so
+                        \ jump to dcln12 to clip the start of the line so it
+                        \ fits on-screen (this BNE is effectively a JMP as A is
+                        \ never zero)
 
 .dcln10
 
- LDA zLineHi,X
- BPL dcln11
+                        \ If we get here then the end point is in front of us
 
- JSR SwapLinePoints
+ LDA zLineHi,X          \ If the z-coordinate for the line's start point is
+ BPL dcln11             \ positive, which is in front of us, jump to dcln11
 
- LDA TT
- BEQ dcln15
+ JSR SwapLinePoints     \ The start point is behind us and the end point is in
+                        \ front of us, so copy the end point's coordinates and
+                        \ clipping information into the start point, so the
+                        \ start point is now in front of us
 
- BNE dcln12
+ LDA TT                 \ If TT is zero then the start point is on-screen, so
+ BEQ dcln15             \ jump to dcln15
+
+ BNE dcln12             \ TT is non-zero, so the start point is off-screen, so
+                        \ jump to dcln12 to clip the start of the line (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .dcln11
 
- LDA TT
- BNE dcln14
+                        \ If we get here then both the start and end points are
+                        \ in front of us
 
- LDA UU
- BNE dcln15
+ LDA TT                 \ If TT is non-zero then the start point is off-screen,
+ BNE dcln14             \ so jump to dcln14 to potentially clip from the end of
+                        \ the line (i.e. if the end point is off-screen)
 
- BEQ dcln21
+ LDA UU                 \ If UU is non-zero then the end point is off-screen, so
+ BNE dcln15             \ jump to dcln13 via dcln15 to clip from the end of the
+                        \ line
+
+ BEQ dcln21             \ Both TT and UU are zero, so both points are on-screen
+                        \ and we don't need to do any clipping, so jump to
+                        \ dcln21
 
 .dcln12
 
- JSR ClipStartOfLine    \ Clipping when TT is non-zero (x-axis)
+                        \ If we get here then the one point is off-screen but
+                        \ in front of us, and the other point is behind us and
+                        \ can't be used as our vector line starting point
+                        \ point, and we've set the start point to be the point
+                        \ that is in front of us
 
- JMP dcln15
+ JSR ClipStartOfLine    \ Clip the line at the start to move the start point
+                        \ on-screen, so we can use it as our vector line's
+                        \ starting point
+
+ JMP dcln15             \ We now have an on-screen pixel coordinate in (R, S),
+                        \ so jump to dcln15 to move on to the next stage
 
 .dcln13
 
- JSR ClipEndOfLine      \ Clipping when UU is non-zero (y-axis)
+                        \ If we get here then both the start and end points are
+                        \ off-screen, but they are both in front of us, so we
+                        \ need to clip both ends of the line
 
- JMP dcln15
+ JSR ClipBestEndOfLine  \ Clip the line at either the start or end point,
+                        \ whichever is best, so that it fits on-screen
+
+ JMP dcln15             \ We now have an on-screen pixel coordinate in (R, S),
+                        \ so jump to dcln15 to move on to the next stage
 
 .dcln14
 
- LDA UU
- BNE dcln13
+                        \ If we get here then both the start and end points are
+                        \ in front of us and the start point is off-screen
+
+ LDA UU                 \ If UU is non-zero then the end point is also
+ BNE dcln13             \ off-screen, so jump to dcln13 to clip both ends of the
+                        \ line
+
+                        \ If we get here then the start point is off-screen but
+                        \ the end point is on-screen, so we now use the end
+                        \ point for our vector line's starting point
 
  LDA V                  \ Flip bits 6 and 7 in V to reverse the line direction
  EOR #%11000000
  STA V
 
- LDA W
+ LDA W                  \ Set (R, S) to the end point's coordinate in (W, G)
  STA R
  LDA G
  STA S
 
+\ ******************************************************************************
+\
+\       Name: DrawClippedLine (Part 5 of 6)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Calculate the deltas for our clipped vector line
+\
+\ ******************************************************************************
+
 .dcln15
 
- LDA #4
- BIT V
+ LDA #4                 \ If bit 7 of V is set, so the direction of the x-delta
+ BIT V                  \ is to the left, set A = 4
  BMI dcln16
 
- LDA #155
+ LDA #155               \ Otherwise the direction of the x-delta is to the
+                        \ right, so set A = 155
 
 .dcln16
 
- STA W
- LDA #0
- BVS dcln17
+ STA W                  \ Set W = 4 or 155, depending on the direction of the
+                        \ x-delta, so W is the value of the x-coordinate at the
+                        \ edge of the screen in the direction given in V
 
- LDA #151
+ LDA #0                 \ If bit 6 of V is set, so the direction of the y-delta
+ BVS dcln17             \ is down, set A = 0
+
+ LDA #151               \ Otherwise the direction of the y-delta is up, so set
+                        \ A = 151
 
 .dcln17
 
- STA G
- JMP dcln19
+ STA G                  \ Set G = 0 or 151, depending on the direction of the
+                        \ y-delta, so W is the value of the y-coordinate at the
+                        \ edge of the screen in the direction given in V
+
+ JMP dcln19             \ Jump to dcln19
 
 .dcln18
 
- LSR I
+ LSR I                  \ Right-shift (I T)
  ROR T
- LSR J
+
+ LSR J                  \ Right-shift (J U)
  ROR U
 
 .dcln19
 
- LDA I
- ORA J
+                        \ Back in part 1 we set the following values:
+                        \
+                        \   * (I T) is the line's |x-delta|
+                        \   * (J U) is the line's |y-delta|
+                        \
+                        \ We now reduce these 16-bit values to 8-bit values by
+                        \ shifting them until they fit into one byte each
+
+ LDA I                  \ If the high bytes of either of the line delta's is
+ ORA J                  \ non-zero, loop up to dcln18 to right-shift both deltas
  BNE dcln18
 
- LDA #&FF
+                        \ We now have the following:
+                        \
+                        \   * T = |x-delta|
+                        \   * U = |y-delta|
+
+ LDA #255               \ If T <> 255, jump to dcln20
  CMP T
  BNE dcln20
 
- LSR T
- LSR U
+ LSR T                  \ T = 255, which is too big to use as our line delta, so
+ LSR U                  \ divide both T and U by 2
 
 .dcln20
 
- CMP U
+ CMP U                  \ If U <> 255, jump to dcln21
  BNE dcln21
 
- LSR T
- LSR U
+ LSR T                  \ U = 255, which is too big to use as our line delta, so
+ LSR U                  \ divide both T and U by 2
 
 .dcln21
 
- INC T
- INC U
+ INC T                  \ Increment T to give us our final |x-delta|, so it is
+                        \ at least 1
+
+ INC U                  \ Increment U to give us our final |y-delta|, so it is
+                        \ at least 1
+
+\ ******************************************************************************
+\
+\       Name: DrawClippedLine (Part 6 of 6)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Add the clipped line to the line buffer and draw it
+\
+\ ******************************************************************************
 
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
- BMI dcln23              \ jump down to dcln23 to add a line to buffer 1
+ BMI dcln23             \ jump down to dcln23 to add a line to buffer 1
 
  LDX lineBuffer2Count   \ If lineBuffer2Count <> 95, line buffer 2 is not full,
  CPX #95                \ so jump down to dcln22 to add a new line to the buffer
@@ -2933,7 +3218,7 @@ ORG CODE%
  INX                    \ Increment the value in lineBuffer2Count as we are
  STX lineBuffer2Count   \ about to add a new line to line buffer 2
 
- JMP dcln25              \ Jump down to dcln25 to buffer the line and draw it
+ JMP dcln25             \ Jump down to dcln25 to buffer the line and draw it
 
 .dcln23
 
@@ -2953,13 +3238,13 @@ ORG CODE%
  LDA R                  \ Save the start x-coordinate in lineBufferR
  STA lineBufferR,X
 
- LDA W                  \ Save the ??? in lineBufferW
+ LDA W                  \ Save the max/min x-coordinate in lineBufferW
  STA lineBufferW,X
 
  LDA S                  \ Save the start y-coordinate in lineBufferS
  STA lineBufferS,X
 
- LDA G                  \ Save the ??? in lineBufferG
+ LDA G                  \ Save the max/min y-coordinate in lineBufferG
  STA lineBufferG,X
 
  LDA T                  \ Save the |x-delta| in lineBufferT
@@ -3906,9 +4191,9 @@ ORG CODE%
  ASL A
  EOR #&C0
  STA V
- LDA xLo
+ LDA xTempLo
  STA R
- LDA yLo
+ LDA yTempLo
  STA S
  LDA #4
  BIT V
@@ -3940,7 +4225,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ If colourLogic = %00000000:
+\ If colourLogic = %00000000 (erase lines):
 \
 \   * Modify the drawing logic in DrawCanopyLine to AND
 \   * Modify DrawCanopyLine so they fetch bit patterns from:
@@ -3952,13 +4237,13 @@ ORG CODE%
 \   * Modify DrawCanopyLine (part 3) so it pokes the value of colourCycle as a
 \     bit pattern in the screen updating routine at dlin50
 \
-\ If colourLogic = %01000000:
+\ If colourLogic = %01000000 (draw lines in colour 2):
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
 \   * Modify DrawCanopyLine so it fetches bit patterns from Lookup2E74 and
 \     Lookup2E7E (colour 2) instead of Lookup2E60 and Lookup2E6A (colour 1)
 \
-\ If colourLogic = %10000000:
+\ If colourLogic = %10000000 (draw lines in colour 1):
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
 \   * Restore the DrawCanopyLine routine back to its default code, so we draw
@@ -4123,74 +4408,117 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ClipEndOfLine
+\       Name: ClipBestEndOfLine
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Clip a line at the start or end point, depending on which is best
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (RR R)              The x-coordinate of the line's start point
+\
+\   (SS S)              The y-coordinate of the line's start point
+\
+\   TT                  The clipping requirements for the start point
+\
+\   (QQ W)              The x-coordinate of the line's end point
+\
+\   (H G)               The y-coordinate of the line's end point
+\
+\   UU                  The clipping requirements for the end point
+\
 \ Other entry points:
 \
 \  AbortLine            Abort drawing this line
 \
 \ ******************************************************************************
 
-.ClipEndOfLine
+.ClipBestEndOfLine
 
- LDA TT                 \ If TT and UU have a set bit in common, jump to AbortLine
- AND UU                 \ to abort the drawing of this line
- BNE AbortLine
+ LDA TT                 \ If TT and UU have a set bit in common, this means that
+ AND UU                 \ both points are off-screen in the same direction, so
+ BNE AbortLine          \ the line can't possibly cross the visible part of the
+                        \ screen at any point, so jump to AbortLine to abort the
+                        \ drawing of this line
 
- LDA SS
- BPL clen1
+ LDA SS                 \ If the start point's y-coordinate is positive, jump to
+ BPL clen1              \ clen1 to skip the following instruction
 
- EOR #&FF
+ EOR #&FF               \ Flip the start point's y-coordinate so it's positive,
+                        \ so:
+                        \
+                        \   A = |start_y|
 
 .clen1
 
- STA L0CC1
- LDA RR
- BPL clen2
+ STA maxCoord           \ Store the start point's y-coordinate in maxCoord, so:
+                        \
+                        \   maxCoord = |start_y|
 
- EOR #&FF
+ LDA RR                 \ If the start point's x-coordinate is positive, jump to
+ BPL clen2              \ clen2 to skip the following instruction
+
+ EOR #&FF               \ Flip the start point's x-coordinate so it's positive,
+                        \ so:
+                        \
+                        \   A = |start_x|
 
 .clen2
 
- CMP L0CC1
- BCC clen3
+ CMP maxCoord           \ If the start point's x-coordinate is < maxCoord, jump
+ BCC clen3              \ to clen3 to skip the following instruction
 
- STA L0CC1
+ STA maxCoord           \ The start point's x-coordinate is >= maxCoord, so
+                        \ update maxCoord so it contains the maximum value:
+                        \
+                        \   maxCoord = max(|start_x|, |start_y|)
 
 .clen3
 
- LDA QQ
- BPL clen4
+ LDA QQ                 \ If the end point's x-coordinate is positive, jump to
+ BPL clen4              \ clen4 to skip the following instruction
 
- EOR #&FF
+ EOR #&FF               \ Flip the end point's x-coordinate so it's positive,
+                        \ so:
+                        \
+                        \   A = |end_x|
 
 .clen4
 
- CMP L0CC1
- BCS ClipStartOfLine
+ CMP maxCoord           \ If |end_x| >= maxCoord, the start point has a smaller
+ BCS ClipStartOfLine    \ x-coordinate magnitude which means it is closer to the
+                        \ origin, so jump to ClipStartOfLine to clip the line at
+                        \ the start point, as it's a better candidate for
+                        \ clipping
 
- LDA H
- BPL clen5
+ LDA H                  \ If the end point's y-coordinate is positive, jump to
+ BPL clen5              \ clen5 to skip the following instruction
 
- EOR #&FF
+ EOR #&FF               \ Flip the end point's y-coordinate so it's positive,
+                        \ so:
+                        \
+                        \   A = |end_y|
 
 .clen5
 
- CMP L0CC1
- BCS ClipStartOfLine
+ CMP maxCoord           \ If |end_y| >= maxCoord, the start point has a smaller
+ BCS ClipStartOfLine    \ y-coordinate magnitude which means it is closer to the
+                        \ origin, so jump to ClipStartOfLine to clip the line at
+                        \ the start point, as it's a better candidate for
+                        \ clipping
 
- JSR SwapLinePoints
+ JSR SwapLinePoints     \ Otherwise the end point is the better candidate for
+                        \ clipping, so copy the end point's coordinates and
+                        \ clipping information into the start point
 
- LDA V
- EOR #&C0
- STA V
- JMP ClipStartOfLine
+ LDA V                  \ We've just flipped the end point to the start, so flip
+ EOR #%11000000         \ bits 6 and 7 in V to reverse the line direction in
+ STA V                  \ both axes
+
+ JMP ClipStartOfLine    \ Jump to ClipStartOfLine to clip the line at the new
+                        \ start point
 
 .AbortLine
 
@@ -4210,42 +4538,81 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (RR R)              The x-coordinate of the line's start point
+\
+\   (SS S)              The y-coordinate of the line's start point
+\
+\   TT                  The clipping requirements for the start point
+\                        
+\                                                     Bit 4     Bit 5
+\                           Off top of screen           0         1
+\                           On-screen                   0         0
+\                           Off bottom of screen        1         0
+\                        
+\                                                     Bit 6     Bit 7
+\                           Off right of screen         0        1
+\                           On-screen                   0        0
+\                           Off left of screen          1        0
+\
+\   (QQ W)              The x-coordinate of the line's end point
+\
+\   (H G)               The y-coordinate of the line's end point
+\
+\   UU                  The clipping requirements for the end point (see above)
 \
 \ ******************************************************************************
 
 .ClipStartOfLine
 
- LDA S
- CLC
- ADC #4
+ LDA S                  \ Set (SS S) = (SS S) + 4
+ CLC                    \
+ ADC #4                 \ starting by adding the low bytes
  STA S
- BCC clip1
 
- INC SS
+ BCC clip1              \ If the addition didn't overflow, jump to clip1 to
+                        \ skip the following instruction
+
+ INC SS                 \ Increment the high byte in SS
 
 .clip1
 
- LDA TT
- BIT V
- BPL clip2
+ LDA TT                 \ Set A = the clipping requirements for the start point
 
- AND #&40
- BNE AbortLine
+ BIT V                  \ If bit 7 of V is clear, jump to clip2 as the x-delta
+ BPL clip2              \ of the line is positive, or to the right
 
- BEQ clip3
+                        \ Bit 7 of V is set, so the x-delta of the line is
+                        \ negative, or to the left
+
+ AND #%01000000         \ If bit 6 of TT is set, then the start point is off the
+ BNE AbortLine          \ left of the screen and the line direction is also to
+                        \ the left, so jump to AbortLine to stop drawing the
+                        \ line as it must be entirely off-screen
+
+ BEQ clip3              \ Jump to clip3 to move on to the next check (this BEQ
+                        \ is effectively a JMP, as A is always zero)
 
 .clip2
 
- AND #&80
- BNE AbortLine
+                        \ If we get here then the x-delta of the line is
+                        \ positive, or to the right
 
- BEQ clip3
+ AND #%10000000         \ If bit 7 of TT is set, then the start point is off the
+ BNE AbortLine          \ right of the screen and the line direction is also to
+                        \ the right, so jump to AbortLine to stop drawing the
+                        \ line as it must be entirely off-screen
+
+ BEQ clip3              \ Jump to clip3 to move on to the next check (this BEQ
+                        \ is effectively a JMP, as A is always zero)
 
 .clip3
 
- LDA TT
- BVC clip4
+ LDA TT                 \ Set A = the clipping requirements for the start point
+
+ BVC clip4              \ If bit 6 of V is clear, jump to clip4 as the y-delta
+                        \ of the line is positive, or up
 
  AND #&10
  BNE AbortLine
@@ -4557,9 +4924,9 @@ ORG CODE%
  ORA V
  STA V
  LDA R
- STA xLo
+ STA xTempLo
  LDA S
- STA yLo
+ STA yTempLo
  RTS
 
 .clip24
@@ -4570,12 +4937,27 @@ ORG CODE%
 \
 \       Name: SwapLinePoints
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Copy an end point into a start point
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (QQ W)              The x-coordinate of the line's end point
+\
+\   (H G)               The y-coordinate of the line's end point
+\
+\   UU                  The clipping requirements for the end point
+\
+\ Returns:
+\
+\
+\   (RR R)              Gets set to the x-coordinate above
+\
+\   (SS S)              Gets set to the y-coordinate above
+\
+\   TT                  Gets set to the clipping requirements above
 \
 \ ******************************************************************************
 
@@ -4667,7 +5049,7 @@ ORG CODE%
  LDA lineBufferR,X      \ Set R to the start x-coordinate from lineBufferR
  STA R
 
- STA xLo
+ STA xTempLo
 
  LDA lineBufferW,X      \ Set W to the ??? from lineBufferW
  STA W
@@ -4675,7 +5057,7 @@ ORG CODE%
  LDA lineBufferS,X      \ Set S to the start y-coordinate from lineBufferS
  STA S
 
- STA yLo
+ STA yTempLo
 
  LDA lineBufferG,X      \ Set G to ??? from lineBufferG
  STA G
@@ -5068,7 +5450,7 @@ ORG CODE%
 
 .L19BE
 
- STA xLo,X
+ STA xTempLo,X
  DEX
  BPL L19BE
 
@@ -5112,11 +5494,11 @@ ORG CODE%
  LDY VV
  LDA W
  CLC
- ADC xLo,Y
- STA xLo,Y
+ ADC xTempLo,Y
+ STA xTempLo,Y
  LDA G
- ADC xHi,Y
- STA xHi,Y
+ ADC xTempHi,Y
+ STA xTempHi,Y
 
 .L1A0C
 
@@ -5143,11 +5525,11 @@ ORG CODE%
  CPY #8
  BCS L1A47
 
- LDA xLo,X
+ LDA xTempLo,X
  STA P
  LDA #0
  STA R
- LDA xHi,X
+ LDA xTempHi,X
  BPL L1A37
 
  DEC R
@@ -5160,9 +5542,9 @@ ORG CODE%
  DEY
  BNE L1A37
 
- STA xLo,X
+ STA xTempLo,X
  LDA R
- STA xHi,X
+ STA xTempHi,X
 
 .L1A47
 
@@ -5175,16 +5557,16 @@ ORG CODE%
 
  LDA #0
  STA R
- LDA xHi,X
+ LDA xTempHi,X
  BPL L1A57
 
  DEC R
 
 .L1A57
 
- STA xLo,X
+ STA xTempLo,X
  LDA R
- STA xHi,X
+ STA xTempHi,X
  JMP L1A47
 
 .L1A62
@@ -5207,27 +5589,27 @@ ORG CODE%
 
 .L1A67
 
- LDA xLo
+ LDA xTempLo
  CLC
  ADC xLineLo,Y
  STA xLineLo,X
- LDA xHi
+ LDA xTempHi
  ADC xLineHi,Y
  STA xLineHi,X
  PHP
  CLC
- LDA yLo
+ LDA yTempLo
  ADC yLineLo,Y
  STA yLineLo,X
- LDA yHi
+ LDA yTempHi
  ADC yLineHi,Y
  STA yLineHi,X
  PHP
  CLC
- LDA zLo
+ LDA zTempLo
  ADC zLineLo,Y
  STA zLineLo,X
- LDA zHi
+ LDA zTempHi
  ADC zLineHi,Y
  STA zLineHi,X
  JMP L4B8C
@@ -5470,10 +5852,10 @@ ORG CODE%
  LDY L0CCB
  LDA L4222,Y
  STA I
- STA xLo
+ STA xTempLo
  LDA L4262,Y
  STA J
- STA xHi
+ STA xTempHi
  LDA G
  STA L4222,Y
  LDA H
@@ -5494,9 +5876,9 @@ ORG CODE%
  STA L4220,Y
  LDA S
  STA L4260,Y
- LDA xLo
+ LDA xTempLo
  STA R
- LDA xHi
+ LDA xTempHi
  STA S
  LDX L0CC4
  LDA L0161,X
@@ -5766,7 +6148,7 @@ ORG CODE%
 
 .L1DB1
 
- STA xLo,X
+ STA xTempLo,X
  DEX
  BPL L1DB1
 
@@ -5809,11 +6191,11 @@ ORG CODE%
  LDY VV
  LDA G
  CLC
- ADC xLo,Y
- STA xLo,Y
+ ADC xTempLo,Y
+ STA xTempLo,Y
  LDA H
- ADC xHi,Y
- STA xHi,Y
+ ADC xTempHi,Y
+ STA xTempHi,Y
  BVC L1E07
 
  LDA #&40
@@ -5851,17 +6233,17 @@ ORG CODE%
 
 .L1E1A
 
- LDA xLo
+ LDA xTempLo
  STA xLineLo,X
- LDA xHi
+ LDA xTempHi
  STA xLineHi,X
- LDA yLo
+ LDA yTempLo
  STA yLineLo,X
- LDA yHi
+ LDA yTempHi
  STA yLineHi,X
- LDA zLo
+ LDA zTempLo
  STA zLineLo,X
- LDA zHi
+ LDA zTempHi
  STA zLineHi,X
  RTS
 
@@ -12836,7 +13218,7 @@ ORG CODE%
  LDA V
  STA L0CA8,Y
  LDA R
- STA xLo,Y
+ STA xTempLo,Y
  INY
  CPY #3
  BNE L30AD
@@ -12873,7 +13255,7 @@ ORG CODE%
 
 .L30EE
 
- LDA xLo,Y
+ LDA xTempLo,Y
  CLC
  ADC L0CB8,Y
  STA L0CB8,Y
@@ -13146,7 +13528,7 @@ ORG CODE%
 
 .L31E7
 
- STA xLo,X
+ STA xTempLo,X
  DEX
  BPL L31E7
 
@@ -13163,7 +13545,7 @@ ORG CODE%
 
 .L3200
 
- LDA xLo,X
+ LDA xTempLo,X
  STA L0CB8,X
  DEX
  BPL L3200
@@ -13233,7 +13615,7 @@ ORG CODE%
 .L3252
 
  CLC
- LDA xHi,X
+ LDA xTempHi,X
  BPL L3259
 
  SEC
@@ -13241,10 +13623,10 @@ ORG CODE%
 .L3259
 
  ROR A
- STA xHi,X
- LDA xLo,X
+ STA xTempHi,X
+ LDA xTempLo,X
  ROR A
- STA xLo,X
+ STA xTempLo,X
  DEX
  BPL L3252
 
@@ -13260,7 +13642,7 @@ ORG CODE%
 
 .L3277
 
- LDA xLo,X
+ LDA xTempLo,X
  STA L0CDA,X
  DEX
  BPL L3277
@@ -13289,7 +13671,7 @@ ORG CODE%
 
  LSR R
  ROR A
- STA xHi,X
+ STA xTempHi,X
  LDA L0CB8,X
  ROR A
  ROR T,X
@@ -13298,13 +13680,13 @@ ORG CODE%
 .L32A4
 
  LSR R
- ROR xHi,X
+ ROR xTempHi,X
  ROR A
  ROR T,X
  DEY
  BPL L32A4
 
- STA xLo,X
+ STA xTempLo,X
  DEX
  BPL L328B
 
@@ -13323,10 +13705,10 @@ ORG CODE%
  ADC T,X
  STA W,X
  LDA L0CA8,X
- ADC xLo,X
+ ADC xTempLo,X
  STA L0CA8,X
  LDA L0CB8,X
- ADC xHi,X
+ ADC xTempHi,X
  STA L0CB8,X
  DEX
  BPL L32BE
@@ -13346,7 +13728,7 @@ ORG CODE%
 .L32EB
 
  LDA L0CDA,X
- STA xLo,X
+ STA xTempLo,X
  DEX
  BPL L32EB
 
@@ -13393,11 +13775,11 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC xLo,X
- STA xLo,X
+ SBC xTempLo,X
+ STA xTempLo,X
  LDA #0
- SBC xHi,X
- STA xHi,X
+ SBC xTempHi,X
+ STA xTempHi,X
  DEX
  BPL L3321
 
