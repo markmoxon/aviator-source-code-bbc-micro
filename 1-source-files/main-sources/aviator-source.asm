@@ -2812,7 +2812,7 @@ ORG CODE%
 
                         \ By this point we have the following, depending on the
                         \ value of the high byte of the start point's
-                        \ y-coordinate:
+                        \ x-coordinate:
                         \
                         \   * If RR < 0, X = 0
                         \   * If RR = 0, X = R
@@ -2878,9 +2878,9 @@ ORG CODE%
                         \ as follows:
                         \
                         \                             Bit 6     Bit 7
-                        \   Off right of screen         0        1
-                        \   On-screen                   0        0
-                        \   Off left of screen          1        0
+                        \   Off right of screen         0         1
+                        \   On-screen                   0         0
+                        \   Off left of screen          1         0
                         \
                         \ We never have both bits set
 
@@ -2895,9 +2895,9 @@ ORG CODE%
                         \   Off bottom of screen        1         0
                         \
                         \                             Bit 6     Bit 7
-                        \   Off right of screen         0        1
-                        \   On-screen                   0        0
-                        \   Off left of screen          1        0
+                        \   Off right of screen         0         1
+                        \   On-screen                   0         0
+                        \   Off left of screen          1         0
 
 \ ******************************************************************************
 \
@@ -2956,9 +2956,9 @@ ORG CODE%
  CPX #4                 \ This section sets bits 6 and 7:
  ROR A                  \
  CPX #156               \                             Bit 6     Bit 7
- ROR A                  \   Off right of screen         0        1
- EOR #%01000000         \   On-screen                   0        0
-                        \   Off left of screen          1        0
+ ROR A                  \   Off right of screen         0         1
+ EOR #%01000000         \   On-screen                   0         0
+                        \   Off left of screen          1         0
  
  STA UU                 \ Store A in UU
                         \
@@ -2971,9 +2971,9 @@ ORG CODE%
                         \   Off bottom of screen        1         0
                         \
                         \                             Bit 6     Bit 7
-                        \   Off right of screen         0        1
-                        \   On-screen                   0        0
-                        \   Off left of screen          1        0
+                        \   Off right of screen         0         1
+                        \   On-screen                   0         0
+                        \   Off left of screen          1         0
 
 \ ******************************************************************************
 \
@@ -4531,10 +4531,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ClipStartOfLine
+\       Name: ClipStartOfLine (Part 1 of 5)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Check whether the line is completely off-screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4544,6 +4544,10 @@ ORG CODE%
 \
 \   (SS S)              The y-coordinate of the line's start point
 \
+\   (I T)               The line's |x-delta|
+\
+\   (J U)               The line's |y-delta|
+\
 \   TT                  The clipping requirements for the start point
 \                        
 \                                                     Bit 4     Bit 5
@@ -4552,15 +4556,26 @@ ORG CODE%
 \                           Off bottom of screen        1         0
 \                        
 \                                                     Bit 6     Bit 7
-\                           Off right of screen         0        1
-\                           On-screen                   0        0
-\                           Off left of screen          1        0
+\                           Off right of screen         0         1
+\                           On-screen                   0         0
+\                           Off left of screen          1         0
 \
-\   (QQ W)              The x-coordinate of the line's end point
+\   V                   Direction of the line:
 \
-\   (H G)               The y-coordinate of the line's end point
+\                         * Bit 7 is the direction of the the x-delta
 \
-\   UU                  The clipping requirements for the end point (see above)
+\                         * Bit 6 is the direction of the the y-delta
+\
+\                       Direction is like a clock, so positive (clear) is up and
+\                       right
+\
+\ Returns:
+\
+\   (RR R)              The x-coordinate of the line's start point, clipped to
+\                       fit on-screen
+\
+\   (SS S)              The y-coordinate of the line's start point, clipped to
+\                       fit on-screen
 \
 \ ******************************************************************************
 
@@ -4568,7 +4583,7 @@ ORG CODE%
 
  LDA S                  \ Set (SS S) = (SS S) + 4
  CLC                    \
- ADC #4                 \ starting by adding the low bytes
+ ADC #4                 \ starting with the low bytes
  STA S
 
  BCC clip1              \ If the addition didn't overflow, jump to clip1 to
@@ -4614,231 +4629,394 @@ ORG CODE%
  BVC clip4              \ If bit 6 of V is clear, jump to clip4 as the y-delta
                         \ of the line is positive, or up
 
- AND #&10
- BNE AbortLine
+                        \ Bit 6 of V is set, so the y-delta of the line is
+                        \ negative, or down
 
- BEQ clip5
+ AND #%00010000         \ If bit 4 of TT is set, then the start point is off the
+ BNE AbortLine          \ bottom of the screen and the line direction is also
+                        \ down, so jump to AbortLine to stop drawing the
+                        \ line as it must be entirely off-screen
+
+ BEQ clip5              \ Jump to clip5 to move on to the next check (this BEQ
+                        \ is effectively a JMP, as A is always zero)
 
 .clip4
 
- AND #&20
- BNE AbortLine
+                        \ If we get here then the y-delta of the line is
+                        \ positive, or up
+
+ AND #%00100000         \ If bit 5 of TT is set, then the start point is off the
+ BNE AbortLine          \ top of the screen and the line direction is also up,
+                        \ so jump to AbortLine to stop drawing the line as it
+                        \ must be entirely off-screen
+
+\ ******************************************************************************
+\
+\       Name: ClipStartOfLine (Part 2 of 5)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ If slope is /
+\   (UU TT) = |start_x + start_y - 159|
+\   clear bit 7 of WW
+\
+\ If slope is \
+\   (UU TT) = |start_y - start_x|
+\   set bit 7 of WW
+\
+\ (Q P) = |x-delta| + |y-delta| + 2
+\
+\ ******************************************************************************
 
 .clip5
 
- LDA V
- ASL A
- EOR V
+ LDA V                  \ If either bit 7 or bit 6 of V are set, but not both,
+ ASL A                  \ then if we EOR them we will get a 1, so this jumps to
+ EOR V                  \ clip6 if this is the case
  BMI clip6
 
- LDA #0
+                        \ If we get here then bits 6 and 7 of V are the same, so
+                        \ the line slope is up-right or down-left, i.e. /
+
+ LDA #0                 \ Set WW = 0, so bit 7 is clear
  STA WW
- LDA R
- CLC
- ADC S
+
+ LDA R                  \ Set (UU TT) = (RR R) + (SS S)
+ CLC                    \
+ ADC S                  \ starting with the low bytes
  STA TT
- LDA RR
+
+ LDA RR                 \ And then the high bytes
  ADC SS
  STA UU
- LDA TT
- SEC
- SBC #&9F
+
+ LDA TT                 \ Set (UU TT) = (UU TT) - 159
+ SEC                    \
+ SBC #159               \ starting with the low bytes
  STA TT
- LDA UU
- SBC #0
- STA UU
+
+ LDA UU                 \ And then the high bytes, so we now have:
+ SBC #0                 \
+ STA UU                 \   (UU TT) = start_x + start_y - 159
+
  JMP clip7
 
 .clip6
 
- LDA #&80
+                        \ If we get here then bits 6 and 7 of V are different,
+                        \ so the line slope is up-right or down-left, i.e. \
+
+ LDA #%10000000         \ Set WW = %10000000, so bit 7 is set
  STA WW
- LDA S
- SEC
- SBC R
+
+ LDA S                  \ Set (UU TT) = (SS S) - (RR R)
+ SEC                    \
+ SBC R                  \ starting with the low bytes
  STA TT
- LDA SS
- SBC RR
- STA UU
+
+ LDA SS                 \ And then the high bytes, so now we have:
+ SBC RR                 \
+ STA UU                 \   (UU TT) = start_y - start_x
 
 .clip7
 
- BPL clip8
+ BPL clip8              \ If (UU TT) is positive, jump to clip8
 
- LDA #0
- SEC
- SBC TT
+ LDA #0                 \ Set (UU TT) = 0 - (UU TT)
+ SEC                    \
+ SBC TT                 \ starting with the low bytes
  STA TT
- LDA #0
- SBC UU
- STA UU
+
+ LDA #0                 \ And then the high bytes, so (UU TT) is now positive,
+ SBC UU                 \ so:
+ STA UU                 \
+                        \   (UU TT) = |UU TT|
+                        \           = |start_x + start_y - 159| if slope is /
+                        \             |start_y - start_x|       if slope is \
 
 .clip8
 
- LDA T
- CLC
- ADC U
+ LDA T                  \ Set (Q P) = (I T) + (J U)
+ CLC                    \
+ ADC U                  \ starting with the low bytes
  STA P
- LDA I
- ADC J
- STA Q
- LDA P
- CLC
- ADC #2
- STA P
- BCC clip9
 
- INC Q
+ LDA I                  \ And then the high bytes, so:
+ ADC J                  \
+ STA Q                  \   (Q P) = |x-delta| + |y-delta|
+
+ LDA P                  \ Set (Q P) = (Q P) + 2
+ CLC                    \
+ ADC #2                 \ starting with the low bytes
+ STA P
+
+ BCC clip9              \ If the addition didn't overflow, jump to clip9 to
+                        \ skip the following instruction
+
+ INC Q                  \ Increment the high byte in Q
+
+\ ******************************************************************************
+\
+\       Name: ClipStartOfLine (Part 3 of 5)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Shallow horizontal:
+\   bit 7 of HH = direction of the y-delta
+\   (PP N) = |x-delta| + 1
+\   clear bit 6 of WW
+\
+\ Steep vertical:
+\   bit 7 of HH = direction of the x-delta
+\   (PP N) = |y-delta| + 1
+\   set bit 6 of WW
+\   set (RR R) = (SS S), so start_x is set to start_y
+\
+\ ******************************************************************************
 
 .clip9
 
- LDA #0
- STA K
- LDA I
+ LDA #0                 \ Set K = 0, though this has no effect as we don't use
+ STA K                  \ K in the following
+
+ LDA I                  \ If I < J, then (I T) < (J U), so jump to clip11
  CMP J
  BCC clip11
 
- BNE clip10
+ BNE clip10             \ If I > J, then (I T) > (J U), so jump to clip10
 
- LDA T
+                        \ If we get here then I = J
+
+ LDA T                  \ If T < U, then (I T) < (J U), so jump to clip11
  CMP U
  BCC clip11
 
 .clip10
 
- LDA V
- STA HH
- LDA T
- CLC
- ADC #1
+                        \ If we get here, then (I T) >= (J U), which is the same
+                        \ as |x-delta| >= |y-delta|, so this is a shallow
+                        \ horizontal slope
+
+ LDA V                  \ Set HH = V
+ STA HH                 \
+                        \ so bit 7 of HH is set to bit 7 of V, i.e. the
+                        \ direction of the y-delta
+
+ LDA T                  \ Set (PP N) = (I T) + 1
+ CLC                    \
+ ADC #1                 \ starting with the low bytes
  STA N
- LDA I
- ADC #0
- STA PP
- JMP clip12
+
+ LDA I                  \ And then the high bytes, so:
+ ADC #0                 \
+ STA PP                 \   (PP N) = |x-delta| + 1
+
+ JMP clip12             \ Jump down to clip12 to move on to the next stage
 
 .clip11
 
- LDA V
- ASL A
- STA HH
- LDA U
- CLC
- ADC #1
+                        \ If we get here, then (I T) < (J U), which is the same
+                        \ as |x-delta| < |y-delta|, so this is a steep vertical
+                        \ slope
+
+ LDA V                  \ Set HH = V << 1
+ ASL A                  \
+ STA HH                 \ so bit 7 of HH is set to bit 6 of V, i.e. the
+                        \ direction of the x-delta
+
+ LDA U                  \ Set (PP N) = (J U) + 1
+ CLC                    \
+ ADC #1                 \ starting with the low bytes
  STA N
- LDA J
- ADC #0
- STA PP
- LDA WW
- ORA #&40
+
+ LDA J                  \ And then the high bytes, so:
+ ADC #0                 \
+ STA PP                 \   (PP N) = |y-delta| + 1
+
+ LDA WW                 \ Set bit 6 of WW
+ ORA #%01000000
  STA WW
- LDA S
- STA R
- LDA SS
- STA RR
+
+ LDA S                  \ Set (RR R) = (SS S)
+ STA R                  \
+ LDA SS                 \ so the x-coordinate of the line's start point is now
+ STA RR                 \ the y-coordinate of the start point
+
+\ ******************************************************************************
+\
+\       Name: ClipStartOfLine (Part 4 of 5)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 1. Double (Q P) and (PP N) until Q >= UU
+\ If Q = UU and P < TT, repeat until P >= TT
+\ i.e. repeat until (Q P) >= (UU TT)
+\ 
+\ 2. Halve (Q P K) and (PP N VV) until Q < UU
+\ i.e. repeat until (Q P K) < (UU TT H)
+\
+\ 3. If (Q P K) = 0, done
+\ Otherwise add 0.5 to (PP N) using a third byte (so add 128)
+\           (UU TT H) = (UU TT 0) - (Q P K)
+\           Jump back to step 2 while (UU TT H) >= 2
+\
+\ ******************************************************************************
 
 .clip12
 
- LDA #&80
+ LDA #128               \ Set W = 128, to use in (QQ G W)
  STA W
- LDA #0
+
+ LDA #0                 \ Set VV = 0, to use as the third byte in (PP N VV)
  STA VV
- STA K
- STA H
- STA QQ
- STA G
- BEQ clip14
+
+ STA K                  \ Set K = 0, to use as the third byte in (Q P K)
+
+ STA H                  \ Set H = 0, to use as the third byte in (UU TT H)
+
+ STA QQ                 \ Set QQ = 0, to use in (QQ G W)
+
+ STA G                  \ Set G = 0, so now we have:
+                        \
+                        \   (QQ G W) = 128
+
+ BEQ clip14             \ Jump to clip14 (this BEQ is effectively a JMP as A is
+                        \ always zero)
 
 .clip13
 
- ASL P
+ ASL P                  \ Set (Q P) = (Q P) * 2
  ROL Q
- ASL N
+
+ ASL N                  \ Set (PP N) = (PP N) * 2
  ROL PP
 
 .clip14
 
- LDA Q
- CMP UU
+ LDA Q                  \ If Q < UU, jump up to clip13 to double the values of
+ CMP UU                 \ (Q P) and (PP N) until Q >= UU
  BCC clip13
 
- BNE clip15
+ BNE clip15             \ If Q <> UU, i.e. Q > U, then jump to clip15
 
- LDA P
- CMP TT
+ LDA P                  \ If we get here then Q = UU, so if P < TT, jump back to
+ CMP TT                 \ clip13 to keep on doubling until P >= TT
  BCC clip13
 
 .clip15
 
- LSR Q
+ LSR Q                  \ Set (Q P K) = (Q P K) / 2
  ROR P
  ROR K
- LSR PP
+
+ LSR PP                 \ Set (PP N VV) = (PP N VV) / 2
  ROR N
  ROR VV
 
 .clip16
 
- LDA Q
+ LDA Q                  \ If Q < UU, jump down to clip17
  CMP UU
  BCC clip17
 
- BNE clip15
+ BNE clip15             \ If Q <> UU, i.e. Q > U, jump back to clip15 to keep on
+                        \ halving until Q < UU or Q = UU
 
- LDA P
- CMP TT
+ LDA P                  \ If we get here then Q = UU, so if P < TT, jump down to
+ CMP TT                 \ clip17
  BCC clip17
 
- BNE clip15
+ BNE clip15             \ If P <> TT, i.e. P > TT, jump back to clip15 to keep
+                        \ on halving until Q < UU, or Q = UU and P <= TT
 
- LDA K
+ LDA K                  \ If K <= H, jump down to clip17
  CMP H
  BCC clip17
-
  BEQ clip17
 
- LDA Q
+ LDA Q                  \ If (Q P K) <> 0, jump back to clip15
  ORA P
  ORA K
  BNE clip15
 
- BEQ clip18
+ BEQ clip18             \ (Q P K) = 0 so jump to clip18 (this BEQ is effectively
+                        \ a JMP as we just passed through a BNE)
 
 .clip17
 
- LDA W
- CLC
- ADC VV
+                        \ The first time we get here, QQ = G = 0 and W = 128, so
+                        \ the following sum is (QQ G W) = 128 + (PP N VV)
+
+ LDA W                  \ Set (QQ G W) = (QQ G W) + (PP N VV)
+ CLC                    \
+ ADC VV                 \ starting with the low bytes
  STA W
- LDA G
+
+ LDA G                  \ Then the middle bytes
  ADC N
  STA G
- LDA QQ
+
+ LDA QQ                 \ And then the high bytes
  ADC PP
  STA QQ
- LDA H
- SEC
- SBC K
+
+                        \ The first time we get here, H = 0, so the
+                        \ following sum is (UU TT H) = (UU TT 0) - (Q P K)
+
+ LDA H                  \ Set (UU TT H) = (UU TT H) - (Q P K)
+ SEC                    \
+ SBC K                  \ starting with the low bytes
  STA H
- LDA TT
+
+ LDA TT                 \ Then the middle bytes
  SBC P
  STA TT
- LDA UU
+
+ LDA UU                 \ And then the high bytes
  SBC Q
  STA UU
+
+                        \ The following comparisons jump back to clip16 if
+                        \ (UU TT H) >= 2
+
+ BNE clip16             \ If UU <> 0, jump back to clip16
+
+ LDA TT                 \ If TT <> 0, jump back to clip16
  BNE clip16
 
- LDA TT
- BNE clip16
-
- LDA H
+ LDA H                  \ If H >= 2, jump back to clip16
  CMP #2
  BCS clip16
 
+                        \ By the time we get here, (UU TT H) is 1 or 0
+
+\ ******************************************************************************
+\
+\       Name: ClipStartOfLine (Part 5 of 5)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Move the start point to the clipped position and return it
+\
+\ ------------------------------------------------------------------------------
+\
+\ By now (QQ G W) contains the delta to add to/subtract from the start point<s
+\ x or y coord (the other coord gets set to the screen edge)
+\
+\ ******************************************************************************
+
 .clip18
 
- LDA G
- ROL W
+ LDA G                  \ If bit 7 of W is set, add 1 to (QQ G) to round it up
+ ROL W                  \ when going from (QQ G W) to (QQ G)
  ADC #0
  STA G
  BCC clip19
@@ -4847,27 +5025,30 @@ ORG CODE%
 
 .clip19
 
- LDA HH
- BMI clip20
+ LDA HH                 \ If bit 7 of HH is set, jump to clip20 to skip the
+ BMI clip20             \ following
 
- LDA R
- CLC
+ LDA R                  \ Set (RR R) = (RR R) + (QQ G)
+ CLC                    \     (SS S) = (RR R)
  ADC G
  STA R
  STA S
+
  LDA RR
  ADC QQ
  STA RR
  STA SS
- JMP clip21
+
+ JMP clip21             \ Jump to clip21 to skip the following
 
 .clip20
 
- LDA R
- SEC
+ LDA R                  \ Set (RR R) = (RR R) - (QQ G)
+ SEC                    \     (SS S) = (RR R)
  SBC G
  STA R
  STA S
+
  LDA RR
  SBC QQ
  STA RR
@@ -4875,63 +5056,76 @@ ORG CODE%
 
 .clip21
 
- BIT WW
- BMI clip23
+ BIT WW                 \ If bit 7 of WW is set, jump to clip23 to skip all of
+ BMI clip23             \ the following
 
- BVS clip22
+ BVS clip22             \ If bit 6 of WW is set, jump to clip22 to skip the
+                        \ following
 
- LDA #&9F
+ LDA #159               \ Set (SS S) = 159 - (RR R)
  SEC
  SBC R
  STA S
+
  LDA #0
  SBC RR
  STA SS
- JMP clip23
+
+ JMP clip23             \ Jump to clip23 to skip the following
 
 .clip22
 
- LDA #&9F
+ LDA #159               \ Set (RR RR) = 159 - (SS S)
  SEC
  SBC S
  STA R
+
  LDA #0
  SBC SS
  STA RR
 
 .clip23
 
- LDA RR
- BNE clip24
+ LDA RR                 \ If RR is non-zero, jump to clip24 to abort the line as
+ BNE clip24             \ the (RR R) x-coordinate is off-screen
 
- LDA R
- CMP #&9C
+ LDA R                  \ If R >= 156, jump to clip24 to abort the line as the
+ CMP #156               \ (RR R) x-coordinate is off the right of the screen
  BCS clip24
 
- CMP #4
- BCC clip24
+ CMP #4                 \ If R < 4, jump to clip24 to abort the line as the
+ BCC clip24             \ (RR R) x-coordinate is off the left of the screen
 
- LDA S
- SEC
- SBC #4
- STA S
- BCC clip24
+ LDA S                  \ Set S = S - 4
+ SEC                    \
+ SBC #4                 \ which subtracts the 4 we add at the start of the
+ STA S                  \ routine
 
- CMP #&98
- BCS clip24
+ BCC clip24             \ If the subtraction just underflowed, jump to clip24 to
+                        \ abort the line as the (SS S) y-coordinate is off the
+                        \ bottom of the screen
 
- LDA #1
+ CMP #152               \ If S > 152, jump to clip24 to abort the line as the
+ BCS clip24             \ (SS S) y-coordinate is off the top of the screen
+
+                        \ If we get here then we have successfully clipped the
+                        \ start point to the edge of the screen
+
+ LDA #1                 \ Set bit 0 of V
  ORA V
  STA V
- LDA R
- STA xTempLo
+
+ LDA R                  \ Copy the (R, S) pixel coordinate into
+ STA xTempLo            \ (xTempLo, yTempLo)
  LDA S
  STA yTempLo
- RTS
+
+ RTS                    \ Return from the subroutine
 
 .clip24
 
- JMP AbortLine
+ JMP AbortLine          \ Jump to AbortLine to abort drawing this line and
+                        \ return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -8351,7 +8545,7 @@ ORG CODE%
                         \ of the next pixel in the line when stepping along the
                         \ longer delta axis one pixel at a time
 
- LDA PP                 \ If PP = 0 then this is a shallow horizontal line, so
+ LDA PP                 \ If PP = 0 then this is a shallow horizontal slope, so
  BEQ dvec3              \ jump up to dvec3 step along the x-axis
 
                         \ If we get here then this is a steep vertical line, so
