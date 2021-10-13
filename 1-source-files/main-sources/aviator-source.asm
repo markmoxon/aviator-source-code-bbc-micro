@@ -227,10 +227,10 @@ ORG &0070
 
  SKIP 1                 \ Temporary storage, used in a number of places
 
-.linesShowEnd
+.linesToShowEnd
 
- SKIP 1                 \ The index of the first empty entry in the
-                        \ linesToShow list
+ SKIP 1                 \ The index of the first empty entry in the linesToShow
+                        \ list
                         \
                         \ Set to 0 in ResetLineLists
 
@@ -244,27 +244,28 @@ ORG &0070
                         \
                         \ Lines are mapped to objects via lineIdToObjectId
 
-.lineIDCounter
+.lineCounter
 
  SKIP 1                 \ Temporary storage, typically used to loop through
-                        \ line IDs
+                        \ lines
 
-.LL
+.linesToShowPointer
 
- SKIP 1                 \ Counter that's related to the linesToShow list
+ SKIP 1                 \ A pointer into the linesToShow list to keep track of
+                        \ where we have processed up to
                         \
                         \ Set to 255 in ResetLineLists
 
-.MM
+.linesToHidePointer
 
- SKIP 1                 \ Counter that's related to the linesToHide list
+ SKIP 1                 \ A pointer into the linesToHide list to keep track of
+                        \ where we have processed up to
                         \
                         \ Set to 255 in ResetLineLists
 
-.linesHideEnd
+.linesToHideEnd
 
- SKIP 1                 \ The index of the last entry in the linesToHide
-                        \ list
+ SKIP 1                 \ The index of the last entry in the linesToHide list
                         \
                         \ Set to 255 in ResetLineLists
 
@@ -278,7 +279,19 @@ ORG &0070
 \
 \ ******************************************************************************
 
-lineBufferU = &0100
+ORG &0100
+
+.lineBufferU
+
+ SKIP 96                \ Line buffer storage for the line's |y-delta| (U)
+                        \
+                        \ Stores information about lines that are drawn
+                        \ on-screen, so they can be quickly erased without
+                        \ having to spend precious time recalculating the line
+                        \ coordinates. The information is stored when a line is
+                        \ drawn by the DrawClippedLine routine, and is read by
+                        \ the EraseCanopyLines routine when the line is erased
+
 L0160 = &0160
 L0161 = &0161
 L0162 = &0162
@@ -295,14 +308,14 @@ L0175 = &0175
 \ ******************************************************************************
 \
 \       Name: L0400
-\       Type: Workspace
-\    Address: &0400 to &04FF
-\   Category: Workspaces
+\       Type: Variable
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ******************************************************************************
 
 L0400 = &0400           \ Whole page zeroed in ResetVariables
+
 L04D8 = &04D8
 L04D9 = &04D9
 L04EC = &04EC
@@ -311,14 +324,22 @@ L04F6 = &04F6
 \ ******************************************************************************
 \
 \       Name: linesToShow
-\       Type: Workspace
-\    Address: &0500 to &05FF
-\   Category: Workspaces
+\       Type: Variable
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ******************************************************************************
 
 linesToShow = &0500
+
+\ ******************************************************************************
+\
+\       Name: L05C8
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
                         \ size in L05C8
@@ -328,9 +349,8 @@ L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
 \ ******************************************************************************
 \
 \       Name: linesToHide
-\       Type: Workspace
-\    Address: &0600 to &06FF
-\   Category: Workspaces
+\       Type: Variable
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ******************************************************************************
@@ -339,62 +359,75 @@ linesToHide = &0600
 
 \ ******************************************************************************
 \
-\       Name: zLineLo
-\       Type: Workspace
-\    Address: &0700 to &07FF
-\   Category: Workspaces
-\    Summary: 
+\       Name: zPointLo
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Low byte of the z-coordinate for a point
+\
+\ ------------------------------------------------------------------------------
+\
+\ The low byte of the z-coordinate for the point with ID X is at zPointLo,X.
 \
 \ ******************************************************************************
 
-zLineLo = &0700
+zPointLo = &0700
+
 L075F = &075F
 L07E4 = &07E4
 L07FC = &07FC
 
 \ ******************************************************************************
 \
-\       Name: xLineLo
-\       Type: Workspace
-\    Address: &0900 to &09FF
-\   Category: Workspaces
-\    Summary: 
+\       Name: xPointLo
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Low byte of the x-coordinate for a point
+\
+\ ------------------------------------------------------------------------------
+\
+\ The low byte of the x-coordinate for the point with ID X is at xPointLo,X.
 \
 \ ******************************************************************************
 
-xLineLo = &0900         \ Set to 80 in ResetVariables, ResetRadar
-L091F = &091F
+xPointLo = &0900
+
 L095F = &095F
 L09FC = &09FC
 
 \ ******************************************************************************
 \
-\       Name: yLineLo
-\       Type: Workspace
-\    Address: &0A00 to &0AFF
-\   Category: Workspaces
-\    Summary: 
+\       Name: yPointLo
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Low byte of the y-coordinate for a point
+\
+\ ------------------------------------------------------------------------------
+\
+\ The low byte of the y-coordinate for the point with ID X is at yPointLo,X.
 \
 \ ******************************************************************************
 
-yLineLo = &0A00
-L0A1F = &0A1F
+yPointLo = &0A00
+
 L0A5F = &0A5F
 L0AFC = &0AFC
 L0AFD = &0AFD
 
 \ ******************************************************************************
 \
-\       Name: yLineHi
-\       Type: Workspace
-\    Address: &0B00 to &0BFF
-\   Category: Workspaces
-\    Summary: 
+\       Name: yPointHi
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: High byte of the y-coordinate for a point
+\
+\ ------------------------------------------------------------------------------
+\
+\ The high byte of the y-coordinate for the point with ID X is at yPointHi,X.
 \
 \ ******************************************************************************
 
-yLineHi = &0B00
-L0B1F = &0B1F
+yPointHi = &0B00
+
 L0BFC = &0BFC
 L0BFD = &0BFD
 
@@ -796,25 +829,33 @@ ORG &0C00
 
  SKIP 1
 
-.L0CC0
+.pointId
 
- SKIP 1
+ SKIP 1                 \ Temporary storage, used to store the ID of the current
+                        \ point when checking a line's visibility in the
+                        \ IsLineVisible routine
 
 .maxCoord
 
  SKIP 1                 \ Temporary storage, used to store the maximum start
                         \ point coordinate when clipping lines
 
-.colourLogic            \ Determines the logic used to draw the canopy view
-                        \
- SKIP 1                 \   * %00000000 just after each flip
-                        \     Sets AND logic in EraseCanopyLines
+.colourLogic            \ Determines the logic and bit patterns used to draw the
+                        \ canopy view:
+ SKIP 1                 \
+                        \   * %00000000 = erase lines
+                        \     Gets set to this value after each screen flip
+                        \     Sets AND logic for screen writing
+                        \     Sets bit patterns to erase the screen
+                        \     See EraseCanopyLines
                         \
                         \   * %01000000 when colourCycle is %11110000
-                        \     Sets ORA logic in FlipColours
+                        \     Sets ORA logic for screen writing
+                        \     See FlipColours
                         \
                         \   * %10000000 when colourCycle is %00001111
-                        \     Sets ORA logic in ResetLineLists, FlipColours
+                        \     Sets ORA logic for screen writing
+                        \     See ResetLineLists, FlipColours
                         \
                         \ Set to %10000000 for each new game
 
@@ -842,7 +883,7 @@ ORG &0C00
                         \
                         \ Set to 1 in ResetVariables (on the ground)
 
-.previousListEnd        \ Used to store the value of linesHideEnd at the
+.previousListEnd        \ Used to store the value of linesToHideEnd at the
                         \ start of each iteration of the main loop, so we can
  SKIP 1                 \ refer to it at the end of the main loop to see if
                         \ we have added anything to the list during the main
@@ -852,9 +893,10 @@ ORG &0C00
 
  SKIP 1
 
-.L0CC8
+.pointCount
 
- SKIP 1
+ SKIP 1                 \ Temporary storage, used as a counter in IsLineVisible
+                        \ to check the start and end points of the line
 
 .pressingT              \ Set to 0 in the main loop if "T" is not being pressed,
                         \ otherwise set to 1, to prevent holding down "T" from
@@ -870,7 +912,7 @@ ORG &0C00
 
 .objectId
 
- SKIP 1                 \ The object ID (i.e. type of object), 0x-39
+ SKIP 1                 \ The object ID (i.e. type of object), 0-39
                         \
                         \ Called OB in original source code
                         \
@@ -1759,7 +1801,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   GG                  The point ID to process
 \
 \ ******************************************************************************
 
@@ -1782,19 +1826,19 @@ ORG CODE%
  TYA
  ORA #1
  STA L0400,X
- LDA zLineHi,X
+ LDA zPointHi,X
  BMI L0D37
 
  STA Q
  BEQ L0D2B
 
- LDA zLineLo,X
+ LDA zPointLo,X
  STA P
  JMP L0D46
 
 .L0D2B
 
- LDA zLineLo,X
+ LDA zPointLo,X
  BNE L0D32
 
  LDA #1
@@ -1808,19 +1852,19 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC zLineLo,X
+ SBC zPointLo,X
  STA P
  LDA #0
- SBC zLineHi,X
+ SBC zPointHi,X
  STA Q
 
 .L0D46
 
- LDA xLineHi,X
+ LDA xPointHi,X
  BMI L0D55
 
  STA QQ
- LDA xLineLo,X
+ LDA xPointLo,X
  STA PP
  JMP L0D6A
 
@@ -1828,10 +1872,10 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC xLineLo,X
+ SBC xPointLo,X
  STA PP
  LDA #0
- SBC xLineHi,X
+ SBC xPointHi,X
  STA QQ
  LDA N
  ORA #8
@@ -1839,11 +1883,11 @@ ORG CODE%
 
 .L0D6A
 
- LDA yLineHi,X
+ LDA yPointHi,X
  BMI L0D7C
 
  STA SS
- LDA yLineLo,X
+ LDA yPointLo,X
  ASL A
  ROL SS
  STA RR
@@ -1853,10 +1897,10 @@ ORG CODE%
 
  LDA #0
  SEC
- SBC yLineLo,X
+ SBC yPointLo,X
  STA RR
  LDA #0
- SBC yLineHi,X
+ SBC yPointHi,X
  ASL RR
  ROL A
  STA SS
@@ -1933,10 +1977,10 @@ ORG CODE%
  JSR L0FA7
 
  LDX GG
- LDA zLineHi,X
+ LDA zPointHi,X
  BMI L0E02
 
- LDA xLineHi,X
+ LDA xPointHi,X
  BPL L0E19
 
 .L0DFF
@@ -1945,7 +1989,7 @@ ORG CODE%
 
 .L0E02
 
- LDA xLineHi,X
+ LDA xPointHi,X
  BMI L0E19
 
 .L0E07
@@ -1953,10 +1997,10 @@ ORG CODE%
  LDA #&50
  SEC
  SBC QQ
- STA xLineLo,X
+ STA xPointLo,X
  LDA #0
  SBC SS
- STA xLineHi,X
+ STA xPointHi,X
  JMP L0E28
 
 .L0E19
@@ -1964,25 +2008,25 @@ ORG CODE%
  LDA #&50
  CLC
  ADC QQ
- STA xLineLo,X
+ STA xPointLo,X
  LDA #0
  ADC SS
- STA xLineHi,X
+ STA xPointHi,X
 
 .L0E28
 
  LDX GG
- LDA zLineHi,X
+ LDA zPointHi,X
  BMI L0E37
 
- LDA yLineHi,X
+ LDA yPointHi,X
  BPL L0E4E
 
  JMP L0E3C
 
 .L0E37
 
- LDA yLineHi,X
+ LDA yPointHi,X
  BMI L0E4E
 
 .L0E3C
@@ -1993,10 +2037,10 @@ ORG CODE%
 .L0E3F
 
  SBC Q
- STA yLineLo,X
+ STA yPointLo,X
  LDA #0
  SBC RR
- STA yLineHi,X
+ STA yPointHi,X
  JMP L0E5D
 
 .L0E4E
@@ -2004,10 +2048,10 @@ ORG CODE%
  LDA #&60
  CLC
  ADC Q
- STA yLineLo,X
+ STA yPointLo,X
  LDA #0
  ADC RR
- STA yLineHi,X
+ STA yPointHi,X
 
 .L0E5D
 
@@ -2539,13 +2583,9 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   L                   The table index for the line's start point, taken from
-\                       lineStartPoint, which is used as index into
-\                       xLineLo, xLineHi, yLineLo, yLineHi
+\   L                   The point ID for the line's start point
 \
-\   M                   The table index for the line's end point, taken from
-\                       lineEndPoint, which is used as index into
-\                       xLineLo, xLineHi, yLineLo, yLineHi
+\   M                   The point ID for the line's end point
 \
 \ Other entry points:
 \
@@ -2579,21 +2619,21 @@ ORG CODE%
                         \ and |y-delta| values, updating the line direction
                         \ information in V as we do so
 
- LDX L                  \ Set X to the table index for the line's start point
+ LDX L                  \ Set X to the point ID for the line's start point
 
- LDY M                  \ Set Y to the table index for the line's end point
+ LDY M                  \ Set Y to the point ID for the line's end point
 
- LDA xLineLo,X          \ Set (RR R) = the X-th entry from (xLineHi xLineLo)
+ LDA xPointLo,X         \ Set (RR R) = the X-th entry from (xPointHi xPointLo)
  STA R                  \
- LDA xLineHi,X          \ i.e. the x-coordinate of the line's start point
+ LDA xPointHi,X         \ i.e. the x-coordinate of the line's start point
  STA RR
 
- LDA yLineLo,X          \ Set (SS S) = the X-th entry from (yLineHi yLineLo)
+ LDA yPointLo,X         \ Set (SS S) = the X-th entry from (yPointHi yPointLo)
  STA S                  \
- LDA yLineHi,X          \ i.e. the y-coordinate of the line's start point
+ LDA yPointHi,X         \ i.e. the y-coordinate of the line's start point
  STA SS
 
- LDA xLineLo,Y          \ Set (QQ W) = the Y-th entry from (xLineHi xLineLo)
+ LDA xPointLo,Y         \ Set (QQ W) = the Y-th entry from (xPointHi xPointLo)
  STA W                  \
                         \ starting with the low byte in W
 
@@ -2603,7 +2643,7 @@ ORG CODE%
                         \
                         \   (I T) = (QQ W) - (RR R)
 
- LDA xLineHi,Y          \ Set (QQ W) = the Y-th entry from (xLineHi xLineLo)
+ LDA xPointHi,Y         \ Set (QQ W) = the Y-th entry from (xPointHi xPointLo)
  STA QQ                 \
                         \ i.e. the x-coordinate of the line's end point
 
@@ -2640,7 +2680,7 @@ ORG CODE%
 
 .dcln2
 
- LDA yLineLo,Y          \ Set (H G) = the Y-th entry from (yLineHi yLineLo)
+ LDA yPointLo,Y         \ Set (H G) = the Y-th entry from (yPointHi yPointLo)
  STA G                  \
                         \ starting with the low byte in G
 
@@ -2650,7 +2690,7 @@ ORG CODE%
                         \
                         \   (J U) = (H G) - (SS S)
 
- LDA yLineHi,Y          \ Set (H G) = the Y-th entry from (yLineHi yLineLo)
+ LDA yPointHi,Y         \ Set (H G) = the Y-th entry from (yPointHi yPointLo)
  STA H                  \
                         \ i.e. the y-coordinate of the line's end point
 
@@ -2994,11 +3034,11 @@ ORG CODE%
                         \ (R, S) and a direction in V, by clipping the current
                         \ start and end points to fit on-screen, if necessary
 
- LDX L                  \ Set X to the table index for the line's start point
+ LDX L                  \ Set X to the point ID for the line's start point
 
- LDY M                  \ Set Y to the table index for the line's end point
+ LDY M                  \ Set Y to the point ID for the line's end point
 
- LDA zLineHi,Y          \ If the z-coordinate for the line's end point is
+ LDA zPointHi,Y         \ If the z-coordinate for the line's end point is
  BPL dcln10             \ positive, then it's in front of us, so jump to dcln10
 
  LDA V                  \ The end point is behind us, so flip bits 6 and 7 in V
@@ -3026,7 +3066,7 @@ ORG CODE%
 
                         \ If we get here then the end point is in front of us
 
- LDA zLineHi,X          \ If the z-coordinate for the line's start point is
+ LDA zPointHi,X         \ If the z-coordinate for the line's start point is
  BPL dcln11             \ positive, which is in front of us, jump to dcln11
 
  JSR SwapLinePoints     \ The start point is behind us and the end point is in
@@ -3280,11 +3320,9 @@ ORG CODE%
 \
 \   S                   Start point y-coordinate
 \
-\   T                   Magnitude of x-coordinate of line's vector |x-delta|
-\                       Horizontal width/length of line when V = 0
+\   T                   Relative magnitude of line's vector |x-delta|
 \
-\   U                   Magnitude of y-coordinate of line's vector |y-delta|
-\                       Vertical width/length of line when V = 0
+\   U                   Relative magnitude of line's vector |y-delta|
 \
 \   V                   Direction of vector (T, U):
 \
@@ -3292,14 +3330,16 @@ ORG CODE%
 \
 \                         * Bit 6 is the direction of the the y-delta
 \
+\                         * Bit 0 is set if the line has been clipped
+\
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
 \
 \                       Also bits 0 and 1 are involved
 \
-\   W                   ???
+\   W                   Max/min x-coordinate for the end of the line
 \
-\   G                   ???
+\   G                   Max/min y-coordinate for the end of the line
 \
 \ ******************************************************************************
 
@@ -4429,6 +4469,22 @@ ORG CODE%
 \
 \   UU                  The clipping requirements for the end point
 \
+\ Returns:
+\
+\   (RR R)              The x-coordinate of the line's new start point, clipped
+\                       to fit on-screen
+\
+\   (SS S)              The y-coordinate of the line's new start point, clipped
+\                       to fit on-screen
+\
+\   T                   Relative magnitude of line's vector |x-delta|
+\
+\   U                   Relative magnitude of line's vector |y-delta|
+\
+\   W                   Max/min x-coordinate for the new end of the line
+\
+\   G                   Max/min y-coordinate for the new end of the line
+\
 \ Other entry points:
 \
 \  AbortLine            Abort drawing this line
@@ -4571,11 +4627,13 @@ ORG CODE%
 \
 \ Returns:
 \
-\   (RR R)              The x-coordinate of the line's start point, clipped to
+\   R                   The x-coordinate of the line's start point, clipped to
 \                       fit on-screen
 \
-\   (SS S)              The y-coordinate of the line's start point, clipped to
+\   S                   The y-coordinate of the line's start point, clipped to
 \                       fit on-screen
+\
+\   V                   Bit 0 is set to indicate the line has been clipped
 \
 \ ******************************************************************************
 
@@ -4589,9 +4647,23 @@ ORG CODE%
  BCC clip1              \ If the addition didn't overflow, jump to clip1 to
                         \ skip the following instruction
 
- INC SS                 \ Increment the high byte in SS
+ INC SS                 \ And then we increment the high byte if the addition
+                        \ overflowed
+                        \
+                        \ So we have now added an extra 4 to the start
+                        \ y-coordinate:
+                        \
+                        \   (SS S) = (SS S) + 4
+                        \
+                        \ We add this to make the x- and y-coordinate consistent
+                        \ in terms of range, as the canopy's x-coordinates start
+                        \ at 4, but the y-coordinates start at 0. We remove this
+                        \ additional 4 at the end, after clipping the line
 
 .clip1
+
+                        \ We now do some simple checks to weed out lines that
+                        \ are entirely off to one side of the screen
 
  LDA TT                 \ Set A = the clipping requirements for the start point
 
@@ -4650,6 +4722,9 @@ ORG CODE%
                         \ so jump to AbortLine to stop drawing the line as it
                         \ must be entirely off-screen
 
+                        \ If we get here then the line might have an on-screen
+                        \ element, so we now move on to the actual clipping
+
 \ ******************************************************************************
 \
 \       Name: ClipStartOfLine (Part 2 of 5)
@@ -4661,11 +4736,11 @@ ORG CODE%
 \
 \ If slope is /
 \   (UU TT) = |start_x + start_y - 159|
-\   clear bit 7 of WW
+\   Clear bit 7 of WW
 \
 \ If slope is \
 \   (UU TT) = |start_y - start_x|
-\   set bit 7 of WW
+\   Set bit 7 of WW
 \
 \ (Q P) = |x-delta| + |y-delta| + 2
 \
@@ -4768,15 +4843,15 @@ ORG CODE%
 \ ------------------------------------------------------------------------------
 \
 \ Shallow horizontal:
-\   bit 7 of HH = direction of the y-delta
+\   Bit 7 of HH = direction of the y-delta
 \   (PP N) = |x-delta| + 1
-\   clear bit 6 of WW
+\   Clear bit 6 of WW
 \
 \ Steep vertical:
-\   bit 7 of HH = direction of the x-delta
+\   Bit 7 of HH = direction of the x-delta
 \   (PP N) = |y-delta| + 1
-\   set bit 6 of WW
-\   set (RR R) = (SS S), so start_x is set to start_y
+\   Set bit 6 of WW
+\   Cet (RR R) = (SS S), so start_x is set to start_y
 \
 \ ******************************************************************************
 
@@ -4856,6 +4931,15 @@ ORG CODE%
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
+\
+\ Division algorithm of some kind, I think it's this for a shallow horizontal /
+\
+\ (QQ G) = (UU TT) * (PP N) / (Q P)
+\        =   (start_x + start_y - 159) * (|x-delta| + 1)
+\          / (|x-delta| + |y-delta|)
+\
+\ This calculates the delta to add to the coordinates in the final part, but I
+\ haven't got to the bottom of this
 \
 \ 1. Double (Q P) and (PP N) until Q >= UU
 \ If Q = UU and P < TT, repeat until P >= TT
@@ -5008,33 +5092,57 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ By now (QQ G W) contains the delta to add to/subtract from the start point<s
-\ x or y coord (the other coord gets set to the screen edge)
+\ If bit 7 of HH clear, (RR R) and (SS S) = (RR R) + (QQ G)
+\ If bit 7 of HH set,   (RR R) and (SS S) = (RR R) - (QQ G)
+\
+\ If bits 6 and 7 of WW clear,        (SS S)  = 159 - (RR R)
+\ If bit 6 of WW is set, bit 7 clear, (RR RR) = 159 - (SS S)
+\
+\ S = S - 4 to undo the bump in the first part
+\
+\ Confirm (R, S) is on-screen and return it as the new start point
 \
 \ ******************************************************************************
 
 .clip18
 
- LDA G                  \ If bit 7 of W is set, add 1 to (QQ G) to round it up
- ROL W                  \ when going from (QQ G W) to (QQ G)
+                        \ By the time we get here, (QQ G W) contains the delta
+                        \ that we need to apply to the start point's x- or
+                        \ y-coordinate, multiplied by 256 so the lowest byte is
+                        \ the fractional part
+
+                        \ If bit 7 of W is set, that means the fractional part
+                        \ is at least 0.5, so we add 1 to the integral part in
+                        \ (QQ G) to round it up when going from the fractional
+                        \ (QQ G W) to the integer (QQ G)
+
+ LDA G                  \ We start with the low byte, rotating bit 7 of W into
+ ROL W                  \ the C flag which we then add with ADC #0
  ADC #0
  STA G
- BCC clip19
 
- INC QQ
+ BCC clip19             \ If the addition didn't overflow, jump to clip19 to
+                        \ skip the following instruction
+
+ INC QQ                 \ And then we increment the high byte if the addition
+                        \ overflowed
 
 .clip19
 
  LDA HH                 \ If bit 7 of HH is set, jump to clip20 to skip the
  BMI clip20             \ following
 
- LDA R                  \ Set (RR R) = (RR R) + (QQ G)
- CLC                    \     (SS S) = (RR R)
- ADC G
+                        \ Bit 7 of HH is clear, so we add the delta in (QQ G)
+                        \ to both coordinates to move the whole line so the
+                        \ start coordinate is on the edge of the screen
+
+ LDA R                  \ Set (RR R) and (S SS) = (RR R) + (QQ G)
+ CLC                    \
+ ADC G                  \ starting with the low bytes
  STA R
  STA S
 
- LDA RR
+ LDA RR                 \ And then the high bytes
  ADC QQ
  STA RR
  STA SS
@@ -5043,13 +5151,17 @@ ORG CODE%
 
 .clip20
 
- LDA R                  \ Set (RR R) = (RR R) - (QQ G)
- SEC                    \     (SS S) = (RR R)
- SBC G
+                        \ Bit 7 of HH is set, so we subtract the delta in (QQ G)
+                        \ from both coordinates to move the whole line so the
+                        \ start coordinate is on the edge of the screen
+
+ LDA R                  \ Set (RR R) and (SS S) = (RR R) - (QQ G)
+ SEC                    \
+ SBC G                  \  starting with the low bytes
  STA R
  STA S
 
- LDA RR
+ LDA RR                 \ And then the high bytes
  SBC QQ
  STA RR
  STA SS
@@ -5057,17 +5169,20 @@ ORG CODE%
 .clip21
 
  BIT WW                 \ If bit 7 of WW is set, jump to clip23 to skip all of
- BMI clip23             \ the following
+ BMI clip23             \ the following and return the final coordinates
 
  BVS clip22             \ If bit 6 of WW is set, jump to clip22 to skip the
                         \ following
 
+                        \ Bits 6 and 7 of WW are both clear, so we update the
+                        \ y-coordinate
+
  LDA #159               \ Set (SS S) = 159 - (RR R)
- SEC
- SBC R
+ SEC                    \
+ SBC R                  \ starting with the low bytes
  STA S
 
- LDA #0
+ LDA #0                 \ And then the high bytes
  SBC RR
  STA SS
 
@@ -5075,12 +5190,14 @@ ORG CODE%
 
 .clip22
 
+                        \ Bit 6 of WW is set, so we update the x-coordinate
+
  LDA #159               \ Set (RR RR) = 159 - (SS S)
- SEC
- SBC S
+ SEC                    \
+ SBC S                  \ starting with the low bytes
  STA R
 
- LDA #0
+ LDA #0                 \ And then the high bytes
  SBC SS
  STA RR
 
@@ -5098,8 +5215,8 @@ ORG CODE%
 
  LDA S                  \ Set S = S - 4
  SEC                    \
- SBC #4                 \ which subtracts the 4 we add at the start of the
- STA S                  \ routine
+ SBC #4                 \ which subtracts the 4 that we added at the start of
+ STA S                  \ the routine
 
  BCC clip24             \ If the subtraction just underflowed, jump to clip24 to
                         \ abort the line as the (SS S) y-coordinate is off the
@@ -5111,8 +5228,8 @@ ORG CODE%
                         \ If we get here then we have successfully clipped the
                         \ start point to the edge of the screen
 
- LDA #1                 \ Set bit 0 of V
- ORA V
+ LDA #1                 \ Set bit 0 of the line direction in V to indicate that
+ ORA V                  \ the line has been clipped
  STA V
 
  LDA R                  \ Copy the (R, S) pixel coordinate into
@@ -5176,32 +5293,35 @@ ORG CODE%
 \
 \       Name: EraseCanopyLines
 \       Type: Subroutine
-\   Category: 
-\    Summary: Draw all the lines from a line buffer
+\   Category: Drawing lines
+\    Summary: Draw all the lines from a line buffer to erase them
 \
 \ ------------------------------------------------------------------------------
 \
-\ We call this with:
+\ We call this from DrawCanopyView, after drawing all the new lines and just
+\ before we flip colours.
 \
-\   * colourCycle = %00001111, colour 1 is white and colour 2 is black
+\   * colourCycle = %00001111, when colour 1 is white and colour 2 is black
 \     Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
-\     Colour 2 is %11110000, so AND'ing with %00001111 gives 0
-\     so this will erase all the lines in line buffer 1 from the hidden screen
+\     Colour 2 on-screen is %11110000, so AND'ing with %00001111 gives 0
+\     So this erases all the lines in buffer 1, which are on-screen in colour 2
+\     i.e. erase all the lines in line buffer 1 from the hidden screen
 \
-\   * colourCycle = %11110000, colour 1 is black and colour 2 is white
+\   * colourCycle = %11110000, when colour 1 is black and colour 2 is white
 \     Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
 \     Colour 1 is %00001111, so AND'ing with %11110000 gives 0
-\     so this will erase all the lines in line buffer 2 from the hidden screen
+\     So this erases all the lines in buffer 2, which are on-screen in colour 1
+\     i.e. erase all the lines in line buffer 2 from the hidden screen
 \
 \ ******************************************************************************
 
 .EraseCanopyLines
 
- LDA #%00000000         \ Set colourLogic = %00000000
- STA colourLogic
+ LDA #%00000000         \ Set colourLogic = %00000000 so when we draw a line, it
+ STA colourLogic        \ erases it
 
- JSR ModifyDrawRoutine  \ Modify the drawing routines to use AND logic and bit
-                        \ patterns that match colourCycle
+ JSR ModifyDrawRoutine  \ Modify the drawing routines to use AND logic and the
+                        \ bit patterns that match colourCycle
 
 .ecal1
 
@@ -5785,27 +5905,27 @@ ORG CODE%
 
  LDA xTempLo
  CLC
- ADC xLineLo,Y
- STA xLineLo,X
+ ADC xPointLo,Y
+ STA xPointLo,X
  LDA xTempHi
- ADC xLineHi,Y
- STA xLineHi,X
+ ADC xPointHi,Y
+ STA xPointHi,X
  PHP
  CLC
  LDA yTempLo
- ADC yLineLo,Y
- STA yLineLo,X
+ ADC yPointLo,Y
+ STA yPointLo,X
  LDA yTempHi
- ADC yLineHi,Y
- STA yLineHi,X
+ ADC yPointHi,Y
+ STA yPointHi,X
  PHP
  CLC
  LDA zTempLo
- ADC zLineLo,Y
- STA zLineLo,X
+ ADC zPointLo,Y
+ STA zPointLo,X
  LDA zTempHi
- ADC zLineHi,Y
- STA zLineHi,X
+ ADC zPointHi,Y
+ STA zPointHi,X
  JMP L4B8C
 
  NOP
@@ -6325,17 +6445,17 @@ ORG CODE%
 .L1D8D
 
  LDX GG
- LDA xLineLo,X
+ LDA xPointLo,X
  STA PP
- LDA xLineHi,X
+ LDA xPointHi,X
  STA SS
- LDA yLineLo,X
+ LDA yPointLo,X
  STA QQ
- LDA yLineHi,X
+ LDA yPointHi,X
  STA TT
- LDA zLineLo,X
+ LDA zPointLo,X
  STA RR
- LDA zLineHi,X
+ LDA zPointHi,X
  STA UU
  LDX #5
  LDA #0
@@ -6428,17 +6548,17 @@ ORG CODE%
 .L1E1A
 
  LDA xTempLo
- STA xLineLo,X
+ STA xPointLo,X
  LDA xTempHi
- STA xLineHi,X
+ STA xPointHi,X
  LDA yTempLo
- STA yLineLo,X
+ STA yPointLo,X
  LDA yTempHi
- STA yLineHi,X
+ STA yPointHi,X
  LDA zTempLo
- STA zLineLo,X
+ STA zPointLo,X
  LDA zTempHi
- STA zLineHi,X
+ STA zPointHi,X
  RTS
 
  BRK
@@ -10022,26 +10142,26 @@ ORG CODE%
 
  LDA xObjectLo,Y
  CLC
- ADC xLineLo,X
+ ADC xPointLo,X
  STA xObjectLo,Y
  LDA xObjectHi,Y
- ADC xLineHi,X
+ ADC xPointHi,X
  STA xObjectHi,Y
 
  LDA yObjectLo,Y
  CLC
- ADC yLineLo,X
+ ADC yPointLo,X
  STA yObjectLo,Y
  LDA yObjectHi,Y
- ADC yLineHi,X
+ ADC yPointHi,X
  STA yObjectHi,Y
 
  LDA zObjectLo,Y
  CLC
- ADC zLineLo,X
+ ADC zPointLo,X
  STA zObjectLo,Y
  LDA zObjectHi,Y
- ADC zLineHi,X
+ ADC zPointHi,X
  STA zObjectHi,Y
 
  RTS
@@ -10154,7 +10274,7 @@ ORG CODE%
 
  STA L368F              \ Set L368F = 0
 
- STA L44F0              \ Set L44F0 = 0
+ STA L44F0              \ Set L44F0 = 0 to reset the L44F0 list to length zero
 
  STA scoreLo            \ Set scoreLo = 0
 
@@ -10173,7 +10293,7 @@ ORG CODE%
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
                         \ in the rset2 loop
 
- STA L05C8              \ Set L05C8 = 0
+ STA L05C8              \ Set L05C8 = 0 to reset the L05C8 list to length zero
 
  STA mainLoopCounter    \ Set mainLoopCounter = 0
 
@@ -10305,17 +10425,17 @@ ORG CODE%
 
 .ResetRadar
 
- LDA #80                \ Set xLineLo = 80, so we don't draw a new alien on the
- STA xLineLo            \ radar (as this coordinate is off the radar)
+ LDA #80                \ Set xPointLo = 80, so we don't draw a new alien on the
+ STA xPointLo           \ radar (as this coordinate is off the radar)
 
  LDA #1                 \ Set alienFlag = 1, so we remove the alien from the
  STA alienFlag          \ radar rather than the runway
 
- STA xLineHi            \ Set xLineHi = 1, so the value in xLineLo is treated as
-                        \ positive
+ STA xPointHi           \ Set xPointHi = 1, so the value in xPointLo is treated
+                        \ as positive
 
  JSR UpdateRadar        \ Remove the current dot from the radar, but don't draw
-                        \ a new one, as xLineLo is off-radar
+                        \ a new one, as xPointLo is off-radar
 
  LDY #&21
  JSR L25B5
@@ -10392,11 +10512,11 @@ ORG CODE%
 
 .MainLoop
 
- LDA linesHideEnd       \ Store the size of the linesToHide list in
+ LDA linesToHideEnd     \ Store the index of the end of the linesToHide list in
  STA previousListEnd    \ previousListEnd so we can check it at the end of the
                         \ main loop
 
- JSR L2F1C
+ JSR L2F1C              \ Theme-related
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
@@ -10450,7 +10570,7 @@ ORG CODE%
  CPY #&1E               \ Loop back until we have copied all four bytes
  BCS main1
 
- LDY linesShowEnd       \ Set Y to the first free entry at the end of the
+ LDY linesToShowEnd     \ Set Y to the first free entry at the end of the
                         \ linesToShow list
 
  LDA #&3C               \ Append &3C to the end of the linesToShow list
@@ -10465,7 +10585,7 @@ ORG CODE%
  INY                    \ Increment Y to point to the next free entry in the
                         \ list
 
- STY linesShowEnd       \ Update linesShowEnd with the updated index of the
+ STY linesToShowEnd     \ Update linesToShowEnd with the updated index of the
                         \ next free entry, which is two more than it was
                         \ before we added the bullets
 
@@ -10484,7 +10604,7 @@ ORG CODE%
  LDA #0                 \ Set L0CCA = 0
  STA L0CCA
 
- STA L05C8              \ Set L05C8 = 0
+ STA L05C8              \ Set L05C8 = 0 to reset the L05C8 list to length zero
 
 .main4
 
@@ -10529,7 +10649,7 @@ ORG CODE%
  LDA themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
  BMI main6              \ enabled, so jump to main6
 
- JSR L2DAC
+ JSR L2DAC              \ Theme-related
 
 \ ******************************************************************************
 \
@@ -10546,7 +10666,7 @@ ORG CODE%
 
 .main6
 
- JSR L2873
+ JSR UpdateLineLists
 
  JSR L4CB0
 
@@ -10841,7 +10961,7 @@ ORG CODE%
 
  JSR L28B6
 
- JSR DrawCanopyView     \ Update the 3D view out of the canopy
+ JSR DrawCanopyView     \ Update the main view out of the canopy
 
  JSR L4D6E
 
@@ -10898,22 +11018,22 @@ ORG CODE%
 \       Name: MainLoop (Part 14 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Add new lines to L0400
+\    Summary: Add new line points to L0400
 \
 \ ------------------------------------------------------------------------------
 \
 \ If we have added any lines to linesToHide list during the main loop
-\ (and therefore incremented linesHideEnd), we process each of them to add
+\ (and therefore incremented linesToHideEnd), we process each of them to add
 \ their details to L0400.
 \
 \ ******************************************************************************
 
 .main25
 
- LDX previousListEnd    \ If the value of linesHideEnd has changed since the
- CPX linesHideEnd       \ start of the main loop - in other words, it is not the
+ LDX previousListEnd    \ If the value of linesToHideEnd has changed since the
+ CPX linesToHideEnd     \ start of the main loop - in other words, it is not the
  BNE main26             \ same as the value we stored in previousListEnd - then
-                        \ this means the value of linesHideEnd has changed
+                        \ this means the value of linesToHideEnd has changed
                         \ during this iteration of the main loop, so jump down
                         \ to main26 to process the new additions to the
                         \ linesToHide list
@@ -10939,12 +11059,12 @@ ORG CODE%
 
                         \ Now to process the line
 
- LDX lineStartPoint,Y   \ Set X to this line's index from lineStartPoint
+ LDX lineStartPointId,Y \ Set X to this line's start point ID from lineStartPointId
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX lineEndPoint,Y     \ Set X to this line's index from lineEndPoint
+ LDX lineEndPointId,Y   \ Set X to this line's end point ID from lineEndPointId
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
@@ -10953,71 +11073,89 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2873
+\       Name: UpdateLineLists
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Drawing lines
+\    Summary: Process the linesToShow list, moving any lines that aren't visible
+\             into the linesToHide list
 \
 \ ******************************************************************************
 
-.L2873
+.UpdateLineLists
 
- LDX linesShowEnd
- BEQ L28B5
+ LDX linesToShowEnd     \ If the linesToShow list is empty, jump to upll5 to
+ BEQ upll5              \ return from the subroutine, as there is nothing to
+                        \ process
 
- LDA #&FF
- STA LL
- LDA #0
- STA lineIDCounter
+ LDA #255               \ Set linesToShowPointer = 255, to use as a pointer
+ STA linesToShowPointer \ to the end of the new linesToShow list as we build it
+                        \ up in-situ
 
-.L287F
+ LDA #0                 \ Set lineCounter = 0, to use as a line counter as we
+ STA lineCounter        \ loop through the linesToShow list
 
- LDX lineIDCounter
- LDA linesToShow,X
+.upll1
+
+ LDX lineCounter        \ Set lineID to the ID of the next line in the
+ LDA linesToShow,X      \ linesToShow list
  STA lineID
- LDA #1
- STA HH
- JSR IsLineVisible
 
- LDA lineID
- BEQ L2896
+ LDA #1                 \ Set HH = 1, so in the following call to IsLineVisible
+ STA HH                 \ we do not check the line's distance against
+                        \ visibleDistance in the visibility checks
 
- LDX showLine
- BNE L28A0
+ JSR IsLineVisible      \ Check whether this line is visible, returning the
+                        \ result in showLine
 
-.L2896
+ LDA lineID             \ If lineID = 0, then this is the runway, so skip the
+ BEQ upll2              \ following instruction to keep the line in the list
 
- INC LL
- LDX LL
- STA linesToShow,X
- JMP L28A7
+ LDX showLine           \ If showLine is non-zero then this line is not visible,
+ BNE upll3              \ so jump to upll3
 
-.L28A0
+.upll2
 
- INC linesHideEnd       \ Increment linesHideEnd to point to the next free
+                        \ If we get here then we want to keep this line in the
+                        \ linesToShow list
+
+ INC linesToShowPointer \ Increment the linesToShowPointer pointer to point to
+                        \ the next free slot in the new list we are creating
+
+ LDX linesToShowPointer \ Store the line ID at the end of the new list we are
+ STA linesToShow,X      \ creating
+
+ JMP upll4              \ Jump down to upll4 to move on to the next line in the
+                        \ list
+
+.upll3
+
+                        \ If we get here then we do not want to keep this line
+                        \ in the linesToShow list, so we need to move it to the
+                        \ linesToHide list
+
+ INC linesToHideEnd     \ Increment linesToHideEnd to point to the next free
                         \ entry at the end of the linesToHide list
 
- LDX linesHideEnd       \ Add the line ID in A to the end of the
- STA linesToHide,X      \ linesToHide list
+ LDX linesToHideEnd     \ Add the line ID to the end of the linesToHide list
+ STA linesToHide,X
 
-.L28A7
+.upll4
 
- INC lineIDCounter
- LDA lineIDCounter
- CMP linesShowEnd
- BCC L287F
+ INC lineCounter        \ Increment the loop counter to point to the next line
+                        \ in the linesToShow list
 
- LDA LL
- ADC #0
- STA linesShowEnd
+ LDA lineCounter        \ Loop back to process the next line from linesToShow
+ CMP linesToShowEnd     \ until we have worked our way to the end
+ BCC upll1
 
-.L28B5
+ LDA linesToShowPointer \ Set linesToShowEnd = linesToShowPointer + 1
+ ADC #0                 \
+ STA linesToShowEnd     \ so it points to the index of the first empty entry in
+                        \ the newly processed linesToShow list
 
- RTS
+.upll5
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11034,23 +11172,24 @@ ORG CODE%
 
 .L28B6
 
- LDA linesShowEnd
+ LDA linesToShowEnd
  BEQ L2929
 
- LDA #&FF
- STA LL
+ LDA #255
+ STA linesToShowPointer
+
  LDA #0
- STA lineIDCounter
+ STA lineCounter
 
 .L28C2
 
- LDX lineIDCounter
+ LDX lineCounter
  LDY linesToShow,X
  STY lineID
- LDX lineStartPoint,Y
+ LDX lineStartPointId,Y
  STX GG
  STX L
- LDX lineEndPoint,Y
+ LDX lineEndPointId,Y
  STX M
  JSR L0D01
 
@@ -11079,8 +11218,8 @@ ORG CODE%
 
 .L2904
 
- INC LL
- LDX LL
+ INC linesToShowPointer
+ LDX linesToShowPointer
  LDA lineID
  STA linesToShow,X
  JMP L291B
@@ -11090,22 +11229,22 @@ ORG CODE%
  LDA lineID
  BEQ L2904
 
- INC linesHideEnd       \ Increment linesHideEnd to point to the next free
+ INC linesToHideEnd     \ Increment linesToHideEnd to point to the next free
                         \ entry at the end of the linesToHide list
 
- LDX linesHideEnd       \ Add the line ID in A to the end of the
+ LDX linesToHideEnd     \ Add the line ID in A to the end of the
  STA linesToHide,X      \ linesToHide list
 
 .L291B
 
- INC lineIDCounter
- LDA lineIDCounter
- CMP linesShowEnd
+ INC lineCounter
+ LDA lineCounter
+ CMP linesToShowEnd
  BCC L28C2
 
- LDA LL
+ LDA linesToShowPointer
  ADC #0
- STA linesShowEnd
+ STA linesToShowEnd
 
 .L2929
 
@@ -11140,13 +11279,13 @@ ORG CODE%
 
 .L293A
 
- LDA MM
- CMP linesHideEnd
+ LDA linesToHidePointer
+ CMP linesToHideEnd
  BEQ IsLineVisible-1
 
  CLC
  ADC #1
- STA MM
+ STA linesToHidePointer
  TAX
  LDA linesToHide,X
  STA lineID
@@ -11176,57 +11315,65 @@ ORG CODE%
 
 .AddLineToList
 
- LDA #0                 \ Set HH = 0
- STA HH
+ LDA #0                 \ Set HH = 0, so in the following call to IsLineVisible
+ STA HH                 \ we check the line's distance against visibleDistance
+                        \ in the visibility checks
 
- JSR IsLineVisible
+ JSR IsLineVisible      \ Check whether this line is visible, returning the
+                        \ result in showLine
 
  LDA lineID             \ Fetch the line ID into A
 
- LDX showLine           \ If showLine = 0, jump down to addl1
- BEQ addl1
+ LDX showLine           \ If showLine = 0 then the line is visible, so jump down
+ BEQ addl1              \ to addl1 to add the line to the linesToShow list
 
-                        \ showLine is non-zero, so we add this line to
-                        \ linesToHide
+                        \ The value of showLine is non-zero, so the line is not
+                        \ visible and we now add it to the linesToHide list
 
- INC linesHideEnd       \ Increment linesHideEnd to point to the next free
+ INC linesToHideEnd     \ Increment linesToHideEnd to point to the next free
                         \ entry at the end of the linesToHide list
 
- LDX linesHideEnd       \ Add the line ID in A to the end of the
- STA linesToHide,X      \ linesToHide list
+ LDX linesToHideEnd     \ Add the line's ID to the end of the linesToHide list
+ STA linesToHide,X
 
  RTS                    \ Return from the subroutine
 
 .addl1
 
-                        \ showLine is zero, so we add this line to
-                        \ linesToShow
+                        \ The value of showLine is zero, so the line is visible
+                        \ and we now add it to the linesToShow list
 
- INC linesShowEnd       \ Increment linesShowEnd so it still points to the
+ INC linesToShowEnd     \ Increment linesToShowEnd so it still points to the
                         \ first empty entry in the linesToShow list after we
                         \ add this line
 
- INC LL                 \ Increment LL
+ INC linesToShowPointer \ Increment linesToShowPointer as we have already
+                        \ processed the line, so we set the progress pointer to
+                        \ be after this line
 
- LDX LL                 \ Add the line ID in A to the end of the linesToShow
- STA linesToShow,X      \ list
+ LDX linesToShowPointer \ Add the line's ID to the end of the linesToShow list
+ STA linesToShow,X
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible
+\       Name: IsLineVisible (Part 1 of )
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   lineID              The line ID to check
+\   lineID              The line ID of the line to check
 \
-\   HH                  ???
+\   HH                  Determines whether we check for distance:
+\
+\                         * 0 = check the line's distance against visibleDistance
+\
+\                         * Non-zero = skip the distance check
 \
 \ Returns:
 \
@@ -11241,97 +11388,141 @@ ORG CODE%
 
 .IsLineVisible
 
- LDA #0                 \ Set showLine = 0 as a starting point for the
- STA showLine           \ return value
+ LDA #0                 \ Set showLine = 0 as a starting point for the return
+ STA showLine           \ value (so we start out by assuming the line is
+                        \ visible, and change this if we find that it isn't)
 
  STA L0CBF              \ Set L0CBF = 0
 
- LDX lineID             \ Set X to the ID of the line to check
+ LDX lineID             \ Set X = lineID, so X contains the ID of the line we
+                        \ want to check for visibility
 
- LDY lineEndPoint,X     \ Set M to the line's lineEndPoint offset
- STY M
+ LDY lineEndPointId,X   \ Set M to the point ID of the line's end point, which
+ STY M                  \ is in the lineID-th entry of lineEndPointId
 
- LDY lineStartPoint,X   \ Set Y and L to the line's lineStartPoint offset
- STY L
+ LDY lineStartPointId,X \ Set L to the point ID for the line's start point,
+ STY L                  \ which is in the lineID-th entry of lineStartPointId
 
- CPX #12                \ If the line ID >= 12, jump to lvis2
+ CPX #12                \ If lineID >= 12, jump to lvis2
  BCS lvis2
 
- CPX #0                 \ If the line ID is not zero, jump to lvis1
+ CPX #0                 \ If lineID is not zero, jump to lvis1
  BNE lvis1
 
-                        \ If we get here then the line ID is 0
+                        \ If we get here then lineID is 0, so this is the
+                        \ horizon
 
- JSR L2C95
+ JSR IsHorizonVisible   \ Check whether the horizon is visible and set showLine
+                        \ accordingly
 
  RTS                    \ Return from the subroutine
 
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 2 of )
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ******************************************************************************
+
 .lvis1
 
-                        \ If we get here then the line ID is in the range 1 to
-                        \ 11
+                        \ If we get here then lineID is in the range 1 to 11,
+                        \ so this is the runway
 
- JSR L31BD
+ JSR IsRunwayVisible    \ Check whether this runway line is visible and set
+                        \ showLine accordingly
 
- JMP lvis19
+ JMP lvis19             \ Jump down to lvis19 to check the line's z-coordinates
+                        \ and return the visibility result
+
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 3 of )
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ******************************************************************************
 
 .lvis2
 
-                        \ If we get here, the line ID >= 12 and Y contains the
-                        \ line's lineStartPoint offset
+                        \ If we get here, lineID >= 12 and Y contains the point
+                        \ ID for the line's start point
+                        \
+                        \ We now run through the following process twice, first
+                        \ for the line's start point, and then for the line's
+                        \ end point
 
- LDA #2                 \ Set L0CC8 = 2
- STA L0CC8
+ LDA #2                 \ Set pointCount = 2 to act as a counter so we can check
+ STA pointCount         \ the start point first, and then the end point
 
 .lvis3
 
- LDA L0400,Y            \ If the Y-th L0400 is positive, skip the following
- BPL lvis4              \ instruction
+ LDA L0400,Y            \ If bit 7 of the point's L0400 entry is clear, skip the
+ BPL lvis4              \ following instruction
 
- JMP lvis17             \ The Y-th L0400 is negative, so jump to lvis17
+ JMP lvis17             \ Bit 7 of the point's L0400 entry is set, which means
+                        \ we have already checked this line, so jump to lvis17
+                        \ to do the distance and z-coordinate tests
 
 .lvis4
 
-                        \ We get here if line ID >= 12, Y contains the line's
-                        \ lineStartPoint offset and Y-th L0400 is positive
+                        \ We get here if lineID >= 12 and we haven't already
+                        \ checked this point
 
- TYA                    \ Store the line's lineStartPoint offset on the stack
+ TYA                    \ Store the point ID for the point on the stack
  PHA
 
- STA L0CC0              \ Set L0CC0 = the line's lineStartPoint offset
+ STA pointId            \ Store the point ID for the point in pointId
 
 .lvis5
 
- LDA lineIdToObjectId,Y \ Set A = the Y-th lineIdToObjectId
+ LDA lineIdToObjectId,Y \ Set A to the object ID for the object containing this
+                        \ line
 
- CMP #40                \ If A < 40, jump to lvis8
+ CMP #40                \ If objectID < 40, jump to lvis8
  BCC lvis8
 
- SEC                    \ Set A = Y-th lineIdToObjectId - 40
- SBC #40
+ SEC                    \ Subtract 40 from A to get the point ID of the new
+ SBC #40                \ point to check
 
- STA L0CCF              \ Store the value of A in L0CCF
+ STA L0CCF              \ Store the new point's ID in L0CCF
 
- TAY                    \ Set Y = Y-th lineIdToObjectId - 40
+ TAY                    \ Store the new point's ID in Y
 
- LDA L0400,Y            \ Set A = the A-th value of L0400
+ LDA L0400,Y            \ If bit 7 of the new point's L0400 entry is set, jump
+ BMI lvis14             \ down to lvis14
 
- BMI lvis14
+ TYA                    \ Set A = the new point's point ID
 
- TYA
- PHA
+ PHA                    \ Store the new point's point ID on the stack
 
  LDX L05C8              \ If L05C8 >= 49, then there are 48 values in the L05C8
- CPX #49                \ list, so jump to lvis11
- BCS lvis11
+ CPX #49                \ list, so jump to lvis11 to set this line as not being
+ BCS lvis11             \ visible, as the L05C8 list is full
 
- INC L05C8              \ L05C8 contains a count of values stored in the L05C8
-                        \ list
+ INC L05C8              \ Increment the value in L05C8, which contains a count
+                        \ of values in the list, as we are about to add a new
+                        \ entry to the end of the list
 
- LDX L05C8              \ Add A to the end of the L05C8 list
- STA L05C8,X
+ LDX L05C8              \ Add A, the new point's point ID, to the end of the
+ STA L05C8,X            \ L05C8 list
 
- BNE lvis5              \ Loop back to ???
+ BNE lvis5              \ Jump back to lvis5 to recurse through the new point
+                        \ (this BNE is effectively a JMP as A is is never zero,
+                        \ because lineIdToObjectId does not contain a value of
+                        \ 40)
+
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 4 of )
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ******************************************************************************
 
 .lvis6
 
@@ -11351,6 +11542,8 @@ ORG CODE%
  JMP lvis16
 
 .lvis8
+
+                        \ If we get here then the objectID for this line is < 40
 
  TAY
  STY objectId
@@ -11385,7 +11578,7 @@ ORG CODE%
 .lvis12
 
  PLA
- CMP L0CC0
+ CMP pointId
  BNE lvis12
 
  RTS                    \ Return from the subroutine
@@ -11397,10 +11590,19 @@ ORG CODE%
  ADC #216
  STA L0CCF
 
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 5 of )
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ******************************************************************************
+
 .lvis14
 
  PLA
- CMP L0CC0
+ CMP pointId
  BEQ lvis15
 
  STA GG
@@ -11437,56 +11639,84 @@ ORG CODE%
  JSR L19A0
 
  LDA showLine
-
  BNE lvis20
 
 .lvis16
 
  LDY GG
 
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 6 of )
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ******************************************************************************
+
 .lvis17
 
-                        \ We jump here if line ID >= 12, Y contains the line's
-                        \ lineStartPoint offset and Y-th L0400 is negative
+                        \ We get here if line ID >= 12 and bit 7 of the point's
+                        \ L0400 entry is set
 
- LDA HH
- BNE lvis18
+ LDA HH                 \ If HH is non-zero, jump to lvis18 to move on to the
+ BNE lvis18             \ end point and then check the z-coordinates
 
- LDX lineID
+ LDX lineID             \ Check whether this line ID is close enough to be
+ JSR CheckDistance      \ visible (so it gets hidden if it is further away than
+                        \ the visibility distance for this line)
 
- JSR CheckDistance
+ STA showLine           \ The above call returns 1 if the line is too far away,
+                        \ or the previous value of showLine if it is close
+                        \ enough to be shown, so store the updated response in
+                        \ showLine
 
- STA showLine
+ BNE lvis20             \ If the response is non-zero then the line is not
+                        \ visible and showLine contains a non-zero response, so
+                        \ jump to lvis20 to return from the subroutine
 
- BNE lvis20
+                        \ Otherwise the line is close enough to be visible and
+                        \ has passed all the other visibility checks so far, so
+                        \ now we check the z-coordinates
 
 .lvis18
 
- LDA #%10000000
+ LDA #%10000000         \ Make the start point's L0400 entry negative
  ORA L0400,Y
  STA L0400,Y
 
- DEC L0CC8
- BEQ lvis19
+ DEC pointCount         \ Decrement pointCount so we check the end point next
 
- LDY M
+ BEQ lvis19             \ If pointCount = 0 then we have checked both the start
+                        \ and end point, so jump to lvis19 to check the line's
+                        \ z-coordinates
 
- JMP lvis3
+                        \ If we get here then we have checked the start point,
+                        \ so we now loop back to check the end point
+
+ LDY M                  \ Set M to the point ID for the line's end point, so
+                        \ when we run through the process above, we do it for
+                        \ the end point instead of the start point
+
+ JMP lvis3              \ Jump back to lvis3 to check the visibility of the end
+                        \ point
 
 .lvis19
 
- LDY M
- LDA zLineHi,Y
-
+ LDY M                  \ If the end point's z-coordinate is positive, jump to
+ LDA zPointHi,Y         \ lvis20 to return from the subroutine
  BPL lvis20
 
- LDY L
- LDA zLineHi,Y
-
+ LDY L                  \ If the start point's z-coordinate is positive, jump to
+ LDA zPointHi,Y         \ lvis20 to return from the subroutine
  BPL lvis20
 
- LDA showLine
- ORA #%10000000
+                        \ If we get here then both the start and end point have
+                        \ negative z-coordinates, so they are both behind us and
+                        \ the line is therefore not visible
+
+ LDA showLine           \ Set bit 7 of showLine to indicate that the line is not
+ ORA #%10000000         \ visible
  STA showLine
 
  LDY L0CBF
@@ -11510,7 +11740,7 @@ ORG CODE%
 \
 \   objectId            Object ID/type, comes from lineIdToObjectId or
 \                       15 for bullets in UpdateBullets
-\                       1 for runway when called from L31BD
+\                       1 for runway when called from IsRunwayVisible
 \
 \ ******************************************************************************
 
@@ -11623,10 +11853,10 @@ ORG CODE%
  SEC
  LDA xObjectLo,Y
  SBC xPlaneLo
- STA xLineLo,X
+ STA xPointLo,X
  LDA xObjectHi,Y
  SBC xPlaneHi
- STA xLineHi,X
+ STA xPointHi,X
  STA T
  LDA #0
  SBC L0C6D
@@ -11637,10 +11867,10 @@ ORG CODE%
  SEC
  LDA yObjectLo,Y
  SBC altitudeLo
- STA yLineLo,X
+ STA yPointLo,X
  LDA yObjectHi,Y
  SBC altitudeHi
- STA yLineHi,X
+ STA yPointHi,X
  STA T
  LDA #0
  SBC L0C6E
@@ -11651,10 +11881,10 @@ ORG CODE%
  SEC
  LDA zObjectLo,Y
  SBC zPlaneLo
- STA zLineLo,X
+ STA zPointLo,X
  LDA zObjectHi,Y
  SBC zPlaneHi
- STA zLineHi,X
+ STA zPointHi,X
  STA T
  LDA #0
  SBC L0C6F
@@ -11756,12 +11986,8 @@ ORG CODE%
 \
 \       Name: ResetLineLists
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: Reset the line lists at linesToShow and linesToHide
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
 \
 \ ******************************************************************************
 
@@ -11773,25 +11999,27 @@ ORG CODE%
  LDA #%00001111         \ Set colourCycle = %00001111, so we show colour 1 and
  STA colourCycle        \ hide colour 2 in the canopy view
 
- JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
-                        \ cycle
+ JSR ModifyDrawRoutine  \ Modify the drawing routines so we draw canopy lines in
+                        \ colour 1 (as colourLogic = %10000000)
 
  LDA #0                 \ Set lineID = 0 to act as a loop counter below
  STA lineID
 
- STA linesShowEnd       \ Set linesShowEnd = 0
+ STA linesToShowEnd     \ Set linesToShowEnd = 0 to reset the linesToShow list
 
- LDA #255               \ Set linesHideEnd = 255
- STA linesHideEnd
+ LDA #255               \ Set linesToHideEnd = 255 to reset the linesToHide list
+ STA linesToHideEnd
 
- STA LL                 \ Set LL = 255
+ STA linesToShowPointer \ Set linesToShowPointer = 255 to reset the progress
+                        \ pointer for the linesToShow list
 
- STA MM                 \ Set MM = 255
+ STA linesToHidePointer \ Set linesToHidePointer = 255 to reset the progress
+                        \ pointer for the linesToHide list
 
 .rell1
 
- JSR AddLineToList      \ Add the line with ID lineID to either the
-                        \ linesToShow or linesToHide list
+ JSR AddLineToList      \ Add the line with ID lineID to either the linesToShow
+                        \ or linesToHide list
 
  INC lineID             \ Increment lineID to move on to the next line
 
@@ -11804,7 +12032,9 @@ ORG CODE%
 
                         \ Fall through into FlipColours to flip the values of
                         \ colourCycle and colourLogic to cycle to the next
-                        \ colour state
+                        \ colour state, so we end up with drawing routines that
+                        \ draw in colour 1, while colourLogic = %01000000 and
+                        \ colourCycle = %11110000
 
 \ ******************************************************************************
 \
@@ -11816,17 +12046,19 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Thie routine flips the colourCycle and colourLogic variables between these two
+\ This routine flips the colourCycle and colourLogic variables between these two
 \ states:
 \
-\   * colourLogic = %10000000 = ORA logic
+\   * colourLogic = %10000000
 \     colourCycle = %00001111 = show colour 1, hide colour 2
 \
-\   * colourLogic = %01000000 = ORA logic
+\   * colourLogic = %01000000
 \     colourCycle = %11110000 = show colour 2, hide colour 1
 \
-\ The routine only checks the value of Colour Cycle, so if colourLogic is
-\ %00000000 on entry, it will be set to one of %10000000 and %01000000.
+\ The routine only checks the value of colourCycle, so if colourLogic is
+\ %00000000 on entry, it will be set to one of %10000000 and %01000000, so we
+\ can use this routine to set the correct state after erasing lines during the
+\ colourLogic %00000000 phase.
 \
 \ ******************************************************************************
 
@@ -11953,11 +12185,7 @@ ORG CODE%
 \       Name: DrawCanopyView
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Draw the 3D view out of the canopy
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Draw the main view out of the canopy
 \
 \ ******************************************************************************
 
@@ -11966,58 +12194,61 @@ ORG CODE%
  JSR ModifyDrawRoutine  \ Modify the drawing routines to use the current colour
                         \ cycle
 
- LDA linesShowEnd       \ If linesShowEnd is non-zero, jump to view1 to skip
+ LDA linesToShowEnd     \ If linesToShowEnd is non-zero, jump to view1 to skip
  BNE view1              \ the following instruction, as there are lines in the
                         \ linesToShow list that we need to draw
 
- BEQ view6              \ linesShowEnd is zero, which means the linesToShow
-                        \ list is empty, so there is nothing to draw and we
+ BEQ view6              \ linesToShowEnd is zero, which means the linesToShow
+                        \ list is empty, so there is nothing to draw, so we
                         \ jump down to view6 to flip the colours (this BEQ is
                         \ effectively a JMP as we know A is zero)
 
 .view1
 
- LDA #0                 \ Set lineIDCounter = 0 to act as a counter in the
- STA lineIDCounter      \ following loop, where lineIDCounter loops from 0 to
-                        \ linesShowEnd - 1
+ LDA #0                 \ Set lineCounter = 0 to act as a counter in the
+ STA lineCounter        \ following loop, where we loop through the linesToShow
+                        \ list
 
 .view2
 
- TAX                    \ Set A to the next line ID from the linesToShow
+ TAX                    \ Set lineID to the next line ID from the linesToShow
  LDA linesToShow,X      \ list
+ STA lineID
 
- STA lineID             \ Store the line's ID in lineID
-
- BNE view3              \ If A is non-zero, jump to view3
+ BNE view3              \ If lineID is non-zero, jump to view3, as this is not
+                        \ the horizon
 
  JSR DrawHalfHorizon    \ The line ID is 0, which is the horizon, so draw the
                         \ first half of the horizon line
 
- LDA lineID             \ Retrieve the line's ID
+ LDA lineID             \ Retrieve the line's ID, as it will have been corrupted
+                        \ by the call to DrawHalfHorizon, and fall through into
+                        \ view3 to draw the other half of the horizon
 
 .view3
 
- TAX
- LDY lineEndPoint,X
+ TAX                    \ Set M to the point ID for the line's end point
+ LDY lineEndPointId,X
  STY M
 
- LDA #0
+ LDA #0                 \ Zero the end point's L0400 entry
  STA L0400,Y
 
- LDY lineStartPoint,X
+ LDY lineStartPointId,X \ Set L to the point ID for the line's start point
  STY L
 
- STA L0400,Y
+ STA L0400,Y            \ Zero the start point's L0400 entry
 
- JSR DrawClippedLine
+ JSR DrawClippedLine    \ Draw the line, clipping it to the canopy view if
+                        \ required
 
- INC lineIDCounter      \ Increment the loop counter
+ INC lineCounter        \ Increment the loop counter
 
- LDA lineIDCounter      \ Loop back to process the next 
- CMP linesShowEnd
+ LDA lineCounter        \ Loop back to draw the next line from the linesToShow
+ CMP linesToShowEnd     \ list
  BCC view2
 
- JSR DrawGunSights      \ Update the gun sights, if shown
+ JSR DrawGunSights      \ Draw the gun sights, if shown
 
                         \ We now flip the screens between the old screen (which
                         \ is being shown in white) and the new one (which we
@@ -12061,7 +12292,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2C95
+\       Name: IsHorizonVisible
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -12072,7 +12303,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L2C95
+.IsHorizonVisible
 
  LDX M
  JSR L4B4A
@@ -12081,7 +12312,7 @@ ORG CODE%
  JSR L4B4A
 
  LDA #&F0
- STA xLineHi,X
+ STA xPointHi,X
  STX GG
 
 .L2CA6
@@ -12106,7 +12337,7 @@ ORG CODE%
 
 .L2CB5
 
- STA zLineHi,X
+ STA zPointHi,X
  LDA #&80
  ORA L0400,X
  STA L0400,X
@@ -12174,26 +12405,26 @@ ORG CODE%
  STA L0CCB
  JSR L1D8D
 
- LDA xLineHi
+ LDA xPointHi
  STA R
- LDA zLineHi
+ LDA zPointHi
  STA S
  LDX #3
 
 .L2D1A
 
  LSR R
- ROR xLineLo
+ ROR xPointLo
  LSR S
- ROR zLineLo
+ ROR zPointLo
  DEX
  BPL L2D1A
 
  LSR R
- LDA xLineLo
+ LDA xPointLo
  ROR A
  ADC #0
- STA xLineLo
+ STA xPointLo
 
 \ ******************************************************************************
 \
@@ -12206,13 +12437,9 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   xLineLo             The x-coordinate of the item to display
+\   (xPointHi xPointLo) The radar x-coordinate of the item to display
 \
-\   xLineHi             Bit 7 denotes the sign of the x-coordinate
-\
-\   zLineLo             The y-coordinate of the item to display
-\
-\   zLineHi             Bit 7 denotes the sign of the y-coordinate
+\   (zPointLo zPointHi) The radar y-coordinate of the item to display
 \
 \   alienFlag           The item to update on the radar:
 \
@@ -12270,14 +12497,14 @@ ORG CODE%
                         \ Now to calculate the position of the new line or dot
                         \ to draw on the radar
 
- LDA xLineLo            \ Set A = xLineLo, the x-coordinate of the alien or
+ LDA xPointLo           \ Set A = xPointLo, the x-coordinate of the alien or
                         \ runway
 
- BIT xLineHi            \ If bit 7 of xLineHi is 0, so xLineLo is positive, jump
- BPL radl2              \ to radl2 to skip the following three instructions
+ BIT xPointHi           \ If the high byte in xPointHi is positive, jump to
+ BPL radl2              \ radl2 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
- CLC                    \ positive, i.e. A = |xLineLo|
+ CLC                    \ positive, i.e. A = |xPointLo|
  ADC #1
 
 .radl2
@@ -12285,14 +12512,14 @@ ORG CODE%
  CMP #13                \ If A >= 13, jump to radl4 to return from the
  BCS radl4              \ subroutine, as the item is off the side of the radar
 
- LDA zLineLo            \ Set A = zLineLo, the y-coordinate of the alien or
+ LDA zPointLo           \ Set A = zPointLo, the y-coordinate of the alien or
                         \ runway
 
- BIT zLineHi            \ If bit 7 of zLineHi is 0, so zLineLo is positive, jump
- BPL radl3              \ to radl3 to skip the following three instructions
+ BIT zPointHi           \ If the high byte in zPointHi is positive, jump to
+ BPL radl3              \ radl3 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
- CLC                    \ positive, i.e. A = |zLineLo|
+ CLC                    \ positive, i.e. A = |zPointLo|
  ADC #1
 
 .radl3
@@ -12301,7 +12528,7 @@ ORG CODE%
  BCS radl4              \ subroutine, as the item is off the top or bottom of
                         \ the radar
 
- LDA xLineLo            \ Set I = xLineLo + 140
+ LDA xPointLo           \ Set I = xPointLo + 140
  CLC                    \
  ADC #140               \ to move the coordinate onto the radar, whose centre
  STA I                  \ cross on-screen is at (140, 207)
@@ -12309,7 +12536,7 @@ ORG CODE%
  STA radarX,X           \ Store the x-coordinate as the X-th byte of radarX, so
                         \ we can erase this item from the radar later
 
- LDA zLineLo            \ Set J = zLineLo + 208
+ LDA zPointLo           \ Set J = zPointLo + 208
  CLC                    \
  ADC #208               \ to move the coordinate onto the radar, whose centre
  STA J                  \ cross on-screen is at (140, 207)
@@ -13674,7 +13901,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L31BD
+\       Name: IsRunwayVisible
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -13685,7 +13912,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L31BD
+.IsRunwayVisible
 
  LDA L04D9
  BEQ L31D4
@@ -13926,13 +14153,13 @@ ORG CODE%
  DEX
  BPL L32EB
 
- LDA L4906
+ LDA zPointHi+6
  STA P
  LDY #6
 
 .L32FB
 
- LDA zLineHi,Y
+ LDA zPointHi,Y
  EOR P
  BMI L3309
 
@@ -14025,33 +14252,33 @@ ORG CODE%
  LDX #&1E
  LDY #&20
 
- LDA xLineHi,X
+ LDA xPointHi,X
  STA T
 
- LDA xLineLo,X
+ LDA xPointLo,X
  ASL A
  ROL T
  SEC
- SBC L091F
- STA xLineLo,Y
+ SBC xPointLo+31
+ STA xPointLo,Y
 
  LDA T
- SBC L4A1F
- STA xLineHi,Y
+ SBC xPointHi+31
+ STA xPointHi,Y
 
- LDA yLineHi,X
+ LDA yPointHi,X
  STA T
 
- LDA yLineLo,X
+ LDA yPointLo,X
  ASL A
  ROL T
  SEC
- SBC L0A1F
- STA yLineLo,Y
+ SBC yPointLo+31
+ STA yPointLo,Y
 
  LDA T
- SBC L0B1F
- STA yLineHi,Y
+ SBC yPointHi+31
+ STA yPointHi,Y
 
  STX L
  STY M
@@ -14788,41 +15015,213 @@ NEXT
 \
 \       Name: visibleDistance
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: The furthest distance at which each line is visible
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Lines are only shown if they are closer than the distance in this table.
+\
+\ The table is indexed by line ID, so for line ID X, visibleDistance,X contains
+\ the maximum distance at which that line is visible.
 \
 \ ******************************************************************************
 
 .visibleDistance
 
- EQUB &10, &7D, &7D, &7D, &7D, &10, &10, &10
- EQUB &10, &10, &28, &10, &50, &50, &32, &32
- EQUB &32, &28, &28, &28, &50, &50, &28, &28
- EQUB &50, &50, &50, &50, &50, &50, &50, &50
- EQUB &50, &50, &50, &50, &50, &50, &50, &3C
- EQUB &46, &3C, &46, &3C, &46, &3C, &46, &3F
- EQUB &3F, &3F, &3F, &3C, &46, &3C, &46, &3C
- EQUB &3F, &3F, &3F, &3F, &1E, &1E, &46, &3C
- EQUB &46, &3C, &46, &3C, &46, &3C, &46, &3C
- EQUB &46, &3C, &46, &3C, &78, &46, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &78, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &19
- EQUB &19, &19, &64, &64, &64, &64, &64, &64
- EQUB &64, &64, &64, &64, &64, &64, &78, &64
- EQUB &64, &64, &64, &64, &64, &64, &64, &64
- EQUB &64, &78, &78, &78, &78, &78, &78, &78
- EQUB &78, &3C, &3C, &3C, &3C, &3C, &3C, &3C
- EQUB &3C, &3C, &3C, &3C, &3C, &3C, &3C, &3C
- EQUB &3C, &3C, &78, &78, &78, &78, &78, &78
+ EQUB 16                \ Line ID:   0
+ EQUB 125               \ Line ID:   1
+ EQUB 125               \ Line ID:   2
+ EQUB 125               \ Line ID:   3
+ EQUB 125               \ Line ID:   4
+ EQUB 16                \ Line ID:   5
+ EQUB 16                \ Line ID:   6
+ EQUB 16                \ Line ID:   7
+ EQUB 16                \ Line ID:   8
+ EQUB 16                \ Line ID:   9
+ EQUB 40                \ Line ID:  10
+ EQUB 16                \ Line ID:  11
+ EQUB 80                \ Line ID:  12
+ EQUB 80                \ Line ID:  13
+ EQUB 50                \ Line ID:  14
+ EQUB 50                \ Line ID:  15
+ EQUB 50                \ Line ID:  16
+ EQUB 40                \ Line ID:  17
+ EQUB 40                \ Line ID:  18
+ EQUB 40                \ Line ID:  19
+ EQUB 80                \ Line ID:  20
+ EQUB 80                \ Line ID:  21
+ EQUB 40                \ Line ID:  22
+ EQUB 40                \ Line ID:  23
+ EQUB 80                \ Line ID:  24
+ EQUB 80                \ Line ID:  25
+ EQUB 80                \ Line ID:  26
+ EQUB 80                \ Line ID:  27
+ EQUB 80                \ Line ID:  28
+ EQUB 80                \ Line ID:  29
+ EQUB 80                \ Line ID:  30
+ EQUB 80                \ Line ID:  31
+ EQUB 80                \ Line ID:  32
+ EQUB 80                \ Line ID:  33
+ EQUB 80                \ Line ID:  34
+ EQUB 80                \ Line ID:  35
+ EQUB 80                \ Line ID:  36
+ EQUB 80                \ Line ID:  37
+ EQUB 80                \ Line ID:  38
+ EQUB 60                \ Line ID:  39
+ EQUB 70                \ Line ID:  40
+ EQUB 60                \ Line ID:  41
+ EQUB 70                \ Line ID:  42
+ EQUB 60                \ Line ID:  43
+ EQUB 70                \ Line ID:  44
+ EQUB 60                \ Line ID:  45
+ EQUB 70                \ Line ID:  46
+ EQUB 63                \ Line ID:  47
+ EQUB 63                \ Line ID:  48
+ EQUB 63                \ Line ID:  49
+ EQUB 63                \ Line ID:  50
+ EQUB 60                \ Line ID:  51
+ EQUB 70                \ Line ID:  52
+ EQUB 60                \ Line ID:  53
+ EQUB 70                \ Line ID:  54
+ EQUB 60                \ Line ID:  55
+ EQUB 63                \ Line ID:  56
+ EQUB 63                \ Line ID:  57
+ EQUB 63                \ Line ID:  58
+ EQUB 63                \ Line ID:  59
+ EQUB 30                \ Line ID:  60
+ EQUB 30                \ Line ID:  61
+ EQUB 70                \ Line ID:  62
+ EQUB 60                \ Line ID:  63
+ EQUB 70                \ Line ID:  64
+ EQUB 60                \ Line ID:  65
+ EQUB 70                \ Line ID:  66
+ EQUB 60                \ Line ID:  67
+ EQUB 70                \ Line ID:  68
+ EQUB 60                \ Line ID:  69
+ EQUB 70                \ Line ID:  70
+ EQUB 60                \ Line ID:  71
+ EQUB 70                \ Line ID:  72
+ EQUB 60                \ Line ID:  73
+ EQUB 70                \ Line ID:  74
+ EQUB 60                \ Line ID:  75
+ EQUB 120               \ Line ID:  76
+ EQUB 70                \ Line ID:  77
+ EQUB 125               \ Line ID:  78
+ EQUB 125               \ Line ID:  79
+ EQUB 125               \ Line ID:  80
+ EQUB 125               \ Line ID:  81
+ EQUB 125               \ Line ID:  82
+ EQUB 125               \ Line ID:  83
+ EQUB 125               \ Line ID:  84
+ EQUB 125               \ Line ID:  85
+ EQUB 125               \ Line ID:  86
+ EQUB 125               \ Line ID:  87
+ EQUB 125               \ Line ID:  88
+ EQUB 125               \ Line ID:  89
+ EQUB 125               \ Line ID:  90
+ EQUB 125               \ Line ID:  91
+ EQUB 125               \ Line ID:  92
+ EQUB 125               \ Line ID:  93
+ EQUB 125               \ Line ID:  94
+ EQUB 125               \ Line ID:  95
+ EQUB 125               \ Line ID:  96
+ EQUB 125               \ Line ID:  97
+ EQUB 125               \ Line ID:  98
+ EQUB 125               \ Line ID:  99
+ EQUB 125               \ Line ID: 100
+ EQUB 125               \ Line ID: 101
+ EQUB 125               \ Line ID: 102
+ EQUB 125               \ Line ID: 103
+ EQUB 125               \ Line ID: 104
+ EQUB 125               \ Line ID: 105
+ EQUB 125               \ Line ID: 106
+ EQUB 125               \ Line ID: 107
+ EQUB 125               \ Line ID: 108
+ EQUB 125               \ Line ID: 109
+ EQUB 125               \ Line ID: 110
+ EQUB 125               \ Line ID: 111
+ EQUB 125               \ Line ID: 112
+ EQUB 125               \ Line ID: 113
+ EQUB 125               \ Line ID: 114
+ EQUB 125               \ Line ID: 115
+ EQUB 125               \ Line ID: 116
+ EQUB 125               \ Line ID: 117
+ EQUB 125               \ Line ID: 118
+ EQUB 125               \ Line ID: 119
+ EQUB 125               \ Line ID: 120
+ EQUB 125               \ Line ID: 121
+ EQUB 125               \ Line ID: 122
+ EQUB 120               \ Line ID: 123
+ EQUB 125               \ Line ID: 124
+ EQUB 125               \ Line ID: 125
+ EQUB 125               \ Line ID: 126
+ EQUB 125               \ Line ID: 127
+ EQUB 125               \ Line ID: 128
+ EQUB 125               \ Line ID: 129
+ EQUB 125               \ Line ID: 130
+ EQUB 125               \ Line ID: 131
+ EQUB 125               \ Line ID: 132
+ EQUB 125               \ Line ID: 133
+ EQUB 125               \ Line ID: 134
+ EQUB 25                \ Line ID: 135
+ EQUB 25                \ Line ID: 136
+ EQUB 25                \ Line ID: 137
+ EQUB 100               \ Line ID: 138
+ EQUB 100               \ Line ID: 139
+ EQUB 100               \ Line ID: 140
+ EQUB 100               \ Line ID: 141
+ EQUB 100               \ Line ID: 142
+ EQUB 100               \ Line ID: 143
+ EQUB 100               \ Line ID: 144
+ EQUB 100               \ Line ID: 145
+ EQUB 100               \ Line ID: 146
+ EQUB 100               \ Line ID: 147
+ EQUB 100               \ Line ID: 148
+ EQUB 100               \ Line ID: 149
+ EQUB 120               \ Line ID: 150
+ EQUB 100               \ Line ID: 151
+ EQUB 100               \ Line ID: 152
+ EQUB 100               \ Line ID: 153
+ EQUB 100               \ Line ID: 154
+ EQUB 100               \ Line ID: 155
+ EQUB 100               \ Line ID: 156
+ EQUB 100               \ Line ID: 157
+ EQUB 100               \ Line ID: 158
+ EQUB 100               \ Line ID: 159
+ EQUB 100               \ Line ID: 160
+ EQUB 120               \ Line ID: 161
+ EQUB 120               \ Line ID: 162
+ EQUB 120               \ Line ID: 163
+ EQUB 120               \ Line ID: 164
+ EQUB 120               \ Line ID: 165
+ EQUB 120               \ Line ID: 166
+ EQUB 120               \ Line ID: 167
+ EQUB 120               \ Line ID: 168
+ EQUB 60                \ Line ID: 169
+ EQUB 60                \ Line ID: 170
+ EQUB 60                \ Line ID: 171
+ EQUB 60                \ Line ID: 172
+ EQUB 60                \ Line ID: 173
+ EQUB 60                \ Line ID: 174
+ EQUB 60                \ Line ID: 175
+ EQUB 60                \ Line ID: 176
+ EQUB 60                \ Line ID: 177
+ EQUB 60                \ Line ID: 178
+ EQUB 60                \ Line ID: 179
+ EQUB 60                \ Line ID: 180
+ EQUB 60                \ Line ID: 181
+ EQUB 60                \ Line ID: 182
+ EQUB 60                \ Line ID: 183
+ EQUB 60                \ Line ID: 184
+ EQUB 60                \ Line ID: 185
+ EQUB 120               \ Line ID: 186
+ EQUB 120               \ Line ID: 187
+ EQUB 120               \ Line ID: 188
+ EQUB 120               \ Line ID: 189
+ EQUB 120               \ Line ID: 190
+ EQUB 120               \ Line ID: 191
+
  EQUB &78, &3F, &0D, &03, &B1, &10, &2E, &64
  EQUB &6C, &70, &32, &20, &53, &54, &41, &26
  EQUB &37, &36, &0D, &03, &B2, &19, &2E, &64
@@ -14837,6 +15236,9 @@ NEXT
 \ ------------------------------------------------------------------------------
 \
 \ 
+\ The initial contents of the last five bytes of this table contains workspace
+\ noise and is ignored. It actually contains snippets of the original source
+\ code.
 \
 \ ******************************************************************************
 
@@ -14848,20 +15250,25 @@ NEXT
  EQUB &7D, &7D, &7D, &7D, &7D, &7D, &19, &5A
  EQUB &5A, &5A, &7D
 
-\ This is workspace noise, containing original assembly code
-
  EQUB &3A, &42, &4E, &45, &20
 
 \ ******************************************************************************
 \
 \       Name: lineBufferR
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Line buffer storage for the start x-coordinate (R)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This table stores information about lines that are drawn on-screen, so they
+\ can be quickly erased without having to spend precious time recalculating the
+\ line coordinates. The information is stored when a line is drawn by the
+\ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
+\ line is erased.
+\
+\ The initial contents of the buffer is just workspace noise and is ignored. It
+\ actually contains snippets of original source code.
 \
 \ ******************************************************************************
 
@@ -14884,13 +15291,20 @@ NEXT
 \
 \       Name: lineBufferW
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Line buffer storage for the max/min x-coordinate (W)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This table stores information about lines that are drawn on-screen, so they
+\ can be quickly erased without having to spend precious time recalculating the
+\ line coordinates. The information is stored when a line is drawn by the
+\ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
+\ line is erased.
 \
+\ The initial contents of the buffer is just workspace noise and is ignored. It
+\ actually contains snippets of original source code.
+
 \ ******************************************************************************
 
 .lineBufferW
@@ -14912,13 +15326,20 @@ NEXT
 \
 \       Name: lineBufferS
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Line buffer storage for the start y-coordinate (S)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This table stores information about lines that are drawn on-screen, so they
+\ can be quickly erased without having to spend precious time recalculating the
+\ line coordinates. The information is stored when a line is drawn by the
+\ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
+\ line is erased.
 \
+\ The initial contents of the buffer is just workspace noise and is ignored. It
+\ actually contains snippets of original source code.
+
 \ ******************************************************************************
 
 .lineBufferS
@@ -14940,13 +15361,20 @@ NEXT
 \
 \       Name: lineBufferG
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Line buffer storage for the max/min y-coordinate (G)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This table stores information about lines that are drawn on-screen, so they
+\ can be quickly erased without having to spend precious time recalculating the
+\ line coordinates. The information is stored when a line is drawn by the
+\ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
+\ line is erased.
 \
+\ The initial contents of the buffer is just workspace noise and is ignored. It
+\ actually contains snippets of original source code.
+
 \ ******************************************************************************
 
 .lineBufferG
@@ -14968,13 +15396,20 @@ NEXT
 \
 \       Name: lineBufferT
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Line buffer storage for the line's |x-delta| (T)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This table stores information about lines that are drawn on-screen, so they
+\ can be quickly erased without having to spend precious time recalculating the
+\ line coordinates. The information is stored when a line is drawn by the
+\ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
+\ line is erased.
 \
+\ The initial contents of the buffer is just workspace noise and is ignored. It
+\ actually contains snippets of original source code.
+
 \ ******************************************************************************
 
 .lineBufferT
@@ -14991,8 +15426,6 @@ NEXT
  EQUB &0D, &04, &56, &1F, &2E, &73, &75, &74
  EQUB &32, &20, &43, &4D, &50, &20, &46, &4C
  EQUB &44, &50, &54, &52, &2C, &58, &3A, &42
-
-\ End of workspace noise
 
 \ ******************************************************************************
 \
@@ -15025,31 +15458,21 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: lineEndPoint
+\       Name: lineEndPointId
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: The point ID for a line's end point
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given a line ID in X, lineEndPoint,X contains:
+\ This table contains the point ID for each line's end point.
 \
-\ The offset of the byte in L0400 that is zeroed in DrawCanopyView
-\
-\ The offset of the byte in L0400 that is zeroed in MainLoop (Part 14) when the
-\ line has been added to the linesToHide list
-\
-\ The value of M that is set in in L28B6 and passed to L0D01
-\
-\ The value of M that is set in DrawCanopyView and passed to DrawClippedLine and
-\ used as an index into xLineLo, xLineHi, yLineLo, yLineHi
-\
-\ The value of M that is set in IsLineVisible and passed to L2C95 and used as
-\ an index into xLineLo, xLineHi, yLineLo, yLineHi
+\ The table is indexed by line ID, so for line ID X, lineEndPointId,X contains
+\ the point ID of the line's end point.
 \
 \ ******************************************************************************
 
-.lineEndPoint
+.lineEndPointId
 
  EQUB &1E, &02, &03, &04, &01, &07, &09, &0B
  EQUB &0D, &0F, &11, &13, &3B, &72, &2A, &2B
@@ -15206,31 +15629,21 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: lineStartPoint
+\       Name: lineStartPointId
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: The point ID for a line's start point
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given a line ID in X, lineStartPoint,X contains:
+\ This table contains the point ID for each line's start point.
 \
-\ The offset of the byte in L0400 that is zeroed in DrawCanopyView
-\
-\ The offset of the byte in L0400 that is zeroed in MainLoop (Part 14) when the
-\ line has been added to the linesToHide list
-\
-\ The value of L and GG that is set in in L28B6 and passed to L0D01
-\
-\ The value of L that is set in DrawCanopyView and passed to DrawClippedLine and
-\ used as an index into xLineLo, xLineHi, yLineLo, yLineHi
-\
-\ The value of L that is set in IsLineVisible and passed to L2C95 and used as
-\ an index into xLineLo, xLineHi, yLineLo, yLineHi
+\ The table is indexed by line ID, so for line ID X, lineStartPointId,X contains
+\ the point ID of the line's start point.
 \
 \ ******************************************************************************
 
-.lineStartPoint
+.lineStartPointId
 
  EQUB &1F, &01, &02, &03, &04, &06, &08, &0A
  EQUB &0C, &0E, &10, &12, &72, &73, &29, &2A
@@ -15447,7 +15860,8 @@ NEXT
 
 .numberOfLines
 
- EQUB 193               \ The total number of 3D lines defined in the game
+ EQUB 193               \ The total number of lines defined in the game + 1,
+                        \ so there are 192 lines
 
 .L4208
 
@@ -15846,9 +16260,349 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: xObjectLo to L44F1
+\       Name: xObjectLo
 \       Type: Variable
-\   Category: 
+\   Category: Drawing lines
+\    Summary: Low byte of the x-coordinate for an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ The low byte of the x-coordinate for the object with ID X is at xObjectLo,X.
+\
+\ This is called XALO in the original source code.
+\
+\ ******************************************************************************
+
+.xObjectLo
+
+ EQUB &23
+ EQUB &66
+ EQUB &18
+ EQUB &DD
+ EQUB &33
+ EQUB &EF
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &4F
+ EQUB &58
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &EE
+ EQUB &AA
+ EQUB &88
+ EQUB &55
+ EQUB &77
+ EQUB &33
+ EQUB &77
+ EQUB &33
+ EQUB &66
+ EQUB &88
+ EQUB &DE
+ EQUB &66
+ EQUB &66
+ EQUB &55
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &40
+ EQUB &23
+ EQUB &33
+ EQUB &31
+ EQUB &3A
+ EQUB &42
+
+\ ******************************************************************************
+\
+\       Name: yObjectLo
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Low byte of the y-coordinate for an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ The low byte of the y-coordinate for the object with ID X is at yObjectLo,X.
+\
+\ ******************************************************************************
+
+.yObjectLo
+
+ EQUB &43
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &27
+ EQUB &20
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &23
+ EQUB &34
+ EQUB &3A
+ EQUB &4A
+ EQUB &4D
+
+\ ******************************************************************************
+\
+\       Name: zObjectLo
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Low byte of the z-coordinate for an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ The low byte of the y-coordinate for the object with ID X is at zObjectLo,X.
+\
+\ ******************************************************************************
+
+.zObjectLo
+
+ EQUB &50
+ EQUB &5C
+ EQUB &66
+ EQUB &33
+ EQUB &00
+ EQUB &11
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &2E
+ EQUB &73
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &A6
+ EQUB &52
+ EQUB &55
+ EQUB &99
+ EQUB &55
+ EQUB &BC
+ EQUB &56
+ EQUB &99
+ EQUB &F8
+ EQUB &77
+ EQUB &11
+ EQUB &CD
+ EQUB &55
+ EQUB &44
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &40
+ EQUB &20
+ EQUB &20
+ EQUB &20
+ EQUB &20
+ EQUB &20
+
+\ ******************************************************************************
+\
+\       Name: xObjectHi
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: High byte of the x-coordinate for an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ The high byte of the x-coordinate for the object with ID X is at xObjectHi,X.
+\
+\ This is called XAHI in the original source code.
+\
+\ ******************************************************************************
+
+.xObjectHi
+
+ EQUB &20
+ EQUB &C6
+ EQUB &4B
+ EQUB &45
+ EQUB &53
+ EQUB &8E
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &4D
+ EQUB &50
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &8E
+ EQUB &EA
+ EQUB &08
+ EQUB &25
+ EQUB &57
+ EQUB &13
+ EQUB &87
+ EQUB &E3
+ EQUB &86
+ EQUB &D8
+ EQUB &ED
+ EQUB &46
+ EQUB &86
+ EQUB &B5
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &04
+ EQUB &41
+ EQUB &20
+ EQUB &53
+ EQUB &49
+ EQUB &5A
+
+\ ******************************************************************************
+\
+\       Name: yObjectHi
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: High byte of the y-coordinate for an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ The high byte of the y-coordinate for the object with ID X is at yObjectHi,X.
+\
+\ ******************************************************************************
+
+.yObjectHi
+
+ EQUB &45
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &0D
+ EQUB &07
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &38
+ EQUB &0D
+ EQUB &07
+ EQUB &76
+ EQUB &1A
+
+\ ******************************************************************************
+\
+\       Name: zObjectHi
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: High byte of the z-coordinate for an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ The high byte of the z-coordinate for the object with ID X is at zObjectHi,X.
+\
+\ ******************************************************************************
+
+.zObjectHi
+
+ EQUB &2E
+ EQUB &44
+ EQUB &86
+ EQUB &63
+ EQUB &C0
+ EQUB &C1
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &5A
+ EQUB &52
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &EA
+ EQUB &D5
+ EQUB &65
+ EQUB &E9
+ EQUB &E5
+ EQUB &AB
+ EQUB &95
+ EQUB &99
+ EQUB &4D
+ EQUB &07
+ EQUB &41
+ EQUB &2C
+ EQUB &05
+ EQUB &74
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &00
+ EQUB &03
+ EQUB &41
+ EQUB &3A
+ EQUB &4C
+ EQUB &53
+ EQUB &52
+
+\ ******************************************************************************
+\
+\       Name: L44F0
+\       Type: Variable
+\   Category:
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15857,66 +16611,10 @@ NEXT
 \
 \ ******************************************************************************
 
-.xObjectLo
-
- EQUB &23               \ Called XALO in original source code
- EQUB &66, &18, &DD, &33, &EF, &00, &00, &00
- EQUB &00, &4F, &58, &00, &00, &00, &00, &EE
- EQUB &AA, &88, &55, &77, &33, &77, &33, &66
- EQUB &88, &DE, &66, &66, &55, &00, &00, &00
- EQUB &00, &40, &23, &33, &31, &3A, &42
-
-.yObjectLo
-
- EQUB &43, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &27, &20, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00
- EQUB &00, &00, &23, &34, &3A, &4A, &4D
-
-.zObjectLo
-
- EQUB &50
- EQUB &5C, &66, &33, &00, &11, &00, &00, &00
- EQUB &00, &2E, &73, &00, &00, &00, &00, &A6
- EQUB &52, &55, &99, &55, &BC, &56, &99, &F8
- EQUB &77, &11, &CD, &55, &44, &00, &00, &00
- EQUB &00, &40, &20, &20, &20, &20, &20
-
-.xObjectHi
-
- EQUB &20               \ Called XAHI in original source code
- EQUB &C6, &4B, &45, &53, &8E, &00, &00, &00
- EQUB &00, &4D, &50, &00, &00, &00, &00, &8E
- EQUB &EA, &08, &25, &57, &13, &87, &E3, &86
- EQUB &D8, &ED, &46, &86, &B5, &00, &00, &00
- EQUB &00, &04, &41, &20, &53, &49, &5A
-
-.yObjectHi
-
- EQUB &45, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &0D, &07, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00
- EQUB &00, &00, &38, &0D, &07, &76, &1A
-
-.zObjectHi
-
- EQUB &2E
- EQUB &44, &86, &63, &C0, &C1, &00, &00, &00
- EQUB &00, &5A, &52, &00, &00, &00, &00, &EA
- EQUB &D5, &65, &E9, &E5, &AB, &95, &99, &4D
- EQUB &07, &41, &2C, &05, &74, &00, &00, &00
- EQUB &00, &03, &41, &3A, &4C, &53, &52
-
 .L44F0
 
  EQUB &FB               \ List with list size in byte #0
                         \ Zeroed in ResetVariables
-
-.L44F1
 
  EQUB &FD, &FF, &F9, &FB, &F8, &FB, &FA, &53
  EQUB &52, &FF, &FE, &01, &41, &58, &0D
@@ -15948,41 +16646,215 @@ NEXT
 \
 \       Name: lineIdToObjectId
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Maps lines to objects
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The X-th entry in lineIdToObjectId contains the object ID of the line with ID
+\ X.
+\
+\ Line 0 is the horizon
+\ Lines 1-11 are the runway
+\ Lines 12-15 are bullets
 \
 \ ******************************************************************************
 
 .lineIdToObjectId
 
- EQUB &31, &01, &01, &01, &01, &01, &01, &01
- EQUB &01, &01, &01, &01, &01, &01, &01, &01
- EQUB &01, &01, &01, &01, &01, &22, &22, &40
- EQUB &22, &3E, &3F, &40, &22, &3E, &00, &00
- EQUB &3E, &22, &45, &08, &08, &50, &4D, &22
- EQUB &4F, &02, &59, &5A, &58, &02, &5B, &5C
- EQUB &5C, &5B, &5C, &02, &5B, &59, &5A, &5B
- EQUB &5C, &63, &63, &03, &63, &63, &02, &02
- EQUB &02, &68, &02, &6A, &6A, &6C, &04, &04
- EQUB &71, &04, &73, &04, &75, &9E, &77, &75
- EQUB &07, &78, &07, &07, &07, &78, &4F, &7E
- EQUB &7E, &06, &81, &06, &06, &06, &81, &0C
- EQUB &0D, &0E, &0F, &7F, &05, &05, &8F, &05
- EQUB &05, &90, &05, &92, &09, &92, &95, &03
- EQUB &99, &03, &03, &03, &03, &04, &04, &6A
- EQUB &9F, &13, &13, &13, &16, &14, &14, &14
- EQUB &10, &10, &10, &10, &11, &11, &11, &11
- EQUB &17, &17, &17, &17, &16, &16, &16, &16
- EQUB &15, &15, &15, &15, &15, &1D, &1D, &1D
- EQUB &1D, &18, &18, &18, &18, &C8, &C7, &12
- EQUB &12, &1B, &1B, &1B, &1B, &1C, &1C, &1C
- EQUB &1C, &19, &19, &19, &19, &1A, &1A, &1A
- EQUB &1A, &13, &DD, &DD, &DD, &1E, &1F, &DE
- EQUB &DE, &DE, &DE, &20, &E3, &E3, &E3, &E3
+ EQUB 9 + 40            \ Line ID:   0
+ EQUB 1                 \ Line ID:   1
+ EQUB 1                 \ Line ID:   2
+ EQUB 1                 \ Line ID:   3
+ EQUB 1                 \ Line ID:   4
+ EQUB 1                 \ Line ID:   5
+ EQUB 1                 \ Line ID:   6
+ EQUB 1                 \ Line ID:   7
+ EQUB 1                 \ Line ID:   8
+ EQUB 1                 \ Line ID:   9
+ EQUB 1                 \ Line ID:  10
+ EQUB 1                 \ Line ID:  11
+ EQUB 1                 \ Line ID:  12
+ EQUB 1                 \ Line ID:  13
+ EQUB 1                 \ Line ID:  14
+ EQUB 1                 \ Line ID:  15
+ EQUB 1                 \ Line ID:  16
+ EQUB 1                 \ Line ID:  17
+ EQUB 1                 \ Line ID:  18
+ EQUB 1                 \ Line ID:  19
+ EQUB 1                 \ Line ID:  20
+ EQUB 34                \ Line ID:  21
+ EQUB 34                \ Line ID:  22
+ EQUB 24 + 40           \ Line ID:  23
+ EQUB 34                \ Line ID:  24
+ EQUB 22 + 40           \ Line ID:  25
+ EQUB 23 + 40           \ Line ID:  26
+ EQUB 24 + 40           \ Line ID:  27
+ EQUB 34                \ Line ID:  28
+ EQUB 22 + 40           \ Line ID:  29
+ EQUB 0                 \ Line ID:  30
+ EQUB 0                 \ Line ID:  31
+ EQUB 22 + 40           \ Line ID:  32
+ EQUB 34                \ Line ID:  33
+ EQUB 29 + 40           \ Line ID:  34
+ EQUB 8                 \ Line ID:  35
+ EQUB 8                 \ Line ID:  36
+ EQUB 40 + 40           \ Line ID:  37
+ EQUB 37 + 40           \ Line ID:  38
+ EQUB 34                \ Line ID:  39
+ EQUB 39 + 40           \ Line ID:  40
+ EQUB 2                 \ Line ID:  41
+ EQUB 49 + 40           \ Line ID:  42
+ EQUB 50 + 40           \ Line ID:  43
+ EQUB 48 + 40           \ Line ID:  44
+ EQUB 2                 \ Line ID:  45
+ EQUB 51 + 40           \ Line ID:  46
+ EQUB 52 + 40           \ Line ID:  47
+ EQUB 52 + 40           \ Line ID:  48
+ EQUB 51 + 40           \ Line ID:  49
+ EQUB 52 + 40           \ Line ID:  50
+ EQUB 2                 \ Line ID:  51
+ EQUB 51 + 40           \ Line ID:  52
+ EQUB 49 + 40           \ Line ID:  53
+ EQUB 50 + 40           \ Line ID:  54
+ EQUB 51 + 40           \ Line ID:  55
+ EQUB 52 + 40           \ Line ID:  56
+ EQUB 59 + 40           \ Line ID:  57
+ EQUB 59 + 40           \ Line ID:  58
+ EQUB 3                 \ Line ID:  59
+ EQUB 59 + 40           \ Line ID:  60
+ EQUB 59 + 40           \ Line ID:  61
+ EQUB 2                 \ Line ID:  62
+ EQUB 2                 \ Line ID:  63
+ EQUB 2                 \ Line ID:  64
+ EQUB 64 + 40           \ Line ID:  65
+ EQUB 2                 \ Line ID:  66
+ EQUB 66 + 40           \ Line ID:  67
+ EQUB 66 + 40           \ Line ID:  68
+ EQUB 68 + 40           \ Line ID:  69
+ EQUB 4                 \ Line ID:  70
+ EQUB 4                 \ Line ID:  71
+ EQUB 73 + 40           \ Line ID:  72
+ EQUB 4                 \ Line ID:  73
+ EQUB 75 + 40           \ Line ID:  74
+ EQUB 4                 \ Line ID:  75
+ EQUB 77 + 40           \ Line ID:  76
+ EQUB 118 + 40          \ Line ID:  77
+ EQUB 79 + 40           \ Line ID:  78
+ EQUB 77 + 40           \ Line ID:  79
+ EQUB 7                 \ Line ID:  80
+ EQUB 80 + 40           \ Line ID:  81
+ EQUB 7                 \ Line ID:  82
+ EQUB 7                 \ Line ID:  83
+ EQUB 7                 \ Line ID:  84
+ EQUB 80 + 40           \ Line ID:  85
+ EQUB 39 + 40           \ Line ID:  86
+ EQUB 86 + 40           \ Line ID:  87
+ EQUB 86 + 40           \ Line ID:  88
+ EQUB 6                 \ Line ID:  89
+ EQUB 89 + 40           \ Line ID:  90
+ EQUB 6                 \ Line ID:  91
+ EQUB 6                 \ Line ID:  92
+ EQUB 6                 \ Line ID:  93
+ EQUB 89 + 40           \ Line ID:  94
+ EQUB 12                \ Line ID:  95
+ EQUB 13                \ Line ID:  96
+ EQUB 14                \ Line ID:  97
+ EQUB 15                \ Line ID:  98
+ EQUB 87 + 40           \ Line ID:  99
+ EQUB 5                 \ Line ID: 100
+ EQUB 5                 \ Line ID: 101
+ EQUB 103 + 40          \ Line ID: 102
+ EQUB 5                 \ Line ID: 103
+ EQUB 5                 \ Line ID: 104
+ EQUB 104 + 40          \ Line ID: 105
+ EQUB 5                 \ Line ID: 106
+ EQUB 106 + 40          \ Line ID: 107
+ EQUB 9                 \ Line ID: 108
+ EQUB 106 + 40          \ Line ID: 109
+ EQUB 109 + 40          \ Line ID: 110
+ EQUB 3                 \ Line ID: 111
+ EQUB 113 + 40          \ Line ID: 112
+ EQUB 3                 \ Line ID: 113
+ EQUB 3                 \ Line ID: 114
+ EQUB 3                 \ Line ID: 115
+ EQUB 3                 \ Line ID: 116
+ EQUB 4                 \ Line ID: 117
+ EQUB 4                 \ Line ID: 118
+ EQUB 66 + 40           \ Line ID: 119
+ EQUB 119 + 40          \ Line ID: 120
+ EQUB 19                \ Line ID: 121
+ EQUB 19                \ Line ID: 122
+ EQUB 19                \ Line ID: 123
+ EQUB 22                \ Line ID: 124
+ EQUB 20                \ Line ID: 125
+ EQUB 20                \ Line ID: 126
+ EQUB 20                \ Line ID: 127
+ EQUB 16                \ Line ID: 128
+ EQUB 16                \ Line ID: 129
+ EQUB 16                \ Line ID: 130
+ EQUB 16                \ Line ID: 131
+ EQUB 17                \ Line ID: 132
+ EQUB 17                \ Line ID: 133
+ EQUB 17                \ Line ID: 134
+ EQUB 17                \ Line ID: 135
+ EQUB 23                \ Line ID: 136
+ EQUB 23                \ Line ID: 137
+ EQUB 23                \ Line ID: 138
+ EQUB 23                \ Line ID: 139
+ EQUB 22                \ Line ID: 140
+ EQUB 22                \ Line ID: 141
+ EQUB 22                \ Line ID: 142
+ EQUB 22                \ Line ID: 143
+ EQUB 21                \ Line ID: 144
+ EQUB 21                \ Line ID: 145
+ EQUB 21                \ Line ID: 146
+ EQUB 21                \ Line ID: 147
+ EQUB 21                \ Line ID: 148
+ EQUB 29                \ Line ID: 149
+ EQUB 29                \ Line ID: 150
+ EQUB 29                \ Line ID: 151
+ EQUB 29                \ Line ID: 152
+ EQUB 24                \ Line ID: 153
+ EQUB 24                \ Line ID: 154
+ EQUB 24                \ Line ID: 155
+ EQUB 24                \ Line ID: 156
+ EQUB 160 + 40          \ Line ID: 157
+ EQUB 159 + 40          \ Line ID: 158
+ EQUB 18                \ Line ID: 159
+ EQUB 18                \ Line ID: 160
+ EQUB 27                \ Line ID: 161
+ EQUB 27                \ Line ID: 162
+ EQUB 27                \ Line ID: 163
+ EQUB 27                \ Line ID: 164
+ EQUB 28                \ Line ID: 165
+ EQUB 28                \ Line ID: 166
+ EQUB 28                \ Line ID: 167
+ EQUB 28                \ Line ID: 168
+ EQUB 25                \ Line ID: 169
+ EQUB 25                \ Line ID: 170
+ EQUB 25                \ Line ID: 171
+ EQUB 25                \ Line ID: 172
+ EQUB 26                \ Line ID: 173
+ EQUB 26                \ Line ID: 174
+ EQUB 26                \ Line ID: 175
+ EQUB 26                \ Line ID: 176
+ EQUB 19                \ Line ID: 177
+ EQUB 181 + 40          \ Line ID: 178
+ EQUB 181 + 40          \ Line ID: 179
+ EQUB 181 + 40          \ Line ID: 180
+ EQUB 30                \ Line ID: 181
+ EQUB 31                \ Line ID: 182
+ EQUB 182 + 40          \ Line ID: 183
+ EQUB 182 + 40          \ Line ID: 184
+ EQUB 182 + 40          \ Line ID: 185
+ EQUB 182 + 40          \ Line ID: 186
+ EQUB 32                \ Line ID: 187
+ EQUB 187 + 40          \ Line ID: 188
+ EQUB 187 + 40          \ Line ID: 189
+ EQUB 187 + 40          \ Line ID: 190
+ EQUB 187 + 40          \ Line ID: 191
+
  EQUB &21, &EF, &ED, &EF, &EF, &E8, &ED, &E8
  EQUB &EF, &4F, &50, &F5, &F3, &50, &F5, &F5
  EQUB &F6, &F3, &F4, &08, &08, &09, &94, &09
@@ -16364,33 +17236,35 @@ NEXT
 
  RTS                    \ Return from the subroutine
 
-\ ******************************************************************************
-\
-\       Name: L4891
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
- EQUB &20, &20, &20, &4C, &44, &41, &26, &38
- EQUB &36, &3A, &43, &4C, &43, &3A, &41
+ EQUB &20, &20          \ These bytes appear to be unused. They actually contain
+ EQUB &20, &4C          \ snippets of the original source code
+ EQUB &44, &41
+ EQUB &26, &38
+ EQUB &36, &3A
+ EQUB &43, &4C
+ EQUB &43, &3A
+ EQUB &41
 
 \ ******************************************************************************
 \
 \       Name: lineBufferV
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: Line buffer storage for the line direction (V)
 \
 \ ------------------------------------------------------------------------------
 \
-\ This variable contains workspace noise that disassembles into code that is
-\ never called:
+\ This table stores information about lines that are drawn on-screen, so they
+\ can be quickly erased without having to spend precious time recalculating the
+\ line coordinates. The information is stored when a line is drawn by the
+\ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
+\ line is erased.
+\
+\ Interestingly, in the original game binary, this variable contains workspace
+\ noise that disassembles into code that is never called and is totally ignored,
+\ and which doesn't appear in the main game code. It contains slightly different
+\ versions of the DrawCanopyCorners and RemoveScore routines, so perhaps this is
+\ a glimpse into early code that didn't make it into the final game?
 \
 \ .L48A0
 \ 
@@ -16398,13 +17272,13 @@ NEXT
 \ 
 \ .L48A2
 \ 
-\  LDA #&77
+\  LDA #%01110111
 \  STA P
-\  LDA #&88
+\  LDA #%10001000
 \  STA Q
-\  LDA #&EE
+\  LDA #%11101110
 \  STA R
-\  LDA #&11
+\  LDA #%00010001
 \  STA S
 \ 
 \ .L48B2
@@ -16413,10 +17287,10 @@ NEXT
 \ 
 \ .L48B4
 \ 
-\  LDA row01_block00_0,X
+\  LDA row1_block0_0,X
 \  AND P
 \  ORA Q
-\  STA row01_block00_0,X
+\  STA row1_block0_0,X
 \  LDA row1_block38_0,X
 \  AND R
 \  ORA S
@@ -16436,8 +17310,8 @@ NEXT
 \ 
 \ .L48D9
 \ 
-\  LDY #&5B
-\  LDX #&C0
+\  LDY #HI(row3_block0_0)
+\  LDX #LO(row3_block0_0)
 \  LDA #8
 \  STA R
 \  LDA #0
@@ -16448,71 +17322,35 @@ NEXT
 
 .lineBufferV
 
- EQUB &A2, &07
- EQUB &A9, &77
- EQUB &85, &70
- EQUB &A9, &88
- EQUB &85, &71
- EQUB &A9, &EE
- EQUB &85, &72
- EQUB &A9, &11
- EQUB &85, &73
- EQUB &A0, &01
- EQUB &BD, &40
- EQUB &59, &25
- EQUB &70, &05
- EQUB &71, &9D
- EQUB &40, &59
- EQUB &BD, &68
- EQUB &5A, &25
- EQUB &72, &05
- EQUB &73, &9D
- EQUB &68, &5A
- EQUB &CA, &88
- EQUB &10, &E8
- EQUB &46, &72
- EQUB &46, &73
- EQUB &46, &70
- EQUB &46, &71
- EQUB &E0, &FF
- EQUB &D0, &DA
- EQUB &60, &A0
- EQUB &5B, &A2
- EQUB &C0, &A9
- EQUB &08, &85
- EQUB &72, &A9
- EQUB &00, &20
- EQUB &AB, &2E
- EQUB &60
+ EQUB &A2, &07, &A9, &77, &85, &70, &A9, &88
+ EQUB &85, &71, &A9, &EE, &85, &72, &A9, &11
+ EQUB &85, &73, &A0, &01, &BD, &40, &59, &25
+ EQUB &70, &05, &71, &9D, &40, &59, &BD, &68
+ EQUB &5A, &25, &72, &05, &73, &9D, &68, &5A
+ EQUB &CA, &88, &10, &E8, &46, &72, &46, &73
+ EQUB &46, &70, &46, &71, &E0, &FF, &D0, &DA
+ EQUB &60, &A0, &5B, &A2, &C0, &A9, &08, &85
+ EQUB &72, &A9, &00, &20, &AB, &2E, &60, &10
+ EQUB &0F, &2E, &53, &54, &49, &50, &20, &4C
+ EQUB &44, &58, &23, &32, &0D, &09, &1A, &2A
+ EQUB &2E, &73, &74, &69, &31, &20, &4C, &44
 
 \ ******************************************************************************
 \
-\       Name: L48E7 to L4AFC
+\       Name: zPointHi
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Drawing lines
+\    Summary: High byte of the z-coordinate for a point
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The high byte of the z-coordinate for the point with ID X is at zPointHi,X.
 \
 \ ******************************************************************************
 
-\ This is workspace noise, containing original assembly code
-
-.L48E7
-
- EQUB &10, &0F, &2E, &53, &54, &49, &50, &20
- EQUB &4C, &44, &58, &23, &32, &0D, &09, &1A
- EQUB &2A, &2E, &73, &74, &69, &31, &20, &4C
- EQUB &44
-
-.zLineHi
+.zPointHi
 
  EQUB &41, &20, &58, &41, &4C, &4F
-
-.L4906
-
  EQUB &2C, &59, &3A, &43, &4C, &43, &3A, &41
  EQUB &44, &43, &20, &44, &54, &49, &50, &3A
  EQUB &53, &54, &41, &26, &37, &37, &2C, &58
@@ -16545,21 +17383,38 @@ NEXT
  EQUB &43, &4C, &43, &3A, &41, &44, &43, &23
  EQUB &34, &30, &3A, &54, &41, &59
 
+\ ******************************************************************************
+\
+\       Name: L49FC
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L49FC
 
  EQUB &0D, &09, &7E, &28
 
-.xLineHi
+\ ******************************************************************************
+\
+\       Name: xPointHi
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: High byte of the x-coordinate for a point
+\
+\ ------------------------------------------------------------------------------
+\
+\ The high byte of the x-coordinate for the point with ID X is at xPointHi,X.
+\
+\ ******************************************************************************
 
- EQUB &20               \ Set to 1 in ResetVariables, ResetRadar
+.xPointHi
 
- EQUB &20, &20, &20, &20, &20, &4C, &44
+ EQUB &20, &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &58, &41, &4C, &4F, &2C, &59
  EQUB &3A, &53, &45, &43, &3A, &53, &42, &43
  EQUB &26, &37, &37, &2C, &58, &3A, &53
-
-.L4A1F
-
  EQUB &54, &41, &26, &37, &34, &0D, &09, &88
  EQUB &26, &20, &20, &20, &20, &20, &20, &4C
  EQUB &44, &41, &20, &58, &41, &48, &49, &2C
@@ -16589,11 +17444,18 @@ NEXT
  EQUB &30, &3A, &53, &54, &41, &26, &37, &32
  EQUB &0D, &09, &CE, &1C, &20
 
+\ ******************************************************************************
+\
+\       Name: L4AFC
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4AFC
 
  EQUB &20, &20, &20, &20
-
-\ End of workspace noise
 
 \ ******************************************************************************
 \
@@ -16609,7 +17471,7 @@ NEXT
 \   FireGuns            X = &ED, Y = &60
 \   L2CD3               X = &A8, Y = 0
 \   L3053               X = &A8, Y = 0
-\   L31BD               X = &A8, Y = range
+\   IsRunwayVisible     X = &A8, Y = range
 \   L4CB0               X = &A8, Y = range
 \   ApplyFlightModel    X = &89, Y = &FF
 \                       X = 0,   Y = &FE
@@ -16619,17 +17481,17 @@ NEXT
 .CopyFrom0C00
 
  LDA &0C00,X
- STA xLineLo,Y
+ STA xPointLo,Y
  LDA &0C01,X
- STA yLineLo,Y
+ STA yPointLo,Y
  LDA &0C02,X
- STA zLineLo,Y
+ STA zPointLo,Y
  LDA &0C10,X
- STA xLineHi,Y
+ STA xPointHi,Y
  LDA &0C11,X
- STA yLineHi,Y
+ STA yPointHi,Y
  LDA &0C12,X
- STA zLineHi,Y
+ STA zPointHi,Y
  RTS
 
 \ ******************************************************************************
@@ -16643,7 +17505,7 @@ NEXT
 \
 \ Called with:
 \
-\   L31BD               X = &A8, Y = 5
+\   IsRunwayVisible     X = &A8, Y = 5
 \   L4CB0               X = &A8, Y = range
 \   ApplyFlightModel    X = 3,   Y = &FF
 \                       X = &83, Y = &FC
@@ -16653,17 +17515,17 @@ NEXT
 
 .CopyTo0C00
 
- LDA xLineLo,Y
+ LDA xPointLo,Y
  STA &0C00,X
- LDA yLineLo,Y
+ LDA yPointLo,Y
  STA &0C01,X
- LDA zLineLo,Y
+ LDA zPointLo,Y
  STA &0C02,X
- LDA xLineHi,Y
+ LDA xPointHi,Y
  STA &0C10,X
- LDA yLineHi,Y
+ LDA yPointHi,Y
  STA &0C11,X
- LDA zLineHi,Y
+ LDA zPointHi,Y
  STA &0C12,X
  RTS
 
@@ -16679,7 +17541,7 @@ NEXT
 \ Called with:
 \
 \   FireGuns            X = &E4
-\   L2C95               X = M
+\   IsHorizonVisible    X = M
 \                       X = L
 \   ApplyFlightModel    X = &FD
 \
@@ -16706,12 +17568,12 @@ NEXT
 
 .L4B4C
 
- STA xLineLo,X
- STA xLineHi,X
- STA yLineLo,X
- STA yLineHi,X
- STA zLineLo,X
- STA zLineHi,X
+ STA xPointLo,X
+ STA xPointHi,X
+ STA yPointLo,X
+ STA yPointHi,X
+ STA zPointLo,X
+ STA zPointHi,X
  RTS
 
 \ ******************************************************************************
@@ -16729,7 +17591,7 @@ NEXT
 
 .CheckDistance
 
- LDA xLineHi,Y
+ LDA xPointHi,Y
  BPL L4B66
 
  EOR #&FF
@@ -16739,7 +17601,7 @@ NEXT
  CMP visibleDistance,X
  BCS L4B83
 
- LDA yLineHi,Y
+ LDA yPointHi,Y
  BPL L4B72
 
  EOR #&FF
@@ -16749,7 +17611,7 @@ NEXT
  CMP visibleDistance,X
  BCS L4B83
 
- LDA zLineHi,Y
+ LDA zPointHi,Y
  BPL L4B7E
 
  EOR #&FF
@@ -17211,7 +18073,7 @@ NEXT
  JSR L4D77
 
  TAX
- LDA L44F1,X
+ LDA L44F0+1,X
  LSR A
  AND P
  BCC L4CF4
@@ -17347,7 +18209,7 @@ NEXT
                         \ counter (SHEILA &44) which increments 1000 times a
                         \ second so this will be pretty random
 
- STA L44F1,X
+ STA L44F0+1,X
 
 \ ******************************************************************************
 \
@@ -17682,7 +18544,7 @@ NEXT
 \       Name: DrawGunSights
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Draw or erase the gun sights
+\    Summary: Draw the canopy corners and the gun sights, if shown
 \
 \ ******************************************************************************
 
@@ -18597,7 +19459,7 @@ NEXT
  JSR L4D77
 
  TAY
- LDA L44F1,Y
+ LDA L44F0+1,Y
  STA P
  LDA L368C
  CMP #&10
