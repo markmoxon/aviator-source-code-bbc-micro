@@ -234,15 +234,13 @@ ORG &0070
                         \
                         \ Set to 0 in ResetLineLists
 
-.lineID
+.lineId
 
  SKIP 1                 \ The line ID, used to pass lines to routines
                         \
                         \ Line 0 is the horizon
                         \ Lines 1-11 are the runway
                         \ Lines 12-15 are bullets
-                        \
-                        \ Lines are mapped to objects via lineIdToObjectId
 
 .lineCounter
 
@@ -344,6 +342,10 @@ linesToShow = &0500
 L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
                         \ size in L05C8
                         \
+                        \ Point IDs (?) are added in IsLineVisible part 3 when
+                        \ those points are part of a linked object - only points
+                        \ that we haven't already processed are added
+                        \
                         \ Zeroed in ResetVariables
 
 \ ******************************************************************************
@@ -427,9 +429,6 @@ L0AFD = &0AFD
 \ ******************************************************************************
 
 yPointHi = &0B00
-
-L0BFC = &0BFC
-L0BFD = &0BFD
 
 \ ******************************************************************************
 \
@@ -918,7 +917,7 @@ ORG &0C00
                         \
                         \   * 30 to 33 = bullets
                         \
-                        \ Lines are mapped to objects via lineIdToObjectId
+                        \ Points are mapped to objects via pointToObjectId
 
 .pressingTab            \ Bit 7 determines whether TAB is being pressed
                         \
@@ -2577,7 +2576,7 @@ ORG CODE%
 \       Name: DrawClippedLine (Part 1 of 6)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: Calculate the line deltas
+\    Summary: Clip a line to fit on-screen, starting with the line deltas
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4578,12 +4577,22 @@ ORG CODE%
 
 .AbortLine
 
- TSX                    \ Remove two bytes from the top of the stack, so the
- INX                    \ RTS returns to the caller's caller, i.e. the caller
- INX                    \ of DrawClippedLine (DrawCanopyView or DrawHalfHorizon)
- TXS                    \ so this aborts the drawing of this line
+ TSX                    \ Remove two bytes from the top of the stack, which
+ INX                    \ removes the return address that was put there by the
+ INX                    \ last JSR instruction. This means that the RTS below
+ TXS                    \ jumps two levels up the call stack, rather than one,
+                        \ so we return to the subroutine that called the
+                        \ subroutine that called ClipBestEndOfLine. The only
+                        \ call to ClipBestEndOfLine is in the DrawClippedLine
+                        \ routine, and the only call to DrawClippedLine is in
+                        \ DrawCanopyView, so this ensures that the RTS below
+                        \ returns us to to DrawCanopyView without drawing the
+                        \ line and without leaving anything on the stack
+                        \
+                        \ In short, this makes the RTS abort the drawing of this
+                        \ line
 
- RTS                    \ Return to the caller's caller
+ RTS                    \ Return to the DrawCanopyView routine
 
 \ ******************************************************************************
 \
@@ -5742,7 +5751,11 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   L0CCB
+\
+\   L0CCF
 \
 \ ******************************************************************************
 
@@ -9877,7 +9890,7 @@ ORG CODE%
 
  LDX #&ED
  LDY #&60
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  LDY #&0C
  LDX #&60
@@ -11059,12 +11072,12 @@ ORG CODE%
 
                         \ Now to process the line
 
- LDX lineStartPointId,Y \ Set X to this line's start point ID from lineStartPointId
+ LDX lineStartPointId,Y \ Set X to the ID of this line's start point
 
  LDA #0                 \ Zero the X-th byte of L0400
  STA L0400,X
 
- LDX lineEndPointId,Y   \ Set X to this line's end point ID from lineEndPointId
+ LDX lineEndPointId,Y   \ Set X to the ID of this line's end point
 
  STA L0400,X            \ Zero the X-th byte of L0400
 
@@ -11096,9 +11109,9 @@ ORG CODE%
 
 .upll1
 
- LDX lineCounter        \ Set lineID to the ID of the next line in the
+ LDX lineCounter        \ Set lineId to the ID of the next line in the
  LDA linesToShow,X      \ linesToShow list
- STA lineID
+ STA lineId
 
  LDA #1                 \ Set HH = 1, so in the following call to IsLineVisible
  STA HH                 \ we do not check the line's distance against
@@ -11107,7 +11120,7 @@ ORG CODE%
  JSR IsLineVisible      \ Check whether this line is visible, returning the
                         \ result in showLine
 
- LDA lineID             \ If lineID = 0, then this is the runway, so skip the
+ LDA lineId             \ If lineId = 0, then this is the runway, so skip the
  BEQ upll2              \ following instruction to keep the line in the list
 
  LDX showLine           \ If showLine is non-zero then this line is not visible,
@@ -11185,7 +11198,7 @@ ORG CODE%
 
  LDX lineCounter
  LDY linesToShow,X
- STY lineID
+ STY lineId
  LDX lineStartPointId,Y
  STX GG
  STX L
@@ -11220,13 +11233,13 @@ ORG CODE%
 
  INC linesToShowPointer
  LDX linesToShowPointer
- LDA lineID
+ LDA lineId
  STA linesToShow,X
  JMP L291B
 
 .L2910
 
- LDA lineID
+ LDA lineId
  BEQ L2904
 
  INC linesToHideEnd     \ Increment linesToHideEnd to point to the next free
@@ -11280,6 +11293,7 @@ ORG CODE%
 .L293A
 
  LDA linesToHidePointer
+
  CMP linesToHideEnd
  BEQ IsLineVisible-1
 
@@ -11288,7 +11302,7 @@ ORG CODE%
  STA linesToHidePointer
  TAX
  LDA linesToHide,X
- STA lineID
+ STA lineId
  CMP #&3C
  BEQ L293A
 
@@ -11309,7 +11323,7 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   lineID              The line ID to process
+\   lineId              The line ID to process
 \
 \ ******************************************************************************
 
@@ -11322,7 +11336,7 @@ ORG CODE%
  JSR IsLineVisible      \ Check whether this line is visible, returning the
                         \ result in showLine
 
- LDA lineID             \ Fetch the line ID into A
+ LDA lineId             \ Fetch the line ID into A
 
  LDX showLine           \ If showLine = 0 then the line is visible, so jump down
  BEQ addl1              \ to addl1 to add the line to the linesToShow list
@@ -11358,27 +11372,31 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 1 of )
+\       Name: IsLineVisible (Part 1 of 7)
 \       Type: Subroutine
-\   Category: Drawing lines
-\    Summary: 
+\   Category: Visibility
+\    Summary: Check whether a line is visible, starting with the horizon
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   lineID              The line ID of the line to check
+\   lineId              The line ID of the line to check
 \
 \   HH                  Determines whether we check for distance:
 \
-\                         * 0 = check the line's distance against visibleDistance
+\                         * 0 = check the line's distance against the maximum
+\                               visible distance in visibleDistance
 \
 \                         * Non-zero = skip the distance check
 \
 \ Returns:
 \
-\   showLine            0 = line is visible
-\                       Non-zero = line is not visible
+\   showLine            Whether this line is visible:
+\
+\                         * 0 = line is visible
+\
+\                         * Non-zero = line is not visible
 \
 \ Other entry points:
 \
@@ -11394,22 +11412,22 @@ ORG CODE%
 
  STA L0CBF              \ Set L0CBF = 0
 
- LDX lineID             \ Set X = lineID, so X contains the ID of the line we
+ LDX lineId             \ Set X = lineId, so X contains the ID of the line we
                         \ want to check for visibility
 
  LDY lineEndPointId,X   \ Set M to the point ID of the line's end point, which
- STY M                  \ is in the lineID-th entry of lineEndPointId
+ STY M                  \ is in the lineId-th entry of lineEndPointId
 
  LDY lineStartPointId,X \ Set L to the point ID for the line's start point,
- STY L                  \ which is in the lineID-th entry of lineStartPointId
+ STY L                  \ which is in the lineId-th entry of lineStartPointId
 
- CPX #12                \ If lineID >= 12, jump to lvis2
+ CPX #12                \ If lineId >= 12, jump to lvis2
  BCS lvis2
 
- CPX #0                 \ If lineID is not zero, jump to lvis1
+ CPX #0                 \ If lineId is not zero, jump to lvis1
  BNE lvis1
 
-                        \ If we get here then lineID is 0, so this is the
+                        \ If we get here then lineId is 0, so this is the
                         \ horizon
 
  JSR IsHorizonVisible   \ Check whether the horizon is visible and set showLine
@@ -11419,16 +11437,16 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 2 of )
+\       Name: IsLineVisible (Part 2 of 7)
 \       Type: Subroutine
-\   Category: Drawing lines
-\    Summary: 
+\   Category: Visibility
+\    Summary: Check whether the runway is visible
 \
 \ ******************************************************************************
 
 .lvis1
 
-                        \ If we get here then lineID is in the range 1 to 11,
+                        \ If we get here then lineId is in the range 1 to 11,
                         \ so this is the runway
 
  JSR IsRunwayVisible    \ Check whether this runway line is visible and set
@@ -11439,16 +11457,17 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 3 of )
+\       Name: IsLineVisible (Part 3 of 7)
 \       Type: Subroutine
-\   Category: Drawing lines
-\    Summary: 
+\   Category: Visibility
+\    Summary: If a line is part of a multi-point object, extract the other
+\             points in the line so we can check them all
 \
 \ ******************************************************************************
 
 .lvis2
 
-                        \ If we get here, lineID >= 12 and Y contains the point
+                        \ If we get here, lineId >= 12 and Y contains the point
                         \ ID for the line's start point
                         \
                         \ We now run through the following process twice, first
@@ -11464,40 +11483,61 @@ ORG CODE%
  BPL lvis4              \ following instruction
 
  JMP lvis17             \ Bit 7 of the point's L0400 entry is set, which means
-                        \ we have already checked this line, so jump to lvis17
+                        \ we have already checked this point, so jump to lvis17
                         \ to do the distance and z-coordinate tests
 
 .lvis4
 
-                        \ We get here if lineID >= 12 and we haven't already
-                        \ checked this point
+                        \ We get here if lineId >= 12 and we haven't already
+                        \ checked the point whose ID is in Y
 
- TYA                    \ Store the point ID for the point on the stack
- PHA
-
- STA pointId            \ Store the point ID for the point in pointId
+ TYA                    \ Store the point ID of this point on the stack and in
+ PHA                    \ pointId. We are about to check whether this point is
+ STA pointId            \ part of a multi-point line, and if so we're going to
+                        \ add the IDs of all the other points in the line to
+                        \ the stack and then work our way through the stacked
+                        \ values, checking the visibility for each of them
+                        \
+                        \ Adding the starting point ID to the stack and to
+                        \ pointId at the same time lets us use this ID as a
+                        \ backstop - in other words, we'll know we have
+                        \ processed all the other point IDs that we added to
+                        \ the stack when we pull a value off the stack that
+                        \ matches the value of pointId (see parts 5 and 6 to
+                        \ see this in action)
 
 .lvis5
 
- LDA lineIdToObjectId,Y \ Set A to the object ID for the object containing this
-                        \ line
+ LDA pointToObjectId,Y  \ Fetch the ID of the object containing this point
 
- CMP #40                \ If objectID < 40, jump to lvis8
- BCC lvis8
+ CMP #40                \ If object ID < 40 then this point does not link to
+ BCC lvis8              \ another point, so jump to lvis8 to check the
+                        \ visibility of this point
+
+                        \ If we get here then this point links to another point
+                        \ in the object table, so we follow the links and add
+                        \ all of the point IDs to the stack and to the L05C8
+                        \ list, looping back until we reach the last point, at
+                        \ which point we jump to lvis8 with a stack full of
+                        \ points
 
  SEC                    \ Subtract 40 from A to get the point ID of the new
  SBC #40                \ point to check
 
  STA L0CCF              \ Store the new point's ID in L0CCF
 
- TAY                    \ Store the new point's ID in Y
+ TAY                    \ Copy the new point's ID into Y so we can use it as an
+                        \ an index into L0400
 
- LDA L0400,Y            \ If bit 7 of the new point's L0400 entry is set, jump
- BMI lvis14             \ down to lvis14
+ LDA L0400,Y            \ If bit 7 of the new point's L0400 entry is set, then
+ BMI lvis14             \ we have already checked this new point, which means
+                        \ we have already processed the rest of the points in
+                        \ the linked object, so jump down to lvis14 to check
+                        \ the points we added to the stack
 
- TYA                    \ Set A = the new point's point ID
+ TYA                    \ Set A = the new point's ID
 
- PHA                    \ Store the new point's point ID on the stack
+ PHA                    \ Store the new point's ID on the stack
 
  LDX L05C8              \ If L05C8 >= 49, then there are 48 values in the L05C8
  CPX #49                \ list, so jump to lvis11 to set this line as not being
@@ -11507,162 +11547,202 @@ ORG CODE%
                         \ of values in the list, as we are about to add a new
                         \ entry to the end of the list
 
- LDX L05C8              \ Add A, the new point's point ID, to the end of the
- STA L05C8,X            \ L05C8 list
+ LDX L05C8              \ Add A, the new point's ID, to the end of the L05C8
+ STA L05C8,X            \ list
 
  BNE lvis5              \ Jump back to lvis5 to recurse through the new point
                         \ (this BNE is effectively a JMP as A is is never zero,
-                        \ because lineIdToObjectId does not contain a value of
+                        \ because pointToObjectId does not contain a value of
                         \ 40)
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 4 of )
+\       Name: IsLineVisible (Part 4 of 7)
 \       Type: Subroutine
-\   Category: Drawing lines
-\    Summary: 
+\   Category: Visibility
+\    Summary: Check the visibility of the bullets
 \
 \ ******************************************************************************
 
 .lvis6
 
- PLA
+                        \ If we get here then the point is not part of a linked
+                        \ object, and object ID is in the range 12 to 15, so
+                        \ this is a bullet line
+
+ PLA                    \ Pull the point ID from the stack and store it in GG
  STA GG
 
- LDA L04D8,Y
- BMI lvis7
+ LDA L04D8,Y            \ If bit 7 of the point's L04D8 entry is set, jump to
+ BMI lvis7              \ lvis16 via lvis7
 
- LDA #%10000000         \ Set showLine so the line is not in view
+                        \ If we get here then bit 7 of the point's L04D8 entry
+                        \ is clear
+
+ LDA #%10000000         \ Set showLine to say that the line is not in view
  STA showLine
 
  RTS                    \ Return from the subroutine
 
 .lvis7
 
- JMP lvis16
+ JMP lvis16             \ Jump down to lvis16 with the next point ID in GG, to
+                        \ check distance and z-coordinates and return the final
+                        \ result
+
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 5 of 7)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
 
 .lvis8
 
-                        \ If we get here then the objectID for this line is < 40
+                        \ If we get here then the point is either the last one
+                        \ in a linked object, or it's not part of a linked
+                        \ object, and the point's object ID in A is < 40
 
- TAY
+ TAY                    \ Store the object ID in objectId
  STY objectId
 
- CMP #16
- BCS lvis9
+ CMP #16                \ If the object ID >= 16, jump to lvis9 to skip the
+ BCS lvis9              \ following
 
- CMP #12
- BCS lvis6
+ CMP #12                \ If the object ID >= 12, then the object ID is in the
+ BCS lvis6              \ range 12 to 15, which means it's a bullet line, so
+                        \ jump to lvis6 to work out its visibility
 
 .lvis9
 
- LDA L04D8,Y
+ LDA L04D8,Y            \ Fetch the object's L04D8 entry
 
- AND #%01000000
- BNE lvis10
+ AND #%01000000         \ If bit 6 of the object's L04D8 entry is set, skip the
+ BNE lvis10             \ following
 
- JSR L2A8C
+ JSR L2A8C              \ (This sets bit 6 of the object's L04D8 entry and
+                        \ sets L0CBF to objectId)
 
 .lvis10
 
- LDY objectId
+ LDY objectId           \ Fetch the object ID from objectId
 
- LDA L04D8,Y
- BMI lvis13
+ LDA L04D8,Y            \ If bit 7 of the object's L04D8 entry is set, jump to
+ BMI lvis13             \ lvis13
 
 .lvis11
 
- LDA #%10000000
+ LDA #%10000000         \ Set showLine to say that the line is not in view
  STA showLine
 
 .lvis12
 
- PLA
- CMP pointId
- BNE lvis12
+ PLA                    \ Pull numbers off the stack until we reach the first
+ CMP pointId            \ number that we put on, which will match pointId, so
+ BNE lvis12             \ by the time we are done we have removed all the IDs
+                        \ we added to the stack during the routine
 
  RTS                    \ Return from the subroutine
 
 .lvis13
 
- TYA
- CLC
- ADC #216
- STA L0CCF
+ TYA                    \ Set L0CCF = object ID + 216
+ CLC                    \
+ ADC #216               \ to pass to the call to L19A0 below, and L0CCF is in
+ STA L0CCF              \ the range 216 to 255
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 5 of )
+\       Name: IsLineVisible (Part 6 of 7)
 \       Type: Subroutine
-\   Category: Drawing lines
-\    Summary: 
+\   Category: Visibility
+\    Summary: Check the visibility of all points on the stack
 \
 \ ******************************************************************************
 
 .lvis14
 
- PLA
- CMP pointId
- BEQ lvis15
+                        \ We jump straight here if we are working through a
+                        \ linked object and come across a point with bit 7 set
+                        \ in the point's L0400 entry (which means we have
+                        \ already processed the rest of the points in the
+                        \ linked object)
 
- STA GG
+                        \ We now loop through any points we have added to the
+                        \ stack and process them all. If we find any that are
+                        \ not visible, then we return the result that the whole
+                        \ line is not visible
 
- LDA #0
+ PLA                    \ Pull the next point ID from the stack
+
+ CMP pointId            \ If the point ID matches pointId, then we have no other
+ BEQ lvis15             \ points on the stack to process, so jump down to lvis15
+                        \ to calculate its visibility
+
+ STA GG                 \ Store the point ID in GG
+
+ LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
- STA L0CCB
+ STA L0CCB              \ Set L0CCB = 0
 
- JSR L19A0
+ JSR L19A0              \ ???
 
- LDA showLine
+ LDA showLine           \ If showLine is non-zero, then the line is not visible,
+ BNE lvis12             \ so jump to lvis12 to clear down the stack and return
+                        \ from the subroutine
 
- BNE lvis12
-
- LDY GG
+ LDY GG                 \ Set L0CCF = the point ID in GG
  STY L0CCF
 
- LDA #%10000000
+ LDA #%10000000         \ Set bit 7 of the point's L0400 entry
  ORA L0400,Y
  STA L0400,Y
 
- BNE lvis14
+ BNE lvis14             \ Jump to lvis14 (this BNE is effectively a JMP as A is
+                        \ never zero)
 
 .lvis15
 
- STA GG
+ STA GG                 \ Store the point ID in GG
 
- LDA #0
+ LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
- STA L0CCB
+ STA L0CCB              \ Set L0CCB = 0
 
- JSR L19A0
+ JSR L19A0              \ ???
 
- LDA showLine
- BNE lvis20
+ LDA showLine           \ If showLine is non-zero, then the line is not visible,
+ BNE lvis20             \ so jump to lvis20 to return from the subroutine (as
+                        \ lvis20 contains an RTS)
+
+\ ******************************************************************************
+\
+\       Name: IsLineVisible (Part 7 of 7)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Check distance and z-coordinates and return the final result
+\
+\ ******************************************************************************
 
 .lvis16
 
- LDY GG
-
-\ ******************************************************************************
-\
-\       Name: IsLineVisible (Part 6 of )
-\       Type: Subroutine
-\   Category: Drawing lines
-\    Summary: 
-\
-\ ******************************************************************************
+ LDY GG                 \ Set Y to the point ID, which we stored in GG before
+                        \ jumping here or falling through from above
 
 .lvis17
 
-                        \ We get here if line ID >= 12 and bit 7 of the point's
-                        \ L0400 entry is set
+                        \ We jump straight here if line ID >= 12 and bit 7 of
+                        \ the point's L0400 entry is set (which means we have
+                        \ already processed this point)
 
  LDA HH                 \ If HH is non-zero, jump to lvis18 to move on to the
  BNE lvis18             \ end point and then check the z-coordinates
 
- LDX lineID             \ Check whether this line ID is close enough to be
+ LDX lineId             \ Check whether this line ID is close enough to be
  JSR CheckDistance      \ visible (so it gets hidden if it is further away than
                         \ the visibility distance for this line)
 
@@ -11719,7 +11799,7 @@ ORG CODE%
  ORA #%10000000         \ visible
  STA showLine
 
- LDY L0CBF
+ LDY L0CBF              \ 0 if L2A8C not called, objectId if L2A8C called
 
  JSR L4C96
 
@@ -11738,7 +11818,7 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   objectId            Object ID/type, comes from lineIdToObjectId or
+\   objectId            Object ID/type, comes from pointToObjectId or
 \                       15 for bullets in UpdateBullets
 \                       1 for runway when called from IsRunwayVisible
 \
@@ -12002,8 +12082,8 @@ ORG CODE%
  JSR ModifyDrawRoutine  \ Modify the drawing routines so we draw canopy lines in
                         \ colour 1 (as colourLogic = %10000000)
 
- LDA #0                 \ Set lineID = 0 to act as a loop counter below
- STA lineID
+ LDA #0                 \ Set lineId = 0 to act as a loop counter below
+ STA lineId
 
  STA linesToShowEnd     \ Set linesToShowEnd = 0 to reset the linesToShow list
 
@@ -12018,12 +12098,12 @@ ORG CODE%
 
 .rell1
 
- JSR AddLineToList      \ Add the line with ID lineID to either the linesToShow
+ JSR AddLineToList      \ Add the line with ID lineId to either the linesToShow
                         \ or linesToHide list
 
- INC lineID             \ Increment lineID to move on to the next line
+ INC lineId             \ Increment lineId to move on to the next line
 
- LDA lineID             \ Loop back until we have processed all the lines
+ LDA lineId             \ Loop back until we have processed all the lines
  CMP numberOfLines
  BCC rell1
 
@@ -12211,17 +12291,17 @@ ORG CODE%
 
 .view2
 
- TAX                    \ Set lineID to the next line ID from the linesToShow
+ TAX                    \ Set lineId to the next line ID from the linesToShow
  LDA linesToShow,X      \ list
- STA lineID
+ STA lineId
 
- BNE view3              \ If lineID is non-zero, jump to view3, as this is not
+ BNE view3              \ If lineId is non-zero, jump to view3, as this is not
                         \ the horizon
 
  JSR DrawHalfHorizon    \ The line ID is 0, which is the horizon, so draw the
                         \ first half of the horizon line
 
- LDA lineID             \ Retrieve the line's ID, as it will have been corrupted
+ LDA lineId             \ Retrieve the line's ID, as it will have been corrupted
                         \ by the call to DrawHalfHorizon, and fall through into
                         \ view3 to draw the other half of the horizon
 
@@ -12294,7 +12374,7 @@ ORG CODE%
 \
 \       Name: IsHorizonVisible
 \       Type: Subroutine
-\   Category: 
+\   Category: Visibility
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -12399,7 +12479,7 @@ ORG CODE%
  LDX #&A8
  LDY #0
  STY GG
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  LDA #0
  STA L0CCB
@@ -13646,7 +13726,7 @@ ORG CODE%
 
  LDX #&A8
  LDY #0
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  LDY VV
  JSR L3152
@@ -13903,7 +13983,7 @@ ORG CODE%
 \
 \       Name: IsRunwayVisible
 \       Type: Subroutine
-\   Category: 
+\   Category: Visibility
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13923,7 +14003,7 @@ ORG CODE%
 
 .L31C7
 
- LDA lineID
+ LDA lineId
  CMP #5
  BCC L31D3
 
@@ -14011,7 +14091,7 @@ ORG CODE%
 
  LDA #&80
  STA L0CCA
- LDA lineID
+ LDA lineId
  CMP #5
  BCC L324A
 
@@ -14113,7 +14193,7 @@ ORG CODE%
 
  LDX #&A8
  LDY #5
- JSR CopyTo0C00
+ JSR CopyPointToWork
 
 .L32BC
 
@@ -14136,7 +14216,7 @@ ORG CODE%
 
  LDX #&A8
  INY
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  CPY #&13
  BNE L32BC
@@ -15015,12 +15095,13 @@ NEXT
 \
 \       Name: visibleDistance
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Visibility
 \    Summary: The furthest distance at which each line is visible
 \
 \ ------------------------------------------------------------------------------
 \
-\ Lines are only shown if they are closer than the distance in this table.
+\ Lines are only shown if they are closer than the distance in this table, so
+\ this table contains the maximum visible distance for each line.
 \
 \ The table is indexed by line ID, so for line ID X, visibleDistance,X contains
 \ the maximum distance at which that line is visible.
@@ -15236,6 +15317,7 @@ NEXT
 \ ------------------------------------------------------------------------------
 \
 \ 
+\
 \ The initial contents of the last five bytes of this table contains workspace
 \ noise and is ignored. It actually contains snippets of the original source
 \ code.
@@ -15248,9 +15330,7 @@ NEXT
  EQUB &6E, &6E, &3A, &42, &1E, &1E, &1E, &1E
  EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
  EQUB &7D, &7D, &7D, &7D, &7D, &7D, &19, &5A
- EQUB &5A, &5A, &7D
-
- EQUB &3A, &42, &4E, &45, &20
+ EQUB &5A, &5A, &7D, &3A, &42, &4E, &45, &20
 
 \ ******************************************************************************
 \
@@ -15267,8 +15347,8 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
-\ The initial contents of the buffer is just workspace noise and is ignored. It
-\ actually contains snippets of original source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
 \
 \ ******************************************************************************
 
@@ -15302,8 +15382,8 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
-\ The initial contents of the buffer is just workspace noise and is ignored. It
-\ actually contains snippets of original source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
 
 \ ******************************************************************************
 
@@ -15337,8 +15417,8 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
-\ The initial contents of the buffer is just workspace noise and is ignored. It
-\ actually contains snippets of original source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
 
 \ ******************************************************************************
 
@@ -15372,8 +15452,8 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
-\ The initial contents of the buffer is just workspace noise and is ignored. It
-\ actually contains snippets of original source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
 
 \ ******************************************************************************
 
@@ -15407,8 +15487,8 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
-\ The initial contents of the buffer is just workspace noise and is ignored. It
-\ actually contains snippets of original source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
 
 \ ******************************************************************************
 
@@ -16644,220 +16724,252 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: lineIdToObjectId
+\       Name: pointToObjectId
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Maps lines to objects
 \
 \ ------------------------------------------------------------------------------
 \
-\ The X-th entry in lineIdToObjectId contains the object ID of the line with ID
+\ The X-th entry in pointToObjectId contains the object ID of the line with ID
 \ X.
 \
 \ Line 0 is the horizon
 \ Lines 1-11 are the runway
 \ Lines 12-15 are bullets
 \
+\ The table contains details of multi-point objects. Values greater than 40 link
+\ to other entries, whose value is the entry minus 40. So if we start with entry
+\ 69, for example, we get the following:
+\
+\   Point ID 69 contains 68 + 40, so it links to point ID 68
+\   Point ID 68 contains 66 + 40, so it links to point ID 66
+\   Point ID 66 contains 2, which doesn't link to anything else
+\
+\ so looking up point 69 gives us the following chain of points:
+\
+\   69 -> 68 -> 66 -> 2
+\
 \ ******************************************************************************
 
-.lineIdToObjectId
+.pointToObjectId
 
- EQUB 9 + 40            \ Line ID:   0
- EQUB 1                 \ Line ID:   1
- EQUB 1                 \ Line ID:   2
- EQUB 1                 \ Line ID:   3
- EQUB 1                 \ Line ID:   4
- EQUB 1                 \ Line ID:   5
- EQUB 1                 \ Line ID:   6
- EQUB 1                 \ Line ID:   7
- EQUB 1                 \ Line ID:   8
- EQUB 1                 \ Line ID:   9
- EQUB 1                 \ Line ID:  10
- EQUB 1                 \ Line ID:  11
- EQUB 1                 \ Line ID:  12
- EQUB 1                 \ Line ID:  13
- EQUB 1                 \ Line ID:  14
- EQUB 1                 \ Line ID:  15
- EQUB 1                 \ Line ID:  16
- EQUB 1                 \ Line ID:  17
- EQUB 1                 \ Line ID:  18
- EQUB 1                 \ Line ID:  19
- EQUB 1                 \ Line ID:  20
- EQUB 34                \ Line ID:  21
- EQUB 34                \ Line ID:  22
- EQUB 24 + 40           \ Line ID:  23
- EQUB 34                \ Line ID:  24
- EQUB 22 + 40           \ Line ID:  25
- EQUB 23 + 40           \ Line ID:  26
- EQUB 24 + 40           \ Line ID:  27
- EQUB 34                \ Line ID:  28
- EQUB 22 + 40           \ Line ID:  29
- EQUB 0                 \ Line ID:  30
- EQUB 0                 \ Line ID:  31
- EQUB 22 + 40           \ Line ID:  32
- EQUB 34                \ Line ID:  33
- EQUB 29 + 40           \ Line ID:  34
- EQUB 8                 \ Line ID:  35
- EQUB 8                 \ Line ID:  36
- EQUB 40 + 40           \ Line ID:  37
- EQUB 37 + 40           \ Line ID:  38
- EQUB 34                \ Line ID:  39
- EQUB 39 + 40           \ Line ID:  40
- EQUB 2                 \ Line ID:  41
- EQUB 49 + 40           \ Line ID:  42
- EQUB 50 + 40           \ Line ID:  43
- EQUB 48 + 40           \ Line ID:  44
- EQUB 2                 \ Line ID:  45
- EQUB 51 + 40           \ Line ID:  46
- EQUB 52 + 40           \ Line ID:  47
- EQUB 52 + 40           \ Line ID:  48
- EQUB 51 + 40           \ Line ID:  49
- EQUB 52 + 40           \ Line ID:  50
- EQUB 2                 \ Line ID:  51
- EQUB 51 + 40           \ Line ID:  52
- EQUB 49 + 40           \ Line ID:  53
- EQUB 50 + 40           \ Line ID:  54
- EQUB 51 + 40           \ Line ID:  55
- EQUB 52 + 40           \ Line ID:  56
- EQUB 59 + 40           \ Line ID:  57
- EQUB 59 + 40           \ Line ID:  58
- EQUB 3                 \ Line ID:  59
- EQUB 59 + 40           \ Line ID:  60
- EQUB 59 + 40           \ Line ID:  61
- EQUB 2                 \ Line ID:  62
- EQUB 2                 \ Line ID:  63
- EQUB 2                 \ Line ID:  64
- EQUB 64 + 40           \ Line ID:  65
- EQUB 2                 \ Line ID:  66
- EQUB 66 + 40           \ Line ID:  67
- EQUB 66 + 40           \ Line ID:  68
- EQUB 68 + 40           \ Line ID:  69
- EQUB 4                 \ Line ID:  70
- EQUB 4                 \ Line ID:  71
- EQUB 73 + 40           \ Line ID:  72
- EQUB 4                 \ Line ID:  73
- EQUB 75 + 40           \ Line ID:  74
- EQUB 4                 \ Line ID:  75
- EQUB 77 + 40           \ Line ID:  76
- EQUB 118 + 40          \ Line ID:  77
- EQUB 79 + 40           \ Line ID:  78
- EQUB 77 + 40           \ Line ID:  79
- EQUB 7                 \ Line ID:  80
- EQUB 80 + 40           \ Line ID:  81
- EQUB 7                 \ Line ID:  82
- EQUB 7                 \ Line ID:  83
- EQUB 7                 \ Line ID:  84
- EQUB 80 + 40           \ Line ID:  85
- EQUB 39 + 40           \ Line ID:  86
- EQUB 86 + 40           \ Line ID:  87
- EQUB 86 + 40           \ Line ID:  88
- EQUB 6                 \ Line ID:  89
- EQUB 89 + 40           \ Line ID:  90
- EQUB 6                 \ Line ID:  91
- EQUB 6                 \ Line ID:  92
- EQUB 6                 \ Line ID:  93
- EQUB 89 + 40           \ Line ID:  94
- EQUB 12                \ Line ID:  95
- EQUB 13                \ Line ID:  96
- EQUB 14                \ Line ID:  97
- EQUB 15                \ Line ID:  98
- EQUB 87 + 40           \ Line ID:  99
- EQUB 5                 \ Line ID: 100
- EQUB 5                 \ Line ID: 101
- EQUB 103 + 40          \ Line ID: 102
- EQUB 5                 \ Line ID: 103
- EQUB 5                 \ Line ID: 104
- EQUB 104 + 40          \ Line ID: 105
- EQUB 5                 \ Line ID: 106
- EQUB 106 + 40          \ Line ID: 107
- EQUB 9                 \ Line ID: 108
- EQUB 106 + 40          \ Line ID: 109
- EQUB 109 + 40          \ Line ID: 110
- EQUB 3                 \ Line ID: 111
- EQUB 113 + 40          \ Line ID: 112
- EQUB 3                 \ Line ID: 113
- EQUB 3                 \ Line ID: 114
- EQUB 3                 \ Line ID: 115
- EQUB 3                 \ Line ID: 116
- EQUB 4                 \ Line ID: 117
- EQUB 4                 \ Line ID: 118
- EQUB 66 + 40           \ Line ID: 119
- EQUB 119 + 40          \ Line ID: 120
- EQUB 19                \ Line ID: 121
- EQUB 19                \ Line ID: 122
- EQUB 19                \ Line ID: 123
- EQUB 22                \ Line ID: 124
- EQUB 20                \ Line ID: 125
- EQUB 20                \ Line ID: 126
- EQUB 20                \ Line ID: 127
- EQUB 16                \ Line ID: 128
- EQUB 16                \ Line ID: 129
- EQUB 16                \ Line ID: 130
- EQUB 16                \ Line ID: 131
- EQUB 17                \ Line ID: 132
- EQUB 17                \ Line ID: 133
- EQUB 17                \ Line ID: 134
- EQUB 17                \ Line ID: 135
- EQUB 23                \ Line ID: 136
- EQUB 23                \ Line ID: 137
- EQUB 23                \ Line ID: 138
- EQUB 23                \ Line ID: 139
- EQUB 22                \ Line ID: 140
- EQUB 22                \ Line ID: 141
- EQUB 22                \ Line ID: 142
- EQUB 22                \ Line ID: 143
- EQUB 21                \ Line ID: 144
- EQUB 21                \ Line ID: 145
- EQUB 21                \ Line ID: 146
- EQUB 21                \ Line ID: 147
- EQUB 21                \ Line ID: 148
- EQUB 29                \ Line ID: 149
- EQUB 29                \ Line ID: 150
- EQUB 29                \ Line ID: 151
- EQUB 29                \ Line ID: 152
- EQUB 24                \ Line ID: 153
- EQUB 24                \ Line ID: 154
- EQUB 24                \ Line ID: 155
- EQUB 24                \ Line ID: 156
- EQUB 160 + 40          \ Line ID: 157
- EQUB 159 + 40          \ Line ID: 158
- EQUB 18                \ Line ID: 159
- EQUB 18                \ Line ID: 160
- EQUB 27                \ Line ID: 161
- EQUB 27                \ Line ID: 162
- EQUB 27                \ Line ID: 163
- EQUB 27                \ Line ID: 164
- EQUB 28                \ Line ID: 165
- EQUB 28                \ Line ID: 166
- EQUB 28                \ Line ID: 167
- EQUB 28                \ Line ID: 168
- EQUB 25                \ Line ID: 169
- EQUB 25                \ Line ID: 170
- EQUB 25                \ Line ID: 171
- EQUB 25                \ Line ID: 172
- EQUB 26                \ Line ID: 173
- EQUB 26                \ Line ID: 174
- EQUB 26                \ Line ID: 175
- EQUB 26                \ Line ID: 176
- EQUB 19                \ Line ID: 177
- EQUB 181 + 40          \ Line ID: 178
- EQUB 181 + 40          \ Line ID: 179
- EQUB 181 + 40          \ Line ID: 180
- EQUB 30                \ Line ID: 181
- EQUB 31                \ Line ID: 182
- EQUB 182 + 40          \ Line ID: 183
- EQUB 182 + 40          \ Line ID: 184
- EQUB 182 + 40          \ Line ID: 185
- EQUB 182 + 40          \ Line ID: 186
- EQUB 32                \ Line ID: 187
- EQUB 187 + 40          \ Line ID: 188
- EQUB 187 + 40          \ Line ID: 189
- EQUB 187 + 40          \ Line ID: 190
- EQUB 187 + 40          \ Line ID: 191
-
- EQUB &21, &EF, &ED, &EF, &EF, &E8, &ED, &E8
- EQUB &EF, &4F, &50, &F5, &F3, &50, &F5, &F5
- EQUB &F6, &F3, &F4, &08, &08, &09, &94, &09
+ EQUB 9 + 40            \ Point ID:   0
+ EQUB 1                 \ Point ID:   1
+ EQUB 1                 \ Point ID:   2
+ EQUB 1                 \ Point ID:   3
+ EQUB 1                 \ Point ID:   4
+ EQUB 1                 \ Point ID:   5
+ EQUB 1                 \ Point ID:   6
+ EQUB 1                 \ Point ID:   7
+ EQUB 1                 \ Point ID:   8
+ EQUB 1                 \ Point ID:   9
+ EQUB 1                 \ Point ID:  10
+ EQUB 1                 \ Point ID:  11
+ EQUB 1                 \ Point ID:  12
+ EQUB 1                 \ Point ID:  13
+ EQUB 1                 \ Point ID:  14
+ EQUB 1                 \ Point ID:  15
+ EQUB 1                 \ Point ID:  16
+ EQUB 1                 \ Point ID:  17
+ EQUB 1                 \ Point ID:  18
+ EQUB 1                 \ Point ID:  19
+ EQUB 1                 \ Point ID:  20
+ EQUB 34                \ Point ID:  21
+ EQUB 34                \ Point ID:  22
+ EQUB 24 + 40           \ Point ID:  23
+ EQUB 34                \ Point ID:  24
+ EQUB 22 + 40           \ Point ID:  25
+ EQUB 23 + 40           \ Point ID:  26
+ EQUB 24 + 40           \ Point ID:  27
+ EQUB 34                \ Point ID:  28
+ EQUB 22 + 40           \ Point ID:  29
+ EQUB 0                 \ Point ID:  30
+ EQUB 0                 \ Point ID:  31
+ EQUB 22 + 40           \ Point ID:  32
+ EQUB 34                \ Point ID:  33
+ EQUB 29 + 40           \ Point ID:  34
+ EQUB 8                 \ Point ID:  35
+ EQUB 8                 \ Point ID:  36
+ EQUB 40 + 40           \ Point ID:  37
+ EQUB 37 + 40           \ Point ID:  38
+ EQUB 34                \ Point ID:  39
+ EQUB 39 + 40           \ Point ID:  40
+ EQUB 2                 \ Point ID:  41
+ EQUB 49 + 40           \ Point ID:  42
+ EQUB 50 + 40           \ Point ID:  43
+ EQUB 48 + 40           \ Point ID:  44
+ EQUB 2                 \ Point ID:  45
+ EQUB 51 + 40           \ Point ID:  46
+ EQUB 52 + 40           \ Point ID:  47
+ EQUB 52 + 40           \ Point ID:  48
+ EQUB 51 + 40           \ Point ID:  49
+ EQUB 52 + 40           \ Point ID:  50
+ EQUB 2                 \ Point ID:  51
+ EQUB 51 + 40           \ Point ID:  52
+ EQUB 49 + 40           \ Point ID:  53
+ EQUB 50 + 40           \ Point ID:  54
+ EQUB 51 + 40           \ Point ID:  55
+ EQUB 52 + 40           \ Point ID:  56
+ EQUB 59 + 40           \ Point ID:  57
+ EQUB 59 + 40           \ Point ID:  58
+ EQUB 3                 \ Point ID:  59
+ EQUB 59 + 40           \ Point ID:  60
+ EQUB 59 + 40           \ Point ID:  61
+ EQUB 2                 \ Point ID:  62
+ EQUB 2                 \ Point ID:  63
+ EQUB 2                 \ Point ID:  64
+ EQUB 64 + 40           \ Point ID:  65
+ EQUB 2                 \ Point ID:  66
+ EQUB 66 + 40           \ Point ID:  67
+ EQUB 66 + 40           \ Point ID:  68
+ EQUB 68 + 40           \ Point ID:  69
+ EQUB 4                 \ Point ID:  70
+ EQUB 4                 \ Point ID:  71
+ EQUB 73 + 40           \ Point ID:  72
+ EQUB 4                 \ Point ID:  73
+ EQUB 75 + 40           \ Point ID:  74
+ EQUB 4                 \ Point ID:  75
+ EQUB 77 + 40           \ Point ID:  76
+ EQUB 118 + 40          \ Point ID:  77
+ EQUB 79 + 40           \ Point ID:  78
+ EQUB 77 + 40           \ Point ID:  79
+ EQUB 7                 \ Point ID:  80
+ EQUB 80 + 40           \ Point ID:  81
+ EQUB 7                 \ Point ID:  82
+ EQUB 7                 \ Point ID:  83
+ EQUB 7                 \ Point ID:  84
+ EQUB 80 + 40           \ Point ID:  85
+ EQUB 39 + 40           \ Point ID:  86
+ EQUB 86 + 40           \ Point ID:  87
+ EQUB 86 + 40           \ Point ID:  88
+ EQUB 6                 \ Point ID:  89
+ EQUB 89 + 40           \ Point ID:  90
+ EQUB 6                 \ Point ID:  91
+ EQUB 6                 \ Point ID:  92
+ EQUB 6                 \ Point ID:  93
+ EQUB 89 + 40           \ Point ID:  94
+ EQUB 12                \ Point ID:  95
+ EQUB 13                \ Point ID:  96
+ EQUB 14                \ Point ID:  97
+ EQUB 15                \ Point ID:  98
+ EQUB 87 + 40           \ Point ID:  99
+ EQUB 5                 \ Point ID: 100
+ EQUB 5                 \ Point ID: 101
+ EQUB 103 + 40          \ Point ID: 102
+ EQUB 5                 \ Point ID: 103
+ EQUB 5                 \ Point ID: 104
+ EQUB 104 + 40          \ Point ID: 105
+ EQUB 5                 \ Point ID: 106
+ EQUB 106 + 40          \ Point ID: 107
+ EQUB 9                 \ Point ID: 108
+ EQUB 106 + 40          \ Point ID: 109
+ EQUB 109 + 40          \ Point ID: 110
+ EQUB 3                 \ Point ID: 111
+ EQUB 113 + 40          \ Point ID: 112
+ EQUB 3                 \ Point ID: 113
+ EQUB 3                 \ Point ID: 114
+ EQUB 3                 \ Point ID: 115
+ EQUB 3                 \ Point ID: 116
+ EQUB 4                 \ Point ID: 117
+ EQUB 4                 \ Point ID: 118
+ EQUB 66 + 40           \ Point ID: 119
+ EQUB 119 + 40          \ Point ID: 120
+ EQUB 19                \ Point ID: 121
+ EQUB 19                \ Point ID: 122
+ EQUB 19                \ Point ID: 123
+ EQUB 22                \ Point ID: 124
+ EQUB 20                \ Point ID: 125
+ EQUB 20                \ Point ID: 126
+ EQUB 20                \ Point ID: 127
+ EQUB 16                \ Point ID: 128
+ EQUB 16                \ Point ID: 129
+ EQUB 16                \ Point ID: 130
+ EQUB 16                \ Point ID: 131
+ EQUB 17                \ Point ID: 132
+ EQUB 17                \ Point ID: 133
+ EQUB 17                \ Point ID: 134
+ EQUB 17                \ Point ID: 135
+ EQUB 23                \ Point ID: 136
+ EQUB 23                \ Point ID: 137
+ EQUB 23                \ Point ID: 138
+ EQUB 23                \ Point ID: 139
+ EQUB 22                \ Point ID: 140
+ EQUB 22                \ Point ID: 141
+ EQUB 22                \ Point ID: 142
+ EQUB 22                \ Point ID: 143
+ EQUB 21                \ Point ID: 144
+ EQUB 21                \ Point ID: 145
+ EQUB 21                \ Point ID: 146
+ EQUB 21                \ Point ID: 147
+ EQUB 21                \ Point ID: 148
+ EQUB 29                \ Point ID: 149
+ EQUB 29                \ Point ID: 150
+ EQUB 29                \ Point ID: 151
+ EQUB 29                \ Point ID: 152
+ EQUB 24                \ Point ID: 153
+ EQUB 24                \ Point ID: 154
+ EQUB 24                \ Point ID: 155
+ EQUB 24                \ Point ID: 156
+ EQUB 160 + 40          \ Point ID: 157
+ EQUB 159 + 40          \ Point ID: 158
+ EQUB 18                \ Point ID: 159
+ EQUB 18                \ Point ID: 160
+ EQUB 27                \ Point ID: 161
+ EQUB 27                \ Point ID: 162
+ EQUB 27                \ Point ID: 163
+ EQUB 27                \ Point ID: 164
+ EQUB 28                \ Point ID: 165
+ EQUB 28                \ Point ID: 166
+ EQUB 28                \ Point ID: 167
+ EQUB 28                \ Point ID: 168
+ EQUB 25                \ Point ID: 169
+ EQUB 25                \ Point ID: 170
+ EQUB 25                \ Point ID: 171
+ EQUB 25                \ Point ID: 172
+ EQUB 26                \ Point ID: 173
+ EQUB 26                \ Point ID: 174
+ EQUB 26                \ Point ID: 175
+ EQUB 26                \ Point ID: 176
+ EQUB 19                \ Point ID: 177
+ EQUB 181 + 40          \ Point ID: 178
+ EQUB 181 + 40          \ Point ID: 179
+ EQUB 181 + 40          \ Point ID: 180
+ EQUB 30                \ Point ID: 181
+ EQUB 31                \ Point ID: 182
+ EQUB 182 + 40          \ Point ID: 183
+ EQUB 182 + 40          \ Point ID: 184
+ EQUB 182 + 40          \ Point ID: 185
+ EQUB 182 + 40          \ Point ID: 186
+ EQUB 32                \ Point ID: 187
+ EQUB 187 + 40          \ Point ID: 188
+ EQUB 187 + 40          \ Point ID: 189
+ EQUB 187 + 40          \ Point ID: 190
+ EQUB 187 + 40          \ Point ID: 191
+ EQUB 33                \ Point ID: 192
+ EQUB 199 + 40          \ Point ID: 193
+ EQUB 197 + 40          \ Point ID: 194
+ EQUB 199 + 40          \ Point ID: 195
+ EQUB 199 + 40          \ Point ID: 196
+ EQUB 192 + 40          \ Point ID: 197
+ EQUB 197 + 40          \ Point ID: 198
+ EQUB 192 + 40          \ Point ID: 199
+ EQUB 199 + 40          \ Point ID: 200
+ EQUB 39 + 40           \ Point ID: 201
+ EQUB 40 + 40           \ Point ID: 202
+ EQUB 205 + 40          \ Point ID: 203
+ EQUB 203 + 40          \ Point ID: 204
+ EQUB 40 + 40           \ Point ID: 205
+ EQUB 205 + 40          \ Point ID: 206
+ EQUB 205 + 40          \ Point ID: 207
+ EQUB 206 + 40          \ Point ID: 208
+ EQUB 203 + 40          \ Point ID: 209
+ EQUB 204 + 40          \ Point ID: 210
+ EQUB 8                 \ Point ID: 211
+ EQUB 8                 \ Point ID: 212
+ EQUB 9                 \ Point ID: 213
+ EQUB 108 + 40          \ Point ID: 214
+ EQUB 9                 \ Point ID: 215
 
 \ ******************************************************************************
 \
@@ -17346,55 +17458,45 @@ NEXT
 \
 \ The high byte of the z-coordinate for the point with ID X is at zPointHi,X.
 \
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
+\
 \ ******************************************************************************
 
 .zPointHi
 
- EQUB &41, &20, &58, &41, &4C, &4F
- EQUB &2C, &59, &3A, &43, &4C, &43, &3A, &41
- EQUB &44, &43, &20, &44, &54, &49, &50, &3A
- EQUB &53, &54, &41, &26, &37, &37, &2C, &58
- EQUB &0D, &09, &24, &23, &20, &20, &20, &20
- EQUB &20, &20, &4C, &44, &41, &20, &58, &41
- EQUB &48, &49, &2C, &59, &3A, &41, &44, &43
- EQUB &23, &35, &3A, &53, &54, &41, &26, &37
- EQUB &41, &2C, &58, &0D, &09, &2E, &1C, &2E
- EQUB &73, &74, &69, &34, &20, &54, &59, &41
+ EQUB &41, &20, &58, &41, &4C, &4F, &2C, &59
  EQUB &3A, &43, &4C, &43, &3A, &41, &44, &43
- EQUB &23, &34, &30, &3A, &54, &41, &59, &0D
- EQUB &09, &38, &1A, &2E, &73, &74, &69, &32
- EQUB &20, &44, &45, &58, &3A, &42, &50, &4C
- EQUB &20, &73, &74, &69, &33, &3A, &72, &74
- EQUB &73, &0D, &09, &42, &12, &2E, &73, &74
- EQUB &69, &33, &20, &42, &45, &51, &20, &73
- EQUB &74, &69, &31, &0D, &09, &4C, &1D, &20
- EQUB &20, &20, &20, &20, &20, &4C, &44, &41
- EQUB &20, &58, &41, &4C, &4F, &2C, &59, &3A
- EQUB &53, &54, &41, &26, &37, &37, &2C, &58
- EQUB &0D, &09, &56, &26, &20, &20, &20, &20
- EQUB &20, &20, &4C, &44, &41, &20, &58, &41
- EQUB &48, &49, &2C, &59, &3A, &53, &54, &41
- EQUB &26, &37, &41, &2C, &58, &3A, &4A, &4D
- EQUB &50, &20, &73, &74, &69, &34, &0D, &09
- EQUB &60, &05, &20, &0D, &09, &6A, &0F, &2E
- EQUB &48, &49, &54, &53, &20, &4C, &44, &58
- EQUB &23, &32, &0D, &09, &74, &1C, &2E, &68
- EQUB &69, &74, &32, &20, &54, &59, &41, &3A
- EQUB &43, &4C, &43, &3A, &41, &44, &43, &23
- EQUB &34, &30, &3A, &54, &41, &59
-
-\ ******************************************************************************
-\
-\       Name: L49FC
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L49FC
-
- EQUB &0D, &09, &7E, &28
+ EQUB &20, &44, &54, &49, &50, &3A, &53, &54
+ EQUB &41, &26, &37, &37, &2C, &58, &0D, &09
+ EQUB &24, &23, &20, &20, &20, &20, &20, &20
+ EQUB &4C, &44, &41, &20, &58, &41, &48, &49
+ EQUB &2C, &59, &3A, &41, &44, &43, &23, &35
+ EQUB &3A, &53, &54, &41, &26, &37, &41, &2C
+ EQUB &58, &0D, &09, &2E, &1C, &2E, &73, &74
+ EQUB &69, &34, &20, &54, &59, &41, &3A, &43
+ EQUB &4C, &43, &3A, &41, &44, &43, &23, &34
+ EQUB &30, &3A, &54, &41, &59, &0D, &09, &38
+ EQUB &1A, &2E, &73, &74, &69, &32, &20, &44
+ EQUB &45, &58, &3A, &42, &50, &4C, &20, &73
+ EQUB &74, &69, &33, &3A, &72, &74, &73, &0D
+ EQUB &09, &42, &12, &2E, &73, &74, &69, &33
+ EQUB &20, &42, &45, &51, &20, &73, &74, &69
+ EQUB &31, &0D, &09, &4C, &1D, &20, &20, &20
+ EQUB &20, &20, &20, &4C, &44, &41, &20, &58
+ EQUB &41, &4C, &4F, &2C, &59, &3A, &53, &54
+ EQUB &41, &26, &37, &37, &2C, &58, &0D, &09
+ EQUB &56, &26, &20, &20, &20, &20, &20, &20
+ EQUB &4C, &44, &41, &20, &58, &41, &48, &49
+ EQUB &2C, &59, &3A, &53, &54, &41, &26, &37
+ EQUB &41, &2C, &58, &3A, &4A, &4D, &50, &20
+ EQUB &73, &74, &69, &34, &0D, &09, &60, &05
+ EQUB &20, &0D, &09, &6A, &0F, &2E, &48, &49
+ EQUB &54, &53, &20, &4C, &44, &58, &23, &32
+ EQUB &0D, &09, &74, &1C, &2E, &68, &69, &74
+ EQUB &32, &20, &54, &59, &41, &3A, &43, &4C
+ EQUB &43, &3A, &41, &44, &43, &23, &34, &30
+ EQUB &3A, &54, &41, &59, &0D, &09, &7E, &28
 
 \ ******************************************************************************
 \
@@ -17407,6 +17509,9 @@ NEXT
 \
 \ The high byte of the x-coordinate for the point with ID X is at xPointHi,X.
 \
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of original source code.
+\
 \ ******************************************************************************
 
 .xPointHi
@@ -17414,71 +17519,76 @@ NEXT
  EQUB &20, &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &58, &41, &4C, &4F, &2C, &59
  EQUB &3A, &53, &45, &43, &3A, &53, &42, &43
- EQUB &26, &37, &37, &2C, &58, &3A, &53
- EQUB &54, &41, &26, &37, &34, &0D, &09, &88
- EQUB &26, &20, &20, &20, &20, &20, &20, &4C
- EQUB &44, &41, &20, &58, &41, &48, &49, &2C
- EQUB &59, &3A, &53, &42, &43, &26, &37, &41
- EQUB &2C, &58, &3A, &42, &4E, &45, &20, &68
- EQUB &69, &74, &31, &0D, &09, &92, &22, &20
- EQUB &20, &20, &20, &20, &20, &4C, &44, &41
- EQUB &26, &37, &34, &3A, &43, &4D, &50, &26
- EQUB &38, &30, &2C, &58, &3A, &42, &43, &53
- EQUB &20, &68, &69, &74, &31, &0D, &09, &9C
- EQUB &26, &20, &20, &20, &20, &20, &20, &44
- EQUB &45, &58, &3A, &42, &50, &4C, &20, &68
- EQUB &69, &74, &32, &3A, &4C, &44, &41, &20
- EQUB &4F, &42, &3A, &53, &54, &41, &20, &45
- EQUB &50, &54, &52, &0D, &09, &A6, &19, &20
- EQUB &20, &20, &20, &20, &20, &54, &53, &58
- EQUB &3A, &49, &4E, &58, &3A, &49, &4E, &58
- EQUB &3A, &54, &58, &53, &0D, &09, &A7, &1D
+ EQUB &26, &37, &37, &2C, &58, &3A, &53, &54
+ EQUB &41, &26, &37, &34, &0D, &09, &88, &26
  EQUB &20, &20, &20, &20, &20, &20, &4C, &44
- EQUB &41, &23, &32, &37, &3A, &53, &54, &41
- EQUB &20, &45, &50, &4C, &4F, &3A, &72, &74
- EQUB &73, &0D, &09, &B0, &0D, &2E, &68, &69
- EQUB &74, &31, &20, &72, &74, &73, &0D, &09
- EQUB &BA, &05, &20, &0D, &09, &C4, &1D, &2E
- EQUB &41, &44, &49, &46, &20, &4C, &44, &41
- EQUB &23, &30, &3A, &53, &54, &41, &26, &37
- EQUB &30, &3A, &53, &54, &41, &26, &37, &32
- EQUB &0D, &09, &CE, &1C, &20
+ EQUB &41, &20, &58, &41, &48, &49, &2C, &59
+ EQUB &3A, &53, &42, &43, &26, &37, &41, &2C
+ EQUB &58, &3A, &42, &4E, &45, &20, &68, &69
+ EQUB &74, &31, &0D, &09, &92, &22, &20, &20
+ EQUB &20, &20, &20, &20, &4C, &44, &41, &26
+ EQUB &37, &34, &3A, &43, &4D, &50, &26, &38
+ EQUB &30, &2C, &58, &3A, &42, &43, &53, &20
+ EQUB &68, &69, &74, &31, &0D, &09, &9C, &26
+ EQUB &20, &20, &20, &20, &20, &20, &44, &45
+ EQUB &58, &3A, &42, &50, &4C, &20, &68, &69
+ EQUB &74, &32, &3A, &4C, &44, &41, &20, &4F
+ EQUB &42, &3A, &53, &54, &41, &20, &45, &50
+ EQUB &54, &52, &0D, &09, &A6, &19, &20, &20
+ EQUB &20, &20, &20, &20, &54, &53, &58, &3A
+ EQUB &49, &4E, &58, &3A, &49, &4E, &58, &3A
+ EQUB &54, &58, &53, &0D, &09, &A7, &1D, &20
+ EQUB &20, &20, &20, &20, &20, &4C, &44, &41
+ EQUB &23, &32, &37, &3A, &53, &54, &41, &20
+ EQUB &45, &50, &4C, &4F, &3A, &72, &74, &73
+ EQUB &0D, &09, &B0, &0D, &2E, &68, &69, &74
+ EQUB &31, &20, &72, &74, &73, &0D, &09, &BA
+ EQUB &05, &20, &0D, &09, &C4, &1D, &2E, &41
+ EQUB &44, &49, &46, &20, &4C, &44, &41, &23
+ EQUB &30, &3A, &53, &54, &41, &26, &37, &30
+ EQUB &3A, &53, &54, &41, &26, &37, &32, &0D
+ EQUB &09, &CE, &1C, &20, &20, &20, &20, &20
 
 \ ******************************************************************************
 \
-\       Name: L4AFC
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4AFC
-
- EQUB &20, &20, &20, &20
-
-\ ******************************************************************************
-\
-\       Name: CopyFrom0C00
+\       Name: CopyWorkToPoint
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Utility routines
+\    Summary: Copy a point from the L0C00 workspace to the point tables
 \
 \ ------------------------------------------------------------------------------
 \
+\ Arguments:
+\
+\   X                   The workspace point to copy (x, y, z):
+\
+\                         * &00 = L0C00, turnLo, L0C02
+\                                 L0C10, turnHi, L0C12
+\
+\                         * &89 = L0C89, verticalSpeedLo, L0C8A
+\                                 L0C99, verticalSpeedHi, L0C9A
+\
+\                         * &A8 = L0CA8, L0CA9, L0CAA
+\                                 L0CB8, L0CB9, L0CBA
+\
+\                         * &ED = xPlaneLo, altitudeLo, zPlaneLo
+\                                 xPlaneHi, altitudeHi, zPlaneHi
+\
+\   Y                   The ID of the point to update in the point tables
+\
 \ Called with:
 \
-\   FireGuns            X = &ED, Y = &60
+\   FireGuns            X = &ED, Y = 96
 \   L2CD3               X = &A8, Y = 0
 \   L3053               X = &A8, Y = 0
 \   IsRunwayVisible     X = &A8, Y = range
 \   L4CB0               X = &A8, Y = range
-\   ApplyFlightModel    X = &89, Y = &FF
-\                       X = 0,   Y = &FE
+\   ApplyFlightModel    X = &89, Y = 255
+\                       X = &00, Y = 254
 \
 \ ******************************************************************************
 
-.CopyFrom0C00
+.CopyWorkToPoint
 
  LDA &0C00,X
  STA xPointLo,Y
@@ -17496,24 +17606,43 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: CopyTo0C00
+\       Name: CopyPointToWork
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Utility routines
+\    Summary: Copy a point from the point tables to the L0C00 workspace
 \
 \ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   The ID of the point to copy from the point tables
+\
+\   X                   The workspace point to update (x, y, z):
+\
+\                         * &03 = L0C03, L0C04, airspeedLo
+\                                 L0C13, L0C14, airspeedHi
+\
+\                         * &83 = L0C83, L0C84, L0C85
+\                                 L0C93, L0C94, L0C95
+\
+\                         * &86 = L0C86, L0C87, L0C88
+\                                 L0C96, L0C97, L0C98
+\
+\                         * &A8 = L0CA8, L0CA9, L0CAA
+\                                 L0CB8, L0CB9, L0CBA
+\
 \
 \ Called with:
 \
 \   IsRunwayVisible     X = &A8, Y = 5
 \   L4CB0               X = &A8, Y = range
-\   ApplyFlightModel    X = 3,   Y = &FF
-\                       X = &83, Y = &FC
-\                       X = &86, Y = &FE
+\   ApplyFlightModel    X = &03, Y = 255
+\                       X = &83, Y = 252
+\                       X = &86, Y = 254
 \
 \ ******************************************************************************
 
-.CopyTo0C00
+.CopyPointToWork
 
  LDA xPointLo,Y
  STA &0C00,X
@@ -17580,57 +17709,95 @@ NEXT
 \
 \       Name: CheckDistance
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Visibility
+\    Summary: Check whether a point on a line is within the visible distance for
+\             the line
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The line ID of the line to check
+\
+\   Y                   The point ID of the point to check
+\
+\ Returns:
+\
+\   A                   Returns the result as follows:
+\
+\                         * The current value of showLine if the point is close
+\                           enough to be visible
+\
+\                         * 1 if the point is too far away to be visible
 \
 \ ******************************************************************************
 
 .CheckDistance
 
- LDA xPointHi,Y
- BPL L4B66
+ LDA xPointHi,Y         \ Set A to the high byte of the point's x-coordinate
 
- EOR #&FF
+ BPL dist1              \ If the x-coordinate is positive, skip the following
+                        \ instruction
 
-.L4B66
+ EOR #&FF               \ Otherwise flip the x-coordinate so it's positive, so:
+                        \
+                        \   A = |xPointHi|
 
- CMP visibleDistance,X
- BCS L4B83
+.dist1
 
- LDA yPointHi,Y
- BPL L4B72
+ CMP visibleDistance,X  \ If A >= this line's visible distance, then the point
+ BCS dist4              \ is too far away to be seen in the x-axis, so jump to
+                        \ dist4 to return a "not visible" result
 
- EOR #&FF
+ LDA yPointHi,Y         \ Set A to the high byte of the point's y-coordinate
 
-.L4B72
+ BPL dist2              \ If the y-coordinate is positive, skip the following
+                        \ instruction
 
- CMP visibleDistance,X
- BCS L4B83
+ EOR #&FF               \ Otherwise flip the y-coordinate so it's positive, so:
+                        \
+                        \   A = |yPointHi|
 
- LDA zPointHi,Y
- BPL L4B7E
+.dist2
 
- EOR #&FF
+ CMP visibleDistance,X  \ If A >= this line's visible distance, then the point
+ BCS dist4              \ is too far away to be seen in the y-axis, so jump to
+                        \ dist4 to return a "not visible" result
 
-.L4B7E
+ LDA zPointHi,Y         \ Set A to the high byte of the point's z-coordinate
 
- CMP visibleDistance,X
- BCC L4B86
+ BPL dist3              \ If the z-coordinate is positive, skip the following
+                        \ instruction
 
-.L4B83
+ EOR #&FF               \ Otherwise flip the z-coordinate so it's positive, so:
+                        \
+                        \   A = |zPointHi|
 
- LDA #1
- RTS
+.dist3
 
-.L4B86
+ CMP visibleDistance,X  \ If A < this line's visible distance, then the point
+ BCC dist5              \ is close enough to be visible in the z-axis, so jump
+                        \ to dist5 to return an "is visible" result
 
- LDA #0
- ORA showLine
- RTS
+.dist4
+
+                        \ If we get here then the point is too far away to be
+                        \ visible in at least one axis
+
+ LDA #1                 \ Set A = 1 as the return value for a "not visible"
+                        \ result
+
+ RTS                    \ Return from the subroutine
+
+.dist5
+
+ LDA #0                 \ The point is close enough to be visible, so return the
+ ORA showLine           \ current value of showLine (this could be achieved by a
+                        \ simple LDA showLine instruction, so perhaps this more
+                        \ convoluted approach is left over from a different
+                        \ version of the routine)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -17971,11 +18138,11 @@ NEXT
 
  JSR TerminateGame      \ Terminate the game
 
- TSX                    \ Remove six bytes from the top of the stack
- TXA
- CLC
- ADC #6
- TAX
+ TSX                    \ Remove six bytes from the top of the stack, which
+ TXA                    \ removes the top three return addresses that were put
+ CLC                    \ there by JSR instructions. This enables us to jump
+ ADC #6                 \ straight back to NewGame without leaving any remnants
+ TAX                    \ of the call stack behind
  TXS
 
  JMP NewGame            \ Jump to NewGame to start a new game
@@ -18061,7 +18228,7 @@ NEXT
 .L4CD7
 
  LDX #&A8
- JSR CopyTo0C00
+ JSR CopyPointToWork
 
  STY T
  LDY #2
@@ -18093,7 +18260,7 @@ NEXT
 
  LDY T
  LDX #&A8
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  DEY
  CPY U
@@ -19423,7 +19590,7 @@ NEXT
 
 .L502B
 
- STA L0BFD
+ STA yPointHi+253
  LDA #&FD
  STA GG
  LDA #&1B
@@ -19433,7 +19600,7 @@ NEXT
  LDX #&89
  LDY #&FF
  STY GG
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  LDA #0
  STA L0CCB
@@ -19441,7 +19608,7 @@ NEXT
 
  LDX #3
  LDY #&FF
- JSR CopyTo0C00
+ JSR CopyPointToWork
 
  JSR L5295
 
@@ -19483,7 +19650,7 @@ NEXT
  EOR #&80
  ASL A
  LDA #0
- SBC L4AFC
+ SBC xPointHi+252
  STA slipRate
  LDA L
  BNE L5099
@@ -19581,7 +19748,7 @@ NEXT
  LDA #0
  STA L07FC
  LDA #&FF
- STA L49FC
+ STA zPointHi+252
  BNE L5123
 
 .L5113
@@ -19592,9 +19759,9 @@ NEXT
 
  STA P
  SEC
- LDA L49FC
+ LDA zPointHi+252
  SBC P
- STA L49FC
+ STA zPointHi+252
  JMP L5127
 
 .L5123
@@ -19628,7 +19795,7 @@ NEXT
  STA L09FC
  TXA
  SBC Q
- STA L4AFC
+ STA xPointHi+252
 
 .L5151
 
@@ -19638,13 +19805,13 @@ NEXT
  STA GG
  JSR L1D8D
 
- LDA L0BFC
+ LDA yPointHi+252
  SEC
  SBC #&10
- STA L0BFC
+ STA yPointHi+252
  LDX #&83
  LDY #&FC
- JSR CopyTo0C00
+ JSR CopyPointToWork
 
  JSR L51F9
 
@@ -19653,7 +19820,7 @@ NEXT
  LDX #0
  LDY #&FE
  STY GG
- JSR CopyFrom0C00
+ JSR CopyWorkToPoint
 
  LDA #&12
  STA L0CCB
@@ -19661,7 +19828,7 @@ NEXT
 
  LDX #&86
  LDY #&FE
- JSR CopyTo0C00
+ JSR CopyPointToWork
 
  JSR L522D
 
@@ -20552,7 +20719,7 @@ NEXT
  CLC
  ADC L0C30
  STA L0C30
- LDA L0BFD
+ LDA yPointHi+253
  BPL L5593
 
  DEC S
@@ -20580,14 +20747,14 @@ NEXT
  STA L09FC
  LDA #0
  SBC L0C73
- STA L4AFC
+ STA xPointHi+252
  SEC
  LDA L0C67
  SBC L0C64
  STA L0AFC
  LDA L0C77
  SBC L0C74
- STA L0BFC
+ STA yPointHi+252
 
  LDA airspeedHi         \ Set A to the high byte of our airspeed
 
@@ -20681,7 +20848,7 @@ NEXT
 
 .L5649
 
- STA L49FC
+ STA zPointHi+252
  RTS
 
 \ ******************************************************************************
