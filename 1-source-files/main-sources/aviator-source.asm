@@ -127,7 +127,7 @@ ORG &0070
 
  SKIP 1                 \ Temporary storage, used in a number of places
                         \
-                        \ Called DTIP in original source code
+                        \ This is called DTIP in the original source code
 
 .R
 
@@ -221,7 +221,7 @@ ORG &0070
 
  SKIP 1                 \ Temporary storage, used in a number of places
                         \
-                        \ Called PP in original source code
+                        \ This is called PP in the original source code
 
 .HH
 
@@ -913,7 +913,7 @@ ORG &0C00
 
  SKIP 1                 \ The object ID (i.e. type of object), 0-39
                         \
-                        \ Called OB in original source code
+                        \ This is called OB in the original source code
                         \
                         \   * 30 to 33 = bullets
                         \
@@ -1086,7 +1086,7 @@ ORG &0C00
  SKIP 1                 \   * 0 = no bullets in the air
                         \   * Non-zero = guns fired, bullets in the air
                         \
-                        \ Called FRFLAG in original source code
+                        \ This is called FRFLAG in the original source code
                         \
                         \ Can't fire guns if this or L368F are non-zero
 
@@ -3301,7 +3301,7 @@ ORG CODE%
 \
 \       Name: DrawCanopyLine (Part 1 of 4)
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -3781,7 +3781,7 @@ ORG CODE%
 \
 \       Name: DrawCanopyLine (Part 2 of 4)
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -3886,7 +3886,7 @@ ORG CODE%
 \
 \       Name: DrawCanopyLine (Part 3 of 4)
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -4208,7 +4208,7 @@ ORG CODE%
 \
 \       Name: DrawCanopyLine (Part 4 of 4)
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -4258,7 +4258,7 @@ ORG CODE%
 \
 \       Name: ModifyDrawRoutine
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Drawing lines
 \    Summary: Modify the drawing routines to draw in the correct colour for the
 \             current colour cycle
 \
@@ -7827,7 +7827,7 @@ ORG CODE%
 \
 \       Name: DrawIndicatorBar
 \       Type: Subroutine
-\   Category: Dashboard
+\   Category: Drawing lines
 \    Summary: Draw a vertical bar on indicator 9 (rudder) or 11 (thrust)
 \
 \ ------------------------------------------------------------------------------
@@ -7887,7 +7887,7 @@ ORG CODE%
 \
 \       Name: DrawIndicatorHand
 \       Type: Subroutine
-\   Category: Dashboard
+\   Category: Drawing lines
 \    Summary: Apply min and max limits to an indicator value and draw a hand
 \             on the indicator
 \
@@ -7962,7 +7962,7 @@ ORG CODE%
 
  STA H                  \ Store the clipped indicator value in H
 
- JSR DialHandVector     \ Calculate the vector for drawing the new dial hand
+ JSR GetHandVector      \ Calculate the vector for drawing the new dial hand
                         \ with value A, returning the result in W, G and R
 
                         \ Fall through into DrawIndicatorLine to draw the new
@@ -7972,7 +7972,7 @@ ORG CODE%
 \
 \       Name: DrawIndicatorLine
 \       Type: Subroutine
-\   Category: Dashboard
+\   Category: Drawing lines
 \    Summary: Draw a line on indicators 0 to 7, i.e. a dial hand (0-6) or an
 \             artificial horizon (7)
 \
@@ -8128,7 +8128,7 @@ ORG CODE%
 \
 \       Name: DrawJoystickCross
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: Draw a cross in the joystick position display (indicator 8 or 10)
 \
 \ ------------------------------------------------------------------------------
@@ -8211,7 +8211,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DialHandVector
+\       Name: GetHandVector
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Vector line calculation for a hand on indicators 0 to 6
@@ -8303,7 +8303,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.DialHandVector
+.GetHandVector
 
  LDY #0                 \ Set R = 0, to use as the first guess for the direction
  STY R                  \ of the hand on the dial (we will change it below if
@@ -9107,7 +9107,7 @@ ORG CODE%
 \
 \       Name: ScaleSigned
 \       Type: Subroutine
-\   Category: Dashboard
+\   Category: Maths
 \    Summary: Scale an indicator value by 4 or 16, retaining the sign and adding
 \             sensitivity for smaller values
 \
@@ -9291,7 +9291,7 @@ ORG CODE%
 \
 \       Name: ProcessKeyLogger (Part 1 of 4)
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Keyboard
 \    Summary: Apply any axis control key presses to the current axis values
 \
 \ ******************************************************************************
@@ -9428,7 +9428,7 @@ ORG CODE%
 \
 \       Name: ProcessKeyLogger (Part 2 of 4)
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Keyboard
 \    Summary: Apply any throttle key presses to the current thrust value
 \
 \ ******************************************************************************
@@ -9492,7 +9492,7 @@ ORG CODE%
 \
 \       Name: ProcessKeyLogger (Part 3 of 4)
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Keyboard
 \    Summary: Process the undercarriage, brake, flaps and fire keys
 \
 \ ******************************************************************************
@@ -9545,7 +9545,7 @@ ORG CODE%
 \
 \       Name: ProcessKeyLogger (Part 4 of 4)
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Keyboard
 \    Summary: 
 \
 \ ******************************************************************************
@@ -9585,7 +9585,7 @@ ORG CODE%
 \
 \       Name: ProcessOtherKeys
 \       Type: Subroutine
-\   Category: 
+\   Category: Keyboard
 \    Summary: Apply the undercarriage, brakes, flaps and fire keys
 \
 \ ------------------------------------------------------------------------------
@@ -9830,7 +9830,7 @@ ORG CODE%
 \
 \       Name: FireGuns
 \       Type: Subroutine
-\   Category: 
+\   Category: Flight
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -10135,7 +10135,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called MOBJ or UOBJ in original source code
+\ This is called MOBJ or UOBJ in the original source code.
 \
 \ Called with:
 \   from FireGuns:
@@ -10480,7 +10480,7 @@ ORG CODE%
 \
 \       Name: NewGame
 \       Type: Subroutine
-\   Category: Main loop
+\   Category: Setup
 \    Summary: Start a new game
 \
 \ ******************************************************************************
@@ -10845,7 +10845,7 @@ ORG CODE%
 
 .main15
 
- JSR VolumeKeys         \ Check the volume keys and adjust the sound volume
+ JSR ProcessVolumeKeys  \ Check the volume keys and adjust the sound volume
                         \ accordingly
 
 \ ******************************************************************************
@@ -11088,7 +11088,7 @@ ORG CODE%
 \
 \       Name: UpdateLineLists
 \       Type: Subroutine
-\   Category: Drawing lines
+\   Category: Visibility
 \    Summary: Process the linesToShow list, moving any lines that aren't visible
 \             into the linesToHide list
 \
@@ -11174,7 +11174,7 @@ ORG CODE%
 \
 \       Name: L28B6
 \       Type: Subroutine
-\   Category: 
+\   Category: Visibility
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -11281,7 +11281,7 @@ ORG CODE%
 \
 \       Name: L293A
 \       Type: Subroutine
-\   Category: 
+\   Category: Visibility
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -11313,7 +11313,7 @@ ORG CODE%
 \
 \       Name: AddLineToList
 \       Type: Subroutine
-\   Category: 
+\   Category: Visibility
 \    Summary: Populate tables at linesToShow and linesToHide
 \
 \ ------------------------------------------------------------------------------
@@ -12066,7 +12066,7 @@ ORG CODE%
 \
 \       Name: ResetLineLists
 \       Type: Subroutine
-\   Category: Drawing lines
+\   Category: Visibility
 \    Summary: Reset the line lists at linesToShow and linesToHide
 \
 \ ******************************************************************************
@@ -12644,7 +12644,7 @@ ORG CODE%
 \
 \       Name: L2DAC
 \       Type: Subroutine
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13265,12 +13265,12 @@ ORG CODE%
 \
 \       Name: UpdateBullets
 \       Type: Subroutine
-\   Category: 
+\   Category: Universe
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called UBUL in original source code
+\ This is called UBUL in the original source code.
 \
 \ ******************************************************************************
 
@@ -13321,12 +13321,12 @@ ORG CODE%
 \
 \       Name: L2F1C
 \       Type: Subroutine
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called SUTR in original source code
+\ This is called SUTR in the original source code.
 \
 \ ******************************************************************************
 
@@ -13378,7 +13378,7 @@ ORG CODE%
 \
 \       Name: L2F4E
 \       Type: Subroutine
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13808,7 +13808,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called STIP in original source code
+\ This is called STIP in the original source code.
 \
 \ ******************************************************************************
 
@@ -13856,7 +13856,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called HITS in original source code
+\ This is called HITS in the original source code.
 \
 \ ******************************************************************************
 
@@ -13909,7 +13909,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called ADIF in original source code
+\ This is called ADIF in the original source code.
 \
 \ ******************************************************************************
 
@@ -14318,7 +14318,7 @@ ORG CODE%
 \
 \       Name: DrawHalfHorizon
 \       Type: Subroutine
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -14371,7 +14371,7 @@ ORG CODE%
 \
 \       Name: FillUpFuelTank
 \       Type: Subroutine
-\   Category: Dashboard
+\   Category: Flight
 \    Summary: Fill up the fuel tank by 1/65th of a full tank every four
 \             iterations of the main loop
 \
@@ -14494,14 +14494,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: VolumeKeys
+\       Name: ProcessVolumeKeys
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Adjust the volume when the volume keys are pressed
 \
 \ ******************************************************************************
 
-.VolumeKeys
+.ProcessVolumeKeys
 
  LDX #&DB               \ Scan the keyboard to see if "7" is being pressed
  JSR ScanKeyboard
@@ -14766,10 +14766,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: radarX to highScoreHi
-\       Type: Workspace
-\   Category: 
-\    Summary: 
+\       Name: radarX
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The x-coordinates of the runway and alien on the radar
 \
 \ ******************************************************************************
 
@@ -14781,6 +14781,15 @@ ORG CODE%
  EQUB &8A               \ The x-coordinate of the alien on the radar, stored so
                         \ we can erase it again
 
+\ ******************************************************************************
+\
+\       Name: radarY
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The y-coordinates of the runway and alien on the radar
+\
+\ ******************************************************************************
+
 .radarY
 
  EQUB &D0               \ The y-coordinate of the runway on the radar, stored so
@@ -14789,53 +14798,157 @@ ORG CODE%
  EQUB &D0               \ The y-coordinate of the alien on the radar, stored so
                         \ we can erase it again
 
+\ ******************************************************************************
+\
+\       Name: L368C
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L368C
 
  EQUB &48
+
+\ ******************************************************************************
+\
+\       Name: L368D
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L368D
 
  EQUB &49
 
-.L368E                  \ EPTR in orginal
+\ ******************************************************************************
+\
+\       Name: L368E
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ This is called EPTR in the original source.
+\
+\ ******************************************************************************
+
+.L368E
 
  EQUB &3D
 
-.L368F                  \ EPLO in orginal
+\ ******************************************************************************
+\
+\       Name: L368F
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ This is called EPLO in the original source.
+\
+\ ******************************************************************************
+
+.L368F
 
  EQUB &26               \ Zeroed in ResetVariables
+                        \
                         \ Can't fire guns if this or firingStatus are non-zero
+
+\ ******************************************************************************
+\
+\       Name: L3690
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L3690
 
  EQUB &34
 
+\ ******************************************************************************
+\
+\       Name: L3691
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L3691
 
  EQUB &34
+
+\ ******************************************************************************
+\
+\       Name: fuelLevel
+\       Type: Variable
+\   Category: Flight
+\    Summary: The current fuel level
+\
+\ ******************************************************************************
 
 .fuelLevel
 
  EQUB &41               \ Current fuel level
                         \
                         \   * 0 = empty
+                        \
                         \   * 65 = full
 
- EQUB &B2, &B7, &BC, &C1, &0F, &B4, &BA, &BF, &C8
+ EQUB &B2, &B7          \ These bytes appear to be unused
+ EQUB &BC, &C1
+ EQUB &0F, &B4
+ EQUB &BA, &BF
+ EQUB &C8
+
+\ ******************************************************************************
+\
+\       Name: scoreLo
+\       Type: Variable
+\   Category: Scoring
+\    Summary: Score (low byte)
+\
+\ ******************************************************************************
 
 .scoreLo
 
- EQUB &49               \ Score (high byte of a BCD number)
+ EQUB &49               \ Score (low byte of a BCD number)
                         \
                         \ The score is displayed with an extra "0" added to the
                         \ end, so this contains the score divided by 10
+
+\ ******************************************************************************
+\
+\       Name: scoreHi
+\       Type: Variable
+\   Category: Scoring
+\    Summary: Score (high byte)
+\
+\ ******************************************************************************
 
 .scoreHi
 
- EQUB &3D               \ Score (low byte of a BCD number)
+ EQUB &3D               \ Score (high byte of a BCD number)
                         \
                         \ The score is displayed with an extra "0" added to the
                         \ end, so this contains the score divided by 10
+
+\ ******************************************************************************
+\
+\       Name: highScoreLo
+\       Type: Variable
+\   Category: Scoring
+\    Summary: High score (high byte)
+\
+\ ******************************************************************************
 
 .highScoreLo
 
@@ -14843,6 +14956,15 @@ ORG CODE%
                         \
                         \ The high score is displayed with an extra "0" added to
                         \ the end, so this contains the high score divided by 10
+
+\ ******************************************************************************
+\
+\       Name: highScoreHi
+\       Type: Variable
+\   Category: Scoring
+\    Summary: High score (low byte)
+\
+\ ******************************************************************************
 
 .highScoreHi
 
@@ -15348,7 +15470,7 @@ NEXT
 \ line is erased.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -15383,7 +15505,7 @@ NEXT
 \ line is erased.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 
 \ ******************************************************************************
 
@@ -15418,7 +15540,7 @@ NEXT
 \ line is erased.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 
 \ ******************************************************************************
 
@@ -15453,7 +15575,7 @@ NEXT
 \ line is erased.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 
 \ ******************************************************************************
 
@@ -15488,7 +15610,7 @@ NEXT
 \ line is erased.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 
 \ ******************************************************************************
 
@@ -15511,7 +15633,7 @@ NEXT
 \
 \       Name: scoreText
 \       Type: Variable
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15540,7 +15662,7 @@ NEXT
 \
 \       Name: lineEndPointId
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: The point ID for a line's end point
 \
 \ ------------------------------------------------------------------------------
@@ -15711,7 +15833,7 @@ NEXT
 \
 \       Name: lineStartPointId
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: The point ID for a line's start point
 \
 \ ------------------------------------------------------------------------------
@@ -15899,14 +16021,10 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L41FA to L4243
+\       Name: L41FA
 \       Type: Variable
 \   Category: 
 \    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
 \
 \ ******************************************************************************
 
@@ -15917,42 +16035,123 @@ NEXT
  EQUB &FF, &FF
  EQUB &FF, &FF
 
+\ ******************************************************************************
+\
+\       Name: L4202
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4202
 
  EQUB &6C               \ Zeroed in ResetVariables
+
+\ ******************************************************************************
+\
+\       Name: L4203
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4203
 
  EQUB &6B               \ Zeroed in ResetVariables
 
+\ ******************************************************************************
+\
+\       Name: L4204
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4204
 
  EQUB &6A               \ Zeroed in ResetVariables
 
+\ ******************************************************************************
+\
+\       Name: L4205
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4205
 
  EQUB &69               \ Zeroed in ResetVariables
+
+\ ******************************************************************************
+\
+\       Name: mainLoopCounter
+\       Type: Variable
+\   Category: Main loop
+\    Summary: The main loop counter
+\
+\ ******************************************************************************
 
 .mainLoopCounter
 
  EQUB &67               \ The main loop counter, which is incremented every
                         \ iteration of the main loop
 
+\ ******************************************************************************
+\
+\       Name: numberOfLines
+\       Type: Variable
+\   Category: Universe
+\    Summary: The total number of lines in the universe
+\
+\ ******************************************************************************
+
 .numberOfLines
 
- EQUB 193               \ The total number of lines defined in the game + 1,
-                        \ so there are 192 lines
+ EQUB 193               \ The total number of lines in the universe + 1, so
+                        \ there are 192 lines
+
+\ ******************************************************************************
+\
+\       Name: L4208
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4208
 
- EQUB &65, &64          \ Called FLDPTR in original source code
+ EQUB &65, &64          \ This is called FLDPTR in the original source code
  EQUB &62, &61          \ Zeroed in ResetVariables
  EQUB &60, &5F
  EQUB &5E  
 
+\ ******************************************************************************
+\
+\       Name: L420F
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L420F
 
  EQUB &5C               \ Zeroed in ResetVariables
+
+\ ******************************************************************************
+\
+\       Name: L4210
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4210
 
@@ -15961,92 +16160,272 @@ NEXT
  EQUB &7D, &7C
  EQUB &7B, &7A
 
+\ ******************************************************************************
+\
+\       Name: L4218
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4218
 
- EQUB &78, &77          \ Populated when guns are fired in main 1
+ EQUB &78, &77          \ Populated when guns are fired in main loop part 1
  EQUB &76, &75
  EQUB &74, &72
  EQUB &71, &70
+
+\ ******************************************************************************
+\
+\       Name: L4220
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4220
 
  EQUB &31
 
+\ ******************************************************************************
+\
+\       Name: L4221
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4221
 
  EQUB &39
+
+\ ******************************************************************************
+\
+\       Name: L4222
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4222
 
  EQUB &0D
 
+\ ******************************************************************************
+\
+\       Name: L4223
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4223
 
  EQUB &06, &18
+
+\ ******************************************************************************
+\
+\       Name: L4225
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4225
 
  EQUB &10, &20
 
+\ ******************************************************************************
+\
+\       Name: L4227
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4227
 
  EQUB &20, &20
+
+\ ******************************************************************************
+\
+\       Name: L4229
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4229
 
  EQUB &20, &20, &20
 
+\ ******************************************************************************
+\
+\       Name: L422C
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L422C
 
  EQUB &4C, &44, &59
+
+\ ******************************************************************************
+\
+\       Name: L422F
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L422F
 
  EQUB &23, &33, &31
 
+\ ******************************************************************************
+\
+\       Name: L4232
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4232
 
  EQUB &0D
+
+\ ******************************************************************************
+\
+\       Name: L4233
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4233
 
  EQUB &06, &00
 
+\ ******************************************************************************
+\
+\       Name: L4235
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4235
 
  EQUB &1D
 
+\ ******************************************************************************
+\
+\       Name: L4236
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4236
 
  EQUB &2E, &00, &00, &00, &FE
+
+\ ******************************************************************************
+\
+\       Name: L423B
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L423B
 
  EQUB &20               \ Bit 0 used as sign for L427B in artificial horizon
                         \ calculations when Y = 0 (x-axis)
 
- EQUB &4C
+ EQUB &4C               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: L423D
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L423D
 
  EQUB &44               \ Bit 0 used as sign for L427D in artificial horizon
                         \ calculations when Y = 0 (x-axis)
 
+\ ******************************************************************************
+\
+\       Name: L423E
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L423E
 
  EQUB &58               \ Bit 0 used as sign for L427E in artificial horizon
                         \ calculations when Y = 3 (y-axis)
+
+\ ******************************************************************************
+\
+\       Name: 
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L423F
 
  EQUB &20               \ Bit 0 used as sign for L427F in artificial horizon
                         \ calculations when Y = 3 (y-axis)
 
- EQUB &50, &00
+ EQUB &50, &00          \ These bytes appear to be unused
+
+\ ******************************************************************************
+\
+\       Name: L4242
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4242
 
  EQUB &52
+
+\ ******************************************************************************
+\
+\       Name: L4243
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4243
 
@@ -16091,14 +16470,10 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L425E to L4283
+\       Name: L425E
 \       Type: Variable
 \   Category: 
 \    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
 \
 \ ******************************************************************************
 
@@ -16106,57 +16481,183 @@ NEXT
 
  EQUB &4D, &50
 
+\ ******************************************************************************
+\
+\       Name: L4260
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4260
 
  EQUB &B2
+
+\ ******************************************************************************
+\
+\       Name: L4261
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4261
 
  EQUB &32
 
+\ ******************************************************************************
+\
+\       Name: L4262
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4262
 
  EQUB &AF
+
+\ ******************************************************************************
+\
+\       Name: L4263
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4263
 
  EQUB &0B, &F2
 
+\ ******************************************************************************
+\
+\       Name: L4265
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4265
 
  EQUB &51, &B6
+
+\ ******************************************************************************
+\
+\       Name: L4267
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4267
 
  EQUB &40, &A7
 
+\ ******************************************************************************
+\
+\       Name: L4269
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4269
 
  EQUB &B2, &0B, &B6
+
+\ ******************************************************************************
+\
+\       Name: L426C
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L426C
 
  EQUB &32, &F2, &40
 
+\ ******************************************************************************
+\
+\       Name: L426F
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L426F
 
  EQUB &AF, &51, &A7
+
+\ ******************************************************************************
+\
+\       Name: L4272
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4272
 
  EQUB &FA
 
+\ ******************************************************************************
+\
+\       Name: L4273
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4273
 
  EQUB &34, &00
+
+\ ******************************************************************************
+\
+\       Name: L4275
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4275
 
  EQUB &34
 
+\ ******************************************************************************
+\
+\       Name: L4276
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4276
 
  EQUB &FA, &00, &00, &00, &FF
+
+\ ******************************************************************************
+\
+\       Name: L427B
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L427B
 
@@ -16165,15 +16666,42 @@ NEXT
 
  EQUB &32
 
+\ ******************************************************************************
+\
+\       Name: L427D
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L427D
 
  EQUB &0D               \ Used as a value in artificial horizon calculations
                         \ when Y = 0 (x-axis), sign bit is in L423D
 
+\ ******************************************************************************
+\
+\       Name: L427E
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L427E
 
  EQUB &34               \ Used as a value in artificial horizon calculations
                         \ when Y = 3 (y-axis), sign bit is in L423E
+
+\ ******************************************************************************
+\
+\       Name: L427F
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L427F
 
@@ -16182,9 +16710,27 @@ NEXT
 
  EQUB &3F, &00
 
+\ ******************************************************************************
+\
+\       Name: L4282
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
+
 .L4282
 
  EQUB &40
+
+\ ******************************************************************************
+\
+\       Name: L4283
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L4283
 
@@ -16342,7 +16888,7 @@ NEXT
 \
 \       Name: xObjectLo
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: Low byte of the x-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -16400,7 +16946,7 @@ NEXT
 \
 \       Name: yObjectLo
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: Low byte of the y-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -16456,7 +17002,7 @@ NEXT
 \
 \       Name: zObjectLo
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: Low byte of the z-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -16512,7 +17058,7 @@ NEXT
 \
 \       Name: xObjectHi
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: High byte of the x-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -16570,7 +17116,7 @@ NEXT
 \
 \       Name: yObjectHi
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: High byte of the y-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -16626,7 +17172,7 @@ NEXT
 \
 \       Name: zObjectHi
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: High byte of the z-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -16726,7 +17272,7 @@ NEXT
 \
 \       Name: pointToObjectId
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: Maps lines to objects
 \
 \ ------------------------------------------------------------------------------
@@ -17451,7 +17997,7 @@ NEXT
 \
 \       Name: zPointHi
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: High byte of the z-coordinate for a point
 \
 \ ------------------------------------------------------------------------------
@@ -17459,7 +18005,7 @@ NEXT
 \ The high byte of the z-coordinate for the point with ID X is at zPointHi,X.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -17502,7 +18048,7 @@ NEXT
 \
 \       Name: xPointHi
 \       Type: Variable
-\   Category: Drawing lines
+\   Category: Universe
 \    Summary: High byte of the x-coordinate for a point
 \
 \ ------------------------------------------------------------------------------
@@ -17510,7 +18056,7 @@ NEXT
 \ The high byte of the x-coordinate for the point with ID X is at xPointHi,X.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of original source code.
+\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -18434,16 +18980,16 @@ NEXT
 
  LDA #7                 \ Set A = 7 for the OSWORD command to make a sound
 
- BNE SoundEnvelope      \ Jump to SoundEnvelope to set up Y and apply the OSWORD
-                        \ command to the (Y X) block, which makes the relevant
-                        \ sound (this BNE is effectively a JMP as A is never
-                        \ zero)
+ BNE MakeSoundEnvelope  \ Jump to MakeSoundEnvelope to set up Y and apply the
+                        \ OSWORD command to the (Y X) block, which makes the
+                        \ relevant sound (this BNE is effectively a JMP as A is
+                        \ never zero)
 
 \ ******************************************************************************
 \
 \       Name: TerminateGame
 \       Type: Subroutine
-\   Category: Main loop
+\   Category: Setup
 \    Summary: Terminate the current game
 \
 \ ******************************************************************************
@@ -18493,13 +19039,13 @@ NEXT
 
  LDA #8                 \ Set A = 8 for the OSWORD command to define an envelope
 
-                        \ Fall through into SoundEnvelope to set up Y and apply
-                        \ the OSWORD command to the (Y X) block, which defines
-                        \ the relevant sound envelope
+                        \ Fall through into MakeSoundEnvelope to set up Y and
+                        \ apply the OSWORD command to the (Y X) block, which
+                        \ defines the relevant sound envelope
 
 \ ******************************************************************************
 \
-\       Name: SoundEnvelope
+\       Name: MakeSoundEnvelope
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Either make a sound or set up an envelope
@@ -18520,13 +19066,13 @@ NEXT
 \
 \ ******************************************************************************
 
-.SoundEnvelope
+.MakeSoundEnvelope
 
  LDY #HI(envelopeData)  \ Set y to the high byte of the envelopeData block
                         \ address, so (Y X) now points to the relevant envelope
                         \ or sound data block
 
- BCC senv1              \ If the addition we did before calling SoundEnvelope
+ BCC senv1              \ If the addition we did before calling the routine
                         \ didn't overflow, skip the next instruction
 
  INY                    \ The above addition overflowed, so increment the high
@@ -18832,7 +19378,7 @@ NEXT
 \
 \       Name: ToggleJoystick
 \       Type: Subroutine
-\   Category: 
+\   Category: Keyboard
 \    Summary: Toggle the joystick setting
 \
 \ ------------------------------------------------------------------------------
@@ -18963,7 +19509,7 @@ NEXT
  EQUB &10, &00          \ Sound #1: Engine amplitude (SOUND &10, -5, 3, 255)
  EQUB &FB, &FF          \ 
  EQUB &03, &00          \ Second parameter (soundData+10) gets changed in the
- EQUB &FF, &00          \ VolumeKeys routine to alter the volume
+ EQUB &FF, &00          \ ProcessVolumeKeys routine to alter the volume
 
  EQUB &13, &00          \ Sound #2: Gunfire hitting ??? (SOUND &13, 2, 220, 2)
  EQUB &02, &00          \
@@ -19002,7 +19548,7 @@ NEXT
 \
 \       Name: PrintTooLate
 \       Type: Subroutine
-\   Category: Text
+\   Category: Theme
 \    Summary: Print the "TOO LATE!" message at column 6, row 7 on-screen
 \
 \ ******************************************************************************
@@ -19029,7 +19575,7 @@ NEXT
 \
 \       Name: tooLateText
 \       Type: Variable
-\   Category: Text
+\   Category: Theme
 \    Summary: The "TOO LATE!" message shown when the aliens land in Acornville
 \
 \ ------------------------------------------------------------------------------
@@ -19309,9 +19855,35 @@ NEXT
 
  EQUB &D4, &C9, &CC, &B0
 
+\ ******************************************************************************
+\
+\       Name: L4F84
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L4F84
 
  EQUB &9C               \ Always either &9C or &27 (156 or 39)
+
+\ ******************************************************************************
+\
+\       Name: L4F85
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
 
 .L4F85
 
@@ -19328,6 +19900,19 @@ NEXT
 
  EQUB &28
 
+\ ******************************************************************************
+\
+\       Name: L4F87
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
+\ ******************************************************************************
+
 .L4F87
 
  EQUB 152               \ Flaps lift factor? Drag factor?
@@ -19339,9 +19924,16 @@ NEXT
  EQUB &00, &00, &FF, &8D, &BE, &00, &05
  EQUB &7D, &FF, &50
 
-.dialQuadrant
+\ ******************************************************************************
+\
+\       Name: dialQuadrant
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The value range of a quadrant in each indicator
+\
+\ ******************************************************************************
 
-                        \ The value range of a quadrant in each indicator
+.dialQuadrant
 
  EQUB 18                \ Centre value for indicator 0 (compass)
  EQUB 22                \ Centre value for indicator 1 (airspeed)
@@ -19351,11 +19943,18 @@ NEXT
  EQUB 26                \ Centre value for indicator 5 (turn)
  EQUB 26                \ Centre value for indicator 6 (slip)
 
- EQUB &41
+ EQUB &41               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: xDeltaMax
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The maximum x-delta for the hand line in each indicator
+\
+\ ******************************************************************************
 
 .xDeltaMax
-
-                        \ The maximum x-delta for the hand in each indicator
 
  EQUB 7                 \ Maximum x-delta for indicator 0 (compass)
  EQUB 9                 \ Maximum x-delta for indicator 1 (airspeed)
@@ -19365,11 +19964,18 @@ NEXT
  EQUB 9                 \ Maximum x-delta for indicator 5 (turn)
  EQUB 9                 \ Maximum x-delta for indicator 6 (slip)
 
- EQUB &0D
+ EQUB &0D               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: yDeltaMax
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The maximum y-delta for the hand line in each indicator
+\
+\ ******************************************************************************
 
 .yDeltaMax
-
-                        \ The maximum y-delta for the hand in each indicator
 
  EQUB 12                \ Maximum y-delta for indicator 0 (compass)
  EQUB 10                \ Maximum y-delta for indicator 1 (airspeed)
@@ -19379,7 +19985,17 @@ NEXT
  EQUB 14                \ Maximum y-delta for indicator 5 (turn)
  EQUB 14                \ Maximum y-delta for indicator 6 (slip)
 
- EQUB &20
+ EQUB &20               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: indicatorLineI
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Line buffer storage for the start x-coordinate for each indicator
+\             line (I)
+\
+\ ******************************************************************************
 
 .indicatorLineI
 
@@ -19396,6 +20012,16 @@ NEXT
  EQUB 106               \ Start x-coordinate for indicator 5 (turn)
  EQUB 106               \ Start x-coordinate for indicator 6 (slip)
  EQUB 84                \ Start x-coordinate for indicator 7 (horizon)
+
+\ ******************************************************************************
+\
+\       Name: indicatorLineJ
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Line buffer storage for the start y-coordinate for each indicator
+\             line (J)
+\
+\ ******************************************************************************
 
 .indicatorLineJ
 
@@ -19420,6 +20046,15 @@ NEXT
 
  EQUB 88                \ Start y-coordinate for indicator 7 (horizon) ???
 
+\ ******************************************************************************
+\
+\       Name: indicatorBase
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The base value for each indicator
+\
+\ ******************************************************************************
+
 .indicatorBase
 
  EQUB 0                 \ Base value for indicator 0 (compass)
@@ -19430,7 +20065,16 @@ NEXT
  EQUB 53                \ Base value for indicator 5 (turn)
  EQUB 106               \ Base value for indicator 6 (slip)
 
- EQUB &4C
+ EQUB &4C               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: indicatorMin
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The minimum value shown on each indicator
+\
+\******************************************************************************
 
 .indicatorMin
 
@@ -19442,7 +20086,16 @@ NEXT
  EQUB 33                \ Minimum value shown on indicator 5 (turn)
  EQUB 91                \ Minimum value shown on indicator 6 (slip)
 
- EQUB &F4
+ EQUB &F4               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: indicatorMax
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The maximum value shown on each indicator
+\
+\ ******************************************************************************
 
 .indicatorMax
 
@@ -19454,7 +20107,16 @@ NEXT
  EQUB 72                \ Maximum value shown on indicator 5 (turn)
  EQUB 120               \ Maximum value shown on indicator 6 (slip)
 
- EQUB &4C
+ EQUB &4C               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: indicatorLineT
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Line buffer storage for the indicator line's |x-delta| (T)
+\
+\ ******************************************************************************
 
 .indicatorLineT
 
@@ -19471,6 +20133,15 @@ NEXT
  EQUB 2                 \ Line x-delta for indicator 6 (slip)
  EQUB 2                 \ Line x-delta for indicator 7 (artificial horizon)
 
+\ ******************************************************************************
+\
+\       Name: indicatorLineU
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Line buffer storage for the indicator line's |y-delta| (U)
+\
+\ ******************************************************************************
+
 .indicatorLineU
 
                         \ Storage for the y-delta of the current line on
@@ -19485,6 +20156,15 @@ NEXT
  EQUB 2                 \ Line y-delta for indicator 5 (turn)
  EQUB 2                 \ Line y-delta for indicator 6 (slip)
  EQUB 2                 \ Line y-delta for indicator 7 (artificial horizon)
+
+\ ******************************************************************************
+\
+\       Name: indicatorLineV
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Line buffer storage for the indicator line's direction (V)
+\
+\ ******************************************************************************
 
 .indicatorLineV
 
@@ -19501,6 +20181,15 @@ NEXT
  EQUB 0                 \ Direction for indicator 6 (slip)
  EQUB 0                 \ Direction for indicator 7 (artificial horizon)
 
+\ ******************************************************************************
+\
+\       Name: joyYCoord
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Temporary storage
+\
+\ ******************************************************************************
+
 .joyYCoord
 
  EQUB 0                 \ Temporary storage, typically used for storing
@@ -19510,6 +20199,15 @@ NEXT
                         \ bar for indicator 9 (rudder), so we can erase it when
                         \ required
 
+\ ******************************************************************************
+\
+\       Name: joyXCoord
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Temporary storage
+\
+\ ******************************************************************************
+
 .joyXCoord
 
  EQUB 0                 \ Temporary storage, typically used for storing
@@ -19517,10 +20215,23 @@ NEXT
 
  EQUB 0                 \ The y-coordinate of the top of the current vertical
                         \ bar for indicator 11 (thrust), so we can erase it when
-                        \ requird
+                        \ required
 
- EQUB &4D, &0D, &0C, &08, &15, &20
- EQUB &20, &20, &20, &20, &20, &4C
+ EQUB &4D, &0D          \ These bytes appear to be unused
+ EQUB &0C, &08
+ EQUB &15, &20
+ EQUB &20, &20
+ EQUB &20, &20
+ EQUB &20, &4C
+
+\ ******************************************************************************
+\
+\       Name: indicator0To6
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The first indicator counter
+\
+\ ******************************************************************************
 
 .indicator0To6
 
@@ -19528,11 +20239,29 @@ NEXT
                         \ indicators 0 to 6, and is used to denote the first
                         \ indicator that gets refreshed in UpdateDashboard
 
+\ ******************************************************************************
+\
+\       Name: indicator7To11
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The second indicator counter
+\
+\ ******************************************************************************
+
 .indicator7To11
 
- EQUB &59               \ The first indicator counter, which cycles through
+ EQUB &59               \ The second indicator counter, which cycles through
                         \ indicators 7 to 10, and is used to denote the second
                         \ indicator that gets refreshed in UpdateDashboard
+
+\ ******************************************************************************
+\
+\       Name: JC
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: Temporary storage
+\
+\ ******************************************************************************
 
 .JC
 
@@ -19540,7 +20269,16 @@ NEXT
                         \ when drawing the crosses on the joystick position
                         \ display
 
- EQUB &31, &3A
+ EQUB &31, &3A          \ These bytes appear to be unused
+
+\ ******************************************************************************
+\
+\       Name: altitudeMinutes
+\       Type: Variable
+\   Category: Dashboard
+\    Summary: The value of the altimeter's large "minute" hand
+\
+\ ******************************************************************************
 
 .altitudeMinutes
 
