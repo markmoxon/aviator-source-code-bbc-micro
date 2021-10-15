@@ -9862,16 +9862,17 @@ ORG CODE%
  ORA L368F              \ from the subroutine (as FireGuns-1 contains an RTS)
  BNE FireGuns-1
 
- LDX #&E4
- JSR L4B4A
+ LDX #228               \ Set the point with ID 228 to (0, 0, 0)
+ JSR SetPointToOrigin
 
  LDA airspeedHi
  CLC
  ADC #&C8
  STA L07E4
- LDA #&FF
- LDX #&5F
- JSR L4B4C
+
+ LDA #&FF               \ Set the point with ID 95 to (-1, -1, -1)
+ LDX #95
+ JSR SetPoint
 
  LDA #&14
  STA L075F
@@ -10152,7 +10153,8 @@ ORG CODE%
 \
 \ This is called MOBJ or UOBJ in the original source code.
 \
-\ Called with:
+\ Called as follows:
+\
 \   from FireGuns:
 \   LDY #12, LDX #96
 \   LDY #12, LDX #95
@@ -10953,15 +10955,13 @@ ORG CODE%
 
 .main20
 
- LDA L05C8
- CMP #&23
+ LDA L05C8              \ If the L05C8 list contains 35 or more entries, jump to
+ CMP #35                \ main21 to skip the following three instructions
  BCS main21
 
- JSR L293A
-
- JSR L293A
-
- JSR L293A
+ JSR ProcessLinesToHide \ Process three lines from the linesToHide list
+ JSR ProcessLinesToHide
+ JSR ProcessLinesToHide
 
 .main21
 
@@ -10987,7 +10987,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
- JSR L28B6
+ JSR ProcessLinesToShow \ Process a line from the linesToShow list
 
  JSR DrawCanopyView     \ Update the main view out of the canopy
 
@@ -11187,7 +11187,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L28B6
+\       Name: ProcessLinesToShow
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: 
@@ -11198,7 +11198,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L28B6
+.ProcessLinesToShow
 
  LDA linesToShowEnd
  BEQ L2929
@@ -11294,7 +11294,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L293A
+\       Name: ProcessLinesToHide
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: 
@@ -11305,31 +11305,40 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L293A
+.ProcessLinesToHide
 
- LDA linesToHidePointer
+ LDA linesToHidePointer \ Set A to the position within the linesToHide list up
+                        \ to which we have processed lines
 
- CMP linesToHideEnd
- BEQ IsLineVisible-1
+ CMP linesToHideEnd     \ If we have processed all the way to the end of the
+ BEQ IsLineVisible-1    \ list, then linesToHidePointer = linesToHideEnd, so
+                        \ return from the subroutine (as IsLineVisible-1
+                        \ contains an RTS)
 
- CLC
- ADC #1
- STA linesToHidePointer
- TAX
+ CLC                    \ Otherwise we have lines on the end of the linesToHide
+ ADC #1                 \ list that we have not yet processed, so increment
+ STA linesToHidePointer \ the linesToHidePointer, as we are about to process a
+                        \ line
+
+ TAX                    \ Set lineId to the line's ID from the linesToHide list
  LDA linesToHide,X
  STA lineId
- CMP #&3C
- BEQ L293A
 
- CMP #&3D
- BEQ L293A
+ CMP #60                \ If lineId = 60, jump back to ProcessLinesToHide to
+ BEQ ProcessLinesToHide \ pick another line
+
+ CMP #61                \ If lineId = 61, jump back to ProcessLinesToHide to
+ BEQ ProcessLinesToHide \ pick another line
+
+                        \ Fall through into ProcessLine to process the line
 
 \ ******************************************************************************
 \
-\       Name: AddLineToList
+\       Name: ProcessLine
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Populate tables at linesToShow and linesToHide
+\    Summary: Process a line, working out its visibility and adding it to the
+\             linesToShow or linesToHide list
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11342,7 +11351,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.AddLineToList
+.ProcessLine
 
  LDA #0                 \ Set HH = 0, so in the following call to IsLineVisible
  STA HH                 \ we check the line's distance against visibleDistance
@@ -12113,8 +12122,8 @@ ORG CODE%
 
 .rell1
 
- JSR AddLineToList      \ Add the line with ID lineId to either the linesToShow
-                        \ or linesToHide list
+ JSR ProcessLine        \ Process the line with ID lineId, adding it to either
+                        \ the linesToShow or the linesToHide list
 
  INC lineId             \ Increment lineId to move on to the next line
 
@@ -12469,43 +12478,50 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Only called for line ID = 0
+\ Arguments:
+\
+\   L                   The point ID of the horizon line's start point
+\
+\   M                   The point ID of the horizon line's end point
 \
 \ ******************************************************************************
 
 .IsHorizonVisible
 
- LDX M
- JSR L4B4A
+ LDX M                  \ Set the end point to (0, 0, 0)
+ JSR SetPointToOrigin
 
- LDX L
- JSR L4B4A
+ LDX L                  \ Set X = the point ID of the horizon line's start point
 
- LDA #&F0
- STA xPointHi,X
- STX GG
+ JSR SetPointToOrigin   \ Set the start point to (0, 0, 0)
 
-.L2CA6
+ LDA #&F0               \ Set the x-coordinate of the horizon line's start point
+ STA xPointHi,X         \ to &F000 by setting the high byte
+
+ STX GG                 \ Set GG = the point ID of the horizon line's start
+                        \ point
+
+.horv1
 
  BIT L0CFA
- BMI L2CB1
+ BMI horv3
 
- BVS L2CB3
+ BVS horv4
 
-.L2CAD
+.horv2
 
  LDA #&28
- BNE L2CB5
+ BNE horv5
 
-.L2CB1
+.horv3
 
- BVS L2CAD
+ BVS horv2
 
-.L2CB3
+.horv4
 
  LDA #&D8
 
-.L2CB5
+.horv5
 
  STA zPointHi,X
  LDA #&80
@@ -12516,13 +12532,13 @@ ORG CODE%
  JSR L1D8D
 
  CPX M
- BEQ L2CD2
+ BEQ horv6
 
  LDX M
  STX GG
- BNE L2CA6
+ BNE horv1
 
-.L2CD2
+.horv6
 
  RTS
 
@@ -15515,9 +15531,18 @@ NEXT
  EQUB 120               \ Line ID: 190
  EQUB 120               \ Line ID: 191
 
- EQUB &78, &3F, &0D, &03, &B1, &10, &2E, &64
- EQUB &6C, &70, &32, &20, &53, &54, &41, &26
- EQUB &37, &36, &0D, &03, &B2, &19, &2E, &64
+ EQUB &78, &3F          \ These bytes appear to be unused
+ EQUB &0D, &03
+ EQUB &B1, &10
+ EQUB &2E, &64
+ EQUB &6C, &70
+ EQUB &32, &20
+ EQUB &53, &54
+ EQUB &41, &26
+ EQUB &37, &36
+ EQUB &0D, &03
+ EQUB &B2, &19
+ EQUB &2E, &64
 
 \ ******************************************************************************
 \
@@ -15766,31 +15791,200 @@ NEXT
 
 .lineEndPointId
 
- EQUB &1E, &02, &03, &04, &01, &07, &09, &0B
- EQUB &0D, &0F, &11, &13, &3B, &72, &2A, &2B
- EQUB &2C, &2E, &2F, &30, &35, &36, &37, &38
- EQUB &3A, &39, &33, &3C, &3D, &3E, &3F, &40
- EQUB &41, &42, &74, &71, &71, &70, &6F, &43
- EQUB &77, &78, &44, &45, &46, &47, &75, &51
- EQUB &55, &55, &55, &76, &48, &49, &4A, &4B
- EQUB &5A, &5E, &5E, &5E, &60, &62, &4C, &4D
- EQUB &4E, &4F, &65, &64, &66, &67, &69, &68
- EQUB &6B, &6A, &6D, &6D, &D7, &6E, &7A, &79
- EQUB &7B, &7B, &91, &91, &93, &93, &94, &9E
- EQUB &9F, &A0, &A0, &A1, &A2, &A1, &A3, &A8
- EQUB &A6, &A7, &A8, &AC, &AB, &7C, &AB, &AF
- EQUB &AE, &AD, &AE, &97, &97, &95, &96, &8A
- EQUB &8A, &89, &8B, &85, &87, &86, &86, &81
- EQUB &82, &83, &83, &D1, &7E, &7E, &7F, &8D
- EQUB &7C, &8F, &8E, &9A, &9B, &9C, &99, &B3
- EQUB &B4, &B4, &B8, &B9, &B9, &BA, &B8, &B9
- EQUB &BD, &BE, &BE, &BF, &BD, &BE, &D7, &C2
- EQUB &C3, &C3, &C4, &C2, &C3, &C8, &C6, &C6
- EQUB &C8, &58, &57, &C9, &28, &19, &1C, &17
- EQUB &18, &58, &63, &63, &CA, &1C, &1A, &1B
- EQUB &1C, &1D, &28, &22, &25, &26, &D1, &D2
- EQUB &D0, &D0, &CC, &CE, &CF, &D3, &D3, &D3
- EQUB &D7, &D7
+ EQUB 30                \ Line ID:   0
+ EQUB 2                 \ Line ID:   1
+ EQUB 3                 \ Line ID:   2
+ EQUB 4                 \ Line ID:   3
+ EQUB 1                 \ Line ID:   4
+ EQUB 7                 \ Line ID:   5
+ EQUB 9                 \ Line ID:   6
+ EQUB 11                \ Line ID:   7
+ EQUB 13                \ Line ID:   8
+ EQUB 15                \ Line ID:   9
+ EQUB 17                \ Line ID:  10
+ EQUB 19                \ Line ID:  11
+ EQUB 59                \ Line ID:  12
+ EQUB 114               \ Line ID:  13
+ EQUB 42                \ Line ID:  14
+ EQUB 43                \ Line ID:  15
+ EQUB 44                \ Line ID:  16
+ EQUB 46                \ Line ID:  17
+ EQUB 47                \ Line ID:  18
+ EQUB 48                \ Line ID:  19
+ EQUB 53                \ Line ID:  20
+ EQUB 54                \ Line ID:  21
+ EQUB 55                \ Line ID:  22
+ EQUB 56                \ Line ID:  23
+ EQUB 58                \ Line ID:  24
+ EQUB 57                \ Line ID:  25
+ EQUB 51                \ Line ID:  26
+ EQUB 60                \ Line ID:  27
+ EQUB 61                \ Line ID:  28
+ EQUB 62                \ Line ID:  29
+ EQUB 63                \ Line ID:  30
+ EQUB 64                \ Line ID:  31
+ EQUB 65                \ Line ID:  32
+ EQUB 66                \ Line ID:  33
+ EQUB 116               \ Line ID:  34
+ EQUB 113               \ Line ID:  35
+ EQUB 113               \ Line ID:  36
+ EQUB 112               \ Line ID:  37
+ EQUB 111               \ Line ID:  38
+ EQUB 67                \ Line ID:  39
+ EQUB 119               \ Line ID:  40
+ EQUB 120               \ Line ID:  41
+ EQUB 68                \ Line ID:  42
+ EQUB 69                \ Line ID:  43
+ EQUB 70                \ Line ID:  44
+ EQUB 71                \ Line ID:  45
+ EQUB 117               \ Line ID:  46
+ EQUB 81                \ Line ID:  47
+ EQUB 85                \ Line ID:  48
+ EQUB 85                \ Line ID:  49
+ EQUB 85                \ Line ID:  50
+ EQUB 118               \ Line ID:  51
+ EQUB 72                \ Line ID:  52
+ EQUB 73                \ Line ID:  53
+ EQUB 74                \ Line ID:  54
+ EQUB 75                \ Line ID:  55
+ EQUB 90                \ Line ID:  56
+ EQUB 94                \ Line ID:  57
+ EQUB 94                \ Line ID:  58
+ EQUB 94                \ Line ID:  59
+ EQUB 96                \ Line ID:  60
+ EQUB 98                \ Line ID:  61
+ EQUB 76                \ Line ID:  62
+ EQUB 77                \ Line ID:  63
+ EQUB 78                \ Line ID:  64
+ EQUB 79                \ Line ID:  65
+ EQUB 101               \ Line ID:  66
+ EQUB 100               \ Line ID:  67
+ EQUB 102               \ Line ID:  68
+ EQUB 103               \ Line ID:  69
+ EQUB 105               \ Line ID:  70
+ EQUB 104               \ Line ID:  71
+ EQUB 107               \ Line ID:  72
+ EQUB 106               \ Line ID:  73
+ EQUB 109               \ Line ID:  74
+ EQUB 109               \ Line ID:  75
+ EQUB 215               \ Line ID:  76
+ EQUB 110               \ Line ID:  77
+ EQUB 122               \ Line ID:  78
+ EQUB 121               \ Line ID:  79
+ EQUB 123               \ Line ID:  80
+ EQUB 123               \ Line ID:  81
+ EQUB 145               \ Line ID:  82
+ EQUB 145               \ Line ID:  83
+ EQUB 147               \ Line ID:  84
+ EQUB 147               \ Line ID:  85
+ EQUB 148               \ Line ID:  86
+ EQUB 158               \ Line ID:  87
+ EQUB 159               \ Line ID:  88
+ EQUB 160               \ Line ID:  89
+ EQUB 160               \ Line ID:  90
+ EQUB 161               \ Line ID:  91
+ EQUB 162               \ Line ID:  92
+ EQUB 161               \ Line ID:  93
+ EQUB 163               \ Line ID:  94
+ EQUB 168               \ Line ID:  95
+ EQUB 166               \ Line ID:  96
+ EQUB 167               \ Line ID:  97
+ EQUB 168               \ Line ID:  98
+ EQUB 172               \ Line ID:  99
+ EQUB 171               \ Line ID: 100
+ EQUB 124               \ Line ID: 101
+ EQUB 171               \ Line ID: 102
+ EQUB 175               \ Line ID: 103
+ EQUB 174               \ Line ID: 104
+ EQUB 173               \ Line ID: 105
+ EQUB 174               \ Line ID: 106
+ EQUB 151               \ Line ID: 107
+ EQUB 151               \ Line ID: 108
+ EQUB 149               \ Line ID: 109
+ EQUB 150               \ Line ID: 110
+ EQUB 138               \ Line ID: 111
+ EQUB 138               \ Line ID: 112
+ EQUB 137               \ Line ID: 113
+ EQUB 139               \ Line ID: 114
+ EQUB 133               \ Line ID: 115
+ EQUB 135               \ Line ID: 116
+ EQUB 134               \ Line ID: 117
+ EQUB 134               \ Line ID: 118
+ EQUB 129               \ Line ID: 119
+ EQUB 130               \ Line ID: 120
+ EQUB 131               \ Line ID: 121
+ EQUB 131               \ Line ID: 122
+ EQUB 209               \ Line ID: 123
+ EQUB 126               \ Line ID: 124
+ EQUB 126               \ Line ID: 125
+ EQUB 127               \ Line ID: 126
+ EQUB 141               \ Line ID: 127
+ EQUB 124               \ Line ID: 128
+ EQUB 143               \ Line ID: 129
+ EQUB 142               \ Line ID: 130
+ EQUB 154               \ Line ID: 131
+ EQUB 155               \ Line ID: 132
+ EQUB 156               \ Line ID: 133
+ EQUB 153               \ Line ID: 134
+ EQUB 179               \ Line ID: 135
+ EQUB 180               \ Line ID: 136
+ EQUB 180               \ Line ID: 137
+ EQUB 184               \ Line ID: 138
+ EQUB 185               \ Line ID: 139
+ EQUB 185               \ Line ID: 140
+ EQUB 186               \ Line ID: 141
+ EQUB 184               \ Line ID: 142
+ EQUB 185               \ Line ID: 143
+ EQUB 189               \ Line ID: 144
+ EQUB 190               \ Line ID: 145
+ EQUB 190               \ Line ID: 146
+ EQUB 191               \ Line ID: 147
+ EQUB 189               \ Line ID: 148
+ EQUB 190               \ Line ID: 149
+ EQUB 215               \ Line ID: 150
+ EQUB 194               \ Line ID: 151
+ EQUB 195               \ Line ID: 152
+ EQUB 195               \ Line ID: 153
+ EQUB 196               \ Line ID: 154
+ EQUB 194               \ Line ID: 155
+ EQUB 195               \ Line ID: 156
+ EQUB 200               \ Line ID: 157
+ EQUB 198               \ Line ID: 158
+ EQUB 198               \ Line ID: 159
+ EQUB 200               \ Line ID: 160
+ EQUB 88                \ Line ID: 161
+ EQUB 87                \ Line ID: 162
+ EQUB 201               \ Line ID: 163
+ EQUB 40                \ Line ID: 164
+ EQUB 25                \ Line ID: 165
+ EQUB 28                \ Line ID: 166
+ EQUB 23                \ Line ID: 167
+ EQUB 24                \ Line ID: 168
+ EQUB 88                \ Line ID: 169
+ EQUB 99                \ Line ID: 170
+ EQUB 99                \ Line ID: 171
+ EQUB 202               \ Line ID: 172
+ EQUB 28                \ Line ID: 173
+ EQUB 26                \ Line ID: 174
+ EQUB 27                \ Line ID: 175
+ EQUB 28                \ Line ID: 176
+ EQUB 29                \ Line ID: 177
+ EQUB 40                \ Line ID: 178
+ EQUB 34                \ Line ID: 179
+ EQUB 37                \ Line ID: 180
+ EQUB 38                \ Line ID: 181
+ EQUB 209               \ Line ID: 182
+ EQUB 210               \ Line ID: 183
+ EQUB 208               \ Line ID: 184
+ EQUB 208               \ Line ID: 185
+ EQUB 204               \ Line ID: 186
+ EQUB 206               \ Line ID: 187
+ EQUB 207               \ Line ID: 188
+ EQUB 211               \ Line ID: 189
+ EQUB 211               \ Line ID: 190
+ EQUB 211               \ Line ID: 191
+
+ EQUB &D7, &D7          \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
@@ -15937,31 +16131,203 @@ NEXT
 
 .lineStartPointId
 
- EQUB &1F, &01, &02, &03, &04, &06, &08, &0A
- EQUB &0C, &0E, &10, &12, &72, &73, &29, &2A
- EQUB &2B, &2D, &2E, &2F, &31, &32, &33, &34
- EQUB &3B, &3A, &39, &34, &3C, &31, &32, &3E
- EQUB &3F, &40, &73, &74, &70, &6F, &3D, &41
- EQUB &42, &43, &77, &78, &44, &45, &46, &50
- EQUB &52, &53, &54, &47, &75, &76, &48, &49
- EQUB &59, &5B, &5C, &5D, &5F, &61, &4A, &4B
- EQUB &4C, &4D, &4E, &4F, &65, &64, &66, &67
- EQUB &69, &68, &6B, &6A, &D5, &6D, &79, &B1
- EQUB &7A, &B1, &90, &92, &92, &94, &90, &9D
- EQUB &9E, &9F, &9D, &A4, &A3, &A2, &A4, &A5
- EQUB &A5, &A6, &A7, &A9, &A9, &8E, &AC, &B0
- EQUB &AF, &B0, &AD, &96, &98, &98, &95, &8B
- EQUB &89, &88, &88, &84, &84, &87, &85, &80
- EQUB &81, &82, &80, &CB, &7D, &7F, &7D, &8C
- EQUB &8D, &8C, &8F, &99, &9A, &9B, &9C, &B2
- EQUB &B2, &B3, &B7, &B7, &B8, &B7, &BA, &BA
- EQUB &BC, &BC, &BD, &BC, &BF, &BF, &6C, &C1
- EQUB &C1, &C2, &C1, &C4, &C4, &C1, &C2, &C5
- EQUB &C7, &56, &63, &27, &CA, &16, &15, &1A
- EQUB &1B, &C9, &58, &CA, &C9, &19, &19, &1A
- EQUB &1B, &16, &21, &CD, &28, &CD, &CF, &D1
- EQUB &D2, &CF, &D2, &D0, &CD, &23, &D4, &24
- EQUB &D6, &6C, &03, &0A, &20, &20, &20, &20
+ EQUB 31                \ Line ID:   0
+ EQUB 1                 \ Line ID:   1
+ EQUB 2                 \ Line ID:   2
+ EQUB 3                 \ Line ID:   3
+ EQUB 4                 \ Line ID:   4
+ EQUB 6                 \ Line ID:   5
+ EQUB 8                 \ Line ID:   6
+ EQUB 10                \ Line ID:   7
+ EQUB 12                \ Line ID:   8
+ EQUB 14                \ Line ID:   9
+ EQUB 16                \ Line ID:  10
+ EQUB 18                \ Line ID:  11
+ EQUB 114               \ Line ID:  12
+ EQUB 115               \ Line ID:  13
+ EQUB 41                \ Line ID:  14
+ EQUB 42                \ Line ID:  15
+ EQUB 43                \ Line ID:  16
+ EQUB 45                \ Line ID:  17
+ EQUB 46                \ Line ID:  18
+ EQUB 47                \ Line ID:  19
+ EQUB 49                \ Line ID:  20
+ EQUB 50                \ Line ID:  21
+ EQUB 51                \ Line ID:  22
+ EQUB 52                \ Line ID:  23
+ EQUB 59                \ Line ID:  24
+ EQUB 58                \ Line ID:  25
+ EQUB 57                \ Line ID:  26
+ EQUB 52                \ Line ID:  27
+ EQUB 60                \ Line ID:  28
+ EQUB 49                \ Line ID:  29
+ EQUB 50                \ Line ID:  30
+ EQUB 62                \ Line ID:  31
+ EQUB 63                \ Line ID:  32
+ EQUB 64                \ Line ID:  33
+ EQUB 115               \ Line ID:  34
+ EQUB 116               \ Line ID:  35
+ EQUB 112               \ Line ID:  36
+ EQUB 111               \ Line ID:  37
+ EQUB 61                \ Line ID:  38
+ EQUB 65                \ Line ID:  39
+ EQUB 66                \ Line ID:  40
+ EQUB 67                \ Line ID:  41
+ EQUB 119               \ Line ID:  42
+ EQUB 120               \ Line ID:  43
+ EQUB 68                \ Line ID:  44
+ EQUB 69                \ Line ID:  45
+ EQUB 70                \ Line ID:  46
+ EQUB 80                \ Line ID:  47
+ EQUB 82                \ Line ID:  48
+ EQUB 83                \ Line ID:  49
+ EQUB 84                \ Line ID:  50
+ EQUB 71                \ Line ID:  51
+ EQUB 117               \ Line ID:  52
+ EQUB 118               \ Line ID:  53
+ EQUB 72                \ Line ID:  54
+ EQUB 73                \ Line ID:  55
+ EQUB 89                \ Line ID:  56
+ EQUB 91                \ Line ID:  57
+ EQUB 92                \ Line ID:  58
+ EQUB 93                \ Line ID:  59
+ EQUB 95                \ Line ID:  60
+ EQUB 97                \ Line ID:  61
+ EQUB 74                \ Line ID:  62
+ EQUB 75                \ Line ID:  63
+ EQUB 76                \ Line ID:  64
+ EQUB 77                \ Line ID:  65
+ EQUB 78                \ Line ID:  66
+ EQUB 79                \ Line ID:  67
+ EQUB 101               \ Line ID:  68
+ EQUB 100               \ Line ID:  69
+ EQUB 102               \ Line ID:  70
+ EQUB 103               \ Line ID:  71
+ EQUB 105               \ Line ID:  72
+ EQUB 104               \ Line ID:  73
+ EQUB 107               \ Line ID:  74
+ EQUB 106               \ Line ID:  75
+ EQUB 213               \ Line ID:  76
+ EQUB 109               \ Line ID:  77
+ EQUB 121               \ Line ID:  78
+ EQUB 177               \ Line ID:  79
+ EQUB 122               \ Line ID:  80
+ EQUB 177               \ Line ID:  81
+ EQUB 144               \ Line ID:  82
+ EQUB 146               \ Line ID:  83
+ EQUB 146               \ Line ID:  84
+ EQUB 148               \ Line ID:  85
+ EQUB 144               \ Line ID:  86
+ EQUB 157               \ Line ID:  87
+ EQUB 158               \ Line ID:  88
+ EQUB 159               \ Line ID:  89
+ EQUB 157               \ Line ID:  90
+ EQUB 164               \ Line ID:  91
+ EQUB 163               \ Line ID:  92
+ EQUB 162               \ Line ID:  93
+ EQUB 164               \ Line ID:  94
+ EQUB 165               \ Line ID:  95
+ EQUB 165               \ Line ID:  96
+ EQUB 166               \ Line ID:  97
+ EQUB 167               \ Line ID:  98
+ EQUB 169               \ Line ID:  99
+ EQUB 169               \ Line ID: 100
+ EQUB 142               \ Line ID: 101
+ EQUB 172               \ Line ID: 102
+ EQUB 176               \ Line ID: 103
+ EQUB 175               \ Line ID: 104
+ EQUB 176               \ Line ID: 105
+ EQUB 173               \ Line ID: 106
+ EQUB 150               \ Line ID: 107
+ EQUB 152               \ Line ID: 108
+ EQUB 152               \ Line ID: 109
+ EQUB 149               \ Line ID: 110
+ EQUB 139               \ Line ID: 111
+ EQUB 137               \ Line ID: 112
+ EQUB 136               \ Line ID: 113
+ EQUB 136               \ Line ID: 114
+ EQUB 132               \ Line ID: 115
+ EQUB 132               \ Line ID: 116
+ EQUB 135               \ Line ID: 117
+ EQUB 133               \ Line ID: 118
+ EQUB 128               \ Line ID: 119
+ EQUB 129               \ Line ID: 120
+ EQUB 130               \ Line ID: 121
+ EQUB 128               \ Line ID: 122
+ EQUB 203               \ Line ID: 123
+ EQUB 125               \ Line ID: 124
+ EQUB 127               \ Line ID: 125
+ EQUB 125               \ Line ID: 126
+ EQUB 140               \ Line ID: 127
+ EQUB 141               \ Line ID: 128
+ EQUB 140               \ Line ID: 129
+ EQUB 143               \ Line ID: 130
+ EQUB 153               \ Line ID: 131
+ EQUB 154               \ Line ID: 132
+ EQUB 155               \ Line ID: 133
+ EQUB 156               \ Line ID: 134
+ EQUB 178               \ Line ID: 135
+ EQUB 178               \ Line ID: 136
+ EQUB 179               \ Line ID: 137
+ EQUB 183               \ Line ID: 138
+ EQUB 183               \ Line ID: 139
+ EQUB 184               \ Line ID: 140
+ EQUB 183               \ Line ID: 141
+ EQUB 186               \ Line ID: 142
+ EQUB 186               \ Line ID: 143
+ EQUB 188               \ Line ID: 144
+ EQUB 188               \ Line ID: 145
+ EQUB 189               \ Line ID: 146
+ EQUB 188               \ Line ID: 147
+ EQUB 191               \ Line ID: 148
+ EQUB 191               \ Line ID: 149
+ EQUB 108               \ Line ID: 150
+ EQUB 193               \ Line ID: 151
+ EQUB 193               \ Line ID: 152
+ EQUB 194               \ Line ID: 153
+ EQUB 193               \ Line ID: 154
+ EQUB 196               \ Line ID: 155
+ EQUB 196               \ Line ID: 156
+ EQUB 193               \ Line ID: 157
+ EQUB 194               \ Line ID: 158
+ EQUB 197               \ Line ID: 159
+ EQUB 199               \ Line ID: 160
+ EQUB 86                \ Line ID: 161
+ EQUB 99                \ Line ID: 162
+ EQUB 39                \ Line ID: 163
+ EQUB 202               \ Line ID: 164
+ EQUB 22                \ Line ID: 165
+ EQUB 21                \ Line ID: 166
+ EQUB 26                \ Line ID: 167
+ EQUB 27                \ Line ID: 168
+ EQUB 201               \ Line ID: 169
+ EQUB 88                \ Line ID: 170
+ EQUB 202               \ Line ID: 171
+ EQUB 201               \ Line ID: 172
+ EQUB 25                \ Line ID: 173
+ EQUB 25                \ Line ID: 174
+ EQUB 26                \ Line ID: 175
+ EQUB 27                \ Line ID: 176
+ EQUB 22                \ Line ID: 177
+ EQUB 33                \ Line ID: 178
+ EQUB 205               \ Line ID: 179
+ EQUB 40                \ Line ID: 180
+ EQUB 205               \ Line ID: 181
+ EQUB 207               \ Line ID: 182
+ EQUB 209               \ Line ID: 183
+ EQUB 210               \ Line ID: 184
+ EQUB 207               \ Line ID: 185
+ EQUB 210               \ Line ID: 186
+ EQUB 208               \ Line ID: 187
+ EQUB 205               \ Line ID: 188
+ EQUB 35                \ Line ID: 189
+ EQUB 212               \ Line ID: 190
+ EQUB 36                \ Line ID: 191
+
+ EQUB &D6, &6C          \ These bytes appear to be unused
+ EQUB &03, &0A
+ EQUB &20, &20
+ EQUB &20, &20
  EQUB &00, &00
 
 \ ******************************************************************************
@@ -16991,46 +17357,46 @@ NEXT
 
 .xObjectLo
 
- EQUB &23
- EQUB &66
- EQUB &18
- EQUB &DD
- EQUB &33
- EQUB &EF
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &4F
- EQUB &58
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &EE
- EQUB &AA
- EQUB &88
- EQUB &55
- EQUB &77
- EQUB &33
- EQUB &77
- EQUB &33
- EQUB &66
- EQUB &88
- EQUB &DE
- EQUB &66
- EQUB &66
- EQUB &55
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &40
- EQUB &23
- EQUB &33
- EQUB &31
- EQUB &3A
- EQUB &42
+ EQUB &23               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &66               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
+ EQUB &18               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &DD               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &33               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
+ EQUB &EF               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
+ EQUB &4F               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &58               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
+ EQUB &EE               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &AA               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &88               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
+ EQUB &55               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
+ EQUB &77               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
+ EQUB &33               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &77               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
+ EQUB &33               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
+ EQUB &66               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &88               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
+ EQUB &DE               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &66               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &66               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
+ EQUB &55               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
+ EQUB &40               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
+ EQUB &23               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
+ EQUB &33               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &31               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &3A               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
+ EQUB &42               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17047,46 +17413,46 @@ NEXT
 
 .yObjectLo
 
- EQUB &43
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &27
- EQUB &20
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &23
- EQUB &34
- EQUB &3A
- EQUB &4A
- EQUB &4D
+ EQUB &43               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &00               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
+ EQUB &00               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &00               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &00               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
+ EQUB &00               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
+ EQUB &27               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &20               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &00               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &00               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
+ EQUB &00               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
+ EQUB &00               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
+ EQUB &00               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &00               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
+ EQUB &00               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
+ EQUB &00               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &00               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
+ EQUB &00               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &00               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &00               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
+ EQUB &00               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
+ EQUB &23               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
+ EQUB &34               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &3A               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &4A               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
+ EQUB &4D               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17103,46 +17469,46 @@ NEXT
 
 .zObjectLo
 
- EQUB &50
- EQUB &5C
- EQUB &66
- EQUB &33
- EQUB &00
- EQUB &11
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &2E
- EQUB &73
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &A6
- EQUB &52
- EQUB &55
- EQUB &99
- EQUB &55
- EQUB &BC
- EQUB &56
- EQUB &99
- EQUB &F8
- EQUB &77
- EQUB &11
- EQUB &CD
- EQUB &55
- EQUB &44
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &40
- EQUB &20
- EQUB &20
- EQUB &20
- EQUB &20
- EQUB &20
+ EQUB &50               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &5C               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
+ EQUB &66               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &33               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &00               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
+ EQUB &11               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
+ EQUB &2E               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &73               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
+ EQUB &A6               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &52               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &55               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
+ EQUB &99               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
+ EQUB &55               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
+ EQUB &BC               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &56               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
+ EQUB &99               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
+ EQUB &F8               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &77               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
+ EQUB &11               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &CD               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &55               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
+ EQUB &44               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
+ EQUB &40               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
+ EQUB &20               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
+ EQUB &20               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &20               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &20               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
+ EQUB &20               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17161,46 +17527,46 @@ NEXT
 
 .xObjectHi
 
- EQUB &20
- EQUB &C6
- EQUB &4B
- EQUB &45
- EQUB &53
- EQUB &8E
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &4D
- EQUB &50
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &8E
- EQUB &EA
- EQUB &08
- EQUB &25
- EQUB &57
- EQUB &13
- EQUB &87
- EQUB &E3
- EQUB &86
- EQUB &D8
- EQUB &ED
- EQUB &46
- EQUB &86
- EQUB &B5
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &04
- EQUB &41
- EQUB &20
- EQUB &53
- EQUB &49
- EQUB &5A
+ EQUB &20               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &C6               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
+ EQUB &4B               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &45               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &53               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
+ EQUB &8E               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
+ EQUB &4D               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &50               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
+ EQUB &8E               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &EA               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &08               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
+ EQUB &25               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
+ EQUB &57               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
+ EQUB &13               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &87               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
+ EQUB &E3               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
+ EQUB &86               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &D8               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
+ EQUB &ED               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &46               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &86               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
+ EQUB &B5               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
+ EQUB &04               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
+ EQUB &41               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
+ EQUB &20               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &53               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &49               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
+ EQUB &5A               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17217,46 +17583,46 @@ NEXT
 
 .yObjectHi
 
- EQUB &45
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &0D
- EQUB &07
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &38
- EQUB &0D
- EQUB &07
- EQUB &76
- EQUB &1A
+ EQUB &45               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &00               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
+ EQUB &00               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &00               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &00               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
+ EQUB &00               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
+ EQUB &0D               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &07               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &00               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &00               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
+ EQUB &00               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
+ EQUB &00               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
+ EQUB &00               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &00               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
+ EQUB &00               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
+ EQUB &00               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &00               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
+ EQUB &00               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &00               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &00               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
+ EQUB &00               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
+ EQUB &38               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
+ EQUB &0D               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &07               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &76               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
+ EQUB &1A               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17273,46 +17639,46 @@ NEXT
 
 .zObjectHi
 
- EQUB &2E
- EQUB &44
- EQUB &86
- EQUB &63
- EQUB &C0
- EQUB &C1
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &5A
- EQUB &52
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &EA
- EQUB &D5
- EQUB &65
- EQUB &E9
- EQUB &E5
- EQUB &AB
- EQUB &95
- EQUB &99
- EQUB &4D
- EQUB &07
- EQUB &41
- EQUB &2C
- EQUB &05
- EQUB &74
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &00
- EQUB &03
- EQUB &41
- EQUB &3A
- EQUB &4C
- EQUB &53
- EQUB &52
+ EQUB &2E               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &44               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
+ EQUB &86               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &63               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &C0               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
+ EQUB &C1               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
+ EQUB &5A               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &52               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
+ EQUB &EA               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &D5               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &65               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
+ EQUB &E9               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
+ EQUB &E5               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
+ EQUB &AB               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &95               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
+ EQUB &99               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
+ EQUB &4D               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &07               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
+ EQUB &41               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &2C               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &05               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
+ EQUB &74               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
+ EQUB &03               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
+ EQUB &41               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
+ EQUB &3A               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &4C               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &53               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
+ EQUB &52               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -18194,6 +18560,16 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
+\ Called as follows:
+\
+\   FireGuns            X = &ED, Y = 96
+\   L2CD3               X = &A8, Y = 0
+\   L3053               X = &A8, Y = 0
+\   IsRunwayVisible     X = &A8, Y = range
+\   L4CB0               X = &A8, Y = range
+\   ApplyFlightModel    X = &89, Y = 255
+\                       X = &00, Y = 254
+\
 \ Arguments:
 \
 \   X                   The workspace point to copy (x, y, z):
@@ -18211,16 +18587,6 @@ NEXT
 \                                 xPlaneHi, altitudeHi, zPlaneHi
 \
 \   Y                   The ID of the point to update in the point tables
-\
-\ Called with:
-\
-\   FireGuns            X = &ED, Y = 96
-\   L2CD3               X = &A8, Y = 0
-\   L3053               X = &A8, Y = 0
-\   IsRunwayVisible     X = &A8, Y = range
-\   L4CB0               X = &A8, Y = range
-\   ApplyFlightModel    X = &89, Y = 255
-\                       X = &00, Y = 254
 \
 \ ******************************************************************************
 
@@ -18249,6 +18615,15 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
+\
+\ Called as follows:
+\
+\   IsRunwayVisible     X = &A8, Y = 5
+\   L4CB0               X = &A8, Y = range
+\   ApplyFlightModel    X = &03, Y = 255
+\                       X = &83, Y = 252
+\                       X = &86, Y = 254
+\
 \ Arguments:
 \
 \   Y                   The ID of the point to copy from the point tables
@@ -18266,15 +18641,6 @@ NEXT
 \
 \                         * &A8 = L0CA8, L0CA9, L0CAA
 \                                 L0CB8, L0CB9, L0CBA
-\
-\
-\ Called with:
-\
-\   IsRunwayVisible     X = &A8, Y = 5
-\   L4CB0               X = &A8, Y = range
-\   ApplyFlightModel    X = &03, Y = 255
-\                       X = &83, Y = 252
-\                       X = &86, Y = 254
 \
 \ ******************************************************************************
 
@@ -18296,50 +18662,52 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4B4A
+\       Name: SetPointToOrigin
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: Set a point's coordinates to the origin at (0, 0, 0)
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called with:
+\ Arguments:
 \
-\   FireGuns            X = &E4
-\   IsHorizonVisible    X = M
-\                       X = L
-\   ApplyFlightModel    X = &FD
+\   X                   The ID of the point to set to the origin
 \
 \ ******************************************************************************
 
-.L4B4A
+.SetPointToOrigin
 
- LDA #0
+ LDA #0                 \ Set A = 0 so we set the X-th point to (0, 0, 0) below
 
 \ ******************************************************************************
 \
-\       Name: L4B4C
+\       Name: SetPoint
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: Set a point's coordinates to the value (a, a, a)
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called with:
+\ Arguments:
 \
-\   FireGuns: X = &5F, A = &FF
+\   X                   The ID of the point to set to the origin
+\
+\   A                   The value for all three coordinates
 \
 \ ******************************************************************************
 
-.L4B4C
+.SetPoint
 
- STA xPointLo,X
+ STA xPointLo,X         \ Set the point's x-coordinate to A
  STA xPointHi,X
- STA yPointLo,X
+
+ STA yPointLo,X         \ Set the point's y-coordinate to A
  STA yPointHi,X
- STA zPointLo,X
+
+ STA zPointLo,X         \ Set the point's z-coordinate to A
  STA zPointHi,X
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -20391,8 +20759,8 @@ NEXT
 
 .ApplyFlightModel
 
- LDX #&FD
- JSR L4B4A
+ LDX #253               \ Set the point with ID 253 to (0, 0, 0)
+ JSR SetPointToOrigin
 
  LDA #&FE
  LDX onGround
