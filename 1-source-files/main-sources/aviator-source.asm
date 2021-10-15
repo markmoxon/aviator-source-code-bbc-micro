@@ -4264,27 +4264,37 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine modifies the DrawCanopyLine routine, depending on the value of
+\ the colourLogic and colourCycle variables. See the DrawCanopyView routine for
+\ details of the colour-cycling system that this forms part of.
+\
+\ This is what the ModifyDrawRoutine routine does:
+\
 \ If colourLogic = %00000000 (erase lines):
 \
 \   * Modify the drawing logic in DrawCanopyLine to AND
-\   * Modify DrawCanopyLine so they fetch bit patterns from:
+\
+\   * Modify DrawCanopyLine so it fetches bit patterns from:
 \       * Lookup2E88 if colourCycle = %00001111
 \       * Lookup2E92 if colourCycle = %11110000
-\     In other words, the bit pattern they fetch is always the same as the value
+\     In other words, the bit pattern it fetches is always the same as the value
 \     of colourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
 \     %11110000
+\
 \   * Modify DrawCanopyLine (part 3) so it pokes the value of colourCycle as a
-\     bit pattern in the screen updating routine at dlin50
+\     bit pattern in the screen-updating routine at dlin50
 \
 \ If colourLogic = %01000000 (draw lines in colour 2):
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
+\
 \   * Modify DrawCanopyLine so it fetches bit patterns from Lookup2E74 and
 \     Lookup2E7E (colour 2) instead of Lookup2E60 and Lookup2E6A (colour 1)
 \
 \ If colourLogic = %10000000 (draw lines in colour 1):
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
+\
 \   * Restore the DrawCanopyLine routine back to its default code, so we draw
 \     in colour 1
 \
@@ -5307,20 +5317,25 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ We call this from DrawCanopyView, after drawing all the new lines and just
-\ before we flip colours.
+\ We call this routine from DrawCanopyView, after drawing all the new lines and
+\ just before we flip colours. See the DrawCanopyView routine for more details
+\ of the colour-cycling system that this forms part of.
 \
-\   * colourCycle = %00001111, when colour 1 is white and colour 2 is black
-\     Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
-\     Colour 2 on-screen is %11110000, so AND'ing with %00001111 gives 0
-\     So this erases all the lines in buffer 1, which are on-screen in colour 2
-\     i.e. erase all the lines in line buffer 1 from the hidden screen
+\ This is what the EraseCanopyLines routine does:
 \
-\   * colourCycle = %11110000, when colour 1 is black and colour 2 is white
-\     Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
-\     Colour 1 is %00001111, so AND'ing with %11110000 gives 0
-\     So this erases all the lines in buffer 2, which are on-screen in colour 1
-\     i.e. erase all the lines in line buffer 2 from the hidden screen
+\ If colourCycle = %00001111, then colour 1 is white and colour 2 is black:
+\
+\  *  Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
+\  *  Colour 2 on-screen is %11110000, so AND'ing with %00001111 gives 0
+\  *  So this erases all the lines in buffer 1, which are on-screen in colour 2
+\     i.e. we erase all the lines in line buffer 1 from the hidden screen
+\
+\ If colourCycle = %11110000, then colour 1 is black and colour 2 is white:
+\
+\  *  Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
+\  *  Colour 1 is %00001111, so AND'ing with %11110000 gives 0
+\  *  So this erases all the lines in buffer 2, which are on-screen in colour 1
+\     i.e. we erase all the lines in line buffer 2 from the hidden screen
 \
 \ ******************************************************************************
 
@@ -5374,7 +5389,7 @@ ORG CODE%
 
  STA xTempLo
 
- LDA lineBufferW,X      \ Set W to the ??? from lineBufferW
+ LDA lineBufferW,X      \ Set W to the max/min x-coordinate from lineBufferW
  STA W
 
  LDA lineBufferS,X      \ Set S to the start y-coordinate from lineBufferS
@@ -5382,7 +5397,7 @@ ORG CODE%
 
  STA yTempLo
 
- LDA lineBufferG,X      \ Set G to ??? from lineBufferG
+ LDA lineBufferG,X      \ Set G to max/min y-coordinate from lineBufferG
  STA G
 
  LDA lineBufferT,X      \ Set T to the |x-delta| from lineBufferT
@@ -5398,7 +5413,7 @@ ORG CODE%
 
  JMP ecal1              \ Loop back to ecal1 to erase the next line
 
- EQUB &17
+ EQUB &17               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -12266,6 +12281,81 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Draw the main view out of the canopy
+\
+\ ------------------------------------------------------------------------------
+\
+\ The DrawCanopyView routine updates the main 3D view out of the canopy, using
+\ colour cycling to make the animation smooth. Although Aviator is a
+\ black-and-white game, it actually uses mode 5, which is a four-colour screen
+\ mode, and it uses those extra colours to switch between animation frames
+\ smoothly.
+\
+\ In this flicker-free approach, colour 0 is always mapped to black and is used
+\ for the background, and colour 3 is always mapped to white and is used for the
+\ dashboard and the canopy edges. We then use colours 1 and 2 inside the canopy,
+\ with one of these mapped to black (so it's invisible against the black
+\ background), and the other mapped to white (so it's visible).
+\
+\ To achieve smooth, flicker-free animation, we update the invisible screen,
+\ erasing and re-drawing lines so that it contains an up-to-date view out of the
+\ canopy. When we've finished this relatively slow drawing process, we then
+\ re-map colours 1 and 2, which flips the two screens in the blink of an eye.
+\ This flipping process is very simple and very quick - we simply map the
+\ visible colour to black, so the old scene disappears from view, and then we
+\ map the invisible colour to white, so the new, updated scene suddenly becomes
+\ visible. We then repeat this process to animate the 3D view without flicker.
+\
+\ The DrawCanopyView implements this approach with the following steps:
+\
+\   * Modify the draw routines so that they draw in the currently hidden colour
+\     (by calling ModifyDrawRoutine)
+\
+\   * Draw the updated lines in the hidden colour (by calling DrawHalfHorizon,
+\     DrawClippedLine and DrawGunSights)
+\
+\   * Re-map colours 1 and 2 to change what's shown on screen
+\
+\   * Erase all the lines from the now-hidden screen (by calling
+\     EraseCanopyLines)
+\
+\   * Flip the colour variables, ready for the next iteration (by calling
+\     FlipColours)
+\
+\ There are two main variables that manage this process: colourLogic and
+\ colourCycle.
+\
+\ The colourLogic variable controls the drawing routines, and has three values:
+\
+\   * %00000000 = erase lines from the screen
+\   * %01000000 = draw lines in colour 2
+\   * &10000000 = draw lines in colour 1
+\
+\ The colourCycle variable keeps track of which colour screen is visible and
+\ which is invisible, and flips between these two values:
+\
+\   * %00001111 = show colour 1, hide colour 2
+\   * %11110000 = show colour 2, hide colour 1
+\
+\ To save space, the main drawing routine at DrawCanopyLine is modified in-place
+\ so it draws the correct colour, and either erases or draws as neccessary. The
+\ code modifications are performed by the ModifyDrawRoutine routine, which
+\ physically pokes new values and instructions into the DrawCanopyLine routine
+\ to change its operation. To add to the complexity, the ModifyDrawRoutine
+\ routine also modifies code within DrawCanopyLine that then modifies even more
+\ code within a different part of DrawCanopyLine; in other words, the
+\ modification code sometimes modifies the modification code.
+\
+\ To speed things up, the on-screen lines are stored in line buffers, so they
+\ can be quickly erased from the hidden screeen by the EraseCanopyLines routine.
+\ This routine sets colourLogic to %00000000, then calls ModifyDrawRoutine to
+\ modify the DrawCanopyLine routine so it erases the currently hidden colour,
+\ and then it erases all of the lines stored in the line buffer. This clears the
+\ hidden screen in the most efficient way possible, so it's ready to take the
+\ new set of lines.
+\
+\ The result of all this self-modifying code and solour switching is a buttery
+\ smooth view out of the canopy. If you compare it to Elite's much more flickery
+\ space ships, there's no contest; Aviator wins hands down.
 \
 \ ******************************************************************************
 
