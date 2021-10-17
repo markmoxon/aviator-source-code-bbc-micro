@@ -8882,6 +8882,9 @@ ORG CODE%
 \ L427B, L427E provide values for T calculations
 \ L427D, L427F provide values for U calculations
 \
+\ L427E = current roll orientation, 0-&FF for 0 to 45 degrees
+\ L423E = direction of roll
+\
 \ Y = 0, K = 0:
 \   T = (L423B L427B) / 4
 \   U = -(L423D L427D) / 4
@@ -17353,50 +17356,91 @@ NEXT
 \
 \ This is called XALO in the original source code.
 \
+\ Object ID  0 has coordinate (  8227, 17731, 11856 )
+\ Object ID  1 has coordinate ( 50790,     0, 17500 )
+\ Object ID  2 has coordinate ( 19224,     0, 34406 )
+\ Object ID  3 has coordinate ( 17885,     0, 25395 )
+\ Object ID  4 has coordinate ( 21299,     0, 49152 )
+\ Object ID  5 has coordinate ( 36591,     0, 49425 )
+\ Object ID  6 has coordinate (     0,     0,     0 )
+\ Object ID  7 has coordinate (     0,     0,     0 )
+\ Object ID  8 has coordinate (     0,     0,     0 )
+\ Object ID  9 has coordinate (     0,     0,     0 )
+\ Object ID 10 has coordinate ( 19791,  3367, 23086 )
+\ Object ID 11 has coordinate ( 20568,  1824, 21107 )
+\ Object ID 12 has coordinate (     0,     0,     0 )
+\ Object ID 13 has coordinate (     0,     0,     0 )
+\ Object ID 14 has coordinate (     0,     0,     0 )
+\ Object ID 15 has coordinate (     0,     0,     0 )
+\ Object ID 16 has coordinate ( 36590,     0, 60070 )
+\ Object ID 17 has coordinate ( 60074,     0, 54610 )
+\ Object ID 18 has coordinate (  2184,     0, 25941 )
+\ Object ID 19 has coordinate (  9557,     0, 59801 )
+\ Object ID 20 has coordinate ( 22391,     0, 58709 )
+\ Object ID 21 has coordinate (  4915,     0, 43964 )
+\ Object ID 22 has coordinate ( 34679,     0, 38230 )
+\ Object ID 23 has coordinate ( 58163,     0, 39321 )
+\ Object ID 24 has coordinate ( 34406,     0, 19960 )
+\ Object ID 25 has coordinate ( 55432,     0,  1911 )
+\ Object ID 26 has coordinate ( 60894,     0, 16657 )
+\ Object ID 27 has coordinate ( 18022,     0, 11469 )
+\ Object ID 28 has coordinate ( 34406,     0,  1365 )
+\ Object ID 29 has coordinate ( 46421,     0, 29764 )
+\ Object ID 30 has coordinate (     0,     0,     0 )
+\ Object ID 31 has coordinate (     0,     0,     0 )
+\ Object ID 32 has coordinate (     0,     0,     0 )
+\ Object ID 33 has coordinate (     0,     0,     0 )
+\ Object ID 34 has coordinate (  1088,     0,   832 )
+\ Object ID 35 has coordinate ( 16675, 14371, 16672 )
+\ Object ID 36 has coordinate (  8243,  3380, 14880 )
+\ Object ID 37 has coordinate ( 21297,  1850, 19488 )
+\ Object ID 38 has coordinate ( 18746, 30282, 21280 )
+\ Object ID 39 has coordinate ( 23106,  6733, 21024 )
+\
 \ ******************************************************************************
 
 .xObjectLo
 
- EQUB &23               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
- EQUB &66               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
- EQUB &18               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
- EQUB &DD               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
- EQUB &33               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
- EQUB &EF               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
- EQUB &4F               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &58               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
- EQUB &EE               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &AA               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &88               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
- EQUB &55               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
- EQUB &77               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
- EQUB &33               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &77               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
- EQUB &33               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
- EQUB &66               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &88               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
- EQUB &DE               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &66               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &66               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
- EQUB &55               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
- EQUB &40               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
- EQUB &23               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
- EQUB &33               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &31               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
- EQUB &3A               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
- EQUB &42               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &23               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &66               \ Object ID  1 has coordinate (&C666, &0000, &445C)
+ EQUB &18               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &DD               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &33               \ Object ID  4 has coordinate (&5333, &0000, &C000)
+ EQUB &EF               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
+ EQUB &4F               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &58               \ Object ID 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
+ EQUB &EE               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &AA               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &88               \ Object ID 18 has coordinate (&0888, &0000, &6555)
+ EQUB &55               \ Object ID 19 has coordinate (&2555, &0000, &E999)
+ EQUB &77               \ Object ID 20 has coordinate (&5777, &0000, &E555)
+ EQUB &33               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &77               \ Object ID 22 has coordinate (&8777, &0000, &9556)
+ EQUB &33               \ Object ID 23 has coordinate (&E333, &0000, &9999)
+ EQUB &66               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &88               \ Object ID 25 has coordinate (&D888, &0000, &0777)
+ EQUB &DE               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &66               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &66               \ Object ID 28 has coordinate (&8666, &0000, &0555)
+ EQUB &55               \ Object ID 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
+ EQUB &40               \ Object ID 34 has coordinate (&0440, &0000, &0340)
+ EQUB &23               \ Object ID 35 has coordinate (&4123, &3823, &4120)
+ EQUB &33               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &31               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &3A               \ Object ID 38 has coordinate (&493A, &764A, &5320)
+ EQUB &42               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17413,46 +17457,46 @@ NEXT
 
 .yObjectLo
 
- EQUB &43               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
- EQUB &00               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
- EQUB &00               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
- EQUB &00               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
- EQUB &00               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
- EQUB &00               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
- EQUB &27               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &20               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &00               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &00               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
- EQUB &00               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
- EQUB &00               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
- EQUB &00               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &00               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
- EQUB &00               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
- EQUB &00               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &00               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
- EQUB &00               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &00               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &00               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
- EQUB &00               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
- EQUB &23               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
- EQUB &34               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &3A               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
- EQUB &4A               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
- EQUB &4D               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &43               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &00               \ Object ID  1 has coordinate (&C666, &0000, &445C)
+ EQUB &00               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &00               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &00               \ Object ID  4 has coordinate (&5333, &0000, &C000)
+ EQUB &00               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
+ EQUB &27               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &20               \ Object ID 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &00               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &00               \ Object ID 18 has coordinate (&0888, &0000, &6555)
+ EQUB &00               \ Object ID 19 has coordinate (&2555, &0000, &E999)
+ EQUB &00               \ Object ID 20 has coordinate (&5777, &0000, &E555)
+ EQUB &00               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &00               \ Object ID 22 has coordinate (&8777, &0000, &9556)
+ EQUB &00               \ Object ID 23 has coordinate (&E333, &0000, &9999)
+ EQUB &00               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &00               \ Object ID 25 has coordinate (&D888, &0000, &0777)
+ EQUB &00               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &00               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &00               \ Object ID 28 has coordinate (&8666, &0000, &0555)
+ EQUB &00               \ Object ID 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 34 has coordinate (&0440, &0000, &0340)
+ EQUB &23               \ Object ID 35 has coordinate (&4123, &3823, &4120)
+ EQUB &34               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &3A               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &4A               \ Object ID 38 has coordinate (&493A, &764A, &5320)
+ EQUB &4D               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17469,46 +17513,46 @@ NEXT
 
 .zObjectLo
 
- EQUB &50               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
- EQUB &5C               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
- EQUB &66               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
- EQUB &33               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
- EQUB &00               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
- EQUB &11               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
- EQUB &2E               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &73               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
- EQUB &A6               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &52               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &55               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
- EQUB &99               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
- EQUB &55               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
- EQUB &BC               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &56               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
- EQUB &99               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
- EQUB &F8               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &77               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
- EQUB &11               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &CD               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &55               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
- EQUB &44               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
- EQUB &40               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
- EQUB &20               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
- EQUB &20               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &20               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
- EQUB &20               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
- EQUB &20               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &50               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &5C               \ Object ID  1 has coordinate (&C666, &0000, &445C)
+ EQUB &66               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &33               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &00               \ Object ID  4 has coordinate (&5333, &0000, &C000)
+ EQUB &11               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
+ EQUB &2E               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &73               \ Object ID 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
+ EQUB &A6               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &52               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &55               \ Object ID 18 has coordinate (&0888, &0000, &6555)
+ EQUB &99               \ Object ID 19 has coordinate (&2555, &0000, &E999)
+ EQUB &55               \ Object ID 20 has coordinate (&5777, &0000, &E555)
+ EQUB &BC               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &56               \ Object ID 22 has coordinate (&8777, &0000, &9556)
+ EQUB &99               \ Object ID 23 has coordinate (&E333, &0000, &9999)
+ EQUB &F8               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &77               \ Object ID 25 has coordinate (&D888, &0000, &0777)
+ EQUB &11               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &CD               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &55               \ Object ID 28 has coordinate (&8666, &0000, &0555)
+ EQUB &44               \ Object ID 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
+ EQUB &40               \ Object ID 34 has coordinate (&0440, &0000, &0340)
+ EQUB &20               \ Object ID 35 has coordinate (&4123, &3823, &4120)
+ EQUB &20               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &20               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &20               \ Object ID 38 has coordinate (&493A, &764A, &5320)
+ EQUB &20               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17527,46 +17571,46 @@ NEXT
 
 .xObjectHi
 
- EQUB &20               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
- EQUB &C6               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
- EQUB &4B               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
- EQUB &45               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
- EQUB &53               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
- EQUB &8E               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
- EQUB &4D               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &50               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
- EQUB &8E               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &EA               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &08               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
- EQUB &25               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
- EQUB &57               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
- EQUB &13               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &87               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
- EQUB &E3               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
- EQUB &86               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &D8               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
- EQUB &ED               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &46               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &86               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
- EQUB &B5               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
- EQUB &04               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
- EQUB &41               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
- EQUB &20               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &53               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
- EQUB &49               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
- EQUB &5A               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &20               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &C6               \ Object ID  1 has coordinate (&C666, &0000, &445C)
+ EQUB &4B               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &45               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &53               \ Object ID  4 has coordinate (&5333, &0000, &C000)
+ EQUB &8E               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
+ EQUB &4D               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &50               \ Object ID 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
+ EQUB &8E               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &EA               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &08               \ Object ID 18 has coordinate (&0888, &0000, &6555)
+ EQUB &25               \ Object ID 19 has coordinate (&2555, &0000, &E999)
+ EQUB &57               \ Object ID 20 has coordinate (&5777, &0000, &E555)
+ EQUB &13               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &87               \ Object ID 22 has coordinate (&8777, &0000, &9556)
+ EQUB &E3               \ Object ID 23 has coordinate (&E333, &0000, &9999)
+ EQUB &86               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &D8               \ Object ID 25 has coordinate (&D888, &0000, &0777)
+ EQUB &ED               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &46               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &86               \ Object ID 28 has coordinate (&8666, &0000, &0555)
+ EQUB &B5               \ Object ID 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
+ EQUB &04               \ Object ID 34 has coordinate (&0440, &0000, &0340)
+ EQUB &41               \ Object ID 35 has coordinate (&4123, &3823, &4120)
+ EQUB &20               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &53               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &49               \ Object ID 38 has coordinate (&493A, &764A, &5320)
+ EQUB &5A               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17583,46 +17627,46 @@ NEXT
 
 .yObjectHi
 
- EQUB &45               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
- EQUB &00               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
- EQUB &00               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
- EQUB &00               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
- EQUB &00               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
- EQUB &00               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
- EQUB &0D               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &07               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &00               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &00               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
- EQUB &00               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
- EQUB &00               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
- EQUB &00               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &00               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
- EQUB &00               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
- EQUB &00               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &00               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
- EQUB &00               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &00               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &00               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
- EQUB &00               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
- EQUB &38               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
- EQUB &0D               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &07               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
- EQUB &76               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
- EQUB &1A               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &45               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &00               \ Object ID  1 has coordinate (&C666, &0000, &445C)
+ EQUB &00               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &00               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &00               \ Object ID  4 has coordinate (&5333, &0000, &C000)
+ EQUB &00               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
+ EQUB &0D               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &07               \ Object ID 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &00               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &00               \ Object ID 18 has coordinate (&0888, &0000, &6555)
+ EQUB &00               \ Object ID 19 has coordinate (&2555, &0000, &E999)
+ EQUB &00               \ Object ID 20 has coordinate (&5777, &0000, &E555)
+ EQUB &00               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &00               \ Object ID 22 has coordinate (&8777, &0000, &9556)
+ EQUB &00               \ Object ID 23 has coordinate (&E333, &0000, &9999)
+ EQUB &00               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &00               \ Object ID 25 has coordinate (&D888, &0000, &0777)
+ EQUB &00               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &00               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &00               \ Object ID 28 has coordinate (&8666, &0000, &0555)
+ EQUB &00               \ Object ID 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 34 has coordinate (&0440, &0000, &0340)
+ EQUB &38               \ Object ID 35 has coordinate (&4123, &3823, &4120)
+ EQUB &0D               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &07               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &76               \ Object ID 38 has coordinate (&493A, &764A, &5320)
+ EQUB &1A               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17639,46 +17683,46 @@ NEXT
 
 .zObjectHi
 
- EQUB &2E               \ Object ID:  0 has coordinate (&2023, &4543, &2E50)
- EQUB &44               \ Object ID:  1 has coordinate (&C666, &0000, &445C)
- EQUB &86               \ Object ID:  2 has coordinate (&4B18, &0000, &8666)
- EQUB &63               \ Object ID:  3 has coordinate (&45DD, &0000, &6333)
- EQUB &C0               \ Object ID:  4 has coordinate (&5333, &0000, &C000)
- EQUB &C1               \ Object ID:  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID:  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID:  9 has coordinate (&0000, &0000, &0000)
- EQUB &5A               \ Object ID: 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &52               \ Object ID: 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID: 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 15 has coordinate (&0000, &0000, &0000)
- EQUB &EA               \ Object ID: 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &D5               \ Object ID: 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &65               \ Object ID: 18 has coordinate (&0888, &0000, &6555)
- EQUB &E9               \ Object ID: 19 has coordinate (&2555, &0000, &E999)
- EQUB &E5               \ Object ID: 20 has coordinate (&5777, &0000, &E555)
- EQUB &AB               \ Object ID: 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &95               \ Object ID: 22 has coordinate (&8777, &0000, &9556)
- EQUB &99               \ Object ID: 23 has coordinate (&E333, &0000, &9999)
- EQUB &4D               \ Object ID: 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &07               \ Object ID: 25 has coordinate (&D888, &0000, &0777)
- EQUB &41               \ Object ID: 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &2C               \ Object ID: 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &05               \ Object ID: 28 has coordinate (&8666, &0000, &0555)
- EQUB &74               \ Object ID: 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID: 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID: 33 has coordinate (&0000, &0000, &0000)
- EQUB &03               \ Object ID: 34 has coordinate (&0440, &0000, &0340)
- EQUB &41               \ Object ID: 35 has coordinate (&4123, &3823, &4120)
- EQUB &3A               \ Object ID: 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &4C               \ Object ID: 37 has coordinate (&5331, &073A, &4C20)
- EQUB &53               \ Object ID: 38 has coordinate (&493A, &764A, &5320)
- EQUB &52               \ Object ID: 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &2E               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
+ EQUB &44               \ Object ID  1 has coordinate (&C666, &0000, &445C)
+ EQUB &86               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
+ EQUB &63               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
+ EQUB &C0               \ Object ID  4 has coordinate (&5333, &0000, &C000)
+ EQUB &C1               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
+ EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
+ EQUB &5A               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
+ EQUB &52               \ Object ID 11 has coordinate (&5058, &0720, &5273)
+ EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
+ EQUB &EA               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
+ EQUB &D5               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
+ EQUB &65               \ Object ID 18 has coordinate (&0888, &0000, &6555)
+ EQUB &E9               \ Object ID 19 has coordinate (&2555, &0000, &E999)
+ EQUB &E5               \ Object ID 20 has coordinate (&5777, &0000, &E555)
+ EQUB &AB               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
+ EQUB &95               \ Object ID 22 has coordinate (&8777, &0000, &9556)
+ EQUB &99               \ Object ID 23 has coordinate (&E333, &0000, &9999)
+ EQUB &4D               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
+ EQUB &07               \ Object ID 25 has coordinate (&D888, &0000, &0777)
+ EQUB &41               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
+ EQUB &2C               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
+ EQUB &05               \ Object ID 28 has coordinate (&8666, &0000, &0555)
+ EQUB &74               \ Object ID 29 has coordinate (&B555, &0000, &7444)
+ EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
+ EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
+ EQUB &03               \ Object ID 34 has coordinate (&0440, &0000, &0340)
+ EQUB &41               \ Object ID 35 has coordinate (&4123, &3823, &4120)
+ EQUB &3A               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
+ EQUB &4C               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
+ EQUB &53               \ Object ID 38 has coordinate (&493A, &764A, &5320)
+ EQUB &52               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
 
 \ ******************************************************************************
 \
@@ -17752,226 +17796,230 @@ NEXT
 \
 \   69 -> 68 -> 66 -> 2
 \
+\ while point 210 gives us this chain:
+\
+\   210 -> 204 -> 203 -> 205 -> 40 -> 39 -> 34
+\
 \ ******************************************************************************
 
 .pointToObjectId
 
- EQUB 9 + 40            \ Point ID:   0
- EQUB 1                 \ Point ID:   1
- EQUB 1                 \ Point ID:   2
- EQUB 1                 \ Point ID:   3
- EQUB 1                 \ Point ID:   4
- EQUB 1                 \ Point ID:   5
- EQUB 1                 \ Point ID:   6
- EQUB 1                 \ Point ID:   7
- EQUB 1                 \ Point ID:   8
- EQUB 1                 \ Point ID:   9
- EQUB 1                 \ Point ID:  10
- EQUB 1                 \ Point ID:  11
- EQUB 1                 \ Point ID:  12
- EQUB 1                 \ Point ID:  13
- EQUB 1                 \ Point ID:  14
- EQUB 1                 \ Point ID:  15
- EQUB 1                 \ Point ID:  16
- EQUB 1                 \ Point ID:  17
- EQUB 1                 \ Point ID:  18
- EQUB 1                 \ Point ID:  19
- EQUB 1                 \ Point ID:  20
- EQUB 34                \ Point ID:  21
- EQUB 34                \ Point ID:  22
- EQUB 24 + 40           \ Point ID:  23
- EQUB 34                \ Point ID:  24
- EQUB 22 + 40           \ Point ID:  25
- EQUB 23 + 40           \ Point ID:  26
- EQUB 24 + 40           \ Point ID:  27
- EQUB 34                \ Point ID:  28
- EQUB 22 + 40           \ Point ID:  29
- EQUB 0                 \ Point ID:  30
- EQUB 0                 \ Point ID:  31
- EQUB 22 + 40           \ Point ID:  32
- EQUB 34                \ Point ID:  33
- EQUB 29 + 40           \ Point ID:  34
- EQUB 8                 \ Point ID:  35
- EQUB 8                 \ Point ID:  36
- EQUB 40 + 40           \ Point ID:  37
- EQUB 37 + 40           \ Point ID:  38
- EQUB 34                \ Point ID:  39
- EQUB 39 + 40           \ Point ID:  40
- EQUB 2                 \ Point ID:  41
- EQUB 49 + 40           \ Point ID:  42
- EQUB 50 + 40           \ Point ID:  43
- EQUB 48 + 40           \ Point ID:  44
- EQUB 2                 \ Point ID:  45
- EQUB 51 + 40           \ Point ID:  46
- EQUB 52 + 40           \ Point ID:  47
- EQUB 52 + 40           \ Point ID:  48
- EQUB 51 + 40           \ Point ID:  49
- EQUB 52 + 40           \ Point ID:  50
- EQUB 2                 \ Point ID:  51
- EQUB 51 + 40           \ Point ID:  52
- EQUB 49 + 40           \ Point ID:  53
- EQUB 50 + 40           \ Point ID:  54
- EQUB 51 + 40           \ Point ID:  55
- EQUB 52 + 40           \ Point ID:  56
- EQUB 59 + 40           \ Point ID:  57
- EQUB 59 + 40           \ Point ID:  58
- EQUB 3                 \ Point ID:  59
- EQUB 59 + 40           \ Point ID:  60
- EQUB 59 + 40           \ Point ID:  61
- EQUB 2                 \ Point ID:  62
- EQUB 2                 \ Point ID:  63
- EQUB 2                 \ Point ID:  64
- EQUB 64 + 40           \ Point ID:  65
- EQUB 2                 \ Point ID:  66
- EQUB 66 + 40           \ Point ID:  67
- EQUB 66 + 40           \ Point ID:  68
- EQUB 68 + 40           \ Point ID:  69
- EQUB 4                 \ Point ID:  70
- EQUB 4                 \ Point ID:  71
- EQUB 73 + 40           \ Point ID:  72
- EQUB 4                 \ Point ID:  73
- EQUB 75 + 40           \ Point ID:  74
- EQUB 4                 \ Point ID:  75
- EQUB 77 + 40           \ Point ID:  76
- EQUB 118 + 40          \ Point ID:  77
- EQUB 79 + 40           \ Point ID:  78
- EQUB 77 + 40           \ Point ID:  79
- EQUB 7                 \ Point ID:  80
- EQUB 80 + 40           \ Point ID:  81
- EQUB 7                 \ Point ID:  82
- EQUB 7                 \ Point ID:  83
- EQUB 7                 \ Point ID:  84
- EQUB 80 + 40           \ Point ID:  85
- EQUB 39 + 40           \ Point ID:  86
- EQUB 86 + 40           \ Point ID:  87
- EQUB 86 + 40           \ Point ID:  88
- EQUB 6                 \ Point ID:  89
- EQUB 89 + 40           \ Point ID:  90
- EQUB 6                 \ Point ID:  91
- EQUB 6                 \ Point ID:  92
- EQUB 6                 \ Point ID:  93
- EQUB 89 + 40           \ Point ID:  94
- EQUB 12                \ Point ID:  95
- EQUB 13                \ Point ID:  96
- EQUB 14                \ Point ID:  97
- EQUB 15                \ Point ID:  98
- EQUB 87 + 40           \ Point ID:  99
- EQUB 5                 \ Point ID: 100
- EQUB 5                 \ Point ID: 101
- EQUB 103 + 40          \ Point ID: 102
- EQUB 5                 \ Point ID: 103
- EQUB 5                 \ Point ID: 104
- EQUB 104 + 40          \ Point ID: 105
- EQUB 5                 \ Point ID: 106
- EQUB 106 + 40          \ Point ID: 107
- EQUB 9                 \ Point ID: 108
- EQUB 106 + 40          \ Point ID: 109
- EQUB 109 + 40          \ Point ID: 110
- EQUB 3                 \ Point ID: 111
- EQUB 113 + 40          \ Point ID: 112
- EQUB 3                 \ Point ID: 113
- EQUB 3                 \ Point ID: 114
- EQUB 3                 \ Point ID: 115
- EQUB 3                 \ Point ID: 116
- EQUB 4                 \ Point ID: 117
- EQUB 4                 \ Point ID: 118
- EQUB 66 + 40           \ Point ID: 119
- EQUB 119 + 40          \ Point ID: 120
- EQUB 19                \ Point ID: 121
- EQUB 19                \ Point ID: 122
- EQUB 19                \ Point ID: 123
- EQUB 22                \ Point ID: 124
- EQUB 20                \ Point ID: 125
- EQUB 20                \ Point ID: 126
- EQUB 20                \ Point ID: 127
- EQUB 16                \ Point ID: 128
- EQUB 16                \ Point ID: 129
- EQUB 16                \ Point ID: 130
- EQUB 16                \ Point ID: 131
- EQUB 17                \ Point ID: 132
- EQUB 17                \ Point ID: 133
- EQUB 17                \ Point ID: 134
- EQUB 17                \ Point ID: 135
- EQUB 23                \ Point ID: 136
- EQUB 23                \ Point ID: 137
- EQUB 23                \ Point ID: 138
- EQUB 23                \ Point ID: 139
- EQUB 22                \ Point ID: 140
- EQUB 22                \ Point ID: 141
- EQUB 22                \ Point ID: 142
- EQUB 22                \ Point ID: 143
- EQUB 21                \ Point ID: 144
- EQUB 21                \ Point ID: 145
- EQUB 21                \ Point ID: 146
- EQUB 21                \ Point ID: 147
- EQUB 21                \ Point ID: 148
- EQUB 29                \ Point ID: 149
- EQUB 29                \ Point ID: 150
- EQUB 29                \ Point ID: 151
- EQUB 29                \ Point ID: 152
- EQUB 24                \ Point ID: 153
- EQUB 24                \ Point ID: 154
- EQUB 24                \ Point ID: 155
- EQUB 24                \ Point ID: 156
- EQUB 160 + 40          \ Point ID: 157
- EQUB 159 + 40          \ Point ID: 158
- EQUB 18                \ Point ID: 159
- EQUB 18                \ Point ID: 160
- EQUB 27                \ Point ID: 161
- EQUB 27                \ Point ID: 162
- EQUB 27                \ Point ID: 163
- EQUB 27                \ Point ID: 164
- EQUB 28                \ Point ID: 165
- EQUB 28                \ Point ID: 166
- EQUB 28                \ Point ID: 167
- EQUB 28                \ Point ID: 168
- EQUB 25                \ Point ID: 169
- EQUB 25                \ Point ID: 170
- EQUB 25                \ Point ID: 171
- EQUB 25                \ Point ID: 172
- EQUB 26                \ Point ID: 173
- EQUB 26                \ Point ID: 174
- EQUB 26                \ Point ID: 175
- EQUB 26                \ Point ID: 176
- EQUB 19                \ Point ID: 177
- EQUB 181 + 40          \ Point ID: 178
- EQUB 181 + 40          \ Point ID: 179
- EQUB 181 + 40          \ Point ID: 180
- EQUB 30                \ Point ID: 181
- EQUB 31                \ Point ID: 182
- EQUB 182 + 40          \ Point ID: 183
- EQUB 182 + 40          \ Point ID: 184
- EQUB 182 + 40          \ Point ID: 185
- EQUB 182 + 40          \ Point ID: 186
- EQUB 32                \ Point ID: 187
- EQUB 187 + 40          \ Point ID: 188
- EQUB 187 + 40          \ Point ID: 189
- EQUB 187 + 40          \ Point ID: 190
- EQUB 187 + 40          \ Point ID: 191
- EQUB 33                \ Point ID: 192
- EQUB 199 + 40          \ Point ID: 193
- EQUB 197 + 40          \ Point ID: 194
- EQUB 199 + 40          \ Point ID: 195
- EQUB 199 + 40          \ Point ID: 196
- EQUB 192 + 40          \ Point ID: 197
- EQUB 197 + 40          \ Point ID: 198
- EQUB 192 + 40          \ Point ID: 199
- EQUB 199 + 40          \ Point ID: 200
- EQUB 39 + 40           \ Point ID: 201
- EQUB 40 + 40           \ Point ID: 202
- EQUB 205 + 40          \ Point ID: 203
- EQUB 203 + 40          \ Point ID: 204
- EQUB 40 + 40           \ Point ID: 205
- EQUB 205 + 40          \ Point ID: 206
- EQUB 205 + 40          \ Point ID: 207
- EQUB 206 + 40          \ Point ID: 208
- EQUB 203 + 40          \ Point ID: 209
- EQUB 204 + 40          \ Point ID: 210
- EQUB 8                 \ Point ID: 211
- EQUB 8                 \ Point ID: 212
- EQUB 9                 \ Point ID: 213
- EQUB 108 + 40          \ Point ID: 214
- EQUB 9                 \ Point ID: 215
+ EQUB 9 + 40            \ Point ID:   0 -> 9
+ EQUB 1                 \ Point ID:   1 -> 1
+ EQUB 1                 \ Point ID:   2 -> 1
+ EQUB 1                 \ Point ID:   3 -> 1
+ EQUB 1                 \ Point ID:   4 -> 1
+ EQUB 1                 \ Point ID:   5 -> 1
+ EQUB 1                 \ Point ID:   6 -> 1
+ EQUB 1                 \ Point ID:   7 -> 1
+ EQUB 1                 \ Point ID:   8 -> 1
+ EQUB 1                 \ Point ID:   9 -> 1
+ EQUB 1                 \ Point ID:  10 -> 1
+ EQUB 1                 \ Point ID:  11 -> 1
+ EQUB 1                 \ Point ID:  12 -> 1
+ EQUB 1                 \ Point ID:  13 -> 1
+ EQUB 1                 \ Point ID:  14 -> 1
+ EQUB 1                 \ Point ID:  15 -> 1
+ EQUB 1                 \ Point ID:  16 -> 1
+ EQUB 1                 \ Point ID:  17 -> 1
+ EQUB 1                 \ Point ID:  18 -> 1
+ EQUB 1                 \ Point ID:  19 -> 1
+ EQUB 1                 \ Point ID:  20 -> 1
+ EQUB 34                \ Point ID:  21 -> 34
+ EQUB 34                \ Point ID:  22 -> 34
+ EQUB 24 + 40           \ Point ID:  23 -> 24 -> 34
+ EQUB 34                \ Point ID:  24 -> 34
+ EQUB 22 + 40           \ Point ID:  25 -> 22 -> 34
+ EQUB 23 + 40           \ Point ID:  26 -> 23 -> 24 -> 34
+ EQUB 24 + 40           \ Point ID:  27 -> 24 -> 34
+ EQUB 34                \ Point ID:  28 -> 34
+ EQUB 22 + 40           \ Point ID:  29 -> 22 -> 34
+ EQUB 0                 \ Point ID:  30 -> 0
+ EQUB 0                 \ Point ID:  31 -> 0
+ EQUB 22 + 40           \ Point ID:  32 -> 22 -> 34
+ EQUB 34                \ Point ID:  33 -> 34
+ EQUB 29 + 40           \ Point ID:  34 -> 29 -> 22 -> 34
+ EQUB 8                 \ Point ID:  35 -> 8
+ EQUB 8                 \ Point ID:  36 -> 8
+ EQUB 40 + 40           \ Point ID:  37 -> 40 -> 39 -> 34
+ EQUB 37 + 40           \ Point ID:  38 -> 37 -> 40 -> 39 -> 34
+ EQUB 34                \ Point ID:  39 -> 34
+ EQUB 39 + 40           \ Point ID:  40 -> 39 -> 34
+ EQUB 2                 \ Point ID:  41 -> 2
+ EQUB 49 + 40           \ Point ID:  42 -> 49 -> 51 -> 2
+ EQUB 50 + 40           \ Point ID:  43 -> 50 -> 52 -> 51 -> 2
+ EQUB 48 + 40           \ Point ID:  44 -> 48 -> 52 -> 51 -> 2
+ EQUB 2                 \ Point ID:  45 -> 2
+ EQUB 51 + 40           \ Point ID:  46 -> 51 -> 2
+ EQUB 52 + 40           \ Point ID:  47 -> 52 -> 51 -> 2
+ EQUB 52 + 40           \ Point ID:  48 -> 52 -> 51 -> 2
+ EQUB 51 + 40           \ Point ID:  49 -> 51 -> 2
+ EQUB 52 + 40           \ Point ID:  50 -> 52 -> 51 -> 2
+ EQUB 2                 \ Point ID:  51 -> 2
+ EQUB 51 + 40           \ Point ID:  52 -> 51 -> 2
+ EQUB 49 + 40           \ Point ID:  53 -> 49 -> 51 -> 2
+ EQUB 50 + 40           \ Point ID:  54 -> 50 -> 52 -> 51 -> 2
+ EQUB 51 + 40           \ Point ID:  55 -> 51 -> 2
+ EQUB 52 + 40           \ Point ID:  56 -> 52 -> 51 -> 2
+ EQUB 59 + 40           \ Point ID:  57 -> 59 -> 3
+ EQUB 59 + 40           \ Point ID:  58 -> 59 -> 3
+ EQUB 3                 \ Point ID:  59 -> 3
+ EQUB 59 + 40           \ Point ID:  60 -> 59 -> 3
+ EQUB 59 + 40           \ Point ID:  61 -> 59 -> 3
+ EQUB 2                 \ Point ID:  62 -> 2
+ EQUB 2                 \ Point ID:  63 -> 2
+ EQUB 2                 \ Point ID:  64 -> 2
+ EQUB 64 + 40           \ Point ID:  65 -> 64 -> 2
+ EQUB 2                 \ Point ID:  66 -> 2
+ EQUB 66 + 40           \ Point ID:  67 -> 66 -> 2
+ EQUB 66 + 40           \ Point ID:  68 -> 66 -> 2
+ EQUB 68 + 40           \ Point ID:  69 -> 68 -> 66 -> 2
+ EQUB 4                 \ Point ID:  70 -> 4
+ EQUB 4                 \ Point ID:  71 -> 4
+ EQUB 73 + 40           \ Point ID:  72 -> 73 -> 4
+ EQUB 4                 \ Point ID:  73 -> 4
+ EQUB 75 + 40           \ Point ID:  74 -> 75 -> 4
+ EQUB 4                 \ Point ID:  75 -> 4
+ EQUB 77 + 40           \ Point ID:  76 -> 77 -> 118 -> 4
+ EQUB 118 + 40          \ Point ID:  77 -> 118 -> 4
+ EQUB 79 + 40           \ Point ID:  78 -> 79 -> 77 -> 118 -> 4
+ EQUB 77 + 40           \ Point ID:  79 -> 77 -> 118 -> 4
+ EQUB 7                 \ Point ID:  80 -> 7
+ EQUB 80 + 40           \ Point ID:  81 -> 80 -> 7
+ EQUB 7                 \ Point ID:  82 -> 7
+ EQUB 7                 \ Point ID:  83 -> 7
+ EQUB 7                 \ Point ID:  84 -> 7
+ EQUB 80 + 40           \ Point ID:  85 -> 80 -> 7
+ EQUB 39 + 40           \ Point ID:  86 -> 39 -> 34
+ EQUB 86 + 40           \ Point ID:  87 -> 86 -> 39 -> 34
+ EQUB 86 + 40           \ Point ID:  88 -> 86 -> 39 -> 34
+ EQUB 6                 \ Point ID:  89 -> 6
+ EQUB 89 + 40           \ Point ID:  90 -> 89 -> 6
+ EQUB 6                 \ Point ID:  91 -> 6
+ EQUB 6                 \ Point ID:  92 -> 6
+ EQUB 6                 \ Point ID:  93 -> 6
+ EQUB 89 + 40           \ Point ID:  94 -> 89 -> 6
+ EQUB 12                \ Point ID:  95 -> 12
+ EQUB 13                \ Point ID:  96 -> 13
+ EQUB 14                \ Point ID:  97 -> 14
+ EQUB 15                \ Point ID:  98 -> 15
+ EQUB 87 + 40           \ Point ID:  99 -> 87 -> 86 -> 39 -> 34
+ EQUB 5                 \ Point ID: 100 -> 5
+ EQUB 5                 \ Point ID: 101 -> 5
+ EQUB 103 + 40          \ Point ID: 102 -> 103 -> 5
+ EQUB 5                 \ Point ID: 103 -> 5
+ EQUB 5                 \ Point ID: 104 -> 5
+ EQUB 104 + 40          \ Point ID: 105 -> 104 -> 5
+ EQUB 5                 \ Point ID: 106 -> 5
+ EQUB 106 + 40          \ Point ID: 107 -> 106 -> 5
+ EQUB 9                 \ Point ID: 108 -> 9
+ EQUB 106 + 40          \ Point ID: 109 -> 106 -> 5
+ EQUB 109 + 40          \ Point ID: 110 -> 109 -> 106 -> 5
+ EQUB 3                 \ Point ID: 111 -> 3
+ EQUB 113 + 40          \ Point ID: 112 -> 113 -> 3
+ EQUB 3                 \ Point ID: 113 -> 3
+ EQUB 3                 \ Point ID: 114 -> 3
+ EQUB 3                 \ Point ID: 115 -> 3
+ EQUB 3                 \ Point ID: 116 -> 3
+ EQUB 4                 \ Point ID: 117 -> 4
+ EQUB 4                 \ Point ID: 118 -> 4
+ EQUB 66 + 40           \ Point ID: 119 -> 66 -> 2
+ EQUB 119 + 40          \ Point ID: 120 -> 119 -> 66 -> 2
+ EQUB 19                \ Point ID: 121 -> 19
+ EQUB 19                \ Point ID: 122 -> 19
+ EQUB 19                \ Point ID: 123 -> 19
+ EQUB 22                \ Point ID: 124 -> 22
+ EQUB 20                \ Point ID: 125 -> 20
+ EQUB 20                \ Point ID: 126 -> 20
+ EQUB 20                \ Point ID: 127 -> 20
+ EQUB 16                \ Point ID: 128 -> 16
+ EQUB 16                \ Point ID: 129 -> 16
+ EQUB 16                \ Point ID: 130 -> 16
+ EQUB 16                \ Point ID: 131 -> 16
+ EQUB 17                \ Point ID: 132 -> 17
+ EQUB 17                \ Point ID: 133 -> 17
+ EQUB 17                \ Point ID: 134 -> 17
+ EQUB 17                \ Point ID: 135 -> 17
+ EQUB 23                \ Point ID: 136 -> 23
+ EQUB 23                \ Point ID: 137 -> 23
+ EQUB 23                \ Point ID: 138 -> 23
+ EQUB 23                \ Point ID: 139 -> 23
+ EQUB 22                \ Point ID: 140 -> 22
+ EQUB 22                \ Point ID: 141 -> 22
+ EQUB 22                \ Point ID: 142 -> 22
+ EQUB 22                \ Point ID: 143 -> 22
+ EQUB 21                \ Point ID: 144 -> 21
+ EQUB 21                \ Point ID: 145 -> 21
+ EQUB 21                \ Point ID: 146 -> 21
+ EQUB 21                \ Point ID: 147 -> 21
+ EQUB 21                \ Point ID: 148 -> 21
+ EQUB 29                \ Point ID: 149 -> 29
+ EQUB 29                \ Point ID: 150 -> 29
+ EQUB 29                \ Point ID: 151 -> 29
+ EQUB 29                \ Point ID: 152 -> 29
+ EQUB 24                \ Point ID: 153 -> 24
+ EQUB 24                \ Point ID: 154 -> 24
+ EQUB 24                \ Point ID: 155 -> 24
+ EQUB 24                \ Point ID: 156 -> 24
+ EQUB 160 + 40          \ Point ID: 157 -> 160 -> 18
+ EQUB 159 + 40          \ Point ID: 158 -> 159 -> 18
+ EQUB 18                \ Point ID: 159 -> 18
+ EQUB 18                \ Point ID: 160 -> 18
+ EQUB 27                \ Point ID: 161 -> 27
+ EQUB 27                \ Point ID: 162 -> 27
+ EQUB 27                \ Point ID: 163 -> 27
+ EQUB 27                \ Point ID: 164 -> 27
+ EQUB 28                \ Point ID: 165 -> 28
+ EQUB 28                \ Point ID: 166 -> 28
+ EQUB 28                \ Point ID: 167 -> 28
+ EQUB 28                \ Point ID: 168 -> 28
+ EQUB 25                \ Point ID: 169 -> 25
+ EQUB 25                \ Point ID: 170 -> 25
+ EQUB 25                \ Point ID: 171 -> 25
+ EQUB 25                \ Point ID: 172 -> 25
+ EQUB 26                \ Point ID: 173 -> 26
+ EQUB 26                \ Point ID: 174 -> 26
+ EQUB 26                \ Point ID: 175 -> 26
+ EQUB 26                \ Point ID: 176 -> 26
+ EQUB 19                \ Point ID: 177 -> 19
+ EQUB 181 + 40          \ Point ID: 178 -> 181 -> 30
+ EQUB 181 + 40          \ Point ID: 179 -> 181 -> 30
+ EQUB 181 + 40          \ Point ID: 180 -> 181 -> 30
+ EQUB 30                \ Point ID: 181 -> 30
+ EQUB 31                \ Point ID: 182 -> 31
+ EQUB 182 + 40          \ Point ID: 183 -> 182 -> 31
+ EQUB 182 + 40          \ Point ID: 184 -> 182 -> 31
+ EQUB 182 + 40          \ Point ID: 185 -> 182 -> 31
+ EQUB 182 + 40          \ Point ID: 186 -> 182 -> 31
+ EQUB 32                \ Point ID: 187 -> 32
+ EQUB 187 + 40          \ Point ID: 188 -> 187 -> 32
+ EQUB 187 + 40          \ Point ID: 189 -> 187 -> 32
+ EQUB 187 + 40          \ Point ID: 190 -> 187 -> 32
+ EQUB 187 + 40          \ Point ID: 191 -> 187 -> 32
+ EQUB 33                \ Point ID: 192 -> 33
+ EQUB 199 + 40          \ Point ID: 193 -> 199 -> 192 -> 33
+ EQUB 197 + 40          \ Point ID: 194 -> 197 -> 192 -> 33
+ EQUB 199 + 40          \ Point ID: 195 -> 199 -> 192 -> 33
+ EQUB 199 + 40          \ Point ID: 196 -> 199 -> 192 -> 33
+ EQUB 192 + 40          \ Point ID: 197 -> 192 -> 33
+ EQUB 197 + 40          \ Point ID: 198 -> 197 -> 192 -> 33
+ EQUB 192 + 40          \ Point ID: 199 -> 192 -> 33
+ EQUB 199 + 40          \ Point ID: 200 -> 199 -> 192 -> 33
+ EQUB 39 + 40           \ Point ID: 201 -> 39 -> 34
+ EQUB 40 + 40           \ Point ID: 202 -> 40 -> 39 -> 34
+ EQUB 205 + 40          \ Point ID: 203 -> 205 -> 40 -> 39 -> 34
+ EQUB 203 + 40          \ Point ID: 204 -> 203 -> 205 -> 40 -> 39 -> 34
+ EQUB 40 + 40           \ Point ID: 205 -> 40 -> 39 -> 34
+ EQUB 205 + 40          \ Point ID: 206 -> 205 -> 40 -> 39 -> 34
+ EQUB 205 + 40          \ Point ID: 207 -> 205 -> 40 -> 39 -> 34
+ EQUB 206 + 40          \ Point ID: 208 -> 206 -> 205 -> 40 -> 39 -> 34
+ EQUB 203 + 40          \ Point ID: 209 -> 203 -> 205 -> 40 -> 39 -> 34
+ EQUB 204 + 40          \ Point ID: 210 -> 204 -> 203 -> 205 -> 40 -> 39 -> 34
+ EQUB 8                 \ Point ID: 211 -> 8
+ EQUB 8                 \ Point ID: 212 -> 8
+ EQUB 9                 \ Point ID: 213 -> 9
+ EQUB 108 + 40          \ Point ID: 214 -> 108 -> 9
+ EQUB 9                 \ Point ID: 215 -> 9
 
 \ ******************************************************************************
 \
