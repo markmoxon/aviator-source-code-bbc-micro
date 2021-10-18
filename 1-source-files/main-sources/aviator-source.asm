@@ -446,9 +446,11 @@ ORG &0C00
 
  SKIP 1
 
-.turnLo                 \ Turn rate (low byte)
+.turnLo
+
+ SKIP 1                 \ Turn rate (low byte)
                         \
- SKIP 1                 \ Stored as 35 * the turn rate in 180 degrees per minute
+                        \ Stored as 35 * the turn rate in 180 degrees per minute
                         \ 
                         \ Shown on indicator 5
 
@@ -460,9 +462,11 @@ ORG &0C00
 
  SKIP 2
 
-.airspeedLo             \ Air speed (low byte)
+.airspeedLo
+
+ SKIP 1                 \ Air speed (low byte)
                         \
- SKIP 1                 \ 100 mph is stored as 9.25 * 256 = 2368
+                        \ 100 mph is stored as 9.25 * 256 = 2368
                         \
                         \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
                         \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
@@ -483,21 +487,29 @@ ORG &0C00
 
  SKIP 3
 
-.elevatorPosition       \ Elevator position (pitch)
-                        \
- SKIP 1                 \ Shown on indicator 8 or 10 as the joystick y-position
+.elevatorPosition
 
-.rudderPosition         \ Rudder position (yaw)
+ SKIP 1                 \ Elevator position (pitch)
                         \
- SKIP 1                 \ Shown on indicator 9
+                        \ Shown on indicator 8 or 10 as the joystick y-position
 
-.aileronPosition        \ Aileron position (roll)
-                        \
- SKIP 1                 \ Shown on indicator 8 or 10 as the joystick x-position
+.rudderPosition
 
-.thrustLo               \ Thrust (low byte)
+ SKIP 1                 \ Rudder position (yaw)
                         \
- SKIP 1                 \ Thrust is in the range 0 to 1280
+                        \ Shown on indicator 9
+
+.aileronPosition
+
+ SKIP 1                 \ Aileron position (roll)
+                        \
+                        \ Shown on indicator 8 or 10 as the joystick x-position
+
+.thrustLo
+
+ SKIP 1                 \ Thrust (low byte)
+                        \
+                        \ Thrust is in the range 0 to 1280
                         \
                         \ Shown on indicator 11
 
@@ -505,9 +517,11 @@ ORG &0C00
 
  SKIP 1
 
-.turnHi                 \ Turn rate (low byte)
+.turnHi
+
+ SKIP 1                 \ Turn rate (low byte)
                         \
- SKIP 1                 \ Stored as 35 * the turn rate in 180 degrees per minute
+                        \ Stored as 35 * the turn rate in 180 degrees per minute
                         \
                         \ Shown on indicator 5
 
@@ -519,9 +533,11 @@ ORG &0C00
 
  SKIP 2
 
-.airspeedHi             \ Air speed (high byte)
+.airspeedHi
+
+ SKIP 1                 \ Air speed (high byte)
                         \
- SKIP 1                 \ 100 mph is stored as 9.25 * 256 = 2368
+                        \ 100 mph is stored as 9.25 * 256 = 2368
                         \
                         \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
                         \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
@@ -542,9 +558,11 @@ ORG &0C00
 
  SKIP 6
 
-.thrustHi               \ Thrust (high byte)
+.thrustHi
+
+ SKIP 1                 \ Thrust (high byte)
                         \
- SKIP 1                 \ Thrust is in the range 0 to 1280
+                        \ Thrust is in the range 0 to 1280
                         \
                         \ Shown on indicator 11
 
@@ -560,9 +578,11 @@ ORG &0C00
 
  SKIP 3
 
-.axisKeyUsage           \ The following locations are updated when keys are
+.axisKeyUsage
+
+ SKIP 3                 \ The following locations are updated when keys are
                         \ pressed in ProcessKeyLogger:
- SKIP 3                 \
+                        \
                         \   * axisKeyUsage   = elevator
                         \   * axisKeyUsage+1 = rudder
                         \   * axisKeyUsage+2 = aileron
@@ -721,9 +741,11 @@ ORG &0C00
 
  SKIP 1
 
-.verticalSpeedLo        \ Vertical speed (low byte)
+.verticalSpeedLo
+
+ SKIP 1                 \ Vertical speed (low byte)
                         \
- SKIP 1                 \ Stored as 128/425 * vertical speed in feet per minute,
+                        \ Stored as 128/425 * vertical speed in feet per minute,
                         \ so:
                         \
                         \ 1000 feet/minute is stored as 128/425 * 1000 = 301
@@ -761,21 +783,27 @@ ORG &0C00
 
  SKIP 1
 
-.verticalSpeedHi        \ Vertical speed (high byte)
+.verticalSpeedHi
+
+ SKIP 1                 \ Vertical speed (high byte)
                         \
- SKIP 1                 \ Shown on indicator 4
+                        \ Shown on indicator 4
 
  SKIP 1
 
-.slipRate               \ Slip rate
+.slipRate
+
+ SKIP 1                 \ Slip rate
                         \
- SKIP 1                 \ Shown on indicator 6
+                        \ Shown on indicator 6
 
  SKIP 3
 
-.keyLoggerLow           \ Key logger (low value)
+.keyLoggerLow
+
+ SKIP 6                 \ Key logger (low value)
                         \
- SKIP 6                 \ Populated with values from keyTable1Lo or keyTable2Lo
+                        \ Populated with values from keyTable1Lo or keyTable2Lo
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      =   1 or  1
@@ -791,9 +819,11 @@ ORG &0C00
 
  SKIP 8
 
-.keyLoggerHigh          \ Key logger (high value)
+.keyLoggerHigh
+
+ SKIP 6                 \ Key logger (high value)
                         \
- SKIP 6                 \ Populated with values from keyTable1Hi or keyTable2Hi
+                        \ Populated with values from keyTable1Hi or keyTable2Hi
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
                         \ L or < (elevator dive/pitch)      = -1 or 1
@@ -817,9 +847,11 @@ ORG &0C00
 
  SKIP 3
 
-.gunSights              \ Gun sights status
+.gunSights
+
+ SKIP 1                 \ Gun sights status
                         \
- SKIP 1                 \ Bit 6 = 1 while "I" is being held down
+                        \ Bit 6 = 1 while "I" is being held down
                         \
                         \ Bit 7 = 1 when sights are being shown
                         \         0 when sights are not being shown
@@ -839,9 +871,11 @@ ORG &0C00
  SKIP 1                 \ Temporary storage, used to store the maximum start
                         \ point coordinate when clipping lines
 
-.colourLogic            \ Determines the logic and bit patterns used to draw the
+.colourLogic
+
+ SKIP 1                 \ Determines the logic and bit patterns used to draw the
                         \ canopy view:
- SKIP 1                 \
+                        \
                         \   * %00000000 = erase lines
                         \     Gets set to this value after each screen flip
                         \     Sets AND logic for screen writing
@@ -859,9 +893,11 @@ ORG &0C00
                         \ Set to %10000000 for each new game
 
 
-.colourCycle            \ Determines which of the two canopy screens we are
+.colourCycle
+
+ SKIP 1                 \ Determines which of the two canopy screens we are
                         \ showing, so we can use colour cycling for smooth
- SKIP 1                 \ animation
+                        \ animation
                         \
                         \ %00001111 = show colour 1, hide colour 2
                         \ %11110000 = show colour 2, hide colour 1
@@ -875,16 +911,20 @@ ORG &0C00
 
  SKIP 1
 
-.onGround               \ "On the ground" status
+.onGround
+
+ SKIP 1                 \ "On the ground" status
                         \
- SKIP 1                 \   * 0 = we are not on the ground
+                        \   * 0 = we are not on the ground
                         \   * 1 = we are on the ground
                         \
                         \ Set to 1 in ResetVariables (on the ground)
 
-.previousListEnd        \ Used to store the value of linesToHideEnd at the
+.previousListEnd
+
+ SKIP 1                 \ Used to store the value of linesToHideEnd at the
                         \ start of each iteration of the main loop, so we can
- SKIP 1                 \ refer to it at the end of the main loop to see if
+                        \ refer to it at the end of the main loop to see if
                         \ we have added anything to the list during the main
                         \ loop
 
@@ -897,9 +937,11 @@ ORG &0C00
  SKIP 1                 \ Temporary storage, used as a counter in IsLineVisible
                         \ to check the start and end points of the line
 
-.pressingT              \ Set to 0 in the main loop if "T" is not being pressed,
+.pressingT
+
+ SKIP 1                 \ Set to 0 in the main loop if "T" is not being pressed,
                         \ otherwise set to 1, to prevent holding down "T" from
- SKIP 1                 \ constantly switching the engine on and off
+                        \ constantly switching the engine on and off
 
 .L0CCA
 
@@ -917,11 +959,13 @@ ORG &0C00
                         \
                         \   * 30 to 33 = bullets
                         \
-                        \ Points are mapped to objects via pointToObjectId
+                        \ Points are mapped to objects via objectPoints
 
-.pressingTab            \ Bit 7 determines whether TAB is being pressed
+.pressingTab
+
+ SKIP 1                 \ Bit 7 determines whether TAB is being pressed
                         \
- SKIP 1                 \   * 0 = not being pressed
+                        \   * 0 = not being pressed
                         \   * 128 = being pressed
                         \
                         \ This value is set in the ToggleJoystick routine
@@ -965,9 +1009,11 @@ ORG &0C00
                         \
                         \ Set to 47 in ResetVariables
 
-.pressingUFBS           \ Determines whether any of the following keys are
+.pressingUFBS
+
+ SKIP 5                 \ Determines whether any of the following keys are
                         \ being pressed:
- SKIP 5                 \
+                        \
                         \ pressingUFBS = 1 while the undercarriage key "U" is 
                         \ being pressed, 0 otherwise
 
@@ -986,14 +1032,18 @@ ORG &0C00
 
  SKIP 1
 
-.scoreDisplayTimer      \ Counter for removing the score after displaying it
+.scoreDisplayTimer
+
+ SKIP 1                 \ Counter for removing the score after displaying it
                         \ for a fixed amount of time
- SKIP 1
 
 
-.gunSoundCounter        \ Counter for the number of firing sounds we make when
+
+.gunSoundCounter
+
+ SKIP 1                 \ Counter for the number of firing sounds we make when
                         \ firing our guns (which makes the sound of two shots)
- SKIP 1
+
 
 .L0CDA
 
@@ -1023,29 +1073,35 @@ ORG &0C00
 
  SKIP 1
 
-.alienFlag
+.TC
 
- SKIP 1                 \ Used to store a flag when updating the radar, to
-                        \ denote whether we are updating the runway or an alien
-                        \
-                        \ Also used as a counter in L2A8C
+ SKIP 1                 \ Temporary storage, used as a flag when updating the
+                        \ radar, and as a loop counter in the visibility checks
 
-.themeStatus            \ Theme status
+.themeStatus
+
+ SKIP 1                 \ Theme status
                         \
- SKIP 1                 \   * Positive (bit 7 = 0) = the Theme is enabled
+                        \   * Positive (bit 7 = 0) = the Theme is enabled and
+                        \     the value is ???
+                        \
                         \   * Negative (bit 7 = 1) = the Theme is not enabled
                         \
                         \ Set to 255 (Theme not enabled) in ResetVariables
 
-.L0CE8                  \ Set to %01000000 when speed is 0 in L50F7
+.L0CE8
+
+ SKIP 1                 \ Set to %01000000 when speed is 0 in L50F7
                         \
- SKIP 1                 \ Gets shifted left with a 1 inserted in bit 0 in L5670
+                        \ Gets shifted left with a 1 inserted in bit 0 in L5670
                         \
                         \ Set to 1 in ResetVariables
 
-.engineStatus           \ Engine status
+.engineStatus
+
+ SKIP 1                 \ Engine status
                         \
- SKIP 1                 \   * 0 = engine is off
+                        \   * 0 = engine is off
                         \   * Non-zero = engine is on
 
 .L0CEA
@@ -1060,11 +1116,13 @@ ORG &0C00
 
  SKIP 1                 \ Plane longitude/x-coordinate (high byte)
                         \
-                        \ Set to (198 229) in ResetVariables
+                        \ Set to &C6E5 in ResetVariables
 
-.altitudeLo             \ Plane altitude/y-coordinate (high byte)
+.yPlaneLo
+
+ SKIP 1                 \ Plane altitude/y-coordinate (high byte)
                         \
- SKIP 1                 \ Stored as the altitude in feet x 4
+                        \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
                         \
@@ -1074,50 +1132,60 @@ ORG &0C00
 
  SKIP 1                 \ Plane latitude/z-coordinate (low byte)
                         \
-                        \ Set to (72 92) in ResetVariables
+                        \ Set to &485C in ResetVariables
 
 .L0CF0
 
  SKIP 1                 \ Set to 5 if undercarriage is up, 10 if it is down in
                         \ IndicatorU
 
-.firingStatus           \ Firing status
+.firingStatus
+
+ SKIP 1                 \ Firing status
                         \
- SKIP 1                 \   * 0 = no bullets in the air
+                        \   * 0 = no bullets in the air
                         \   * Non-zero = guns fired, bullets in the air
                         \
                         \ This is called FRFLAG in the original source code
                         \
                         \ Can't fire guns if this or L368F are non-zero
 
-.ucStatus               \ Undercarriage status
+.ucStatus
+
+ SKIP 1                 \ Undercarriage status
                         \
- SKIP 1                 \   * 0 = undercarriage is up
+                        \   * 0 = undercarriage is up
                         \   * Non-zero = undercarriage is down
                         \
                         \ Set to 1 (undercarriage is down) in ResetVariables
              
-.flapsStatus            \ Flaps status
+.flapsStatus
+
+ SKIP 1                 \ Flaps status
                         \
- SKIP 1                 \   * 0 = flaps are off (raised)
+                        \   * 0 = flaps are off (raised)
                         \   * Non-zero = flaps are on (dropped)
                         \
                         \ Set to 0 (flaps are off) in ResetVariables
 
  SKIP 1
 
-.brakesStatus           \ Brakes status
+.brakesStatus
+
+ SKIP 1                 \ Brakes status
                         \
- SKIP 1                 \   * 0 = brakes are off
+                        \   * 0 = brakes are off
                         \   * Non-zero = brakes are on
                         \
                         \ Set to 1 (brakes are on) in ResetVariables
 
  SKIP 1
 
-.propellorStatus        \ Propellor status
+.propellorStatus
+
+ SKIP 1                 \ Propellor status
                         \
- SKIP 1                 \   * 0 = propellor is working
+                        \   * 0 = propellor is working
                         \   * Non-zero = propellor is broken
                         \
                         \ If we make a crash landing with the undercarriage up,
@@ -1136,15 +1204,17 @@ ORG &0C00
                         \
                         \ The height measured is 512 feet, rather than the 500
                         \ feet mentioned in the maunal, as this is set to
-                        \ non-zero when altitudeHi >= 2
+                        \ non-zero when the plane's altitude in yPlaneHi >= 2
 
 .L0CFA
 
  SKIP 1                 \ Set to 7 in ResetVariables
 
-.compassHeading         \ Direction of the compass (i.e. its heading)
+.compassHeading
+
+ SKIP 1                 \ Direction of the compass (i.e. its heading)
                         \
- SKIP 1                 \   * 0 = North
+                        \   * 0 = North
                         \   * 64 = East
                         \   * 128 = South
                         \   * 192 = West
@@ -1159,11 +1229,13 @@ ORG &0C00
 
  SKIP 1                 \ Plane longitude/x-coordinate (high byte)
                         \
-                        \ Set to (198 229) in ResetVariables
+                        \ Set to &C6E5 in ResetVariables
 
-.altitudeHi             \ Plane altitude/y-coordinate (high byte)
+.yPlaneHi
+
+ SKIP 1                 \ Plane altitude/y-coordinate (high byte)
                         \
- SKIP 1                 \ Stored as the altitude in feet x 4
+                        \ Stored as the altitude in feet x 4
                         \
                         \ Shown on indicator 2
                         \
@@ -1173,7 +1245,7 @@ ORG &0C00
 
  SKIP 1                 \ Plane latitude/z-coordinate (high byte)
                         \
-                        \ Set to (72 92) in ResetVariables
+                        \ Set to &485C in ResetVariables
 
 \ ******************************************************************************
 \
@@ -6967,7 +7039,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the altitude from (altitudeHi altitudeLo) and reduces it to
+\ This section takes the altitude from (yPlaneHi yPlaneLo) and reduces it to
 \ the range 0 to 254, before passing it to the DrawIndicatorHand to update the
 \ small hand of the on-screen altimeter.
 \
@@ -6981,16 +7053,16 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 2
 
- LDA altitudeLo         \ Set (A R) = (altitudeHi altitudeLo)
+ LDA yPlaneLo           \ Set (A R) = (yPlaneHi yPlaneLo)
  STA R
- LDA altitudeHi
+ LDA yPlaneHi
 
  LSR A                  \ Set (S R) = (A R) / 4
- ROR R                  \           = (altitudeHi altitudeLo) / 4
+ ROR R                  \           = (yPlaneHi yPlaneLo) / 4
  LSR A                  \           = altitude
  ROR R                  \
  STA S                  \ so (S R) is the altitude in feet, as the value stored
-                        \ in (altitudeHi altitudeLo) is the actual altitude x 4
+                        \ in (yPlaneHi yPlaneLo) is the actual altitude x 4
 
  LDA #0                 \ Set T = 0
  STA T
@@ -10301,7 +10373,7 @@ ORG CODE%
  TXA                    \ Set X = 0 to use as a counter for zeroing 256 bytes in
                         \ the rset1 loop
 
- STA L4202              \ Set L4202 = 0
+ STA alienCounter       \ Set alienCounter = 0
 
  STA L4F87              \ Set L4F87 = 0
 
@@ -10354,20 +10426,20 @@ ORG CODE%
 
  BPL rset3              \ Loop back until we have zeroed L4210 to L4210+7
 
- LDA #72                \ Set zPlaneHi = 72
+ LDA #&48               \ Set zPlaneHi = &48
  STA zPlaneHi
 
- LDA #92                \ Set zPlaneLo = 92
+ LDA #&5C               \ Set zPlaneLo = &5C, so (zPlaneHi zPlaneLo) = &485C
  STA zPlaneLo
 
- LDA #198               \ Set xPlaneHi = 198
+ LDA #&C6               \ Set xPlaneHi = &C6
  STA xPlaneHi
 
- LDA #229               \ Set xPlaneLo = 229
+ LDA #&E5               \ Set xPlaneLo = &E5, so (xPlaneHi xPlaneLo) = &C6E5
  STA xPlaneLo
 
- LDA #10                \ Set altitudeLo = 10
- STA altitudeLo
+ LDA #10                \ Set yPlaneLo = 10, so (yPlaneHi yPlaneLo) = 10
+ STA yPlaneLo
 
  STA L0CF8              \ Set L0CF8 = 10
 
@@ -10461,8 +10533,8 @@ ORG CODE%
  LDA #80                \ Set xPointLo = 80, so we don't draw a new alien on the
  STA xPointLo           \ radar (as this coordinate is off the radar)
 
- LDA #1                 \ Set alienFlag = 1, so we remove the alien from the
- STA alienFlag          \ radar rather than the runway
+ LDA #1                 \ Set TC = 1, so we remove the alien from the radar
+ STA TC                 \ rather than the runway when we call UpdateRadar
 
  STA xPointHi           \ Set xPointHi = 1, so the value in xPointLo is treated
                         \ as positive
@@ -11535,7 +11607,9 @@ ORG CODE%
 
 .lvis5
 
- LDA pointToObjectId,Y  \ Fetch the ID of the object containing this point
+ LDA objectPoints,Y     \ Fetch this point's entry from objectPoints, which
+                        \ will tell us if this point is related to any other
+                        \ points as part of a larger object
 
  CMP #40                \ If object ID < 40 then this point does not link to
  BCC lvis8              \ another point, so jump to lvis8 to check the
@@ -11579,8 +11653,7 @@ ORG CODE%
 
  BNE lvis5              \ Jump back to lvis5 to recurse through the new point
                         \ (this BNE is effectively a JMP as A is is never zero,
-                        \ because pointToObjectId does not contain a value of
-                        \ 40)
+                        \ because objectPoints does not contain a value of 40)
 
 \ ******************************************************************************
 \
@@ -11828,7 +11901,7 @@ ORG CODE%
 
  LDY L0CBF              \ 0 if L2A8C not called, objectId if L2A8C called
 
- JSR L4C96
+ JSR L4C96              \ Cycle to the next set of ??? coordinates
 
 .lvis20
 
@@ -11843,104 +11916,152 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ Called with:
+\   15 for bullets in UpdateBullets
+\   1 for runway when called from IsRunwayVisible
+\
 \ Arguments:
 \
-\   objectId            Object ID/type, comes from pointToObjectId or
-\                       15 for bullets in UpdateBullets
-\                       1 for runway when called from IsRunwayVisible
+\   objectId            Object ID
+\
+\   GG                  &62 from UpdateBullets
+\                       
+\ Results:
+\
+\   L04D8               The object's L04D8 entry: bits 6 and 7 affected
 \
 \ ******************************************************************************
 
 .L2A8C
 
- LDY objectId
- STY L0CBF
- TYA
+ LDY objectId           \ Set Y to the object ID
+
+ STY L0CBF              \ Store the object ID in L0CBF
+
+ TYA                    \ Set N = 216 + object ID
  CLC
- ADC #&D8
+ ADC #216
  STA N
- LDA #1
+
+ LDA #1                 \ Set K = 1
  STA K
- CPY #&0C
- BCC L2AB5
 
- CPY #&10
- BCS L2AB5
+                        \ We now check for some specific groups of object:
+                        \
+                        \   * Bullets (12, 13, 14 or 15)
+                        \   * Trees (6, 7, 8 or 9)
+                        \   * ??? (30)
+                        \   * ??? (31, 32 or 33)
 
- LDA #0
+ CPY #12                \ If the object ID < 12, jump to L2AB5 to check the next
+ BCC L2AB5              \ range
+
+ CPY #16                \ If the object ID >= 16, jump to L2AB5 to check the
+ BCS L2AB5              \ next range
+
+                        \ If we get here then the object ID is 12, 13, 14 or 15,
+                        \ so this is a bullet
+
+ LDA #0                 \ Set K = 0
  STA K
- LDA yObjectHi,Y
- BPL L2AD8
 
- TYA
- AND #1
+ LDA yObjectHi,Y        \ If the object's y-coordinate is positive, jump to
+ BPL L2AD8              \ L2AD8 to check the next range
+
+ TYA                    \ If bit 0 of the object ID is set, i.e. the object ID
+ AND #1                 \ is 13 or 15, jump to L2AD8 to check the next range
  BNE L2AD8
 
- JMP L2B93
+ JMP L2B93              \ The object ID is 12 or 14, so jump to L2B93
 
 .L2AB5
 
- LDA N
- STA GG
- CPY #6
- BCC L2AD8
+                        \ If we get here then this is not a bullet
 
- CPY #&0A
- BCS L2AD8
+ LDA N                  \ Set GG = N
+ STA GG                 \        = 216 + object ID
 
- LDA #8
- STA alienFlag
+ CPY #6                 \ If the object ID < 6, jump to L2AD8 to check the next
+ BCC L2AD8              \ range
+
+ CPY #10                \ If the object ID >= 10, jump to L2AD8 to check the
+ BCS L2AD8              \ next range
+
+                        \ If we get here then the object ID is 6, 7, 8 or 9, so
+                        \ this is a tree
+
+ LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
+ STA TC                 \ we work through all 8 items in this tree group
 
 .L2AC6
 
- LDX L3EC2,Y
- LDA L3ED0,X
- STA xObjectHi,Y
- LDA L3EF0,X
- STA zObjectHi,Y
- JMP L2B20
+ LDX treeGroupLo-6,Y    \ Set X = 0, 8, 16 or 24, for Y = 6, 7, 8 or 9
+                        \
+                        \ (or 1, 9, 17, 25 etc., depending on the current group)
+
+ LDA xTreeHi,X          \ Set the object's x-coordinate to the X-th entry in
+ STA xObjectHi,Y        \ xTreeHi
+
+ LDA zTreeHi,X          \ Set the object's z-coordinate to the X-th entry in
+ STA zObjectHi,Y        \ zTreeHi
+
+ JMP L2B20              \ Jump to L2B20 to process this object
 
 .L2AD8
 
- CPY #&22
- BCS L2B20
+                        \ We jump here if this is a bullet with a positive
+                        \ y-coordinate, or if it's object ID 13 or 15
 
- CPY #&1E
- BCC L2B20
+ CPY #34                \ If the object ID >= 34, jump to L2B20 to process the
+ BCS L2B20              \ object
 
- BNE L2B09
+ CPY #30                \ If the object ID < 30, jump to L2B20 to process the
+ BCC L2B20              \ object
 
- LDA themeStatus
- BNE L2B1D
+ BNE L2B09              \ If the object ID <> 30, i.e. 31, 32 or 33, jump to
+                        \ L2B09
 
- LDA #8
- STA alienFlag
+                        \ If we get here then the object ID is 30
+
+ LDA themeStatus        \ If themeStatus is non-zero then the Theme is ???, so
+ BNE L2B1D              \ jump to L2B1D to skip the following
+
+ LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
+ STA TC                 \ we work through all 8 items in this group
 
 .L2AEC
 
- LDX L4202
- LDA L4210,X
- BNE L2B1A
+ LDX alienCounter       \ Fetch the current value of alienCounter, which
+                        \ contains the number of the alien to process, 0 to 7
 
- LDA L4208,X
- BPL L2AF9
+ LDA L4210,X            \ If the alien's L4210 entry is non-zero, jump to L2BA0
+ BNE L2B1A              \ via L2B1A to move onto the next alien in the group
+
+ LDA L4208,X            \ Set A = the alien's L4208 entry
+
+ BPL L2AF9              \ If A is positive, jump to L2AF9... which has no
+                        \ effect, as that's the next instruction anyway
 
 .L2AF9
 
- TAX
+ TAX                    \ Copy the 
  LDA xObjectHi,X
  STA xObjectHi,Y
+
  LDA zObjectHi,X
  STA zObjectHi,Y
- JMP L2B20
+
+ JMP L2B20              \ Jump to L2B20 to process this object
 
 .L2B09
+
+                        \ If we get here then the object ID is 31, 32 or 33
 
  LDX L41E4,Y
  BMI L2B1A
 
  LDA L4210,X
- CMP #&1B
+ CMP #27
  BCS L2B20
 
  LDA L4208,X
@@ -11956,45 +12077,80 @@ ORG CODE%
 
 .L2B20
 
- LDX GG
- SEC
- LDA xObjectLo,Y
- SBC xPlaneLo
- STA xPointLo,X
- LDA xObjectHi,Y
+                        \ We now translate the base location of the object,
+                        \ in (xObject, yObject, zObject), by subtracting the
+                        \ current plane coordinates (xPlane, altitude, zPlane)
+                        \ to give the vector from the plane's location to the
+                        \ object's location
+
+ LDX GG                 \ Set X to the value of GG:
+                        \
+                        \   * For bullets, this is the value of GG that is
+                        \     passed to the routine, i.e. 98
+                        \
+                        \   * For other objects, this is 216 + object ID, so
+                        \     points 216 to 255 contain the translated
+                        \     coordinates for objects 0 to 39
+                        \
+                        \ So the in the following, we set the coordinates of
+                        \ the point whose ID is in GG, i.e. point GG
+
+ SEC                    \ Set the x-coordinate of point GG:
+ LDA xObjectLo,Y        \
+ SBC xPlaneLo           \   (xPointHi xPointLo) = (xObjectHi xObjectLo)
+ STA xPointLo,X         \                         - (xPlaneHi xPlaneLo)
+                        \
+                        \ starting with the low bytes
+
+ LDA xObjectHi,Y        \ And then the high bytes
  SBC xPlaneHi
  STA xPointHi,X
- STA T
- LDA #0
+
+ STA T                  \ Set T = the high byte of the result, i.e. xPointHi
+
+ LDA #0                 \ Set A = 0 - L0C6D
  SBC L0C6D
+
  JSR L2BC0
 
  BNE L2B93
 
- SEC
- LDA yObjectLo,Y
- SBC altitudeLo
- STA yPointLo,X
- LDA yObjectHi,Y
- SBC altitudeHi
+ SEC                    \ Set the y-coordinate of point GG:
+ LDA yObjectLo,Y        \
+ SBC yPlaneLo           \   (yPointHi yPointLo) = (yObjectHi yObjectLo)
+ STA yPointLo,X         \                         - (yPlaneHi yPlaneLo)
+                        \
+                        \ starting with the low bytes
+
+ LDA yObjectHi,Y        \ And then the high bytes
+ SBC yPlaneHi
  STA yPointHi,X
- STA T
- LDA #0
+
+ STA T                  \ Set T = the high byte of the result, i.e. yPointHi
+
+ LDA #0                 \ Set A = 0 - L0C6E
  SBC L0C6E
+
  JSR L2BC0
 
  BNE L2B93
 
- SEC
- LDA zObjectLo,Y
- SBC zPlaneLo
- STA zPointLo,X
- LDA zObjectHi,Y
+ SEC                    \ Set the z-coordinate of point GG:
+ LDA zObjectLo,Y        \
+ SBC zPlaneLo           \   (zPointHi zPointLo) = (zObjectHi zObjectLo)
+ STA zPointLo,X         \                         - (zPlaneHi zPlaneLo)
+                        \
+                        \ starting with the low bytes
+
+ LDA zObjectHi,Y        \ And then the high bytes
  SBC zPlaneHi
  STA zPointHi,X
- STA T
- LDA #0
+
+ STA T                  \ Set T = the high byte of the result, i.e. zPointHi
+
+ LDA #0                 \ Set A = 0 - L0C6F
  SBC L0C6F
+
  JSR L2BC0
 
  BNE L2B93
@@ -12007,44 +12163,64 @@ ORG CODE%
  LDA showLine
  BNE L2BB7
 
- LDA #&C0
- BNE L2BB9
+ LDA #%11000000         \ Set A = %11000000 to set bits 6 and 7 of the object's
+                        \ L04D8 entry
+
+ BNE L2BB9              \ Jump to L2BB9 to set the object's L04D8 entry and
+                        \ return from the subroutine
 
 .L2B93
 
- JSR L4C96
+                        \ We jump here if this is a bullet with a negative
+                        \ y-coordinate and it's object ID 12 or 14
 
- BCC L2BA0
+ JSR L4C96              \ Cycle to the next set of tree coordinates
 
- DEC alienFlag
- BEQ L2BB7
+ BCC L2BA0              \ The C flag is cleared by the L4C96 routine if this is
+                        \ not a tree object (Y = 6, 7, 8 or 9), in which case we
+                        \ jump to L2BA0 to skip the following
 
- JMP L2AC6
+                        \ This is a tree object, so now we move onto the next
+                        \ item in the group
+
+ DEC TC                 \ Decrement the loop counter
+
+ BEQ L2BB7              \ If we have processed all 8 items in the group, jump
+                        \ to L2BB7 to return from the subroutine
+
+ JMP L2AC6              \ Otherwise loop back to L2AC6 to process the next item
+                        \ in the group
 
 .L2BA0
 
- CPY #&1E
- BNE L2BB7
+ CPY #30                \ If the object ID <> 30, jump to L2BB7 to skip the
+ BNE L2BB7              \ following
 
- LDA L4202
- CLC
+ LDA alienCounter       \ Increment alienCounter to iterate through values
+ CLC                    \ 0 to 7 and round again
  ADC #1
  AND #7
- STA L4202
- DEC alienFlag
- BEQ L2BB7
+ STA alienCounter
 
- JMP L2AEC
+ DEC TC                 \ Decrement the loop counter
+
+ BEQ L2BB7              \ If we have processed all 8 items in the group, jump
+                        \ to L2BB7 to return from the subroutine
+
+ JMP L2AEC              \ Otherwise loop back to L2AEC to process the next item
+                        \ in the group
 
 .L2BB7
 
- LDA #&40
+ LDA #%01000000         \ Set A = %11000000 to set bit 6 of the object's L04D8
+                        \ entry
 
 .L2BB9
 
- ORA L04D8,Y
- STA L04D8,Y
- RTS
+ ORA L04D8,Y            \ Set the bits of the object's L04D8 entry as per the
+ STA L04D8,Y            \ value in A
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12055,39 +12231,56 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   K                   The value to return in A if A = -1 or A >= 1
+\
+\   Y                   The object ID
+\
+\ Returns:
+\
+\   A                   0 or K
 \
 \ ******************************************************************************
 
 .L2BC0
 
- BPL L2BCD
+ BPL L2BCD              \ If A is positive, jump to L2BCD
 
- CMP #&FF
+ CMP #&FF               \ If A <> -1, jump to L2BD9
  BNE L2BD9
 
- LDA T
+                        \ If we get here, then A is in the range -2 to -128
+
+ LDA T                  \ Set A = ~T
  EOR #&FF
- JMP L2BD1
+
+ JMP L2BD1              \ Jump to L2BD1
 
 .L2BCD
 
- BNE L2BD9
+ BNE L2BD9              \ If A is non-zero, jump to L2BD9
 
- LDA T
+                        \ If we get here then A is 0
+
+ LDA T                  \ Set A = T
 
 .L2BD1
 
- CMP Lookup3BD8,Y
- BCS L2BD9
+ CMP Lookup3BD8,Y       \ If A >= the object's maximum value in Lookup3BD8,
+ BCS L2BD9              \ jump to L2BD9
 
- LDA #0
- RTS
+ LDA #0                 \ Set A = 0 as the return value
+
+ RTS                    \ Return from the subroutine
 
 .L2BD9
 
- LDA K
- RTS
+                        \ If we get here then A = -1 or A >= 1
+
+ LDA K                  \ Set A = K as the return value
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12561,12 +12754,12 @@ ORG CODE%
 .L2CD3
 
  LDX #0
- STX alienFlag
+ STX TC
  CPY #&21
  BNE L2CE1
 
  LDA #1
- STA alienFlag
+ STA TC
 
 .L2CE1
 
@@ -12630,7 +12823,7 @@ ORG CODE%
 \
 \   (zPointLo zPointHi) The radar y-coordinate of the item to display
 \
-\   alienFlag           The item to update on the radar:
+\   TC                  The item to update on the radar:
 \
 \                         * 0 = update the runway
 \
@@ -12640,8 +12833,8 @@ ORG CODE%
 
 .UpdateRadar
 
- LDX alienFlag          \ Set X = alienFlag to point to the item to update on
-                        \ the radar (0 for the runway, 1 for the alien)
+ LDX TC                 \ Set X = TC to point to the item to update on the radar
+                        \ (0 for the runway, 1 for the alien)
 
  LDA radarX,X           \ Set I = the X-th byte of radarX, the x-coordinate of
  STA I                  \ the current line or dot on the radar
@@ -12661,9 +12854,9 @@ ORG CODE%
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- LDX alienFlag          \ If alienFlag is non-zero then we just erased a dot
- BNE radl1              \ from the radar, so jump to radl1 as we don't need to
-                        \ redraw the cross at the centre of the radar
+ LDX TC                 \ If TC is non-zero then we just erased a dot from the
+ BNE radl1              \ radar, so jump to radl1 as we don't need to redraw the
+                        \ cross at the centre of the radar
                         
                         \ If we get here then we just erased a line from the
                         \ radar, which may have corrupted the cross in the
@@ -15566,11 +15759,46 @@ NEXT
 
 .Lookup3BD8
 
- EQUB &6C, &7D, &7D, &7D, &7D, &7D, &28, &28
- EQUB &6E, &6E, &3A, &42, &1E, &1E, &1E, &1E
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &7D, &7D
- EQUB &7D, &7D, &7D, &7D, &7D, &7D, &19, &5A
- EQUB &5A, &5A, &7D, &3A, &42, &4E, &45, &20
+ EQUB 108               \ Object ID:  0
+ EQUB 125               \ Object ID:  1
+ EQUB 125               \ Object ID:  2
+ EQUB 125               \ Object ID:  3
+ EQUB 125               \ Object ID:  4
+ EQUB 125               \ Object ID:  5
+ EQUB  40               \ Object ID:  6
+ EQUB  40               \ Object ID:  7
+ EQUB 110               \ Object ID:  8
+ EQUB 110               \ Object ID:  9
+ EQUB  58               \ Object ID: 10
+ EQUB  66               \ Object ID: 11
+ EQUB  30               \ Object ID: 12
+ EQUB  30               \ Object ID: 13
+ EQUB  30               \ Object ID: 14
+ EQUB  30               \ Object ID: 15
+ EQUB 125               \ Object ID: 16
+ EQUB 125               \ Object ID: 17
+ EQUB 125               \ Object ID: 18
+ EQUB 125               \ Object ID: 19
+ EQUB 125               \ Object ID: 20
+ EQUB 125               \ Object ID: 21
+ EQUB 125               \ Object ID: 22
+ EQUB 125               \ Object ID: 23
+ EQUB 125               \ Object ID: 24
+ EQUB 125               \ Object ID: 25
+ EQUB 125               \ Object ID: 26
+ EQUB 125               \ Object ID: 27
+ EQUB 125               \ Object ID: 28
+ EQUB 125               \ Object ID: 29
+ EQUB  25               \ Object ID: 30
+ EQUB  90               \ Object ID: 31
+ EQUB  90               \ Object ID: 32
+ EQUB  90               \ Object ID: 33
+ EQUB 125               \ Object ID: 34
+ EQUB  58               \ Object ID: 35
+ EQUB  66               \ Object ID: 36
+ EQUB  78               \ Object ID: 37
+ EQUB  69               \ Object ID: 38
+ EQUB  32               \ Object ID: 39
 
 \ ******************************************************************************
 \
@@ -15988,10 +16216,34 @@ NEXT
  EQUB 211               \ Line ID: 191
 
  EQUB &D7, &D7          \ These bytes appear to be unused
+ EQUB &74, &72
+ EQUB &75, &32
+ EQUB &3A, &43
 
 \ ******************************************************************************
 \
-\       Name: L3EC2
+\       Name: treeGroupLo
+\       Type: Variable
+\   Category: 
+\    Summary: 
+\
+\ ------------------------------------------------------------------------------
+\
+\ Gets cycled through:
+\
+\   0,8,16,24 -> 1,9,17,25 -> ... -> 6,15,22,30 -> 7,16,23,3 -> 0,8,16,24 -> ...
+\
+\ by successive calls to L4C96.
+\
+\ ******************************************************************************
+
+.treeGroupLo
+
+ EQUB 0, 8, 16, 24
+
+\ ******************************************************************************
+\
+\       Name: treeGroupHi
 \       Type: Variable
 \   Category: 
 \    Summary: 
@@ -16002,67 +16254,97 @@ NEXT
 \
 \ ******************************************************************************
 
-.L3EC2
+.treeGroupHi
 
- EQUB &74, &72, &75, &32
+ EQUB 0, 8, 16, 24
 
 \ ******************************************************************************
 \
-\       Name: L3EC6
+\       Name: xTreeHi
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Universe
+\    Summary: High byte of the x-coordinate for trees (objects 6 to 9)
 \
 \ ******************************************************************************
 
-.L3EC6
+.xTreeHi
 
- EQUB &3A, &43, &00, &08, &10, &18, &00, &08
- EQUB &10, &18
+ EQUB &C8               \ Group 0: object 6 has coordinate (&C800, &0000, &5200)
+ EQUB &2A               \ Group 1: object 6 has coordinate (&2A00, &0000, &D200)
+ EQUB &CF               \ Group 2: object 6 has coordinate (&CF00, &0000, &9A00)
+ EQUB &82               \ Group 3: object 6 has coordinate (&8200, &0000, &C900)
+ EQUB &1D               \ Group 4: object 6 has coordinate (&1D00, &0000, &3E00)
+ EQUB &75               \ Group 5: object 6 has coordinate (&7500, &0000, &3300)
+ EQUB &1A               \ Group 6: object 6 has coordinate (&1A00, &0000, &8A00)
+ EQUB &CF               \ Group 7: object 6 has coordinate (&CF00, &0000, &EC00)
+ EQUB &9C               \ Group 0: object 7 has coordinate (&9C00, &0000, &C600)
+ EQUB &43               \ Group 1: object 7 has coordinate (&4300, &0000, &E200)
+ EQUB &E5               \ Group 2: object 7 has coordinate (&E500, &0000, &BA00)
+ EQUB &8A               \ Group 3: object 7 has coordinate (&8A00, &0000, &7000)
+ EQUB &EA               \ Group 4: object 7 has coordinate (&EA00, &0000, &6E00)
+ EQUB &22               \ Group 5: object 7 has coordinate (&2200, &0000, &4400)
+ EQUB &6A               \ Group 6: object 7 has coordinate (&6A00, &0000, &2000)
+ EQUB &C5               \ Group 7: object 7 has coordinate (&C500, &0000, &1B00)
+ EQUB &15               \ Group 0: object 8 has coordinate (&1500, &0000, &2F00)
+ EQUB &C4               \ Group 1: object 8 has coordinate (&C400, &0000, &0500)
+ EQUB &C4               \ Group 2: object 8 has coordinate (&C400, &0000, &0500)
+ EQUB &CE               \ Group 3: object 8 has coordinate (&CE00, &0000, &F500)
+ EQUB &CE               \ Group 4: object 8 has coordinate (&CE00, &0000, &F500)
+ EQUB &CE               \ Group 5: object 8 has coordinate (&CE00, &0000, &F500)
+ EQUB &15               \ Group 6: object 8 has coordinate (&1500, &0000, &2F00)
+ EQUB &11               \ Group 7: object 8 has coordinate (&1100, &0000, &D600)
+ EQUB &38               \ Group 0: object 9 has coordinate (&3800, &0000, &1C00)
+ EQUB &D5               \ Group 1: object 9 has coordinate (&D500, &0000, &2E00)
+ EQUB &D5               \ Group 2: object 9 has coordinate (&D500, &0000, &2E00)
+ EQUB &DA               \ Group 3: object 9 has coordinate (&DA00, &0000, &D300)
+ EQUB &DA               \ Group 4: object 9 has coordinate (&DA00, &0000, &D300)
+ EQUB &0D               \ Group 5: object 9 has coordinate (&0D00, &0000, &D900)
+ EQUB &38               \ Group 6: object 9 has coordinate (&3800, &0000, &1C00)
+ EQUB &0D               \ Group 7: object 9 has coordinate (&0D00, &0000, &D900)
 
 \ ******************************************************************************
 \
-\       Name: L3ED0
+\       Name: zTreeHi
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Universe
+\    Summary: High byte of the z-coordinate for trees (objects 6 to 9)
 \
 \ ******************************************************************************
 
-.L3ED0
+.zTreeHi
 
- EQUB &C8, &2A, &CF, &82, &1D, &75, &1A, &CF
- EQUB &9C, &43, &E5, &8A, &EA, &22, &6A, &C5
- EQUB &15, &C4, &C4, &CE, &CE, &CE, &15, &11
- EQUB &38, &D5, &D5, &DA, &DA, &0D, &38, &0D
-
-\ ******************************************************************************
-\
-\       Name: L3EF0
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L3EF0
-
- EQUB &52, &D2, &9A, &C9, &3E, &33, &8A, &EC
- EQUB &C6, &E2, &BA, &70, &6E, &44, &20, &1B
- EQUB &2F, &05, &05, &F5, &F5, &F5, &2F, &D6
- EQUB &1C, &2E, &2E, &D3, &D3, &D9, &1C, &D9
+ EQUB &52               \ Group 0: object 6 has coordinate (&C800, &0000, &5200)
+ EQUB &D2               \ Group 1: object 6 has coordinate (&2A00, &0000, &D200)
+ EQUB &9A               \ Group 2: object 6 has coordinate (&CF00, &0000, &9A00)
+ EQUB &C9               \ Group 3: object 6 has coordinate (&8200, &0000, &C900)
+ EQUB &3E               \ Group 4: object 6 has coordinate (&1D00, &0000, &3E00)
+ EQUB &33               \ Group 5: object 6 has coordinate (&7500, &0000, &3300)
+ EQUB &8A               \ Group 6: object 6 has coordinate (&1A00, &0000, &8A00)
+ EQUB &EC               \ Group 7: object 6 has coordinate (&CF00, &0000, &EC00)
+ EQUB &C6               \ Group 0: object 7 has coordinate (&9C00, &0000, &C600)
+ EQUB &E2               \ Group 1: object 7 has coordinate (&4300, &0000, &E200)
+ EQUB &BA               \ Group 2: object 7 has coordinate (&E500, &0000, &BA00)
+ EQUB &70               \ Group 3: object 7 has coordinate (&8A00, &0000, &7000)
+ EQUB &6E               \ Group 4: object 7 has coordinate (&EA00, &0000, &6E00)
+ EQUB &44               \ Group 5: object 7 has coordinate (&2200, &0000, &4400)
+ EQUB &20               \ Group 6: object 7 has coordinate (&6A00, &0000, &2000)
+ EQUB &1B               \ Group 7: object 7 has coordinate (&C500, &0000, &1B00)
+ EQUB &2F               \ Group 0: object 8 has coordinate (&1500, &0000, &2F00)
+ EQUB &05               \ Group 1: object 8 has coordinate (&C400, &0000, &0500)
+ EQUB &05               \ Group 2: object 8 has coordinate (&C400, &0000, &0500)
+ EQUB &F5               \ Group 3: object 8 has coordinate (&CE00, &0000, &F500)
+ EQUB &F5               \ Group 4: object 8 has coordinate (&CE00, &0000, &F500)
+ EQUB &F5               \ Group 5: object 8 has coordinate (&CE00, &0000, &F500)
+ EQUB &2F               \ Group 6: object 8 has coordinate (&1500, &0000, &2F00)
+ EQUB &D6               \ Group 7: object 8 has coordinate (&1100, &0000, &D600)
+ EQUB &1C               \ Group 0: object 9 has coordinate (&3800, &0000, &1C00)
+ EQUB &2E               \ Group 1: object 9 has coordinate (&D500, &0000, &2E00)
+ EQUB &2E               \ Group 2: object 9 has coordinate (&D500, &0000, &2E00)
+ EQUB &D3               \ Group 3: object 9 has coordinate (&DA00, &0000, &D300)
+ EQUB &D3               \ Group 4: object 9 has coordinate (&DA00, &0000, &D300)
+ EQUB &D9               \ Group 5: object 9 has coordinate (&0D00, &0000, &D900)
+ EQUB &1C               \ Group 6: object 9 has coordinate (&3800, &0000, &1C00)
+ EQUB &D9               \ Group 7: object 9 has coordinate (&0D00, &0000, &D900)
 
 \ ******************************************************************************
 \
@@ -16496,16 +16778,18 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4202
+\       Name: alienCounter
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4202
+.alienCounter
 
- EQUB &6C               \ Zeroed in ResetVariables
+ EQUB &6C               \ Used as a counter, from 0 to 7, for aliens
+                        \
+                        \ Zeroed in ResetVariables
 
 \ ******************************************************************************
 \
@@ -16581,12 +16865,16 @@ NEXT
 \   Category: 
 \    Summary: 
 \
+\ ------------------------------------------------------------------------------
+\
+\ This is called FLDPTR in the original source code.
+\
 \ ******************************************************************************
 
 .L4208
 
- EQUB &65, &64          \ This is called FLDPTR in the original source code
- EQUB &62, &61          \ Zeroed in ResetVariables
+ EQUB &65, &64          \ Zeroed in ResetVariables
+ EQUB &62, &61
  EQUB &60, &5F
  EQUB &5E  
 
@@ -17770,23 +18058,35 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: pointToObjectId
+\       Name: objectPoints
 \       Type: Variable
 \   Category: Universe
-\    Summary: Maps lines to objects
+\    Summary: Sequences of related points that together make up objects
 \
 \ ------------------------------------------------------------------------------
 \
-\ The X-th entry in pointToObjectId contains the object ID of the line with ID
-\ X.
+\ Objects in Aviator are collections of points. These points are stored in
+\ sequences in the objectPoints table. The last point in a sequence always has
+\ an ID in the range 0 to 39. This final point ID is known as the object ID, and
+\ each object is made up of one or more sequences, all of which end on the same
+\ object ID.
 \
-\ Line 0 is the horizon
-\ Lines 1-11 are the runway
-\ Lines 12-15 are bullets
+\ The objectPoints table maps points to objects. Essentially, it's a table of
+\ point sequences which refer to other entries in the table in a recursive
+\ manner. The X-th entry in objectPoints contains one of the following:
 \
-\ The table contains details of multi-point objects. Values greater than 40 link
-\ to other entries, whose value is the entry minus 40. So if we start with entry
-\ 69, for example, we get the following:
+\   * If point X is the last point in an object, then objectPoints,X will be in
+\     in the range 0 to 39, and is the object ID (so values < 40 indicate end
+\     points in the sequences)
+\
+\   * If point X is part of a sequence of points in an object, then
+\     objectPoints,X will be >= 40, and will contain 40 + the ID of the next
+\     point in the sequence (so values >= 40 link to other entries, whose value
+\     is the entry minus 40)
+\
+\ Given a point ID, we can use this table to follow the sequence of related
+\ points, all the way to the object ID at the end. So if we start with entry 69,
+\ for example, we get the following:
 \
 \   Point ID 69 contains 68 + 40, so it links to point ID 68
 \   Point ID 68 contains 66 + 40, so it links to point ID 66
@@ -17796,13 +18096,16 @@ NEXT
 \
 \   69 -> 68 -> 66 -> 2
 \
-\ while point 210 gives us this chain:
+\ so this is one of the sequences for object 2, while point 210 gives us this
+\ chain:
 \
 \   210 -> 204 -> 203 -> 205 -> 40 -> 39 -> 34
 \
+\ which is one of the sequences for object 34.
+
 \ ******************************************************************************
 
-.pointToObjectId
+.objectPoints
 
  EQUB 9 + 40            \ Point ID:   0 -> 9
  EQUB 1                 \ Point ID:   1 -> 1
@@ -18631,8 +18934,8 @@ NEXT
 \                         * &A8 = L0CA8, L0CA9, L0CAA
 \                                 L0CB8, L0CB9, L0CBA
 \
-\                         * &ED = xPlaneLo, altitudeLo, zPlaneLo
-\                                 xPlaneHi, altitudeHi, zPlaneHi
+\                         * &ED = xPlaneLo, yPlaneLo, zPlaneLo
+\                                 xPlaneHi, yPlaneHi, zPlaneHi
 \
 \   Y                   The ID of the point to update in the point tables
 \
@@ -19208,31 +19511,44 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   Y                   The Object ID to move on to the next set of coordinates
+\
+\ Returns:
+\
+\   C flag              Set if this is a tree object (Y = 6, 7, 8 or 9)
+\                       Clear otherwise
 \
 \ ******************************************************************************
 
 .L4C96
 
- CPY #6
- BCC L4CAE
+ CPY #6                 \ If Y < 6, jump to L4CAE to return from the subroutine
+ BCC L4CAE              \ with the C flag clear
 
- CPY #10
- BCS L4CAE
+ CPY #10                \ If Y >= 10, jump to L4CAE to return from the
+ BCS L4CAE              \ subroutine with the C flag clear
 
- LDA L3EC2,Y
- CLC
- ADC #1
- AND #7
- ORA L3EC6,Y
- STA L3EC2,Y
- SEC
- RTS
+                        \ If we get here then Y = 6, 7, 8 or 9
+
+ LDA treeGroupLo-6,Y    \ Increment the value in treeGroupLo for this tree from
+ CLC                    \ 0-7, adding in the value from treeGroupHi, so:
+ ADC #1                 \
+ AND #7                 \   * Tree 6 goes from 0-7 and round again
+ ORA treeGroupHi-6,Y    \   * Tree 7 goes from 8-15 and round again
+ STA treeGroupLo-6,Y    \   * Tree 8 goes from 16-23 and round again
+                        \   * Tree 9 goes from 24-31 and round again
+
+ SEC                    \ Set the C flag
+
+ RTS                    \ Return from the subroutine
 
 .L4CAE
 
- CLC
- RTS
+ CLC                    \ Clear the C flag
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -19368,7 +19684,7 @@ NEXT
  CPY #&1E
  BNE L4D44
 
- LDX L4202
+ LDX alienCounter
  JMP L4D4A
 
 .L4D44
@@ -21396,10 +21712,10 @@ NEXT
 
 .L5317
 
- LDA altitudeHi
+ LDA yPlaneHi
  BNE L5323
 
- LDA altitudeLo
+ LDA yPlaneLo
  CMP #&14
  BCC L533A
 
@@ -22173,7 +22489,7 @@ NEXT
 
 .L568F
 
- LDA altitudeHi
+ LDA yPlaneHi
  BMI L56A3
 
  BEQ L56A8
@@ -22181,7 +22497,7 @@ NEXT
  CMP #2
  BCC L569D
 
- STA reached512ft       \ Set reached512ft = 2 when altitudeHi >= 2
+ STA reached512ft       \ Set reached512ft = 2 when yPlaneHi >= 2
 
 .L569D
 
@@ -22197,13 +22513,13 @@ NEXT
 .L56A8
 
  LDA L0CF0
- CMP altitudeLo
+ CMP yPlaneLo
  BCC L569D
 
  LDX L
  BEQ L5701
 
- STA altitudeLo
+ STA yPlaneLo
  LDX verticalSpeedHi
  BPL L56C1
 
@@ -22263,11 +22579,11 @@ NEXT
 .L5701
 
  SEC
- SBC altitudeLo
+ SBC yPlaneLo
  LSR A
  CLC
  ADC L0CF0
- STA altitudeLo
+ STA yPlaneLo
  LDA verticalSpeedHi
  BPL L5720
 
@@ -22388,7 +22704,7 @@ NEXT
  CMP #&0C
  BCS L57B2
 
- LDA altitudeLo
+ LDA yPlaneLo
  CMP L0CF0
  BNE L57B2
 
@@ -22490,7 +22806,7 @@ NEXT
 
  STY Q
  STX P
- LDA altitudeHi
+ LDA yPlaneHi
  EOR #&FF
  STA R
  JSR L5474
