@@ -305,19 +305,25 @@ L0175 = &0175
 
 \ ******************************************************************************
 \
-\       Name: L0400
+\       Name: pointStatus
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: 
 \
 \ ******************************************************************************
 
-L0400 = &0400           \ Whole page zeroed in ResetVariables
+pointStatus = &0400    \ Whole page zeroed in ResetVariables
 
-L04D8 = &04D8
-L04D9 = &04D9
-L04EC = &04EC
-L04F6 = &04F6
+\ ******************************************************************************
+\
+\       Name: objectStatus
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: 
+\
+\ ******************************************************************************
+
+objectStatus = &04D8    \ Zeroed in ResetVariables and in main loop part 2
 
 \ ******************************************************************************
 \
@@ -1885,7 +1891,7 @@ ORG CODE%
  STA N
  LDA #&10
  STA R
- LDA L0400,X
+ LDA pointStatus,X
  TAY
  AND #1
  BEQ L0D14
@@ -1896,7 +1902,7 @@ ORG CODE%
 
  TYA
  ORA #1
- STA L0400,X
+ STA pointStatus,X
  LDA zPointHi,X
  BMI L0D37
 
@@ -2126,9 +2132,9 @@ ORG CODE%
 
 .L0E5D
 
- LDA L0400,X
+ LDA pointStatus,X
  ORA N
- STA L0400,X
+ STA pointStatus,X
  RTS
 
  JSR L0F48
@@ -10387,13 +10393,14 @@ ORG CODE%
 
 .rset1
 
-                        \ This loop zeroes &0400 to &04FF
+                        \ This loop zeroes the whole page at pointStatus, which
+                        \ also zeroes objectStatus
 
- STA L0400,X            \ Zero the X-th byte of page &4
+ STA pointStatus,X      \ Zero the X-th byte of pointStatus
 
  DEX                    \ Decrement the byte counter
 
- BNE rset1              \ Loop back until we have zeroed &0400 to &04FF
+ BNE rset1              \ Loop back until we have zeroed the whole page
 
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
                         \ in the rset2 loop
@@ -10657,18 +10664,19 @@ ORG CODE%
  LDA #2                 \ Set gunSoundCounter = 2, so we make two firing sounds
  STA gunSoundCounter    \ below, one for each bullet
 
- LDY #&21               \ We now copy four bytes from L04D8 to L41FA, between
-                        \ offset &1E and &21, so set up a counter in Y that can
-                        \ also act as the offset
+ LDY #&21               \ We now copy the status bytes for the four bullet
+                        \ objects from objectStatus+30 to objectStatus+33 into
+                        \ bulletStatus, so set up a counter in Y that can also
+                        \ act as the offset
 
 .main1
 
- LDA L04D8,Y            \ Copy the Y-th byte of L04D8 to the Y-th byte of L41FA,
- STA L41FA,Y            \ so that's:
+ LDA objectStatus,Y     \ Copy the Y-th byte of objectStatus to bulletStatus,
+ STA bulletStatus-30,Y  \ to give this:
                         \
-                        \   L04D8+30 -> L41FA+30
+                        \   objectStatus+30 -> bulletStatus
                         \   ...
-                        \   L04D8+33 -> L41FA+33
+                        \   objectStatus+33 -> bulletStatus+3
 
  DEY                    \ Decrement the loop counter
 
@@ -10703,8 +10711,9 @@ ORG CODE%
 
 .main3
 
- LDX #19                \ We now want to zero memory from L04D8 to &04FF, which
-                        \ we do as two blocks of 19 bytes, so set a counter in X
+ LDX #19                \ We now want to zero the 40 bytes in objectStatus,
+                        \ which we can do as two blocks of 20 bytes, so set a
+                        \ counter in X
 
  LDA #0                 \ Set L0CCA = 0
  STA L0CCA
@@ -10713,13 +10722,13 @@ ORG CODE%
 
 .main4
 
- STA L04D8,X            \ Zero the X-th byte of L04D8, to zero L04D8 to L04EB
+ STA objectStatus,X     \ Zero the X-th byte of objectStatus
 
- STA L04EC,X            \ Zero the X-th byte of L04EC, to zero L04EC to &04FF
+ STA objectStatus+20,X  \ Zero the X-th byte of objectStatus+20
 
  DEX                    \ Decrement the loop counter
 
- BPL main4              \ Loop back until we have zeroed from L04D8 to &04FF
+ BPL main4              \ Loop back until we have zeroed all 40 bytes
 
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
  BEQ main5              \ the air, so jump to main5 to skip updating the bullet
@@ -10829,7 +10838,7 @@ ORG CODE%
 .main8
 
  LDY objectId
- LDA L41FA,Y
+ LDA bulletStatus-30,Y
  BPL main9
 
  JSR L3053
@@ -11121,13 +11130,13 @@ ORG CODE%
 \       Name: MainLoop (Part 14 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Add new line points to L0400
+\    Summary: Update the status of any new line points
 \
 \ ------------------------------------------------------------------------------
 \
-\ If we have added any lines to linesToHide list during the main loop
-\ (and therefore incremented linesToHideEnd), we process each of them to add
-\ their details to L0400.
+\ If we have added any lines to linesToHide list during the main loop (and
+\ therefore incremented linesToHideEnd), we reset their start and points'
+\ statuses in pointStatus to zero.
 \
 \ ******************************************************************************
 
@@ -11164,12 +11173,12 @@ ORG CODE%
 
  LDX lineStartPointId,Y \ Set X to the ID of this line's start point
 
- LDA #0                 \ Zero the X-th byte of L0400
- STA L0400,X
+ LDA #0                 \ Zero the status byte for the start point
+ STA pointStatus,X
 
  LDX lineEndPointId,Y   \ Set X to the ID of this line's end point
 
- STA L0400,X            \ Zero the X-th byte of L0400
+ STA pointStatus,X      \ Zero the status byte for the end point
 
  JMP main25             \ Jump back to main25 to repeat this process until we
                         \ have zeroed all the new additions to linesToHide
@@ -11301,10 +11310,10 @@ ORG CODE%
  JSR L0D01
 
  LDX L
- LDA L0400,X
+ LDA pointStatus,X
  STA L0CC7
  LDX M
- LDA L0400,X
+ LDA pointStatus,X
  STA N
  AND L0CC7
  AND #&30
@@ -11359,7 +11368,7 @@ ORG CODE%
 .L2930
 
  LDY L05C8,X
- STA L0400,Y
+ STA pointStatus,Y
  DEX
  BNE L2930
 
@@ -11578,10 +11587,10 @@ ORG CODE%
 
 .lvis3
 
- LDA L0400,Y            \ If bit 7 of the point's L0400 entry is clear, skip the
- BPL lvis4              \ following instruction
+ LDA pointStatus,Y      \ If bit 7 of the point's status byte is clear, skip
+ BPL lvis4              \ the following instruction
 
- JMP lvis17             \ Bit 7 of the point's L0400 entry is set, which means
+ JMP lvis17             \ Bit 7 of the point's status byte is set, which means
                         \ we have already checked this point, so jump to lvis17
                         \ to do the distance and z-coordinate tests
 
@@ -11628,9 +11637,9 @@ ORG CODE%
  STA L0CCF              \ Store the new point's ID in L0CCF
 
  TAY                    \ Copy the new point's ID into Y so we can use it as an
-                        \ an index into L0400
+                        \ an index into pointStatus
 
- LDA L0400,Y            \ If bit 7 of the new point's L0400 entry is set, then
+ LDA pointStatus,Y      \ If bit 7 of the new point's status byte is set, then
  BMI lvis14             \ we have already checked this new point, which means
                         \ we have already processed the rest of the points in
                         \ the linked object, so jump down to lvis14 to check
@@ -11673,10 +11682,10 @@ ORG CODE%
  PLA                    \ Pull the point ID from the stack and store it in GG
  STA GG
 
- LDA L04D8,Y            \ If bit 7 of the point's L04D8 entry is set, jump to
+ LDA objectStatus,Y     \ If bit 7 of the object's status byte is set, jump to
  BMI lvis7              \ lvis16 via lvis7
 
-                        \ If we get here then bit 7 of the point's L04D8 entry
+                        \ If we get here then bit 7 of the object's status byte
                         \ is clear
 
  LDA #%10000000         \ Set showLine to say that the line is not in view
@@ -11717,20 +11726,20 @@ ORG CODE%
 
 .lvis9
 
- LDA L04D8,Y            \ Fetch the object's L04D8 entry
+ LDA objectStatus,Y     \ Fetch the object's status byte
 
- AND #%01000000         \ If bit 6 of the object's L04D8 entry is set, skip the
- BNE lvis10             \ following
+ AND #%01000000         \ If bit 6 of the object's status byte is set, skip
+ BNE lvis10             \ the following
 
- JSR L2A8C              \ (This sets bit 6 of the object's L04D8 entry and
+ JSR L2A8C              \ (This sets bit 6 of the object's status byte and
                         \ sets L0CBF to objectId)
 
 .lvis10
 
  LDY objectId           \ Fetch the object ID from objectId
 
- LDA L04D8,Y            \ If bit 7 of the object's L04D8 entry is set, jump to
- BMI lvis13             \ lvis13
+ LDA objectStatus,Y     \ If bit 7 of the object's status byte is set, jump
+ BMI lvis13             \ to lvis13
 
 .lvis11
 
@@ -11766,7 +11775,7 @@ ORG CODE%
 
                         \ We jump straight here if we are working through a
                         \ linked object and come across a point with bit 7 set
-                        \ in the point's L0400 entry (which means we have
+                        \ in the point's status byte (which means we have
                         \ already processed the rest of the points in the
                         \ linked object)
 
@@ -11797,9 +11806,9 @@ ORG CODE%
  LDY GG                 \ Set L0CCF = the point ID in GG
  STY L0CCF
 
- LDA #%10000000         \ Set bit 7 of the point's L0400 entry
- ORA L0400,Y
- STA L0400,Y
+ LDA #%10000000         \ Set bit 7 of the point's status byte
+ ORA pointStatus,Y
+ STA pointStatus,Y
 
  BNE lvis14             \ Jump to lvis14 (this BNE is effectively a JMP as A is
                         \ never zero)
@@ -11836,7 +11845,7 @@ ORG CODE%
 .lvis17
 
                         \ We jump straight here if line ID >= 12 and bit 7 of
-                        \ the point's L0400 entry is set (which means we have
+                        \ the point's status byte is set (which means we have
                         \ already processed this point)
 
  LDA HH                 \ If HH is non-zero, jump to lvis18 to move on to the
@@ -11861,9 +11870,9 @@ ORG CODE%
 
 .lvis18
 
- LDA #%10000000         \ Make the start point's L0400 entry negative
- ORA L0400,Y
- STA L0400,Y
+ LDA #%10000000         \ Set bit 7 of the start point's status byte
+ ORA pointStatus,Y
+ STA pointStatus,Y
 
  DEC pointCount         \ Decrement pointCount so we check the end point next
 
@@ -11928,7 +11937,7 @@ ORG CODE%
 \                       
 \ Results:
 \
-\   L04D8               The object's L04D8 entry: bits 6 and 7 affected
+\   objectStatus        The object's status byte: bits 6 and 7 affected
 \
 \ ******************************************************************************
 
@@ -11943,7 +11952,7 @@ ORG CODE%
  ADC #216
  STA N
 
- LDA #1                 \ Set K = 1
+ LDA #1                 \ Set K = 1 to pass to the L2BC0 routine
  STA K
 
                         \ We now check for some specific groups of object:
@@ -11962,7 +11971,7 @@ ORG CODE%
                         \ If we get here then the object ID is 12, 13, 14 or 15,
                         \ so this is a bullet
 
- LDA #0                 \ Set K = 0
+ LDA #0                 \ Set K = 0 to pass to the L2BC0 routine
  STA K
 
  LDA yObjectHi,Y        \ If the object's y-coordinate is positive, jump to
@@ -12164,9 +12173,9 @@ ORG CODE%
  BNE L2BB7
 
  LDA #%11000000         \ Set A = %11000000 to set bits 6 and 7 of the object's
-                        \ L04D8 entry
+                        \ status byte
 
- BNE L2BB9              \ Jump to L2BB9 to set the object's L04D8 entry and
+ BNE L2BB9              \ Jump to L2BB9 to set the object's status byte and
                         \ return from the subroutine
 
 .L2B93
@@ -12212,13 +12221,13 @@ ORG CODE%
 
 .L2BB7
 
- LDA #%01000000         \ Set A = %11000000 to set bit 6 of the object's L04D8
-                        \ entry
+ LDA #%01000000         \ Set A = %01000000 to set bit 6 of the object's status
+                        \ byte
 
 .L2BB9
 
- ORA L04D8,Y            \ Set the bits of the object's L04D8 entry as per the
- STA L04D8,Y            \ value in A
+ ORA objectStatus,Y     \ Set the bits of the object's status byte as per the
+ STA objectStatus,Y     \ value in A
 
  RTS                    \ Return from the subroutine
 
@@ -12606,13 +12615,13 @@ ORG CODE%
  LDY lineEndPointId,X
  STY M
 
- LDA #0                 \ Zero the end point's L0400 entry
- STA L0400,Y
+ LDA #0                 \ Zero the end point's status byte
+ STA pointStatus,Y
 
  LDY lineStartPointId,X \ Set L to the point ID for the line's start point
  STY L
 
- STA L0400,Y            \ Zero the start point's L0400 entry
+ STA pointStatus,Y      \ Zero the start point's status byte
 
  JSR DrawClippedLine    \ Draw the line, clipping it to the canopy view if
                         \ required
@@ -12721,8 +12730,8 @@ ORG CODE%
 
  STA zPointHi,X
  LDA #&80
- ORA L0400,X
- STA L0400,X
+ ORA pointStatus,X
+ STA pointStatus,X
  LDA #&1B
  STA L0CCB
  JSR L1D8D
@@ -14296,7 +14305,7 @@ ORG CODE%
 
 .IsRunwayVisible
 
- LDA L04D9
+ LDA objectStatus+1
  BEQ L31D4
 
  BMI L31C7
@@ -14365,7 +14374,7 @@ ORG CODE%
  BEQ L3222
 
  LDA #&40
- STA L04D9
+ STA objectStatus+1
  RTS
 
 .L3222
@@ -14609,8 +14618,8 @@ ORG CODE%
 .L333B
 
  LDA #&80
- ORA L0400,X
- STA L0400,X
+ ORA pointStatus,X
+ STA pointStatus,X
  DEX
  BNE L333B
 
@@ -16758,23 +16767,8 @@ NEXT
 
  EQUB &FB, &FC, &FC, &FC, &FC, &FD, &FD, &FD
  EQUB &FD, &FE, &FE, &FE, &FE, &FE, &FE, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF
-
-\ ******************************************************************************
-\
-\       Name: L41FA
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L41FA
-
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
- EQUB &FF, &FF
 
 \ ******************************************************************************
 \
@@ -16909,14 +16903,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4218
+\       Name: bulletStatus
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4218
+.bulletStatus
 
  EQUB &78, &77          \ Populated when guns are fired in main loop part 1
  EQUB &76, &75
