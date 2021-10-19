@@ -862,9 +862,11 @@ ORG &0C00
                         \ Bit 7 = 1 when sights are being shown
                         \         0 when sights are not being shown
 
-.L0CBF
+.isObject
 
- SKIP 1
+ SKIP 1                 \ Temporary storage, used to store the object ID when we
+                        \ check the visibility of an object in IsLineVisible and
+                        \ call SetObjectCoords to set its coordinates
 
 .pointId
 
@@ -11518,7 +11520,8 @@ ORG CODE%
  STA showLine           \ value (so we start out by assuming the line is
                         \ visible, and change this if we find that it isn't)
 
- STA L0CBF              \ Set L0CBF = 0
+ STA isObject           \ Set isObject = 0, which we set to a non-zero object ID
+                        \ if we end up processing an object
 
  LDX lineId             \ Set X = lineId, so X contains the ID of the line we
                         \ want to check for visibility
@@ -11728,11 +11731,13 @@ ORG CODE%
 
  LDA objectStatus,Y     \ Fetch the object's status byte
 
- AND #%01000000         \ If bit 6 of the object's status byte is set, skip
- BNE lvis10             \ the following
+ AND #%01000000         \ If bit 6 of the object's status byte is set then we
+ BNE lvis10             \ have already set this object's coordinates in this
+                        \ iteration of the main loop, so skip the following
 
- JSR L2A8C              \ (This sets bit 6 of the object's status byte and
-                        \ sets L0CBF to objectId)
+ JSR SetObjectCoords    \ Calculate the object's coordinates, setting bit 6 of
+                        \ the object's status byte and setting isObject to the
+                        \ object ID
 
 .lvis10
 
@@ -11908,9 +11913,12 @@ ORG CODE%
  ORA #%10000000         \ visible
  STA showLine
 
- LDY L0CBF              \ 0 if L2A8C not called, objectId if L2A8C called
+ LDY isObject           \ If we processed an object above, then its ID will be
+                        \ in isObject, so fetch this into Y for the call to
+                        \ NextObjectGroup
 
- JSR L4C96              \ Cycle to the next set of ??? coordinates
+ JSR NextObjectGroup    \ Cycle to the next object group, if we just processed
+                        \ an object that's in an object group
 
 .lvis20
 
@@ -11918,34 +11926,39 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2A8C
+\       Name: SetObjectCoords (Part 1 of 11)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Visibility
+\    Summary: Set the coordinates for an object and update the status bytes
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called with:
-\   15 for bullets in UpdateBullets
-\   1 for runway when called from IsRunwayVisible
-\
 \ Arguments:
 \
-\   objectId            Object ID
+\   objectId            The object ID, for example:
 \
-\   GG                  &62 from UpdateBullets
+\                         * 1 for the runway when called from IsRunwayVisible
+\
+\                         * 15 for bullets when called from UpdateBullets
+\
+\   GG                  &62 when called from UpdateBullets
 \                       
 \ Results:
 \
 \   objectStatus        The object's status byte: bits 6 and 7 affected
 \
+\   isObject            The object ID
+\
+\   xObjectHi etc.      Set to the object's coordinates, relative to the plane
+\
 \ ******************************************************************************
 
-.L2A8C
+.SetObjectCoords
 
  LDY objectId           \ Set Y to the object ID
 
- STY L0CBF              \ Store the object ID in L0CBF
+ STY isObject           \ Store the object ID in isObject, so callers of this
+                        \ routine will know we just processed an object
 
  TYA                    \ Set N = 216 + object ID
  CLC
@@ -11958,15 +11971,24 @@ ORG CODE%
                         \ We now check for some specific groups of object:
                         \
                         \   * Bullets (12, 13, 14 or 15)
-                        \   * Trees (6, 7, 8 or 9)
+                        \   * Object groups, e.g. trees (6, 7, 8 or 9)
                         \   * ??? (30)
                         \   * ??? (31, 32 or 33)
 
- CPY #12                \ If the object ID < 12, jump to L2AB5 to check the next
- BCC L2AB5              \ range
+ CPY #12                \ If the object ID < 12, jump to objc1 to check the next
+ BCC objc1              \ range
 
- CPY #16                \ If the object ID >= 16, jump to L2AB5 to check the
- BCS L2AB5              \ next range
+ CPY #16                \ If the object ID >= 16, jump to objc1 to check the
+ BCS objc1              \ next range
+
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 2 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Process the bullets (objects 12, 13, 14 or 15)
+\
+\ ******************************************************************************
 
                         \ If we get here then the object ID is 12, 13, 14 or 15,
                         \ so this is a bullet
@@ -11975,116 +11997,171 @@ ORG CODE%
  STA K
 
  LDA yObjectHi,Y        \ If the object's y-coordinate is positive, jump to
- BPL L2AD8              \ L2AD8 to check the next range
+ BPL objc3              \ objc3 to check the next range
 
  TYA                    \ If bit 0 of the object ID is set, i.e. the object ID
- AND #1                 \ is 13 or 15, jump to L2AD8 to check the next range
- BNE L2AD8
+ AND #1                 \ is 13 or 15, jump to objc3 to check the next range
+ BNE objc3
 
- JMP L2B93              \ The object ID is 12 or 14, so jump to L2B93
+ JMP objc10             \ The object ID is 12 or 14, so jump to objc10
 
-.L2AB5
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 3 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Logic for checking which object to process
+\
+\ ******************************************************************************
+
+.objc1
 
                         \ If we get here then this is not a bullet
 
  LDA N                  \ Set GG = N
  STA GG                 \        = 216 + object ID
 
- CPY #6                 \ If the object ID < 6, jump to L2AD8 to check the next
- BCC L2AD8              \ range
+ CPY #6                 \ If the object ID < 6, jump to objc3 to check the next
+ BCC objc3              \ range
 
- CPY #10                \ If the object ID >= 10, jump to L2AD8 to check the
- BCS L2AD8              \ next range
+ CPY #10                \ If the object ID >= 10, jump to objc3 to check the
+ BCS objc3              \ next range
+
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 4 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
 
                         \ If we get here then the object ID is 6, 7, 8 or 9, so
-                        \ this is a tree
+                        \ this is an object group (e.g. a tree)
 
  LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
- STA TC                 \ we work through all 8 items in this tree group
+ STA TC                 \ we work through all 8 objects in this object group
 
-.L2AC6
+.objc2
 
- LDX treeGroupLo-6,Y    \ Set X = 0, 8, 16 or 24, for Y = 6, 7, 8 or 9
+ LDX objectGroup-6,Y    \ Set X = 0, 8, 16 or 24, for Y = 6, 7, 8 or 9
                         \
                         \ (or 1, 9, 17, 25 etc., depending on the current group)
 
- LDA xTreeHi,X          \ Set the object's x-coordinate to the X-th entry in
- STA xObjectHi,Y        \ xTreeHi
+ LDA xGroupHi,X         \ Set the object's x-coordinate to the X-th entry in
+ STA xObjectHi,Y        \ xGroupHi
 
- LDA zTreeHi,X          \ Set the object's z-coordinate to the X-th entry in
- STA zObjectHi,Y        \ zTreeHi
+ LDA zGroupHi,X         \ Set the object's z-coordinate to the X-th entry in
+ STA zObjectHi,Y        \ zGroupHi
 
- JMP L2B20              \ Jump to L2B20 to process this object
+ JMP objc9              \ Jump to objc9 to process this object
 
-.L2AD8
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 5 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Logic for checking which object to process
+\
+\ ******************************************************************************
+
+.objc3
 
                         \ We jump here if this is a bullet with a positive
                         \ y-coordinate, or if it's object ID 13 or 15
 
- CPY #34                \ If the object ID >= 34, jump to L2B20 to process the
- BCS L2B20              \ object
+ CPY #34                \ If the object ID >= 34, jump to objc9 to process the
+ BCS objc9              \ object
 
- CPY #30                \ If the object ID < 30, jump to L2B20 to process the
- BCC L2B20              \ object
+ CPY #30                \ If the object ID < 30, jump to objc9 to process the
+ BCC objc9              \ object
 
- BNE L2B09              \ If the object ID <> 30, i.e. 31, 32 or 33, jump to
-                        \ L2B09
+ BNE objc6              \ If the object ID <> 30, i.e. 31, 32 or 33, jump to
+                        \ objc6
+
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 6 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Process the alien (object 30)
+\
+\ ******************************************************************************
 
                         \ If we get here then the object ID is 30
 
  LDA themeStatus        \ If themeStatus is non-zero then the Theme is ???, so
- BNE L2B1D              \ jump to L2B1D to skip the following
+ BNE objc8              \ jump to objc8 to skip the following
 
  LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
  STA TC                 \ we work through all 8 items in this group
 
-.L2AEC
+.objc4
 
  LDX alienCounter       \ Fetch the current value of alienCounter, which
                         \ contains the number of the alien to process, 0 to 7
 
- LDA L4210,X            \ If the alien's L4210 entry is non-zero, jump to L2BA0
- BNE L2B1A              \ via L2B1A to move onto the next alien in the group
+ LDA L4210,X            \ If the alien's L4210 entry is non-zero, jump to objc11
+ BNE objc7              \ via objc7 to move onto the next alien in the group
 
- LDA L4208,X            \ Set A = the alien's L4208 entry
+ LDA L4208,X            \ Set A = the alien's L4208 entry, which gives the
+                        \ object ID for alien number alienCounter
 
- BPL L2AF9              \ If A is positive, jump to L2AF9... which has no
+ BPL objc5              \ If A is positive, jump to objc5... which has no
                         \ effect, as that's the next instruction anyway
 
-.L2AF9
+.objc5
 
- TAX                    \ Copy the 
- LDA xObjectHi,X
+ TAX                    \ Copy the alien's x-coordinate to the current object's
+ LDA xObjectHi,X        \ x-coordinate
  STA xObjectHi,Y
 
- LDA zObjectHi,X
- STA zObjectHi,Y
+ LDA zObjectHi,X        \ Copy the alien's z-coordinate to the current object's
+ STA zObjectHi,Y        \ x-coordinate
 
- JMP L2B20              \ Jump to L2B20 to process this object
+ JMP objc9              \ Jump to objc9 to process this object
 
-.L2B09
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 7 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
+
+.objc6
 
                         \ If we get here then the object ID is 31, 32 or 33
 
  LDX L41E4,Y
- BMI L2B1A
+ BMI objc7
 
  LDA L4210,X
  CMP #27
- BCS L2B20
+ BCS objc9
 
  LDA L4208,X
- BPL L2AF9
+ BPL objc5
 
-.L2B1A
+.objc7
 
- JMP L2BA0
+ JMP objc11
 
-.L2B1D
+.objc8
 
- JMP L2BB7
+ JMP objc12
 
-.L2B20
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 8 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
+
+.objc9
 
                         \ We now translate the base location of the object,
                         \ in (xObject, yObject, zObject), by subtracting the
@@ -12122,7 +12199,7 @@ ORG CODE%
 
  JSR L2BC0
 
- BNE L2B93
+ BNE objc10
 
  SEC                    \ Set the y-coordinate of point GG:
  LDA yObjectLo,Y        \
@@ -12142,7 +12219,7 @@ ORG CODE%
 
  JSR L2BC0
 
- BNE L2B93
+ BNE objc10
 
  SEC                    \ Set the z-coordinate of point GG:
  LDA zObjectLo,Y        \
@@ -12162,7 +12239,7 @@ ORG CODE%
 
  JSR L2BC0
 
- BNE L2B93
+ BNE objc10
 
  LDA #0
  STA L0CCB
@@ -12170,40 +12247,59 @@ ORG CODE%
 
  LDY objectId
  LDA showLine
- BNE L2BB7
+ BNE objc12
 
  LDA #%11000000         \ Set A = %11000000 to set bits 6 and 7 of the object's
                         \ status byte
 
- BNE L2BB9              \ Jump to L2BB9 to set the object's status byte and
+ BNE objc13             \ Jump to objc13 to set the object's status byte and
                         \ return from the subroutine
 
-.L2B93
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 9 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
+
+.objc10
 
                         \ We jump here if this is a bullet with a negative
                         \ y-coordinate and it's object ID 12 or 14
 
- JSR L4C96              \ Cycle to the next set of tree coordinates
+ JSR NextObjectGroup    \ Cycle to the next object group if this object is part
+                        \ of an object group (i.e. Y = 6, 7, 8 or 9)
 
- BCC L2BA0              \ The C flag is cleared by the L4C96 routine if this is
-                        \ not a tree object (Y = 6, 7, 8 or 9), in which case we
-                        \ jump to L2BA0 to skip the following
+ BCC objc11             \ If the C flag is clear then this object is not part of
+                        \ an object group, so jump to objc11 to skip the
+                        \ following
 
-                        \ This is a tree object, so now we move onto the next
-                        \ item in the group
+                        \ This object is part of an object group, so now we move
+                        \ onto the next object in the group
 
  DEC TC                 \ Decrement the loop counter
 
- BEQ L2BB7              \ If we have processed all 8 items in the group, jump
-                        \ to L2BB7 to return from the subroutine
+ BEQ objc12             \ If we have processed all 8 items in the group, jump
+                        \ to objc12 to return from the subroutine
 
- JMP L2AC6              \ Otherwise loop back to L2AC6 to process the next item
+ JMP objc2              \ Otherwise loop back to objc2 to process the next item
                         \ in the group
 
-.L2BA0
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 10 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
 
- CPY #30                \ If the object ID <> 30, jump to L2BB7 to skip the
- BNE L2BB7              \ following
+.objc11
+
+ CPY #30                \ If the object ID <> 30, jump to objc12 to skip the
+ BNE objc12             \ following
 
  LDA alienCounter       \ Increment alienCounter to iterate through values
  CLC                    \ 0 to 7 and round again
@@ -12213,18 +12309,27 @@ ORG CODE%
 
  DEC TC                 \ Decrement the loop counter
 
- BEQ L2BB7              \ If we have processed all 8 items in the group, jump
-                        \ to L2BB7 to return from the subroutine
+ BEQ objc12             \ If we have processed all 8 items in the group, jump
+                        \ to objc12 to return from the subroutine
 
- JMP L2AEC              \ Otherwise loop back to L2AEC to process the next item
+ JMP objc4              \ Otherwise loop back to objc4 to process the next item
                         \ in the group
 
-.L2BB7
+\ ******************************************************************************
+\
+\       Name: SetObjectCoords (Part 11 of 11)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
+
+.objc12
 
  LDA #%01000000         \ Set A = %01000000 to set bit 6 of the object's status
                         \ byte
 
-.L2BB9
+.objc13
 
  ORA objectStatus,Y     \ Set the bits of the object's status byte as per the
  STA objectStatus,Y     \ value in A
@@ -12242,24 +12347,40 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   K                   The value to return in A if A = -1 or A >= 1
+\   K                   The value to return in A if A = -1 or A = 1 to 127
 \
 \   Y                   The object ID
 \
+\   T                   High byte of point, i.e. xPointHi, yPointHi or zPointHi
+\
 \ Returns:
 \
-\   A                   0 or K
+\   A                   K if:
+\
+\                         * A = -128 to -2
+\
+\                         * A = 1 to 127
+\
+\                         * A = 0 and T >= object's Lookup3BD8 value
+\
+\                         * A = -1 and ~T >= object's Lookup3BD8 value
+\
+\                       0 if:
+\
+\                         * A = 0 and T < object's Lookup3BD8 value
+\
+\                         * A = -1 and ~T < object's Lookup3BD8 value
 \
 \ ******************************************************************************
 
 .L2BC0
 
- BPL L2BCD              \ If A is positive, jump to L2BCD
+ BPL L2BCD              \ If A is positive, i.e. 0 to 127, jump to L2BCD
 
- CMP #&FF               \ If A <> -1, jump to L2BD9
+ CMP #&FF               \ If A <> -1, i.e. A is -128 to -2, jump to L2BD9
  BNE L2BD9
 
-                        \ If we get here, then A is in the range -2 to -128
+                        \ If we get here, then A = -1
 
  LDA T                  \ Set A = ~T
  EOR #&FF
@@ -12268,9 +12389,11 @@ ORG CODE%
 
 .L2BCD
 
+                        \ If we get here, then A is positive (0 to 127)
+
  BNE L2BD9              \ If A is non-zero, jump to L2BD9
 
-                        \ If we get here then A is 0
+                        \ If we get here then A = 0
 
  LDA T                  \ Set A = T
 
@@ -12285,7 +12408,7 @@ ORG CODE%
 
 .L2BD9
 
-                        \ If we get here then A = -1 or A >= 1
+                        \ If we get here then A = -1 or A is 1 to 127
 
  LDA K                  \ Set A = K as the return value
 
@@ -13603,7 +13726,7 @@ ORG CODE%
 
  LDA #0
  STA showLine
- JSR L2A8C
+ JSR SetObjectCoords
 
  BPL L2F0A
 
@@ -14329,9 +14452,11 @@ ORG CODE%
 
  LDA #0
  STA L0CCB
+
  LDA #1
  STA objectId
- JSR L2A8C
+
+ JSR SetObjectCoords
 
  BPL L3246
 
@@ -16231,52 +16356,67 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: treeGroupLo
+\       Name: objectGroup
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ Gets cycled through:
+\ The current object number in each of the four object groups. The values in
+\ this table cycle through the following values:
 \
-\   0,8,16,24 -> 1,9,17,25 -> ... -> 6,15,22,30 -> 7,16,23,3 -> 0,8,16,24 -> ...
+\   * 0,  8, 16, 24
+\   * 1,  9, 17, 25
+\   * 2, 10, 18, 26
+\   * 3, 11, 19, 27
+\   * 4, 12, 20, 28
+\   * 5, 13, 21, 29
+\   * 6, 14, 22, 30
+\   * 7, 15, 23, 31
 \
-\ by successive calls to L4C96.
+\ and then back round to the start. The cycling is performed by successive calls
+\ to the NextObjectGroup routine.
 \
 \ ******************************************************************************
 
-.treeGroupLo
+.objectGroup
 
  EQUB 0, 8, 16, 24
 
 \ ******************************************************************************
 \
-\       Name: treeGroupHi
+\       Name: groupStart
 \       Type: Variable
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The starting point for the four object groups, so the groups cycle through the
+\ following values:
+\
+\   * 0 to 7
+\   * 8 to 15
+\   * 16 to 23
+\   * 24 to 31
 \
 \ ******************************************************************************
 
-.treeGroupHi
+.groupStart
 
  EQUB 0, 8, 16, 24
 
 \ ******************************************************************************
 \
-\       Name: xTreeHi
+\       Name: xGroupHi
 \       Type: Variable
 \   Category: Universe
-\    Summary: High byte of the x-coordinate for trees (objects 6 to 9)
+\    Summary: High byte of the x-coordinate for objects in a group (6 to 9)
 \
 \ ******************************************************************************
 
-.xTreeHi
+.xGroupHi
 
  EQUB &C8               \ Group 0: object 6 has coordinate (&C800, &0000, &5200)
  EQUB &2A               \ Group 1: object 6 has coordinate (&2A00, &0000, &D200)
@@ -16313,14 +16453,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: zTreeHi
+\       Name: zGroupHi
 \       Type: Variable
 \   Category: Universe
-\    Summary: High byte of the z-coordinate for trees (objects 6 to 9)
+\    Summary: High byte of the z-coordinate for objects in a group (6 to 9)
 \
 \ ******************************************************************************
 
-.zTreeHi
+.zGroupHi
 
  EQUB &52               \ Group 0: object 6 has coordinate (&C800, &0000, &5200)
  EQUB &D2               \ Group 1: object 6 has coordinate (&2A00, &0000, &D200)
@@ -19498,10 +19638,10 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4C96
+\       Name: NextObjectGroup
 \       Type: Subroutine
 \   Category: 
-\    Summary: 
+\    Summary: Cycle to the next object group
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19511,12 +19651,12 @@ NEXT
 \
 \ Returns:
 \
-\   C flag              Set if this is a tree object (Y = 6, 7, 8 or 9)
+\   C flag              Set if this object is part of an object group (Y = 6, 7, 8 or 9)
 \                       Clear otherwise
 \
 \ ******************************************************************************
 
-.L4C96
+.NextObjectGroup
 
  CPY #6                 \ If Y < 6, jump to L4CAE to return from the subroutine
  BCC L4CAE              \ with the C flag clear
@@ -19526,13 +19666,13 @@ NEXT
 
                         \ If we get here then Y = 6, 7, 8 or 9
 
- LDA treeGroupLo-6,Y    \ Increment the value in treeGroupLo for this tree from
- CLC                    \ 0-7, adding in the value from treeGroupHi, so:
+ LDA objectGroup-6,Y    \ Increment the value in objectGroup for this object
+ CLC                    \ from 0-7, adding in the value from groupStart, so:
  ADC #1                 \
- AND #7                 \   * Tree 6 goes from 0-7 and round again
- ORA treeGroupHi-6,Y    \   * Tree 7 goes from 8-15 and round again
- STA treeGroupLo-6,Y    \   * Tree 8 goes from 16-23 and round again
-                        \   * Tree 9 goes from 24-31 and round again
+ AND #7                 \   * Object 6 goes from 0-7 and round again
+ ORA groupStart-6,Y  \   * Object 7 goes from 8-15 and round again
+ STA objectGroup-6,Y    \   * Object 8 goes from 16-23 and round again
+                        \   * Object 9 goes from 24-31 and round again
 
  SEC                    \ Set the C flag
 
