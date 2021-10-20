@@ -955,9 +955,14 @@ ORG &0C00
 
  SKIP 1
 
-.L0CCB
+.matrixNumber
 
- SKIP 1
+ SKIP 1                 \ The matrix used in matrix operations:
+                        \
+                        \   * 0 = matrix 1
+                        \   * 9 = matrix 2
+                        \   * 18 = matrix 3
+                        \   * 27 = matrix 4
 
 .objectId
 
@@ -2163,16 +2168,16 @@ ORG CODE%
  LDX TT
  LDY J
  LDA highNibble,X
- ORA times16Hi,Y
+ ORA shift4Right,Y
  STA T
  AND #&F0
  ORA lowNibble,Y
  STA U
  AND #&0F
- ORA times16Lo,X
+ ORA shift4Left,X
  STA V
  AND #&F0
- ORA times16Hi,Y
+ ORA shift4Right,Y
  TAY
  LDX S
  AND #&0F
@@ -2198,7 +2203,7 @@ ORG CODE%
 
 .L0EBB
 
- LDA times16Lo,X
+ LDA shift4Left,X
  ADC P
  BCC L0EC3
 
@@ -2216,7 +2221,7 @@ ORG CODE%
  ADC S
  STA P
  TYA
- ADC times16Hi,X
+ ADC shift4Right,X
  ADC Q
  BCC L0EDB
 
@@ -2239,7 +2244,7 @@ ORG CODE%
 
  AND #&F0
  LDX TT
- ORA times16Hi,X
+ ORA shift4Right,X
  TAY
  AND #&F0
  ORA lowNibble,X
@@ -2247,13 +2252,13 @@ ORG CODE%
  LDA timesTable,X
  TAX
  CLC
- LDA times16Lo,X
+ LDA shift4Left,X
  ADC I
 
 .L0EFE
 
  LDA timesTable,Y
- ADC times16Hi,X
+ ADC shift4Right,X
  ROR A
  CLC
  ADC P
@@ -2360,9 +2365,9 @@ ORG CODE%
 
  TAY
  LDX T
- LDA times16Hi,X
- ORA times16Lo,Y
- LDY times16Lo,X
+ LDA shift4Right,X
+ ORA shift4Left,Y
+ LDY shift4Left,X
  RTS
 
 \ ******************************************************************************
@@ -2408,7 +2413,7 @@ ORG CODE%
  BEQ L0F8D
 
  TAX
- LDA times16Lo,X
+ LDA shift4Left,X
  RTS
 
 .L0F97
@@ -5579,10 +5584,10 @@ ORG CODE%
  ORA highNibble,Y
  STA T
  AND #%11110000
- ORA times16Hi,X
+ ORA shift4Right,X
  STA U
  AND #%00001111
- ORA times16Lo,Y
+ ORA shift4Left,Y
  TAY
  AND #%11110000
  ORA lowNibble,X
@@ -5756,76 +5761,125 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1931
+\       Name: MultiplyVxSR
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Calculate (G W) = V * (S R) / 16 or V * (S R) / 8
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ If bit 7 of K is clear, calculate (G W) = V * (S R) / 16
+\
+\ If bit 7 of K is set, calculate (G W) = V * (S R) / 8
+\
+\ Arguments:
+\
+\   (S R)               
+\
+\   V                   Magnitude 0-15, can be positive or negative
+\
+\   K                   Determines the calculation
 \
 \ ******************************************************************************
 
-.L1931
+.MultiplyVxSR
 
- LDX S
- LDY V
- LDA times16Lo,Y
- ORA times16Hi,X
- TAY
- AND #&F0
- ORA lowNibble,X
- STA U
- LDX R
- AND #&F0
- ORA times16Hi,X
- TAX
- LDA timesTable,X
- TAX
- STX T
- LDA timesTable,Y
- TAY
- LDA times16Hi,X
- ORA times16Lo,Y
- CLC
- LDX U
+ LDX S                  \ Set X = S = %SSSSssss
+
+ LDY V                  \ Set Y = V = %VVVVvvvv
+
+ LDA shift4Left,Y       \ A = V << 4
+                        \   = %vvvv0000
+ 
+ ORA shift4Right,X      \ Y = A OR (S >> 4)
+ TAY                    \   = %vvvv0000 OR %0000SSSS
+                        \   = %vvvvSSSS
+
+ AND #%11110000         \ Set U = (A AND %11110000) OR (X AND %00001111)
+ ORA lowNibble,X        \       = (%vvvvSSSS AND %11110000) OR (X AND %00001111)
+ STA U                  \       = %vvvv0000 OR (%SSSSssss AND %00001111)
+                        \       = %vvvvssss
+
+ LDX R                  \ Set X = R = %RRRRrrrr
+
+ AND #%11110000         \ Set X = (A AND %1111000) OR (X >> 4)
+ ORA shift4Right,X      \       = (%vvvvssss AND %11110000) OR (%RRRRrrrr >> 4)
+ TAX                    \       = %vvvv0000 OR %0000RRRR
+                        \       = %vvvvRRRR
+
+ LDA timesTable,X       \ Set X = %vvvv * %RRRR
+ TAX                    \
+                        \ Call this %XXXXxxxx
+
+ STX T                  \ Set T = %XXXXxxxx
+
+ LDA timesTable,Y       \ Set Y = %vvvv * %SSSS
+ TAY                    \
+                        \ Call this %YYYYyyyy
+
+ LDA shift4Right,X      \ Set A = (X >> 4) OR (Y << 4)
+ ORA shift4Left,Y       \       = %0000XXXX OR %yyyy0000
+                        \       = %yyyyXXXX
+
+ CLC                    \ Set W = A + (%vvvv * %ssss)
+ LDX U                  \       = %yyyyXXXX + (%vvvv * %ssss)
  ADC timesTable,X
  STA W
- LDA times16Hi,Y
- ADC #0
+
+ LDA shift4Right,Y      \ Set G = (Y >> 4) + carry
+ ADC #0                 \       = %0000YYYY + carry
  STA G
- BIT K
- BPL L198E
 
- LDX R
- LDA V
- AND #&0F
- ORA times16Lo,X
+                        \ So (G W) = %YYYYyyyyXXXX + (%vvvv * %ssss)
+                        \          = %YYYYyyyy0000 + %XXXX + (%vvvv * %ssss)
+                        \          =   %vvvv * %SSSS << 4
+                        \            + %vvvv * %RRRR >> 4
+                        \            + %vvvv * %ssss
+                        \          = %vvvv * (%SSSS << 4 + %ssss + %RRRR >> 4)
+                        \          = %vvvv * (%SSSSssss + %RRRR >> 4)
+                        \          = %vvvv * (S R) >> 4
+                        \          = V * (S R) >> 4
+                        \          = V * (S R) / 16
+
+ BIT K                  \ If bit 7 of K is clear, jump to L198E to skip the
+ BPL L198E              \ following and apply the correct sign to the result
+
+ LDX R                  \ Set X = R = %RRRRrrrr
+
+ LDA V                  \ Set Y = (V AND %00001111) OR (X << 3)
+ AND #%00001111         \       = %0000vvvv OR %rrrr0000
+ ORA shift4Left,X       \       = %rrrrvvvv
  TAY
- LDX T
- LDA times16Lo,X
- CLC
- ADC timesTable,Y
- BCC L1989
 
- INC W
- BNE L1989
+ LDX T                  \ Set X = T = %XXXXxxxx
 
- INC G
+ LDA shift4Left,X       \ Set A = (X << 4) + (%rrrr * %vvvv)
+ CLC                    \       = %xxxx0000 + (%rrrr * %vvvv)
+ ADC timesTable,Y       \       = %vvvv * %RRRR << 4 + %rrrr * %vvvv
+                        \       = %vvvv * (%RRRR << 4 + %rrrr)
+                        \       = %vvvv * %RRRRrrrr
+                        \       = V * R
+
+ BCC L1989              \ If the addition didn't overflow, i.e. V * R < 256,
+                        \ jump to L1989 to skip the following
+
+ INC W                  \ Set (G W) = (G W) + 1
+ BNE L1989              \
+ INC G                  \ to round the result up, as the low bytes of the
+                        \ multiplication produced a carry
 
 .L1989
 
- ASL A
+ ASL A                  \ Set (G W A) = (G W A) * 2
  ROL W
  ROL G
 
 .L198E
 
- LDA V
+ LDA V                  \ If V is positive, skip the following
  BPL L199F
 
- LDA #0
+ LDA #0                 \ V is negative, so negate (G W)
  SEC
  SBC W
  STA W
@@ -5835,11 +5889,11 @@ ORG CODE%
 
 .L199F
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L19A0
+\       Name: L19A0 (Part 1 of )
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -5848,92 +5902,156 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   L0CCB
+\   GG                  Point ID to process and update
 \
-\   L0CCF
+\   matrixNumber        We access 8 bytes at matrix1Hi+matrixNumber and matrix1Lo+matrixNumber
+\
+\   L0CCF               Point ID of point to add to give final result
 \
 \ ******************************************************************************
 
 .L19A0
 
- LDX GG
- LDY Lookup3400,X
+ LDX GG                 \ Set X to the point ID
+
+ LDY Lookup3400,X       \ Set PP to the point's Lookup3400 entry
  STY PP
- LDY Lookup34D8,X
+
+ LDY Lookup34D8,X       \ Set QQ to the point's Lookup34D8 entry
  STY QQ
- LDY L35B0,X
- STY RR
- LDA times16Hi,Y
+
+ LDY L35B0,X            \ Set Y and RR to the point's L35B0 entry, call this
+ STY RR                 \ %YYYYyyyy
+
+ LDA shift4Right,Y      \ Set A and UU to Y >> 4, so UU = %0000YYYY
  STA UU
- CMP #9
- ROR K
- LDX #5
- LDA #0
+ 
+ CMP #9                 \ If A >= 9, set bit 7 of K so the result of the call to
+ ROR K                  \ MultiplyVxSR is doubled, i.e. (G W) is doubled
+
+ LDX #5                 \ We now zero the three 16-bit xTemp, yTemp and zTemp
+                        \ variables, which live in the six bytes from XTempLo
+                        \ to zTempHi, so set a counter in X to count the bytes
+
+ LDA #0                 \ Set A = 0 to use as our zero
 
 .L19BE
 
- STA xTempLo,X
- DEX
- BPL L19BE
+ STA xTempLo,X          \ Zero the X-th byte of the six-byte xTemp coordinate
+                        \ block
 
- LDA L0CCB
- CLC
- ADC #8
- STA P
- LDA #2
- STA VV
+ DEX                    \ Decrement the loop counter
+
+ BPL L19BE              \ Loop back until we have zeroed all six bytes
+
+ LDA matrixNumber       \ Set P = matrixNumber + 8
+ CLC                    \
+ ADC #8                 \ so we do 9 iterations of the following loop,
+ STA P                  \ decrementing P from matrixNumber + 8 to matrixNumber through three
+                        \ iterations of an outer loop, each with three
+                        \ iterations of an inner loop
+
+ LDA #2                 \ Set VV = 2, to act as an outer loop counter 2, 1, 0,
+ STA VV                 \ so the first three inner loop iterations affect zTemp,
+                        \ the next three affect yTemp, and the last three affect
+                        \ xTemp
 
 .L19D0
 
- LDX #2
+ LDX #2                 \ Set X = 2, to act as an inner loop counter, 2, 1, 0,
+                        \ so V and I iterate through RR, then QQ, then PP
+
+                        \ So the iterations are:
+                        \
+                        \   * zTemp += RR * (matrix1Hi+matrixNumber+8 matrix1Lo+matrixNumber+8)
+                        \   * zTemp += QQ * (matrix1Hi+matrixNumber+7 matrix1Lo+matrixNumber+7)
+                        \   * ztemp += PP * (matrix1Hi+matrixNumber+6 matrix1Lo+matrixNumber+6)
+                        \
+                        \   * yTemp += RR * (matrix1Hi+matrixNumber+5 matrix1Lo+matrixNumber+5)
+                        \   * yTemp += QQ * (matrix1Hi+matrixNumber+4 matrix1Lo+matrixNumber+4)
+                        \   * ytemp += PP * (matrix1Hi+matrixNumber+3 matrix1Lo+matrixNumber+3)
+                        \
+                        \   * zTemp += RR * (matrix1Hi+matrixNumber+2 matrix1Lo+matrixNumber+2)
+                        \   * zTemp += QQ * (matrix1Hi+matrixNumber+1 matrix1Lo+matrixNumber+1)
+                        \   * ztemp += PP * (matrix1Hi+matrixNumber+0 matrix1Lo+matrixNumber+0)
+                        \
+                        \ Multiplying a vector by a matrix?
 
 .L19D2
 
- LDY P
- LDA PP,X
- STA I
- AND #&0F
- STA V
- BEQ L1A0C
+ LDY P                  \ Set Y to P
 
- LDA L4260,Y
+ LDA PP,X               \ Set I = PP, QQ or RR, when X = 0, 1 or 2
+ STA I
+
+ AND #%00001111         \ Set V = bits 0-3 of I
+ STA V
+
+ BEQ L1A0C              \ If V = 0, jump to L1A0C to move onto the next loop,
+                        \ as the (G W) calculation will be zero below and will
+                        \ not affect the xTemp coordinate
+
+ LDA matrix1Hi,Y        \ Set S = P-th entry of matrix1Hi
  STA S
- LDA L4220,Y
+
+ LDA matrix1Lo,Y        \ Set R = P-th entry of matrix1Lo
  STA R
- AND #1
+
+ AND #1                 \ If bit 0 of R is clear, skip the following
  BEQ L19F2
 
- LDA V
- EOR #&80
+ LDA V                  \ Bit 0 of R is set, so flip bit 7 of V
+ EOR #%10000000
  STA V
 
 .L19F2
 
- STX Q
- JSR L1931
+ STX Q                  \ Store the loop counter in X, so we can retrieve it
+                        \ after the call to MultiplyVxSR
 
- LDX Q
- LDY VV
- LDA W
+ JSR MultiplyVxSR       \ Calculate:
+                        \
+                        \   (G W) = V * (S R) / 16      if bit 7 of K = 0
+                        \
+                        \   (G W) = V * (S R) / 8       if bit 7 of K = 1
+
+ LDX Q                  \ Restore the value of X
+
+ LDY VV                 \ Fetch the coordinate index from VV
+
+ LDA W                  \ Add (G W) to the VV-th temp coordinate
  CLC
  ADC xTempLo,Y
  STA xTempLo,Y
+
  LDA G
  ADC xTempHi,Y
  STA xTempHi,Y
 
 .L1A0C
 
- LDA P
- CMP L0CCB
+ LDA P                  \ If P = matrixNumber, jump to L1A1D as we have done all 8
+ CMP matrixNumber
  BEQ L1A1D
 
- DEC P
- DEX
- BPL L19D2
+ DEC P                  \ Decrement P
 
- DEC VV
- JMP L19D0
+ DEX                    \ Decrement the inner loop counter
+
+ BPL L19D2              \ Loop back until X has done 2, 1, 0
+
+ DEC VV                 \ Decrement the outer loop counter
+
+ JMP L19D0              \ Loop back to L19D0
+
+\ ******************************************************************************
+\
+\       Name: L19A0 (Part 2 of )
+\       Type: Subroutine
+\   Category: 
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L1A1D
 
@@ -6005,7 +6123,13 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ X-th (xPoint, yPoint, zPoint) = (xTemp yTemp zTemp) + Y-th point
+\
+\ Arguments:
+\
+\   X                   Point ID to update with the result
+\
+\   Y                   Point ID to add to xTemp
 \
 \ ******************************************************************************
 
@@ -6034,7 +6158,9 @@ ORG CODE%
  LDA zTempHi
  ADC zPointHi,Y
  STA zPointHi,X
- JMP L4B8C
+
+ JMP L4B8C              \ Set showLine according to the overflow flag from each
+                        \ of the results (if any axes overflow, hide line)
 
  NOP
 
@@ -6166,32 +6292,32 @@ ORG CODE%
  JSR L1D03
 
  LDX L0CC4
- LDY L0CCB
+ LDY matrixNumber
  LDA L0162,X
- STA L4232,Y
- STA L4236,Y
- STA L423B,Y
+ STA matrix3Lo,Y
+ STA matrix3Lo+4,Y
+ STA matrix4Lo,Y
  LDA L0172,X
- STA L4272,Y
- STA L4276,Y
- STA L427B,Y
+ STA matrix3Hi,Y
+ STA matrix3Hi+4,Y
+ STA matrix4Hi,Y
  LDA L0165,X
- STA L4235,Y
- STA L423E,Y
+ STA matrix3Lo+3,Y
+ STA matrix4Lo+3,Y
  EOR #1
- STA L4233,Y
+ STA matrix3Lo+1,Y
  LDA L0175,X
- STA L4273,Y
- STA L4275,Y
- STA L427E,Y
+ STA matrix3Hi+1,Y
+ STA matrix3Hi+3,Y
+ STA matrix4Hi+3,Y
  LDA L0160,X
- STA L4243,Y
+ STA matrix4Lo+8,Y
  LDA L0170,X
- STA L4283,Y
+ STA matrix4Hi+8,Y
  LDA L0163,X
- STA L4242,Y
+ STA matrix4Lo+7,Y
  LDA L0173,X
- STA L4282,Y
+ STA matrix4Hi+7,Y
  LDY #5
 
 .L1B95
@@ -6199,10 +6325,10 @@ ORG CODE%
  CPY #3
  BEQ L1BA5
 
- LDA L4220,Y
- STA L423B,Y
- LDA L4260,Y
- STA L427B,Y
+ LDA matrix1Lo,Y
+ STA matrix4Lo,Y
+ LDA matrix1Hi,Y
+ STA matrix4Hi,Y
 
 .L1BA5
 
@@ -6220,20 +6346,20 @@ ORG CODE%
  STA S
  JSR L1D77
 
- LDY L0CCB
- LDA L4223,Y
+ LDY matrixNumber
+ LDA matrix1Lo+3,Y
  STA I
- LDA L4263,Y
+ LDA matrix1Hi+3,Y
  STA J
  JSR L1AA6
 
  LDA R
- STA L4223,Y
+ STA matrix1Lo+3,Y
  LDA S
- STA L4263,Y
- LDA L4225,Y
+ STA matrix1Hi+3,Y
+ LDA matrix1Lo+5,Y
  STA I
- LDA L4265,Y
+ LDA matrix1Hi+5,Y
  STA J
  LDX L0CC4
  LDA L0161,X
@@ -6242,18 +6368,18 @@ ORG CODE%
  STA S
  JSR L1D77
 
- LDY L0CCB
- LDA L4220,Y
+ LDY matrixNumber
+ LDA matrix1Lo,Y
  EOR #1
  STA I
- LDA L4260,Y
+ LDA matrix1Hi,Y
  STA J
  JSR L1AA6
 
  LDA R
- STA L4225,Y
+ STA matrix1Lo+5,Y
  LDA S
- STA L4265,Y
+ STA matrix1Hi+5,Y
  LDX L0CC4
  LDA L0161,X
  STA R
@@ -6271,33 +6397,33 @@ ORG CODE%
  STA S
  JSR L1D77
 
- LDY L0CCB
- LDA L4222,Y
+ LDY matrixNumber
+ LDA matrix1Lo+2,Y
  STA I
  STA xTempLo
- LDA L4262,Y
+ LDA matrix1Hi+2,Y
  STA J
  STA xTempHi
  LDA G
- STA L4222,Y
+ STA matrix1Lo+2,Y
  LDA H
- STA L4262,Y
+ STA matrix1Hi+2,Y
  LDA R
  EOR #1
  STA R
  JSR L1D77
 
- LDY L0CCB
- LDA L4220,Y
+ LDY matrixNumber
+ LDA matrix1Lo,Y
  STA I
- LDA L4260,Y
+ LDA matrix1Hi,Y
  STA J
  JSR L1AA6
 
  LDA R
- STA L4220,Y
+ STA matrix1Lo,Y
  LDA S
- STA L4260,Y
+ STA matrix1Hi,Y
  LDA xTempLo
  STA R
  LDA xTempHi
@@ -6309,41 +6435,41 @@ ORG CODE%
  STA J
  JSR L1D77
 
- LDY L0CCB
- LDA L4222,Y
+ LDY matrixNumber
+ LDA matrix1Lo+2,Y
  STA I
- LDA L4262,Y
+ LDA matrix1Hi+2,Y
  STA J
  JSR L1AA6
 
  LDA R
- STA L4222,Y
+ STA matrix1Lo+2,Y
  LDA S
- STA L4262,Y
+ STA matrix1Hi+2,Y
  LDX L0CC4
  LDA L0163,X
- STA L4227,Y
+ STA matrix1Lo+7,Y
  LDA L0173,X
- STA L4267,X
+ STA matrix1Hi+7,X
  LDA #2
  STA T
- LDY L0CCB
- LDX L0CCB
+ LDY matrixNumber
+ LDX matrixNumber
 
 .L1CC3
 
- LDA L4220,Y
- STA L4229,X
- LDA L4260,Y
- STA L4269,X
- LDA L4221,Y
- STA L422C,X
- LDA L4261,Y
- STA L426C,X
- LDA L4222,Y
- STA L422F,X
- LDA L4262,Y
- STA L426F,X
+ LDA matrix1Lo,Y
+ STA matrix2Lo,X
+ LDA matrix1Hi,Y
+ STA matrix2Hi,X
+ LDA matrix1Lo+1,Y
+ STA matrix2Lo+3,X
+ LDA matrix1Hi+1,Y
+ STA matrix2Hi+3,X
+ LDA matrix1Lo+2,Y
+ STA matrix2Lo+6,X
+ LDA matrix1Hi+2,Y
+ STA matrix2Hi+6,X
  INY
  INY
  INY
@@ -6433,15 +6559,15 @@ ORG CODE%
 
  TYA
  CLC
- ADC L0CCB
+ ADC matrixNumber
  STA N
  JSR L1D77
 
  LDY N
  LDA G
- STA L4220,Y
+ STA matrix1Lo,Y
  LDA H
- STA L4260,Y
+ STA matrix1Hi,Y
  RTS
 
 \ ******************************************************************************
@@ -6574,7 +6700,7 @@ ORG CODE%
  DEX
  BPL L1DB1
 
- LDA L0CCB
+ LDA matrixNumber
  CLC
  ADC #8
  STA P
@@ -6588,17 +6714,17 @@ ORG CODE%
 .L1DC5
 
  LDY P
- LDA L4260,Y
+ LDA matrix1Hi,Y
  STA S
  BNE L1DD5
 
- LDA L4220,Y
+ LDA matrix1Lo,Y
  CMP #5
  BCC L1E07
 
 .L1DD5
 
- LDA L4220,Y
+ LDA matrix1Lo,Y
  STA R
  LDA PP,X
  STA I
@@ -6626,7 +6752,7 @@ ORG CODE%
 .L1E07
 
  LDY P
- CPY L0CCB
+ CPY matrixNumber
  BEQ L1E18
 
  DEC P
@@ -8956,33 +9082,33 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ L423B, L423D, L423E, L423F are only used to provide signs in bit 0:
+\ matrix4Lo, matrix4Lo+2, matrix4Lo+3, matrix4Lo+4 are only used to provide signs in bit 0:
 \   Negative if bit 0 is set, positive if clear
 \
-\ L427B, L427E provide values for T calculations
-\ L427D, L427F provide values for U calculations
+\ matrix4Hi, matrix4Hi+3 provide values for T calculations
+\ matrix4Hi+2, matrix4Hi+4 provide values for U calculations
 \
-\ L427E = current roll orientation, 0-&FF for 0 to 45 degrees
-\ L423E = direction of roll
+\ matrix4Hi+3 = current roll orientation, 0-&FF for 0 to 45 degrees
+\ matrix4Lo+3 = direction of roll
 \
 \ Y = 0, K = 0:
-\   T = (L423B L427B) / 4
-\   U = -(L423D L427D) / 4
+\   T = (matrix4Lo matrix4Hi) / 4
+\   U = -(matrix4Lo+2 matrix4Hi+2) / 4
 \   Return (T + U) / 8 with the sign bits retained = x-coord of start
 \
 \ Y = 0, K = 1:
-\   T = -(L423B L427B) / 4
-\   U = -(L423D L427D) / 4
+\   T = -(matrix4Lo matrix4Hi) / 4
+\   U = -(matrix4Lo+2 matrix4Hi+2) / 4
 \   Return (T + U) / 8 with the sign bits retained = y-coord of start
 \
 \ Y = 3, K = 0:
-\   T = (L423E L427E) / 4
-\   U = -(L423F L427F) / 4
+\   T = (matrix4Lo+3 matrix4Hi+3) / 4
+\   U = -(matrix4Lo+4 matrix4Hi+4) / 4
 \   Return (T + U) / 8 with the sign bits retained = x-delta
 \
 \ Y = 3, K = 1:
-\   T = -(L423E L427E) / 4
-\   U = -(L423F L427F) / 4
+\   T = -(matrix4Lo+3 matrix4Hi+3) / 4
+\   U = -(matrix4Lo+4 matrix4Hi+4) / 4
 \   Return (T + U) / 8 with the sign bits retained = y-delta
 \
 \ The line is returned relative to the origin (0, 0), so that's as if the centre
@@ -9025,7 +9151,7 @@ ORG CODE%
 
 .ArtificialHorizon
 
- LDA L427B,Y            \ Set A = L427B (Y = 0) or L427E (Y = 3)
+ LDA matrix4Hi,Y        \ Set A = matrix4Hi (Y = 0) or matrix4Hi+3 (Y = 3)
 
  LSR A                  \ Set A = A / 4
  LSR A
@@ -9038,7 +9164,7 @@ ORG CODE%
 
  STA T                  \ Set T = A, so T = A / 4 or A / 8
 
- LDA L423B,Y            \ Set A = L423B (Y = 0) or L423E (Y = 3)
+ LDA matrix4Lo,Y        \ Set A = matrix4Lo (Y = 0) or matrix4Lo+3 (Y = 3)
 
  EOR K                  \ If K = 1, flip bit 0 of A
 
@@ -9052,7 +9178,7 @@ ORG CODE%
 
 .arhi2
 
- LDA L427D,Y            \ Set A = L427D (Y = 0) or L427F (Y = 3)
+ LDA matrix4Hi+2,Y      \ Set A = matrix4Hi+2 (Y = 0) or matrix4Hi+4 (Y = 3)
 
  LSR A                  \ Set A = A / 4
  LSR A
@@ -9065,7 +9191,7 @@ ORG CODE%
 
  STA U                  \ Set U = A, so U = A / 4 or A / 8
 
- LDA L423D,Y            \ Set A = L423D (Y = 0) or L423F (Y = 3)
+ LDA matrix4Lo+2,Y      \ Set A = matrix4Lo+2 (Y = 0) or matrix4Lo+4 (Y = 3)
 
  CPY #0                 \ If Y = 0, flip bit 0 of A
  BNE arhi4
@@ -9665,7 +9791,7 @@ ORG CODE%
  BPL pkey16
 
  LDA #0
- STA L0CCB
+ STA matrixNumber
  STA L0CC4
 
  JSR L1AFC
@@ -9966,7 +10092,7 @@ ORG CODE%
  LDA #&E4
  STA GG
  LDA #9
- STA L0CCB
+ STA matrixNumber
 
  STA firingStatus       \ Set firingStatus = 9, which is a non-zero value, to
                         \ indicate that there are bullets are in the air
@@ -11624,8 +11750,9 @@ ORG CODE%
                         \ points as part of a larger object
 
  CMP #40                \ If object ID < 40 then this point does not link to
- BCC lvis8              \ another point, so jump to lvis8 to check the
-                        \ visibility of this point
+ BCC lvis8              \ another point, or it's the last point in a linked
+                        \ object, so jump to lvis8 to check the visibility of
+                        \ this point
 
                         \ If we get here then this point links to another point
                         \ in the object table, so we follow the links and add
@@ -11800,7 +11927,7 @@ ORG CODE%
  LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
- STA L0CCB              \ Set L0CCB = 0
+ STA matrixNumber       \ Set matrixNumber = 0
 
  JSR L19A0              \ ???
 
@@ -11825,7 +11952,7 @@ ORG CODE%
  LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
- STA L0CCB              \ Set L0CCB = 0
+ STA matrixNumber       \ Set matrixNumber = 0
 
  JSR L19A0              \ ???
 
@@ -12242,7 +12369,7 @@ ORG CODE%
  BNE objc10
 
  LDA #0
- STA L0CCB
+ STA matrixNumber
  JSR L1D8D
 
  LDY objectId
@@ -12856,7 +12983,7 @@ ORG CODE%
  ORA pointStatus,X
  STA pointStatus,X
  LDA #&1B
- STA L0CCB
+ STA matrixNumber
  JSR L1D8D
 
  CPX M
@@ -12916,7 +13043,7 @@ ORG CODE%
  JSR CopyWorkToPoint
 
  LDA #0
- STA L0CCB
+ STA matrixNumber
  JSR L1D8D
 
  LDA xPointHi
@@ -14451,7 +14578,7 @@ ORG CODE%
 .L31D4
 
  LDA #0
- STA L0CCB
+ STA matrixNumber
 
  LDA #1
  STA objectId
@@ -15522,18 +15649,20 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: times16Hi
+\       Name: shift4Right
 \       Type: Variable
 \   Category: Maths
-\    Summary: Lookup table for the high byte of a value * 16
+\    Summary: Lookup table for shifting a byte four places to the right, to
+\             extract the high nibble
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, times16Hi,X contains the high byte of X * 16.
+\ In the table below, shift4Right,X contains the high byte of X * 16. So if X is
+\ %XXXXxxxx, shift4Right,X contains %0000XXXX.
 \
 \ ******************************************************************************
 
-.times16Hi
+.shift4Right
 
 FOR I%, 0, 255
 
@@ -15543,18 +15672,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: times16Lo
+\       Name: shift4Left
 \       Type: Variable
 \   Category: Maths
-\    Summary: Lookup table for the low byte of a value * 16
+\    Summary: Lookup table for shifting a byte four places to the left, to
+\             extract the low nibble
 \
 \ ------------------------------------------------------------------------------
 \
-\ In the table below, times16Lo,X contains the low byte of X * 16.
+\ In the table below, shift4Left,X contains the low byte of X * 16. So if X is
+\ %XXXXxxxx, shift4Left,X contains %xxxx0000.
 \
 \ ******************************************************************************
 
-.times16Lo
+.shift4Left
 
 FOR I%, 0, 255
 
@@ -17059,258 +17190,77 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4220
+\       Name: matrix1Lo
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4220
+.matrix1Lo
 
- EQUB &31
-
-\ ******************************************************************************
-\
-\       Name: L4221
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4221
-
- EQUB &39
-
-\ ******************************************************************************
-\
-\       Name: L4222
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4222
-
- EQUB &0D
-
-\ ******************************************************************************
-\
-\       Name: L4223
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4223
-
- EQUB &06, &18
-
-\ ******************************************************************************
-\
-\       Name: L4225
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4225
-
- EQUB &10, &20
-
-\ ******************************************************************************
-\
-\       Name: L4227
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4227
-
- EQUB &20, &20
-
-\ ******************************************************************************
-\
-\       Name: L4229
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4229
-
+ EQUB &31, &39, &0D
+ EQUB &06, &18, &10
  EQUB &20, &20, &20
 
 \ ******************************************************************************
 \
-\       Name: L422C
+\       Name: matrix2Lo
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L422C
+.matrix2Lo
 
+ EQUB &20, &20, &20
  EQUB &4C, &44, &59
-
-\ ******************************************************************************
-\
-\       Name: L422F
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L422F
-
  EQUB &23, &33, &31
 
 \ ******************************************************************************
 \
-\       Name: L4232
+\       Name: matrix3Lo
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4232
+.matrix3Lo
 
- EQUB &0D
+ EQUB &0D, &06, &00
+ EQUB &1D, &2E, &00
+ EQUB &00, &00, &FE
 
 \ ******************************************************************************
 \
-\       Name: L4233
+\       Name: matrix4Lo
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4233
+.matrix4Lo
 
- EQUB &06, &00
-
-\ ******************************************************************************
-\
-\       Name: L4235
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4235
-
- EQUB &1D
-
-\ ******************************************************************************
-\
-\       Name: L4236
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4236
-
- EQUB &2E, &00, &00, &00, &FE
-
-\ ******************************************************************************
-\
-\       Name: L423B
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L423B
-
- EQUB &20               \ Bit 0 used as sign for L427B in artificial horizon
+ EQUB &20               \ Bit 0 used as sign for matrix4Hi in artificial horizon
                         \ calculations when Y = 0 (x-axis)
 
- EQUB &4C               \ This byte appears to be unused
+ EQUB &4C
 
-\ ******************************************************************************
-\
-\       Name: L423D
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L423D
-
- EQUB &44               \ Bit 0 used as sign for L427D in artificial horizon
+ EQUB &44               \ Bit 0 used as sign for matrix4Hi+2 in artificial horizon
                         \ calculations when Y = 0 (x-axis)
 
-\ ******************************************************************************
-\
-\       Name: L423E
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L423E
-
- EQUB &58               \ Bit 0 used as sign for L427E in artificial horizon
+ EQUB &58               \ Bit 0 used as sign for matrix4Hi+3 in artificial horizon
                         \ calculations when Y = 3 (y-axis)
 
-\ ******************************************************************************
-\
-\       Name: 
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L423F
-
- EQUB &20               \ Bit 0 used as sign for L427F in artificial horizon
+ EQUB &20               \ Bit 0 used as sign for matrix4Hi+4 in artificial horizon
                         \ calculations when Y = 3 (y-axis)
 
- EQUB &50, &00          \ These bytes appear to be unused
+ EQUB &50
 
-\ ******************************************************************************
-\
-\       Name: L4242
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4242
-
- EQUB &52
-
-\ ******************************************************************************
-\
-\       Name: L4243
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4243
-
- EQUB &4E
+ EQUB &00, &52, &4E
 
 \ ******************************************************************************
 \
@@ -17364,258 +17314,76 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4260
+\       Name: matrix1Hi
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4260
+.matrix1Hi
 
- EQUB &B2
+ EQUB &B2, &32, &AF
+ EQUB &0B, &F2, &51
+ EQUB &B6, &40, &A7
 
 \ ******************************************************************************
 \
-\       Name: L4261
+\       Name: matrix2Hi
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4261
-
- EQUB &32
-
-\ ******************************************************************************
-\
-\       Name: L4262
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4262
-
- EQUB &AF
-
-\ ******************************************************************************
-\
-\       Name: L4263
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4263
-
- EQUB &0B, &F2
-
-\ ******************************************************************************
-\
-\       Name: L4265
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4265
-
- EQUB &51, &B6
-
-\ ******************************************************************************
-\
-\       Name: L4267
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4267
-
- EQUB &40, &A7
-
-\ ******************************************************************************
-\
-\       Name: L4269
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4269
+.matrix2Hi
 
  EQUB &B2, &0B, &B6
-
-\ ******************************************************************************
-\
-\       Name: L426C
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L426C
-
  EQUB &32, &F2, &40
-
-\ ******************************************************************************
-\
-\       Name: L426F
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L426F
-
  EQUB &AF, &51, &A7
 
 \ ******************************************************************************
 \
-\       Name: L4272
+\       Name: matrix3Hi
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4272
+.matrix3Hi
 
- EQUB &FA
+ EQUB &FA, &34, &00
+ EQUB &34, &FA, &00
+ EQUB &00, &00, &FF
 
 \ ******************************************************************************
 \
-\       Name: L4273
+\       Name: matrix4Hi
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L4273
-
- EQUB &34, &00
-
-\ ******************************************************************************
-\
-\       Name: L4275
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4275
-
- EQUB &34
-
-\ ******************************************************************************
-\
-\       Name: L4276
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4276
-
- EQUB &FA, &00, &00, &00, &FF
-
-\ ******************************************************************************
-\
-\       Name: L427B
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L427B
+.matrix4Hi
 
  EQUB &FA               \ Used as a value in artificial horizon calculations
-                        \ when Y = 0 (x-axis), sign bit is in L423B
+                        \ when Y = 0 (x-axis), sign bit is in matrix4Lo
 
  EQUB &32
 
-\ ******************************************************************************
-\
-\       Name: L427D
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L427D
-
  EQUB &0D               \ Used as a value in artificial horizon calculations
-                        \ when Y = 0 (x-axis), sign bit is in L423D
-
-\ ******************************************************************************
-\
-\       Name: L427E
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L427E
+                        \ when Y = 0 (x-axis), sign bit is in matrix4Lo+2
 
  EQUB &34               \ Used as a value in artificial horizon calculations
-                        \ when Y = 3 (y-axis), sign bit is in L423E
-
-\ ******************************************************************************
-\
-\       Name: L427F
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L427F
+                        \ when Y = 3 (y-axis), sign bit is in matrix4Lo+3
 
  EQUB &F2               \ Used as a value in artificial horizon calculations
-                        \ when Y = 3 (y-axis), sign bit is in L423F
+                        \ when Y = 3 (y-axis), sign bit is in matrix4Lo+4
 
- EQUB &3F, &00
-
-\ ******************************************************************************
-\
-\       Name: L4282
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4282
-
- EQUB &40
-
-\ ******************************************************************************
-\
-\       Name: L4283
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4283
-
- EQUB &F7
+ EQUB &3F
+ EQUB &00, &40, &F7
 
 \ ******************************************************************************
 \
@@ -21288,7 +21056,7 @@ NEXT
  LDA #&FD
  STA GG
  LDA #&1B
- STA L0CCB
+ STA matrixNumber
  JSR L1D8D
 
  LDX #&89
@@ -21297,7 +21065,7 @@ NEXT
  JSR CopyWorkToPoint
 
  LDA #0
- STA L0CCB
+ STA matrixNumber
  JSR L1D8D
 
  LDX #3
@@ -21494,7 +21262,7 @@ NEXT
 .L5151
 
  LDA #9
- STA L0CCB
+ STA matrixNumber
  LDA #&FC
  STA GG
  JSR L1D8D
@@ -21517,7 +21285,7 @@ NEXT
  JSR CopyWorkToPoint
 
  LDA #&12
- STA L0CCB
+ STA matrixNumber
  JSR L1D8D
 
  LDX #&86
