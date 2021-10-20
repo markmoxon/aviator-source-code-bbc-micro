@@ -992,9 +992,16 @@ ORG &0C00
                         \
                         \   * Negative = hide line
 
-.L0CCF
+.objectAnchorPoint
 
- SKIP 1
+ SKIP 1                 \ Used to store the anchor point of the current object
+                        \
+                        \ This is the point to which all the other points in
+                        \ the object, i.e. those in xObjectPoint, yObjectPoint
+                        \ and zObjectPoint, are relative
+                        \
+                        \ In other words, this is effectively the object's
+                        \ coordinate
 
 .lineBuffer1Count
 
@@ -5841,8 +5848,8 @@ ORG CODE%
                         \          = V * (S R) >> 4
                         \          = V * (S R) / 16
 
- BIT K                  \ If bit 7 of K is clear, jump to L198E to skip the
- BPL L198E              \ following and apply the correct sign to the result
+ BIT K                  \ If bit 7 of K is clear, jump to msvr2 to skip the
+ BPL msvr2              \ following and apply the correct sign to the result
 
  LDX R                  \ Set X = R = %RRRRrrrr
 
@@ -5860,24 +5867,24 @@ ORG CODE%
                         \       = %vvvv * %RRRRrrrr
                         \       = V * R
 
- BCC L1989              \ If the addition didn't overflow, i.e. V * R < 256,
-                        \ jump to L1989 to skip the following
+ BCC msvr1              \ If the addition didn't overflow, i.e. V * R < 256,
+                        \ jump to msvr1 to skip the following
 
  INC W                  \ Set (G W) = (G W) + 1
- BNE L1989              \
+ BNE msvr1              \
  INC G                  \ to round the result up, as the low bytes of the
                         \ multiplication produced a carry
 
-.L1989
+.msvr1
 
  ASL A                  \ Set (G W A) = (G W A) * 2
  ROL W
  ROL G
 
-.L198E
+.msvr2
 
  LDA V                  \ If V is positive, skip the following
- BPL L199F
+ BPL msvr3
 
  LDA #0                 \ V is negative, so negate (G W)
  SEC
@@ -5887,47 +5894,70 @@ ORG CODE%
  SBC G
  STA G
 
-.L199F
+.msvr3
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L19A0 (Part 1 of )
+\       Name: SetObjectPoints (Part 1 of )
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
+\ If the object point has object coordinates of xObjectPoint, yObjectPoint and
+\ zObjectPoint (which are relative to the object's origin), then this applies a
+\ rotation matrix to the coordinates as follows:
+\
+\ [ xTemp ]     [ m0 m1 m2 ]   [ xObjectPoint ]
+\ [ yTemp ]  =  [ m3 m4 m5 ] x [ yObjectPoint ]
+\ [ zTemp ]     [ m6 m7 m8 ]   [ zObjectPoint ]
+\
+\ where m0 = (matrix1Hi matrix1Lo), m1 = (matrix1Hi+1 matrix1Lo+1), and so on
+\ (if matrix 1 is being used).
+\
+\ The result is then scaled by the scale factor in bits 4 to 7 of zObjectPoint
+\ in part 2.
+\
 \ Arguments:
 \
 \   GG                  Point ID to process and update
 \
-\   matrixNumber        We access 8 bytes at matrix1Hi+matrixNumber and matrix1Lo+matrixNumber
+\   matrixNumber        The matrix to use in the calculation:
 \
-\   L0CCF               Point ID of point to add to give final result
+\                         * 0 = matrix 1
+\                         * 9 = matrix 2
+\                         * 18 = matrix 3
+\                         * 27 = matrix 4
+\
+\   objectAnchorPoint   Point ID of the anchor point to which we add the final
+\                       result to
 \
 \ ******************************************************************************
 
-.L19A0
+.SetObjectPoints
 
  LDX GG                 \ Set X to the point ID
 
- LDY Lookup3400,X       \ Set PP to the point's Lookup3400 entry
- STY PP
+ LDY xObjectPoint,X     \ Set PP to the point's object x-coordinate from
+ STY PP                 \ xObjectPoint
 
- LDY Lookup34D8,X       \ Set QQ to the point's Lookup34D8 entry
- STY QQ
+ LDY yObjectPoint,X     \ Set QQ to the point's object y-coordinate from
+ STY QQ                 \ yObjectPoint
 
- LDY L35B0,X            \ Set Y and RR to the point's L35B0 entry, call this
- STY RR                 \ %YYYYyyyy
+ LDY zObjectPoint,X     \ Set Y and RR to the point's object z-coordinate from
+ STY RR                 \ zObjectPoint, which also contains the scale factor in
+                        \ bits 4 to 7
 
- LDA shift4Right,Y      \ Set A and UU to Y >> 4, so UU = %0000YYYY
- STA UU
+ LDA shift4Right,Y      \ Set A and UU to Y >> 4, which is the scale factor in
+ STA UU                 \ bits 4 to 7 of the zFactor entry
  
  CMP #9                 \ If A >= 9, set bit 7 of K so the result of the call to
- ROR K                  \ MultiplyVxSR is doubled, i.e. (G W) is doubled
+ ROR K                  \ MultiplyVxSR is doubled, i.e. (G W) is doubled, giving
+                        \ us an effective overall scale factor of 2^9, as
+                        \ required
 
  LDX #5                 \ We now zero the three 16-bit xTemp, yTemp and zTemp
                         \ variables, which live in the six bytes from XTempLo
@@ -5935,61 +5965,78 @@ ORG CODE%
 
  LDA #0                 \ Set A = 0 to use as our zero
 
-.L19BE
+.objp1
 
  STA xTempLo,X          \ Zero the X-th byte of the six-byte xTemp coordinate
                         \ block
 
  DEX                    \ Decrement the loop counter
 
- BPL L19BE              \ Loop back until we have zeroed all six bytes
+ BPL objp1              \ Loop back until we have zeroed all six bytes
 
  LDA matrixNumber       \ Set P = matrixNumber + 8
  CLC                    \
- ADC #8                 \ so we do 9 iterations of the following loop,
- STA P                  \ decrementing P from matrixNumber + 8 to matrixNumber through three
-                        \ iterations of an outer loop, each with three
-                        \ iterations of an inner loop
+ ADC #8                 \ so we do 9 iterations of the following loop, with P
+ STA P                  \ going from matrixNumber + 8 to matrixNumber across
+                        \ three iterations of the outer loop, each with three
+                        \ iterations of the inner loop
 
  LDA #2                 \ Set VV = 2, to act as an outer loop counter 2, 1, 0,
  STA VV                 \ so the first three inner loop iterations affect zTemp,
                         \ the next three affect yTemp, and the last three affect
                         \ xTemp
 
-.L19D0
+.objp2
 
  LDX #2                 \ Set X = 2, to act as an inner loop counter, 2, 1, 0,
-                        \ so V and I iterate through RR, then QQ, then PP
-
-                        \ So the iterations are:
+                        \ so V and I iterate through RR, then QQ, then PP, i.e.
+                        \ zObjectPoint then yObjectPoint then xObjectPoint
                         \
-                        \   * zTemp += RR * (matrix1Hi+matrixNumber+8 matrix1Lo+matrixNumber+8)
-                        \   * zTemp += QQ * (matrix1Hi+matrixNumber+7 matrix1Lo+matrixNumber+7)
-                        \   * ztemp += PP * (matrix1Hi+matrixNumber+6 matrix1Lo+matrixNumber+6)
+                        \ So the calculations in order are:
                         \
-                        \   * yTemp += RR * (matrix1Hi+matrixNumber+5 matrix1Lo+matrixNumber+5)
-                        \   * yTemp += QQ * (matrix1Hi+matrixNumber+4 matrix1Lo+matrixNumber+4)
-                        \   * ytemp += PP * (matrix1Hi+matrixNumber+3 matrix1Lo+matrixNumber+3)
+                        \   * zTemp += zObjectPoint * m8
+                        \   * zTemp += yObjectPoint * m7
+                        \   * ztemp += xObjectPoint * m6
                         \
-                        \   * zTemp += RR * (matrix1Hi+matrixNumber+2 matrix1Lo+matrixNumber+2)
-                        \   * zTemp += QQ * (matrix1Hi+matrixNumber+1 matrix1Lo+matrixNumber+1)
-                        \   * ztemp += PP * (matrix1Hi+matrixNumber+0 matrix1Lo+matrixNumber+0)
+                        \   * yTemp += zObjectPoint * m5
+                        \   * yTemp += yObjectPoint * m4
+                        \   * ytemp += xObjectPoint * m3
                         \
-                        \ Multiplying a vector by a matrix?
+                        \   * xTemp += zObjectPoint * m2
+                        \   * xTemp += yObjectPoint * m1
+                        \   * xTemp += xObjectPoint * m0
+                        \
+                        \ Or, to switch it around the othee way and plug in the
+                        \ initial value of xTemp = yTemp = zTemp = 0, we get:
+                        \
+                        \   * xTemp = m0 * xObjectPoint + m1 * yObjectPoint
+                        \                               + m2 * zObjectPoint
+                        \
+                        \   * yTemp = m3 * xObjectPoint + m4 * yObjectPoint
+                        \                               + m5 * zObjectPoint
+                        \
+                        \   * zTemp = m6 * xObjectPoint + m7 * yObjectPoint
+                        \                               + m8 * zObjectPoint
+                        \
+                        \ which gives us the matrix product that we want
 
-.L19D2
+.objp3
 
- LDY P                  \ Set Y to P
+ LDY P                  \ Set Y to P, the number of the matrix element to
+                        \ multiply next
 
- LDA PP,X               \ Set I = PP, QQ or RR, when X = 0, 1 or 2
- STA I
+ LDA PP,X               \ Set A = PP, QQ or RR, when X = 0, 1 or 2, to give the
+                        \ object point coordinate to multiple next
 
- AND #%00001111         \ Set V = bits 0-3 of I
- STA V
+ STA I                  \ Store A in I (this doesn't appear to be used)
 
- BEQ L1A0C              \ If V = 0, jump to L1A0C to move onto the next loop,
-                        \ as the (G W) calculation will be zero below and will
-                        \ not affect the xTemp coordinate
+ AND #%00001111         \ Set V = bits 0-3 of A, which removes the scale factor
+ STA V                  \ in the case of zObjectPoint (the other points always
+                        \ fit into bits 0 to 3)
+
+ BEQ objp5              \ If V = 0, jump to objp5 to move onto the next loop,
+                        \ as the (G W) calculation would return zero and have
+                        \ no effect anyway
 
  LDA matrix1Hi,Y        \ Set S = P-th entry of matrix1Hi
  STA S
@@ -5998,13 +6045,13 @@ ORG CODE%
  STA R
 
  AND #1                 \ If bit 0 of R is clear, skip the following
- BEQ L19F2
+ BEQ objp4
 
  LDA V                  \ Bit 0 of R is set, so flip bit 7 of V
  EOR #%10000000
  STA V
 
-.L19F2
+.objp4
 
  STX Q                  \ Store the loop counter in X, so we can retrieve it
                         \ after the call to MultiplyVxSR
@@ -6014,105 +6061,139 @@ ORG CODE%
                         \   (G W) = V * (S R) / 16      if bit 7 of K = 0
                         \
                         \   (G W) = V * (S R) / 8       if bit 7 of K = 1
+                        \
+                        \ K is only set to 1 if the scale factor is 9, in which
+                        \ case we 
 
  LDX Q                  \ Restore the value of X
 
- LDY VV                 \ Fetch the coordinate index from VV
+ LDY VV                 \ Fetch the coordinate index from VV, which points to
+                        \ relevant xTemp, yTemp or ztemp coordinate
 
- LDA W                  \ Add (G W) to the VV-th temp coordinate
- CLC
+ LDA W                  \ Add (G W) to the xTemp coordinate, starting with the
+ CLC                    \ high bytes
  ADC xTempLo,Y
  STA xTempLo,Y
 
- LDA G
- ADC xTempHi,Y
- STA xTempHi,Y
+ LDA G                  \ And then the low bytes, so we have the following:
+ ADC xTempHi,Y          \
+ STA xTempHi,Y          \   xTemp/yTemp/zTemp += (G W)
 
-.L1A0C
+.objp5
 
- LDA P                  \ If P = matrixNumber, jump to L1A1D as we have done all 8
- CMP matrixNumber
- BEQ L1A1D
+ LDA P                  \ If P = matrixNumber, jump to objp6 as we have now done
+ CMP matrixNumber       \ all 9 calculations
+ BEQ objp6
 
- DEC P                  \ Decrement P
+ DEC P                  \ Otherwise we have more calculations to do, so
+                        \ to decrement P to point to the next matrix entry
 
  DEX                    \ Decrement the inner loop counter
 
- BPL L19D2              \ Loop back until X has done 2, 1, 0
+ BPL objp3              \ Loop back until X has iterated through 2, 1 and 0
 
- DEC VV                 \ Decrement the outer loop counter
+ DEC VV                 \ Decrement the outer loop counter, so we iterate
+                        \ through zTemp, yTemp and xTemp
 
- JMP L19D0              \ Loop back to L19D0
+ JMP objp2              \ Loop back to objp2
 
 \ ******************************************************************************
 \
-\       Name: L19A0 (Part 2 of )
+\       Name: SetObjectPoints (Part 2 of )
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L1A1D
+.objp6
 
- LDX #2
+ LDX #2                 \ Set X = 2 to act as a loop counter, to iterate through
+                        \ 2, 1 and 0, which we use to work through zTemp, yTemp
+                        \ and zTemp
 
-.L1A1F
+.objp7
 
- LDY UU
- BEQ L1A4C
+ LDY UU                 \ Set Y = UU = %0000ZZZZ, from the zObjectPoint lookup
 
- CPY #8
- BCS L1A47
+ BEQ objp10             \ If UU = 0, jump to objp10
 
- LDA xTempLo,X
+ CPY #8                 \ If Y >= 8, jump to objp9 to move on to the next iteration
+ BCS objp9
+
+ LDA xTempLo,X          \ Set P = xTempLo
  STA P
- LDA #0
+
+ LDA #0                 \ Set R = 0
  STA R
- LDA xTempHi,X
- BPL L1A37
 
- DEC R
+ LDA xTempHi,X          \ Set A = xTempHi/yTempH/zTempHi
+                        \
+                        \ so we now have the following 24-bit number:
+                        \
+                        \   (R A P) = (0 xTempHi xTempLo)
 
-.L1A37
+ BPL objp8              \ If xTempHi is positive, skip the following instruction
 
- ASL P
+ DEC R                  \ xTempHi is negative, so decrement R to &FF so (R A P)
+                        \ is a 24-bit negative number
+
+                        \ We now shift (R A P) left by Y places (we know Y is 7
+                        \ or less from above)
+
+.objp8
+
+ ASL P                  \ Set (R A P) = (R A P) << 1
  ROL A
  ROL R
- DEY
- BNE L1A37
 
- STA xTempLo,X
+ DEY                    \ Decrement the shift counter in Y
+
+ BNE objp8              \ Loop back to objp8 until we have shifted (R A P) by Y
+                        \ places
+
+ STA xTempLo,X          \ Set xTemp/yTemp/zTemp = (R A)
  LDA R
  STA xTempHi,X
 
-.L1A47
+.objp9
 
- DEX
- BPL L1A1F
+ DEX                    \ Decrement the counter in X so we work through zTemp,
+                        \ yTemp and xTemp
 
- BMI L1A62
+ BPL objp7              \ Loop back to objp7 until we have processed all three
+                        \ axes
 
-.L1A4C
+ BMI objp12             \ Jump to objp12 to finish off (this BMI is effectively
+                        \ a JMP as X is now negative)
 
- LDA #0
+.objp10
+
+ LDA #0                 \ Set (R A) = (0 xTempHi)
  STA R
  LDA xTempHi,X
- BPL L1A57
 
- DEC R
+ BPL objp11             \ If xTempHi is positive, skip the following instruction
 
-.L1A57
+ DEC R                  \ xTempHi is negative, so decrement R to &FF so (R A)
+                        \ is a 16-bit negative number
 
- STA xTempLo,X
+.objp11
+
+ STA xTempLo,X          \ Set xTemp/yTemp/zTemp = (R A)
  LDA R
  STA xTempHi,X
- JMP L1A47
 
-.L1A62
+ JMP objp9              \ Jump up to objp9 to move onto the next axis
 
- LDX GG
- LDY L0CCF
+.objp12
+
+ LDX GG                 \ Set X to the point ID passed to the routine
+
+ LDY objectAnchorPoint  \ Set Y to the point ID of the object's anchor point
+
+                        \ Fall through into L1A67 to update the original point
+                        \ by setting it to objectAnchorPoint + our result above
 
 \ ******************************************************************************
 \
@@ -10134,14 +10215,14 @@ ORG CODE%
  LDX #&5F
  JSR L257B
 
- STX L0CCF
+ STX objectAnchorPoint
  LDA #&60
  STA GG
- JSR L19A0
+ JSR SetObjectPoints
 
  LDA #&61
  STA GG
- JSR L19A0
+ JSR SetObjectPoints
 
  LDX #&62
  LDY #&60
@@ -11764,7 +11845,7 @@ ORG CODE%
  SEC                    \ Subtract 40 from A to get the point ID of the new
  SBC #40                \ point to check
 
- STA L0CCF              \ Store the new point's ID in L0CCF
+ STA objectAnchorPoint  \ Store the new point's ID as the object's anchor point
 
  TAY                    \ Copy the new point's ID into Y so we can use it as an
                         \ an index into pointStatus
@@ -11889,10 +11970,10 @@ ORG CODE%
 
 .lvis13
 
- TYA                    \ Set L0CCF = object ID + 216
- CLC                    \
- ADC #216               \ to pass to the call to L19A0 below, and L0CCF is in
- STA L0CCF              \ the range 216 to 255
+ TYA                    \ Set objectAnchorPoint = object ID + 216
+ CLC
+ ADC #216
+ STA objectAnchorPoint
 
 \ ******************************************************************************
 \
@@ -11922,21 +12003,23 @@ ORG CODE%
  BEQ lvis15             \ points on the stack to process, so jump down to lvis15
                         \ to calculate its visibility
 
- STA GG                 \ Store the point ID in GG
+ STA GG                 \ Store the point ID in GG so its coordinates get
+                        \ calculated in the call to SetObjectPoints
 
  LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
- STA matrixNumber       \ Set matrixNumber = 0
+ STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
+                        \ object points in the call toSetObjectPoints
 
- JSR L19A0              \ ???
+ JSR SetObjectPoints    \ ???
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
  BNE lvis12             \ so jump to lvis12 to clear down the stack and return
                         \ from the subroutine
 
- LDY GG                 \ Set L0CCF = the point ID in GG
- STY L0CCF
+ LDY GG                 \ Set objectAnchorPoint = the point ID in GG
+ STY objectAnchorPoint
 
  LDA #%10000000         \ Set bit 7 of the point's status byte
  ORA pointStatus,Y
@@ -11952,9 +12035,10 @@ ORG CODE%
  LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
- STA matrixNumber       \ Set matrixNumber = 0
+ STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
+                        \ object points in the call toSetObjectPoints
 
- JSR L19A0              \ ???
+ JSR SetObjectPoints    \ ???
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
  BNE lvis20             \ so jump to lvis20 to return from the subroutine (as
@@ -14166,7 +14250,7 @@ ORG CODE%
 
 .L303B
 
- LDA L35B0,Y
+ LDA zObjectPoint,Y
  CLC
  ADC #&10
  BIT K
@@ -14177,7 +14261,7 @@ ORG CODE%
 
 .L3049
 
- STA L35B0,Y
+ STA zObjectPoint,Y
  DEY
  DEX
  BPL L303B
@@ -14231,7 +14315,7 @@ ORG CODE%
 
 .L3079
 
- LDA L35B0,X
+ LDA zObjectPoint,X
  EOR #&70
  LSR A
  LSR A
@@ -14597,13 +14681,13 @@ ORG CODE%
  BPL L31E7
 
  LDY #&D9
- STY L0CCF
+ STY objectAnchorPoint
  LDX #1
  JSR L1A67
 
  LDA #2
  STA GG
- JSR L19A0
+ JSR SetObjectPoints
 
  LDX #5
 
@@ -14616,7 +14700,7 @@ ORG CODE%
 
  LDA #4
  STA GG
- JSR L19A0
+ JSR SetObjectPoints
 
  LDY #2
  LDX #3
@@ -15167,165 +15251,687 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: Lookup3400
+\       Name: xObjectPoint
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Universe
+\    Summary: Scaled x-coordinates of the points that make up objects
 \
 \ ******************************************************************************
 
-.Lookup3400
+.xObjectPoint
 
- EQUB &0D, &00, &00, &00, &08, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &0A, &00, &00, &00, &00, &04, &00, &00
- EQUB &04, &00, &00, &00, &04, &00, &0C, &05
- EQUB &08, &00, &00, &00, &00, &00, &00, &00
- EQUB &0C, &00, &00, &0C, &0B, &00, &00, &00
- EQUB &00, &02, &01, &03, &06, &0A, &03, &09
- EQUB &06, &0D, &00, &01, &05, &01, &00, &09
- EQUB &00, &08, &00, &0E, &00, &0D, &05, &0C
- EQUB &0F, &00, &07, &06, &0C, &00, &00, &08
- EQUB &00, &0F, &00, &04, &03, &0A, &00, &00
- EQUB &00, &0A, &00, &00, &00, &00, &00, &0B
- EQUB &0B, &0D, &0E, &04, &04, &0D, &0C, &0D
- EQUB &04, &0E, &00, &03, &0F, &0A, &0B, &02
- EQUB &0E, &00, &0B, &0A, &0A, &05, &0E, &00
- EQUB &00, &0B, &0E, &05, &04, &09, &0A, &00
- EQUB &01, &05, &0D, &00, &00, &0D, &0F, &02
- EQUB &00, &09, &0D, &0F, &0B, &00, &0B, &0D
- EQUB &02, &03, &0A, &08, &00, &00, &04, &0C
- EQUB &00, &06, &0E, &0B, &00, &05, &0A, &0E
- EQUB &00, &05, &0B, &05, &00, &05, &0D, &02
- EQUB &00, &02, &00, &0C, &0E, &05, &05, &00
- EQUB &03, &0E, &03, &05, &00, &03, &0E, &03
- EQUB &09, &04, &05, &09, &07, &04, &04, &00
- EQUB &02, &00, &00, &00, &0B, &0C, &0B, &00
- EQUB &00, &00, &00, &04, &01, &00, &00, &04
+ EQUB 13                \ Point ID 0   is (13, 61, 13) with scale 0
+ EQUB 0                 \ Point ID 1   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 2   is ( 0,  0, 12) with scale 9
+ EQUB 0                 \ Point ID 3   is ( 0,  0,  0) with scale 0
+ EQUB 8                 \ Point ID 4   is ( 8,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 5   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 6   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 7   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 8   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 9   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 10  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 11  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 12  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 13  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 14  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 15  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 16  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 17  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 18  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 19  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 20  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 21  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 22  is ( 0,  0,  8) with scale 4
+ EQUB 0                 \ Point ID 23  is ( 0,  0,  8) with scale 4
+ EQUB 10                \ Point ID 24  is (10,  0,  0) with scale 6
+ EQUB 0                 \ Point ID 25  is ( 0,  1,  0) with scale 8
+ EQUB 0                 \ Point ID 26  is ( 0,  1,  0) with scale 8
+ EQUB 0                 \ Point ID 27  is ( 0,  1,  0) with scale 8
+ EQUB 0                 \ Point ID 28  is ( 0,  1,  0) with scale 8
+ EQUB 4                 \ Point ID 29  is ( 4,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 30  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 31  is ( 0,  0,  0) with scale 0
+ EQUB 4                 \ Point ID 32  is ( 4,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 33  is ( 0,  0, 10) with scale 5
+ EQUB 0                 \ Point ID 34  is ( 0,  0, 12) with scale 4
+ EQUB 0                 \ Point ID 35  is ( 0,  0,  0) with scale 0
+ EQUB 4                 \ Point ID 36  is ( 4,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 37  is ( 0,  0,  2) with scale 8
+ EQUB 12                \ Point ID 38  is (12,  0,  0) with scale 4
+ EQUB 5                 \ Point ID 39  is ( 5,  0, 10) with scale 5
+ EQUB 8                 \ Point ID 40  is ( 8,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 41  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 42  is ( 0, 10,  0) with scale 3
+ EQUB 0                 \ Point ID 43  is ( 0, 10,  0) with scale 3
+ EQUB 0                 \ Point ID 44  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 45  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 46  is ( 0, 10,  0) with scale 3
+ EQUB 0                 \ Point ID 47  is ( 0, 10,  0) with scale 3
+ EQUB 12                \ Point ID 48  is (12,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 49  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 50  is ( 0,  0,  8) with scale 3
+ EQUB 12                \ Point ID 51  is (12,  0,  0) with scale 5
+ EQUB 11                \ Point ID 52  is (11,  0,  0) with scale 6
+ EQUB 0                 \ Point ID 53  is ( 0, 10,  0) with scale 4
+ EQUB 0                 \ Point ID 54  is ( 0, 10,  0) with scale 4
+ EQUB 0                 \ Point ID 55  is ( 0, 10,  0) with scale 4
+ EQUB 0                 \ Point ID 56  is ( 0, 10,  0) with scale 4
+ EQUB 2                 \ Point ID 57  is ( 2,  0, 14) with scale 8
+ EQUB 1                 \ Point ID 58  is ( 1,  0, 11) with scale 8
+ EQUB 3                 \ Point ID 59  is ( 3,  0,  9) with scale 9
+ EQUB 6                 \ Point ID 60  is ( 6,  0, 12) with scale 8
+ EQUB 10                \ Point ID 61  is (10,  0,  1) with scale 8
+ EQUB 3                 \ Point ID 62  is ( 3,  0,  9) with scale 7
+ EQUB 9                 \ Point ID 63  is ( 9,  0, 15) with scale 6
+ EQUB 6                 \ Point ID 64  is ( 6,  0, 13) with scale 8
+ EQUB 13                \ Point ID 65  is (13,  0,  3) with scale 4
+ EQUB 0                 \ Point ID 66  is ( 0,  0, 14) with scale 9
+ EQUB 1                 \ Point ID 67  is ( 1,  0,  0) with scale 8
+ EQUB 5                 \ Point ID 68  is ( 5,  0, 12) with scale 9
+ EQUB 1                 \ Point ID 69  is ( 1,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 70  is ( 0,  0,  0) with scale 0
+ EQUB 9                 \ Point ID 71  is ( 9,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 72  is ( 0,  0,  9) with scale 5
+ EQUB 8                 \ Point ID 73  is ( 8,  0,  6) with scale 9
+ EQUB 0                 \ Point ID 74  is ( 0,  0,  1) with scale 8
+ EQUB 14                \ Point ID 75  is (14,  0,  7) with scale 9
+ EQUB 0                 \ Point ID 76  is ( 0,  0,  1) with scale 8
+ EQUB 13                \ Point ID 77  is (13,  0,  2) with scale 9
+ EQUB 5                 \ Point ID 78  is ( 5,  0, 13) with scale 4
+ EQUB 12                \ Point ID 79  is (12,  0,  0) with scale 8
+ EQUB 15                \ Point ID 80  is (15,  0, 15) with scale 1
+ EQUB 0                 \ Point ID 81  is ( 0, 12,  0) with scale 2
+ EQUB 7                 \ Point ID 82  is ( 7, 12,  7) with scale 1
+ EQUB 6                 \ Point ID 83  is ( 6,  7, 11) with scale 2
+ EQUB 12                \ Point ID 84  is (12,  8,  5) with scale 2
+ EQUB 0                 \ Point ID 85  is ( 0, 10,  0) with scale 0
+ EQUB 0                 \ Point ID 86  is ( 0,  0,  1) with scale 8
+ EQUB 8                 \ Point ID 87  is ( 8,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 88  is ( 0,  2,  0) with scale 8
+ EQUB 15                \ Point ID 89  is (15,  0, 15) with scale 1
+ EQUB 0                 \ Point ID 90  is ( 0, 10,  0) with scale 2
+ EQUB 4                 \ Point ID 91  is ( 4, 12,  4) with scale 1
+ EQUB 3                 \ Point ID 92  is ( 3,  5, 12) with scale 2
+ EQUB 10                \ Point ID 93  is (10,  7,  8) with scale 2
+ EQUB 0                 \ Point ID 94  is ( 0, 10,  0) with scale 0
+ EQUB 0                 \ Point ID 95  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 96  is ( 0,  0,  1) with scale 8
+ EQUB 10                \ Point ID 97  is (10,  0,  0) with scale 1
+ EQUB 0                 \ Point ID 98  is ( 0,  0,  1) with scale 8
+ EQUB 0                 \ Point ID 99  is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 100 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 101 is ( 0,  0, 11) with scale 4
+ EQUB 0                 \ Point ID 102 is ( 0,  0, 10) with scale 4
+ EQUB 11                \ Point ID 103 is (11,  0,  7) with scale 8
+ EQUB 11                \ Point ID 104 is (11,  0,  4) with scale 9
+ EQUB 13                \ Point ID 105 is (13,  0, 13) with scale 3
+ EQUB 14                \ Point ID 106 is (14,  0,  0) with scale 9
+ EQUB 4                 \ Point ID 107 is ( 4,  0, 10) with scale 3
+ EQUB 4                 \ Point ID 108 is ( 4,  0,  0) with scale 8
+ EQUB 13                \ Point ID 109 is (13,  0,  3) with scale 8
+ EQUB 12                \ Point ID 110 is (12,  0,  0) with scale 8
+ EQUB 13                \ Point ID 111 is (13,  0, 10) with scale 9
+ EQUB 4                 \ Point ID 112 is ( 4,  0, 12) with scale 8
+ EQUB 14                \ Point ID 113 is (14,  0,  1) with scale 9
+ EQUB 0                 \ Point ID 114 is ( 0,  0, 12) with scale 8
+ EQUB 3                 \ Point ID 115 is ( 3,  0,  5) with scale 8
+ EQUB 15                \ Point ID 116 is (15,  0,  0) with scale 8
+ EQUB 10                \ Point ID 117 is (10,  0,  5) with scale 8
+ EQUB 11                \ Point ID 118 is (11,  0,  4) with scale 8
+ EQUB 2                 \ Point ID 119 is ( 2,  0, 14) with scale 8
+ EQUB 14                \ Point ID 120 is (14,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 121 is ( 0,  0,  9) with scale 8
+ EQUB 11                \ Point ID 122 is (11,  0,  7) with scale 9
+ EQUB 10                \ Point ID 123 is (10,  0,  3) with scale 9
+ EQUB 10                \ Point ID 124 is (10,  0,  3) with scale 9
+ EQUB 5                 \ Point ID 125 is ( 5,  0,  9) with scale 9
+ EQUB 14                \ Point ID 126 is (14,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 127 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 128 is ( 0,  0,  7) with scale 8
+ EQUB 11                \ Point ID 129 is (11,  0, 14) with scale 8
+ EQUB 14                \ Point ID 130 is (14,  0, 10) with scale 8
+ EQUB 5                 \ Point ID 131 is ( 5,  0,  0) with scale 8
+ EQUB 4                 \ Point ID 132 is ( 4,  0, 14) with scale 8
+ EQUB 9                 \ Point ID 133 is ( 9,  0,  4) with scale 9
+ EQUB 10                \ Point ID 134 is (10,  0,  2) with scale 9
+ EQUB 0                 \ Point ID 135 is ( 0,  0,  0) with scale 0
+ EQUB 1                 \ Point ID 136 is ( 1,  0, 15) with scale 8
+ EQUB 5                 \ Point ID 137 is ( 5,  0, 10) with scale 9
+ EQUB 13                \ Point ID 138 is (13,  0,  4) with scale 8
+ EQUB 0                 \ Point ID 139 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 140 is ( 0,  0, 11) with scale 8
+ EQUB 13                \ Point ID 141 is (13,  0,  9) with scale 8
+ EQUB 15                \ Point ID 142 is (15,  0,  0) with scale 7
+ EQUB 2                 \ Point ID 143 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 144 is ( 0,  0, 13) with scale 8
+ EQUB 9                 \ Point ID 145 is ( 9,  0,  9) with scale 9
+ EQUB 13                \ Point ID 146 is (13,  0, 11) with scale 8
+ EQUB 15                \ Point ID 147 is (15,  0,  5) with scale 8
+ EQUB 11                \ Point ID 148 is (11,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 149 is ( 0,  0, 11) with scale 8
+ EQUB 11                \ Point ID 150 is (11,  0, 13) with scale 8
+ EQUB 13                \ Point ID 151 is (13,  0,  2) with scale 8
+ EQUB 2                 \ Point ID 152 is ( 2,  0,  0) with scale 8
+ EQUB 3                 \ Point ID 153 is ( 3,  0,  8) with scale 8
+ EQUB 10                \ Point ID 154 is (10,  0,  7) with scale 8
+ EQUB 8                 \ Point ID 155 is ( 8,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 156 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 157 is ( 0,  0,  6) with scale 8
+ EQUB 4                 \ Point ID 158 is ( 4,  0,  8) with scale 8
+ EQUB 12                \ Point ID 159 is (12,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 160 is ( 0,  0,  6) with scale 8
+ EQUB 6                 \ Point ID 161 is ( 6,  0,  9) with scale 9
+ EQUB 14                \ Point ID 162 is (14,  0, 12) with scale 8
+ EQUB 11                \ Point ID 163 is (11,  0,  0) with scale 7
+ EQUB 0                 \ Point ID 164 is ( 0,  0,  3) with scale 8
+ EQUB 5                 \ Point ID 165 is ( 5,  0, 12) with scale 9
+ EQUB 10                \ Point ID 166 is (10,  0,  9) with scale 9
+ EQUB 14                \ Point ID 167 is (14,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 168 is ( 0,  0, 12) with scale 8
+ EQUB 5                 \ Point ID 169 is ( 5,  0, 11) with scale 9
+ EQUB 11                \ Point ID 170 is (11,  0,  7) with scale 8
+ EQUB 5                 \ Point ID 171 is ( 5,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 172 is ( 0,  0,  9) with scale 8
+ EQUB 5                 \ Point ID 173 is ( 5,  0,  8) with scale 9
+ EQUB 13                \ Point ID 174 is (13,  0, 13) with scale 8
+ EQUB 2                 \ Point ID 175 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 176 is ( 0,  0,  8) with scale 8
+ EQUB 2                 \ Point ID 177 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 178 is ( 0,  0, 12) with scale 0
+ EQUB 12                \ Point ID 179 is (12,  0,  0) with scale 0
+ EQUB 14                \ Point ID 180 is (14,  0, 14) with scale 2
+ EQUB 5                 \ Point ID 181 is ( 5,  0,  5) with scale 8
+ EQUB 5                 \ Point ID 182 is ( 5,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 183 is ( 0,  0,  3) with scale 2
+ EQUB 3                 \ Point ID 184 is ( 3,  0,  0) with scale 2
+ EQUB 14                \ Point ID 185 is (14,  0, 14) with scale 2
+ EQUB 3                 \ Point ID 186 is ( 3,  4,  3) with scale 2
+ EQUB 5                 \ Point ID 187 is ( 5,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 188 is ( 0,  0,  3) with scale 2
+ EQUB 3                 \ Point ID 189 is ( 3,  0,  0) with scale 2
+ EQUB 14                \ Point ID 190 is (14,  0, 14) with scale 2
+ EQUB 3                 \ Point ID 191 is ( 3,  4,  3) with scale 2
+ EQUB 9                 \ Point ID 192 is ( 9,  0,  9) with scale 7
+ EQUB 4                 \ Point ID 193 is ( 4,  0,  5) with scale 5
+ EQUB 5                 \ Point ID 194 is ( 5,  0,  4) with scale 5
+ EQUB 9                 \ Point ID 195 is ( 9,  0,  8) with scale 6
+ EQUB 7                 \ Point ID 196 is ( 7,  4,  5) with scale 5
+ EQUB 4                 \ Point ID 197 is ( 4,  0,  0) with scale 4
+ EQUB 4                 \ Point ID 198 is ( 4,  3,  2) with scale 5
+ EQUB 0                 \ Point ID 199 is ( 0,  0,  4) with scale 4
+ EQUB 2                 \ Point ID 200 is ( 2,  3,  4) with scale 5
+ EQUB 0                 \ Point ID 201 is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 202 is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 203 is ( 0,  0, 12) with scale 4
+ EQUB 11                \ Point ID 204 is (11,  0,  0) with scale 5
+ EQUB 12                \ Point ID 205 is (12,  0,  0) with scale 4
+ EQUB 11                \ Point ID 206 is (11,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 207 is ( 0,  8,  0) with scale 4
+ EQUB 0                 \ Point ID 208 is ( 0,  8,  0) with scale 4
+ EQUB 0                 \ Point ID 209 is ( 0,  8,  0) with scale 4
+ EQUB 0                 \ Point ID 210 is ( 0,  8,  0) with scale 4
+ EQUB 4                 \ Point ID 211 is ( 4,  1,  4) with scale 7
+ EQUB 1                 \ Point ID 212 is ( 1,  0,  4) with scale 8
+ EQUB 0                 \ Point ID 213 is ( 0,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 214 is ( 0,  0,  5) with scale 8
+ EQUB 4                 \ Point ID 215 is ( 4,  2,  5) with scale 7
 
 \ ******************************************************************************
 \
-\       Name: Lookup34D8
+\       Name: yObjectPoint
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Universe
+\    Summary: Scaled y-coordinates of the points that make up objects
 \
 \ ******************************************************************************
 
-.Lookup34D8
+.yObjectPoint
 
- EQUB &3D, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &01, &01, &01, &01, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &0A, &0A, &00, &00, &0A, &0A
- EQUB &00, &00, &00, &00, &00, &0A, &0A, &0A
- EQUB &0A, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &0C, &0C, &07, &08, &0A, &00, &00
- EQUB &02, &00, &0A, &0C, &05, &07, &0A, &00
- EQUB &00, &00, &00, &02, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &04, &00, &00, &00, &00, &04
- EQUB &00, &00, &00, &00, &04, &00, &03, &00
- EQUB &03, &02, &02, &00, &00, &00, &00, &08
- EQUB &08, &08, &08, &01, &00, &00, &00, &02
+ EQUB 61                \ Point ID 0   is (13, 61, 13) with scale 0
+ EQUB 0                 \ Point ID 1   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 2   is ( 0,  0, 12) with scale 9
+ EQUB 0                 \ Point ID 3   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 4   is ( 8,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 5   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 6   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 7   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 8   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 9   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 10  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 11  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 12  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 13  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 14  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 15  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 16  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 17  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 18  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 19  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 20  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 21  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 22  is ( 0,  0,  8) with scale 4
+ EQUB 0                 \ Point ID 23  is ( 0,  0,  8) with scale 4
+ EQUB 0                 \ Point ID 24  is (10,  0,  0) with scale 6
+ EQUB 1                 \ Point ID 25  is ( 0,  1,  0) with scale 8
+ EQUB 1                 \ Point ID 26  is ( 0,  1,  0) with scale 8
+ EQUB 1                 \ Point ID 27  is ( 0,  1,  0) with scale 8
+ EQUB 1                 \ Point ID 28  is ( 0,  1,  0) with scale 8
+ EQUB 0                 \ Point ID 29  is ( 4,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 30  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 31  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 32  is ( 4,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 33  is ( 0,  0, 10) with scale 5
+ EQUB 0                 \ Point ID 34  is ( 0,  0, 12) with scale 4
+ EQUB 0                 \ Point ID 35  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 36  is ( 4,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 37  is ( 0,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 38  is (12,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 39  is ( 5,  0, 10) with scale 5
+ EQUB 0                 \ Point ID 40  is ( 8,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 41  is ( 0,  0,  8) with scale 3
+ EQUB 10                \ Point ID 42  is ( 0, 10,  0) with scale 3
+ EQUB 10                \ Point ID 43  is ( 0, 10,  0) with scale 3
+ EQUB 0                 \ Point ID 44  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 45  is ( 0,  0,  0) with scale 0
+ EQUB 10                \ Point ID 46  is ( 0, 10,  0) with scale 3
+ EQUB 10                \ Point ID 47  is ( 0, 10,  0) with scale 3
+ EQUB 0                 \ Point ID 48  is (12,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 49  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 50  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 51  is (12,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 52  is (11,  0,  0) with scale 6
+ EQUB 10                \ Point ID 53  is ( 0, 10,  0) with scale 4
+ EQUB 10                \ Point ID 54  is ( 0, 10,  0) with scale 4
+ EQUB 10                \ Point ID 55  is ( 0, 10,  0) with scale 4
+ EQUB 10                \ Point ID 56  is ( 0, 10,  0) with scale 4
+ EQUB 0                 \ Point ID 57  is ( 2,  0, 14) with scale 8
+ EQUB 0                 \ Point ID 58  is ( 1,  0, 11) with scale 8
+ EQUB 0                 \ Point ID 59  is ( 3,  0,  9) with scale 9
+ EQUB 0                 \ Point ID 60  is ( 6,  0, 12) with scale 8
+ EQUB 0                 \ Point ID 61  is (10,  0,  1) with scale 8
+ EQUB 0                 \ Point ID 62  is ( 3,  0,  9) with scale 7
+ EQUB 0                 \ Point ID 63  is ( 9,  0, 15) with scale 6
+ EQUB 0                 \ Point ID 64  is ( 6,  0, 13) with scale 8
+ EQUB 0                 \ Point ID 65  is (13,  0,  3) with scale 4
+ EQUB 0                 \ Point ID 66  is ( 0,  0, 14) with scale 9
+ EQUB 0                 \ Point ID 67  is ( 1,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 68  is ( 5,  0, 12) with scale 9
+ EQUB 0                 \ Point ID 69  is ( 1,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 70  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 71  is ( 9,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 72  is ( 0,  0,  9) with scale 5
+ EQUB 0                 \ Point ID 73  is ( 8,  0,  6) with scale 9
+ EQUB 0                 \ Point ID 74  is ( 0,  0,  1) with scale 8
+ EQUB 0                 \ Point ID 75  is (14,  0,  7) with scale 9
+ EQUB 0                 \ Point ID 76  is ( 0,  0,  1) with scale 8
+ EQUB 0                 \ Point ID 77  is (13,  0,  2) with scale 9
+ EQUB 0                 \ Point ID 78  is ( 5,  0, 13) with scale 4
+ EQUB 0                 \ Point ID 79  is (12,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 80  is (15,  0, 15) with scale 1
+ EQUB 12                \ Point ID 81  is ( 0, 12,  0) with scale 2
+ EQUB 12                \ Point ID 82  is ( 7, 12,  7) with scale 1
+ EQUB 7                 \ Point ID 83  is ( 6,  7, 11) with scale 2
+ EQUB 8                 \ Point ID 84  is (12,  8,  5) with scale 2
+ EQUB 10                \ Point ID 85  is ( 0, 10,  0) with scale 0
+ EQUB 0                 \ Point ID 86  is ( 0,  0,  1) with scale 8
+ EQUB 0                 \ Point ID 87  is ( 8,  0,  0) with scale 4
+ EQUB 2                 \ Point ID 88  is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 89  is (15,  0, 15) with scale 1
+ EQUB 10                \ Point ID 90  is ( 0, 10,  0) with scale 2
+ EQUB 12                \ Point ID 91  is ( 4, 12,  4) with scale 1
+ EQUB 5                 \ Point ID 92  is ( 3,  5, 12) with scale 2
+ EQUB 7                 \ Point ID 93  is (10,  7,  8) with scale 2
+ EQUB 10                \ Point ID 94  is ( 0, 10,  0) with scale 0
+ EQUB 0                 \ Point ID 95  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 96  is ( 0,  0,  1) with scale 8
+ EQUB 0                 \ Point ID 97  is (10,  0,  0) with scale 1
+ EQUB 0                 \ Point ID 98  is ( 0,  0,  1) with scale 8
+ EQUB 2                 \ Point ID 99  is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 100 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 101 is ( 0,  0, 11) with scale 4
+ EQUB 0                 \ Point ID 102 is ( 0,  0, 10) with scale 4
+ EQUB 0                 \ Point ID 103 is (11,  0,  7) with scale 8
+ EQUB 0                 \ Point ID 104 is (11,  0,  4) with scale 9
+ EQUB 0                 \ Point ID 105 is (13,  0, 13) with scale 3
+ EQUB 0                 \ Point ID 106 is (14,  0,  0) with scale 9
+ EQUB 0                 \ Point ID 107 is ( 4,  0, 10) with scale 3
+ EQUB 0                 \ Point ID 108 is ( 4,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 109 is (13,  0,  3) with scale 8
+ EQUB 0                 \ Point ID 110 is (12,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 111 is (13,  0, 10) with scale 9
+ EQUB 0                 \ Point ID 112 is ( 4,  0, 12) with scale 8
+ EQUB 0                 \ Point ID 113 is (14,  0,  1) with scale 9
+ EQUB 0                 \ Point ID 114 is ( 0,  0, 12) with scale 8
+ EQUB 0                 \ Point ID 115 is ( 3,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 116 is (15,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 117 is (10,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 118 is (11,  0,  4) with scale 8
+ EQUB 0                 \ Point ID 119 is ( 2,  0, 14) with scale 8
+ EQUB 0                 \ Point ID 120 is (14,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 121 is ( 0,  0,  9) with scale 8
+ EQUB 0                 \ Point ID 122 is (11,  0,  7) with scale 9
+ EQUB 0                 \ Point ID 123 is (10,  0,  3) with scale 9
+ EQUB 0                 \ Point ID 124 is (10,  0,  3) with scale 9
+ EQUB 0                 \ Point ID 125 is ( 5,  0,  9) with scale 9
+ EQUB 0                 \ Point ID 126 is (14,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 127 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 128 is ( 0,  0,  7) with scale 8
+ EQUB 0                 \ Point ID 129 is (11,  0, 14) with scale 8
+ EQUB 0                 \ Point ID 130 is (14,  0, 10) with scale 8
+ EQUB 0                 \ Point ID 131 is ( 5,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 132 is ( 4,  0, 14) with scale 8
+ EQUB 0                 \ Point ID 133 is ( 9,  0,  4) with scale 9
+ EQUB 0                 \ Point ID 134 is (10,  0,  2) with scale 9
+ EQUB 0                 \ Point ID 135 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 136 is ( 1,  0, 15) with scale 8
+ EQUB 0                 \ Point ID 137 is ( 5,  0, 10) with scale 9
+ EQUB 0                 \ Point ID 138 is (13,  0,  4) with scale 8
+ EQUB 0                 \ Point ID 139 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 140 is ( 0,  0, 11) with scale 8
+ EQUB 0                 \ Point ID 141 is (13,  0,  9) with scale 8
+ EQUB 0                 \ Point ID 142 is (15,  0,  0) with scale 7
+ EQUB 0                 \ Point ID 143 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 144 is ( 0,  0, 13) with scale 8
+ EQUB 0                 \ Point ID 145 is ( 9,  0,  9) with scale 9
+ EQUB 0                 \ Point ID 146 is (13,  0, 11) with scale 8
+ EQUB 0                 \ Point ID 147 is (15,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 148 is (11,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 149 is ( 0,  0, 11) with scale 8
+ EQUB 0                 \ Point ID 150 is (11,  0, 13) with scale 8
+ EQUB 0                 \ Point ID 151 is (13,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 152 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 153 is ( 3,  0,  8) with scale 8
+ EQUB 0                 \ Point ID 154 is (10,  0,  7) with scale 8
+ EQUB 0                 \ Point ID 155 is ( 8,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 156 is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 157 is ( 0,  0,  6) with scale 8
+ EQUB 0                 \ Point ID 158 is ( 4,  0,  8) with scale 8
+ EQUB 0                 \ Point ID 159 is (12,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 160 is ( 0,  0,  6) with scale 8
+ EQUB 0                 \ Point ID 161 is ( 6,  0,  9) with scale 9
+ EQUB 0                 \ Point ID 162 is (14,  0, 12) with scale 8
+ EQUB 0                 \ Point ID 163 is (11,  0,  0) with scale 7
+ EQUB 0                 \ Point ID 164 is ( 0,  0,  3) with scale 8
+ EQUB 0                 \ Point ID 165 is ( 5,  0, 12) with scale 9
+ EQUB 0                 \ Point ID 166 is (10,  0,  9) with scale 9
+ EQUB 0                 \ Point ID 167 is (14,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 168 is ( 0,  0, 12) with scale 8
+ EQUB 0                 \ Point ID 169 is ( 5,  0, 11) with scale 9
+ EQUB 0                 \ Point ID 170 is (11,  0,  7) with scale 8
+ EQUB 0                 \ Point ID 171 is ( 5,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 172 is ( 0,  0,  9) with scale 8
+ EQUB 0                 \ Point ID 173 is ( 5,  0,  8) with scale 9
+ EQUB 0                 \ Point ID 174 is (13,  0, 13) with scale 8
+ EQUB 0                 \ Point ID 175 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 176 is ( 0,  0,  8) with scale 8
+ EQUB 0                 \ Point ID 177 is ( 2,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 178 is ( 0,  0, 12) with scale 0
+ EQUB 0                 \ Point ID 179 is (12,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 180 is (14,  0, 14) with scale 2
+ EQUB 0                 \ Point ID 181 is ( 5,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 182 is ( 5,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 183 is ( 0,  0,  3) with scale 2
+ EQUB 0                 \ Point ID 184 is ( 3,  0,  0) with scale 2
+ EQUB 0                 \ Point ID 185 is (14,  0, 14) with scale 2
+ EQUB 4                 \ Point ID 186 is ( 3,  4,  3) with scale 2
+ EQUB 0                 \ Point ID 187 is ( 5,  0,  5) with scale 8
+ EQUB 0                 \ Point ID 188 is ( 0,  0,  3) with scale 2
+ EQUB 0                 \ Point ID 189 is ( 3,  0,  0) with scale 2
+ EQUB 0                 \ Point ID 190 is (14,  0, 14) with scale 2
+ EQUB 4                 \ Point ID 191 is ( 3,  4,  3) with scale 2
+ EQUB 0                 \ Point ID 192 is ( 9,  0,  9) with scale 7
+ EQUB 0                 \ Point ID 193 is ( 4,  0,  5) with scale 5
+ EQUB 0                 \ Point ID 194 is ( 5,  0,  4) with scale 5
+ EQUB 0                 \ Point ID 195 is ( 9,  0,  8) with scale 6
+ EQUB 4                 \ Point ID 196 is ( 7,  4,  5) with scale 5
+ EQUB 0                 \ Point ID 197 is ( 4,  0,  0) with scale 4
+ EQUB 3                 \ Point ID 198 is ( 4,  3,  2) with scale 5
+ EQUB 0                 \ Point ID 199 is ( 0,  0,  4) with scale 4
+ EQUB 3                 \ Point ID 200 is ( 2,  3,  4) with scale 5
+ EQUB 2                 \ Point ID 201 is ( 0,  2,  0) with scale 8
+ EQUB 2                 \ Point ID 202 is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 203 is ( 0,  0, 12) with scale 4
+ EQUB 0                 \ Point ID 204 is (11,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 205 is (12,  0,  0) with scale 4
+ EQUB 0                 \ Point ID 206 is (11,  0,  0) with scale 5
+ EQUB 8                 \ Point ID 207 is ( 0,  8,  0) with scale 4
+ EQUB 8                 \ Point ID 208 is ( 0,  8,  0) with scale 4
+ EQUB 8                 \ Point ID 209 is ( 0,  8,  0) with scale 4
+ EQUB 8                 \ Point ID 210 is ( 0,  8,  0) with scale 4
+ EQUB 1                 \ Point ID 211 is ( 4,  1,  4) with scale 7
+ EQUB 0                 \ Point ID 212 is ( 1,  0,  4) with scale 8
+ EQUB 0                 \ Point ID 213 is ( 0,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 214 is ( 0,  0,  5) with scale 8
+ EQUB 2                 \ Point ID 215 is ( 4,  2,  5) with scale 7
 
 \ ******************************************************************************
 \
-\       Name: L35B0
+\       Name: zObjectPoint
 \       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Universe
+\    Summary: Scaled y-coordinates of the points that make up objects
 \
 \ ******************************************************************************
 
-.L35B0
+.zObjectPoint
 
- EQUB &0D, &00, &9C, &00, &50, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &48, &48
- EQUB &60, &80, &80, &80, &80, &80, &00, &00
- EQUB &80, &5A, &4C, &00, &82, &82, &40, &5A
- EQUB &40, &38, &30, &30, &38, &00, &30, &30
- EQUB &50, &38, &38, &50, &60, &40, &40, &40
- EQUB &40, &8E, &8B, &99, &8C, &81, &79, &6F
- EQUB &8D, &43, &9E, &80, &9C, &80, &00, &50
- EQUB &59, &96, &81, &97, &81, &92, &4D, &80
- EQUB &1F, &20, &17, &2B, &25, &00, &81, &40
- EQUB &80, &1F, &20, &14, &2C, &28, &00, &00
- EQUB &81, &10, &81, &80, &00, &4B, &4A, &87
- EQUB &94, &3D, &90, &3A, &80, &83, &80, &9A
- EQUB &8C, &91, &8C, &85, &80, &85, &84, &8E
- EQUB &40, &89, &97, &93, &93, &99, &82, &00
- EQUB &87, &8E, &8A, &80, &8E, &94, &92, &00
- EQUB &8F, &9A, &84, &00, &8B, &89, &70, &80
- EQUB &8D, &99, &8B, &85, &80, &8B, &8D, &82
- EQUB &80, &88, &87, &82, &00, &86, &88, &80
- EQUB &86, &99, &8C, &70, &83, &9C, &99, &80
- EQUB &8C, &9B, &87, &80, &89, &98, &8D, &80
- EQUB &88, &80, &0C, &00, &2E, &85, &85, &23
- EQUB &20, &2E, &23, &85, &23, &20, &2E, &23
- EQUB &79, &55, &54, &68, &55
-
-\ ******************************************************************************
-\
-\       Name: Lookup3675
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.Lookup3675
-
- EQUB &40, &52, &44, &54, &80
-
-\ ******************************************************************************
-\
-\       Name: Lookup367A
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.Lookup367A
-
- EQUB &80, &4C, &50, &40, &50, &40, &40, &40
- EQUB &40, &74, &84, &82, &85, &75
+ EQUB 13                \ Point ID 0   is (13, 61, 13) with scale 0
+ EQUB 0                 \ Point ID 1   is ( 0,  0,  0) with scale 0
+ EQUB 156               \ Point ID 2   is ( 0,  0, 12) with scale 9
+ EQUB 0                 \ Point ID 3   is ( 0,  0,  0) with scale 0
+ EQUB 80                \ Point ID 4   is ( 8,  0,  0) with scale 5
+ EQUB 0                 \ Point ID 5   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 6   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 7   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 8   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 9   is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 10  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 11  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 12  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 13  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 14  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 15  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 16  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 17  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 18  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 19  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 20  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 21  is ( 0,  0,  0) with scale 0
+ EQUB 72                \ Point ID 22  is ( 0,  0,  8) with scale 4
+ EQUB 72                \ Point ID 23  is ( 0,  0,  8) with scale 4
+ EQUB 96                \ Point ID 24  is (10,  0,  0) with scale 6
+ EQUB 128               \ Point ID 25  is ( 0,  1,  0) with scale 8
+ EQUB 128               \ Point ID 26  is ( 0,  1,  0) with scale 8
+ EQUB 128               \ Point ID 27  is ( 0,  1,  0) with scale 8
+ EQUB 128               \ Point ID 28  is ( 0,  1,  0) with scale 8
+ EQUB 128               \ Point ID 29  is ( 4,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 30  is ( 0,  0,  0) with scale 0
+ EQUB 0                 \ Point ID 31  is ( 0,  0,  0) with scale 0
+ EQUB 128               \ Point ID 32  is ( 4,  0,  0) with scale 8
+ EQUB 90                \ Point ID 33  is ( 0,  0, 10) with scale 5
+ EQUB 76                \ Point ID 34  is ( 0,  0, 12) with scale 4
+ EQUB 0                 \ Point ID 35  is ( 0,  0,  0) with scale 0
+ EQUB 130               \ Point ID 36  is ( 4,  0,  2) with scale 8
+ EQUB 130               \ Point ID 37  is ( 0,  0,  2) with scale 8
+ EQUB 64                \ Point ID 38  is (12,  0,  0) with scale 4
+ EQUB 90                \ Point ID 39  is ( 5,  0, 10) with scale 5
+ EQUB 64                \ Point ID 40  is ( 8,  0,  0) with scale 4
+ EQUB 56                \ Point ID 41  is ( 0,  0,  8) with scale 3
+ EQUB 48                \ Point ID 42  is ( 0, 10,  0) with scale 3
+ EQUB 48                \ Point ID 43  is ( 0, 10,  0) with scale 3
+ EQUB 56                \ Point ID 44  is ( 0,  0,  8) with scale 3
+ EQUB 0                 \ Point ID 45  is ( 0,  0,  0) with scale 0
+ EQUB 48                \ Point ID 46  is ( 0, 10,  0) with scale 3
+ EQUB 48                \ Point ID 47  is ( 0, 10,  0) with scale 3
+ EQUB 80                \ Point ID 48  is (12,  0,  0) with scale 5
+ EQUB 56                \ Point ID 49  is ( 0,  0,  8) with scale 3
+ EQUB 56                \ Point ID 50  is ( 0,  0,  8) with scale 3
+ EQUB 80                \ Point ID 51  is (12,  0,  0) with scale 5
+ EQUB 96                \ Point ID 52  is (11,  0,  0) with scale 6
+ EQUB 64                \ Point ID 53  is ( 0, 10,  0) with scale 4
+ EQUB 64                \ Point ID 54  is ( 0, 10,  0) with scale 4
+ EQUB 64                \ Point ID 55  is ( 0, 10,  0) with scale 4
+ EQUB 64                \ Point ID 56  is ( 0, 10,  0) with scale 4
+ EQUB 142               \ Point ID 57  is ( 2,  0, 14) with scale 8
+ EQUB 139               \ Point ID 58  is ( 1,  0, 11) with scale 8
+ EQUB 153               \ Point ID 59  is ( 3,  0,  9) with scale 9
+ EQUB 140               \ Point ID 60  is ( 6,  0, 12) with scale 8
+ EQUB 129               \ Point ID 61  is (10,  0,  1) with scale 8
+ EQUB 121               \ Point ID 62  is ( 3,  0,  9) with scale 7
+ EQUB 111               \ Point ID 63  is ( 9,  0, 15) with scale 6
+ EQUB 141               \ Point ID 64  is ( 6,  0, 13) with scale 8
+ EQUB 67                \ Point ID 65  is (13,  0,  3) with scale 4
+ EQUB 158               \ Point ID 66  is ( 0,  0, 14) with scale 9
+ EQUB 128               \ Point ID 67  is ( 1,  0,  0) with scale 8
+ EQUB 156               \ Point ID 68  is ( 5,  0, 12) with scale 9
+ EQUB 128               \ Point ID 69  is ( 1,  0,  0) with scale 8
+ EQUB 0                 \ Point ID 70  is ( 0,  0,  0) with scale 0
+ EQUB 80                \ Point ID 71  is ( 9,  0,  0) with scale 5
+ EQUB 89                \ Point ID 72  is ( 0,  0,  9) with scale 5
+ EQUB 150               \ Point ID 73  is ( 8,  0,  6) with scale 9
+ EQUB 129               \ Point ID 74  is ( 0,  0,  1) with scale 8
+ EQUB 151               \ Point ID 75  is (14,  0,  7) with scale 9
+ EQUB 129               \ Point ID 76  is ( 0,  0,  1) with scale 8
+ EQUB 146               \ Point ID 77  is (13,  0,  2) with scale 9
+ EQUB 77                \ Point ID 78  is ( 5,  0, 13) with scale 4
+ EQUB 128               \ Point ID 79  is (12,  0,  0) with scale 8
+ EQUB 31                \ Point ID 80  is (15,  0, 15) with scale 1
+ EQUB 32                \ Point ID 81  is ( 0, 12,  0) with scale 2
+ EQUB 23                \ Point ID 82  is ( 7, 12,  7) with scale 1
+ EQUB 43                \ Point ID 83  is ( 6,  7, 11) with scale 2
+ EQUB 37                \ Point ID 84  is (12,  8,  5) with scale 2
+ EQUB 0                 \ Point ID 85  is ( 0, 10,  0) with scale 0
+ EQUB 129               \ Point ID 86  is ( 0,  0,  1) with scale 8
+ EQUB 64                \ Point ID 87  is ( 8,  0,  0) with scale 4
+ EQUB 128               \ Point ID 88  is ( 0,  2,  0) with scale 8
+ EQUB 31                \ Point ID 89  is (15,  0, 15) with scale 1
+ EQUB 32                \ Point ID 90  is ( 0, 10,  0) with scale 2
+ EQUB 20                \ Point ID 91  is ( 4, 12,  4) with scale 1
+ EQUB 44                \ Point ID 92  is ( 3,  5, 12) with scale 2
+ EQUB 40                \ Point ID 93  is (10,  7,  8) with scale 2
+ EQUB 0                 \ Point ID 94  is ( 0, 10,  0) with scale 0
+ EQUB 0                 \ Point ID 95  is ( 0,  0,  0) with scale 0
+ EQUB 129               \ Point ID 96  is ( 0,  0,  1) with scale 8
+ EQUB 16                \ Point ID 97  is (10,  0,  0) with scale 1
+ EQUB 129               \ Point ID 98  is ( 0,  0,  1) with scale 8
+ EQUB 128               \ Point ID 99  is ( 0,  2,  0) with scale 8
+ EQUB 0                 \ Point ID 100 is ( 0,  0,  0) with scale 0
+ EQUB 75                \ Point ID 101 is ( 0,  0, 11) with scale 4
+ EQUB 74                \ Point ID 102 is ( 0,  0, 10) with scale 4
+ EQUB 135               \ Point ID 103 is (11,  0,  7) with scale 8
+ EQUB 148               \ Point ID 104 is (11,  0,  4) with scale 9
+ EQUB 61                \ Point ID 105 is (13,  0, 13) with scale 3
+ EQUB 144               \ Point ID 106 is (14,  0,  0) with scale 9
+ EQUB 58                \ Point ID 107 is ( 4,  0, 10) with scale 3
+ EQUB 128               \ Point ID 108 is ( 4,  0,  0) with scale 8
+ EQUB 131               \ Point ID 109 is (13,  0,  3) with scale 8
+ EQUB 128               \ Point ID 110 is (12,  0,  0) with scale 8
+ EQUB 154               \ Point ID 111 is (13,  0, 10) with scale 9
+ EQUB 140               \ Point ID 112 is ( 4,  0, 12) with scale 8
+ EQUB 145               \ Point ID 113 is (14,  0,  1) with scale 9
+ EQUB 140               \ Point ID 114 is ( 0,  0, 12) with scale 8
+ EQUB 133               \ Point ID 115 is ( 3,  0,  5) with scale 8
+ EQUB 128               \ Point ID 116 is (15,  0,  0) with scale 8
+ EQUB 133               \ Point ID 117 is (10,  0,  5) with scale 8
+ EQUB 132               \ Point ID 118 is (11,  0,  4) with scale 8
+ EQUB 142               \ Point ID 119 is ( 2,  0, 14) with scale 8
+ EQUB 64                \ Point ID 120 is (14,  0,  0) with scale 4
+ EQUB 137               \ Point ID 121 is ( 0,  0,  9) with scale 8
+ EQUB 151               \ Point ID 122 is (11,  0,  7) with scale 9
+ EQUB 147               \ Point ID 123 is (10,  0,  3) with scale 9
+ EQUB 147               \ Point ID 124 is (10,  0,  3) with scale 9
+ EQUB 153               \ Point ID 125 is ( 5,  0,  9) with scale 9
+ EQUB 130               \ Point ID 126 is (14,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 127 is ( 0,  0,  0) with scale 0
+ EQUB 135               \ Point ID 128 is ( 0,  0,  7) with scale 8
+ EQUB 142               \ Point ID 129 is (11,  0, 14) with scale 8
+ EQUB 138               \ Point ID 130 is (14,  0, 10) with scale 8
+ EQUB 128               \ Point ID 131 is ( 5,  0,  0) with scale 8
+ EQUB 142               \ Point ID 132 is ( 4,  0, 14) with scale 8
+ EQUB 148               \ Point ID 133 is ( 9,  0,  4) with scale 9
+ EQUB 146               \ Point ID 134 is (10,  0,  2) with scale 9
+ EQUB 0                 \ Point ID 135 is ( 0,  0,  0) with scale 0
+ EQUB 143               \ Point ID 136 is ( 1,  0, 15) with scale 8
+ EQUB 154               \ Point ID 137 is ( 5,  0, 10) with scale 9
+ EQUB 132               \ Point ID 138 is (13,  0,  4) with scale 8
+ EQUB 0                 \ Point ID 139 is ( 0,  0,  0) with scale 0
+ EQUB 139               \ Point ID 140 is ( 0,  0, 11) with scale 8
+ EQUB 137               \ Point ID 141 is (13,  0,  9) with scale 8
+ EQUB 112               \ Point ID 142 is (15,  0,  0) with scale 7
+ EQUB 128               \ Point ID 143 is ( 2,  0,  0) with scale 8
+ EQUB 141               \ Point ID 144 is ( 0,  0, 13) with scale 8
+ EQUB 153               \ Point ID 145 is ( 9,  0,  9) with scale 9
+ EQUB 139               \ Point ID 146 is (13,  0, 11) with scale 8
+ EQUB 133               \ Point ID 147 is (15,  0,  5) with scale 8
+ EQUB 128               \ Point ID 148 is (11,  0,  0) with scale 8
+ EQUB 139               \ Point ID 149 is ( 0,  0, 11) with scale 8
+ EQUB 141               \ Point ID 150 is (11,  0, 13) with scale 8
+ EQUB 130               \ Point ID 151 is (13,  0,  2) with scale 8
+ EQUB 128               \ Point ID 152 is ( 2,  0,  0) with scale 8
+ EQUB 136               \ Point ID 153 is ( 3,  0,  8) with scale 8
+ EQUB 135               \ Point ID 154 is (10,  0,  7) with scale 8
+ EQUB 130               \ Point ID 155 is ( 8,  0,  2) with scale 8
+ EQUB 0                 \ Point ID 156 is ( 0,  0,  0) with scale 0
+ EQUB 134               \ Point ID 157 is ( 0,  0,  6) with scale 8
+ EQUB 136               \ Point ID 158 is ( 4,  0,  8) with scale 8
+ EQUB 128               \ Point ID 159 is (12,  0,  0) with scale 8
+ EQUB 134               \ Point ID 160 is ( 0,  0,  6) with scale 8
+ EQUB 153               \ Point ID 161 is ( 6,  0,  9) with scale 9
+ EQUB 140               \ Point ID 162 is (14,  0, 12) with scale 8
+ EQUB 112               \ Point ID 163 is (11,  0,  0) with scale 7
+ EQUB 131               \ Point ID 164 is ( 0,  0,  3) with scale 8
+ EQUB 156               \ Point ID 165 is ( 5,  0, 12) with scale 9
+ EQUB 153               \ Point ID 166 is (10,  0,  9) with scale 9
+ EQUB 128               \ Point ID 167 is (14,  0,  0) with scale 8
+ EQUB 140               \ Point ID 168 is ( 0,  0, 12) with scale 8
+ EQUB 155               \ Point ID 169 is ( 5,  0, 11) with scale 9
+ EQUB 135               \ Point ID 170 is (11,  0,  7) with scale 8
+ EQUB 128               \ Point ID 171 is ( 5,  0,  0) with scale 8
+ EQUB 137               \ Point ID 172 is ( 0,  0,  9) with scale 8
+ EQUB 152               \ Point ID 173 is ( 5,  0,  8) with scale 9
+ EQUB 141               \ Point ID 174 is (13,  0, 13) with scale 8
+ EQUB 128               \ Point ID 175 is ( 2,  0,  0) with scale 8
+ EQUB 136               \ Point ID 176 is ( 0,  0,  8) with scale 8
+ EQUB 128               \ Point ID 177 is ( 2,  0,  0) with scale 8
+ EQUB 12                \ Point ID 178 is ( 0,  0, 12) with scale 0
+ EQUB 0                 \ Point ID 179 is (12,  0,  0) with scale 0
+ EQUB 46                \ Point ID 180 is (14,  0, 14) with scale 2
+ EQUB 133               \ Point ID 181 is ( 5,  0,  5) with scale 8
+ EQUB 133               \ Point ID 182 is ( 5,  0,  5) with scale 8
+ EQUB 35                \ Point ID 183 is ( 0,  0,  3) with scale 2
+ EQUB 32                \ Point ID 184 is ( 3,  0,  0) with scale 2
+ EQUB 46                \ Point ID 185 is (14,  0, 14) with scale 2
+ EQUB 35                \ Point ID 186 is ( 3,  4,  3) with scale 2
+ EQUB 133               \ Point ID 187 is ( 5,  0,  5) with scale 8
+ EQUB 35                \ Point ID 188 is ( 0,  0,  3) with scale 2
+ EQUB 32                \ Point ID 189 is ( 3,  0,  0) with scale 2
+ EQUB 46                \ Point ID 190 is (14,  0, 14) with scale 2
+ EQUB 35                \ Point ID 191 is ( 3,  4,  3) with scale 2
+ EQUB 121               \ Point ID 192 is ( 9,  0,  9) with scale 7
+ EQUB 85                \ Point ID 193 is ( 4,  0,  5) with scale 5
+ EQUB 84                \ Point ID 194 is ( 5,  0,  4) with scale 5
+ EQUB 104               \ Point ID 195 is ( 9,  0,  8) with scale 6
+ EQUB 85                \ Point ID 196 is ( 7,  4,  5) with scale 5
+ EQUB 64                \ Point ID 197 is ( 4,  0,  0) with scale 4
+ EQUB 82                \ Point ID 198 is ( 4,  3,  2) with scale 5
+ EQUB 68                \ Point ID 199 is ( 0,  0,  4) with scale 4
+ EQUB 84                \ Point ID 200 is ( 2,  3,  4) with scale 5
+ EQUB 128               \ Point ID 201 is ( 0,  2,  0) with scale 8
+ EQUB 128               \ Point ID 202 is ( 0,  2,  0) with scale 8
+ EQUB 76                \ Point ID 203 is ( 0,  0, 12) with scale 4
+ EQUB 80                \ Point ID 204 is (11,  0,  0) with scale 5
+ EQUB 64                \ Point ID 205 is (12,  0,  0) with scale 4
+ EQUB 80                \ Point ID 206 is (11,  0,  0) with scale 5
+ EQUB 64                \ Point ID 207 is ( 0,  8,  0) with scale 4
+ EQUB 64                \ Point ID 208 is ( 0,  8,  0) with scale 4
+ EQUB 64                \ Point ID 209 is ( 0,  8,  0) with scale 4
+ EQUB 64                \ Point ID 210 is ( 0,  8,  0) with scale 4
+ EQUB 116               \ Point ID 211 is ( 4,  1,  4) with scale 7
+ EQUB 132               \ Point ID 212 is ( 1,  0,  4) with scale 8
+ EQUB 130               \ Point ID 213 is ( 0,  0,  2) with scale 8
+ EQUB 133               \ Point ID 214 is ( 0,  0,  5) with scale 8
+ EQUB 117               \ Point ID 215 is ( 4,  2,  5) with scale 7
 
 \ ******************************************************************************
 \
@@ -19474,8 +20080,8 @@ NEXT
  JSR MakeSound          \ ???
 
  LDX L368E
- LDY Lookup367A,X
- LDA Lookup3675,X
+ LDY zObjectPoint+202,X
+ LDA zObjectPoint+197,X
  STA U
  LDX #2
  CPX L368D
