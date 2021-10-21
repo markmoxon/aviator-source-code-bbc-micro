@@ -6130,8 +6130,8 @@ ORG CODE%
 
  LDX Q                  \ Restore the value of X
 
- LDY VV                 \ Fetch the vector index from VV, which points to the
-                        \ relevant xTemp, yTemp or ztemp coordinate
+ LDY VV                 \ Fetch the outer loop counter from VV, which points to
+                        \ the relevant xTemp, yTemp or ztemp coordinate
 
  LDA W                  \ Add (G W) to the xTemp coordinate, starting with the
  CLC                    \ high bytes
@@ -6310,17 +6310,17 @@ ORG CODE%
 
  LDY objectAnchorPoint  \ Set Y to the point ID of the object's anchor point
 
-                        \ Fall through into AddVectorToPoint to add the anchor
+                        \ Fall through into AddTempToPoint to add the anchor
                         \ point to the (xTemp, yTemp, zTemp) vector and store
                         \ the result in (xPoint, yPoint, zPoint)
 
 \ ******************************************************************************
 \
-\       Name: AddVectorToPoint (Part 1 of 2)
+\       Name: AddTempToPoint (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Universe
-\    Summary: Add a vector to a point, store the result in another point, and
-\             set the result to hidden if it overflows
+\    Summary: Add the xTemp vector to a point, store the result in another
+\             point, and set the result to hidden if it overflows
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6346,7 +6346,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.AddVectorToPoint
+.AddTempToPoint
 
  LDA xTempLo            \ Set point X's x-coordinate to the following:
  CLC                    \
@@ -6899,42 +6899,64 @@ ORG CODE%
 
 .L1D8D
 
- LDX GG
- LDA xPointLo,X
+ LDX GG                 \ Set X to the point ID whose coordinates we want to
+                        \ calculate
+
+ LDA xPointLo,X         \ Set (SS PP) to the point's x-coordinate
  STA PP
  LDA xPointHi,X
  STA SS
- LDA yPointLo,X
+
+ LDA yPointLo,X         \ Set (TT QQ) to the point's y-coordinate
  STA QQ
  LDA yPointHi,X
  STA TT
- LDA zPointLo,X
+
+ LDA zPointLo,X         \ Set (UU RR) to the point's z-coordinate
  STA RR
  LDA zPointHi,X
  STA UU
- LDX #5
- LDA #0
+
+ LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) vector, which is
+                        \ stored in six bytes to give us three 16-bit coordinate
+                        \ values (from XTempLo to zTempHi), so set a counter in
+                        \ X to count the bytes
+
+ LDA #0                 \ Set A = 0 to use as our zero
 
 .L1DB1
 
- STA xTempLo,X
- DEX
- BPL L1DB1
+ STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
+                        \ between XTempLo and zTempHi
 
- LDA matrixNumber
- CLC
- ADC #8
- STA P
- LDA #2
- STA VV
+ DEX                    \ Decrement the loop counter
+
+ BPL L1DB1              \ Loop back until we have zeroed all six bytes
+
+ LDA matrixNumber       \ Set P = matrixNumber + 8
+ CLC                    \
+ ADC #8                 \ In the following loop, P counts down from m8 to m0,
+ STA P                  \ which we implement as an index that counts down from
+                        \ matrixNumber + 8 to matrixNumber, so that it iterates
+                        \ through the correct matrix table
+                        \
+                        \ This works because matrixNumber contains 0 for matrix
+                        \ 1, 9 for matrix 2 and so on, and each matrix table,
+                        \ such as matrix1Lo, contains 9 entries
+
+ LDA #2                 \ Set VV = 2, to act as our outer loop counter that
+ STA VV                 \ iterates through zTemp, yTemp and xTemp
 
 .L1DC3
 
- LDX #2
+ LDX #2                 \ Set X = 2, to act as our inner loop counter that
+                        \ iterates through zPoint, yPoint and xPoint
 
 .L1DC5
 
- LDY P
+ LDY P                  \ Set Y = P, which is the number of the matrix element
+                        \ to multiply next
+
  LDA matrix1Hi,Y
  STA S
  BNE L1DD5
@@ -6957,69 +6979,88 @@ ORG CODE%
  JSR L17E3
 
  LDX Q
+
  LDY VV
+
  LDA G
  CLC
  ADC xTempLo,Y
  STA xTempLo,Y
+
  LDA H
  ADC xTempHi,Y
  STA xTempHi,Y
+
  BVC L1E07
 
- LDA #&40
- STA showLine
+ LDA #%01000000         \ The addition overflowed for this axis, so set bit 6 of
+ STA showLine           \ showLine so the line containing this point is marked
+                        \ as being hidden
 
 .L1E07
 
- LDY P
- CPY matrixNumber
- BEQ L1E18
+ LDY P                  \ If P = matrixNumber then we have done all nine
+ CPY matrixNumber       \ calculations, so jump down to objp6 to apply the
+ BEQ L1E18              \ correct scale factor
 
- DEC P
- DEX
- BPL L1DC5
+ DEC P                  \ Otherwise we have more calculations to do, so
+                        \ decrement P to point to the next matrix entry
 
- DEC VV
- JMP L1DC3
+ DEX                    \ Decrement the inner loop counter to work our way
+                        \ through zObjectPoint, yObjectPoint and xObjectPoint
+
+ BPL L1DC5              \ Loop back until we have worked through all three
+                        \ anchor-relative points
+
+ DEC VV                 \ Decrement the outer loop counter to work our way
+                        \ through zTemp, yTemp and xTemp
+
+ JMP L1DC3              \ Jump back to objp2 to do the next calculation
 
 .L1E18
 
- LDX GG
+ LDX GG                 \ Set X to the point ID whose coordinates we want to
+                        \ calculate, so the original point is updated with the
+                        \ final result
+
+                        \ Fall through into CopyTempToPoint to copy the result
+                        \ from (xTemp, yTemp, zTemp) to (xPoint, yPoint, zPoint)
 
 \ ******************************************************************************
 \
-\       Name: L1E1A
+\       Name: CopyTempToPoint
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: Set a specified point to (xTemp, yTemp, zTemp)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The ID of the point to set to (xTemp, yTemp, zTemp)
 \
 \ ******************************************************************************
 
-.L1E1A
+.CopyTempToPoint
 
- LDA xTempLo
+ LDA xTempLo            \ Set point X's x-coordinate to (xTempHi xTempLo)
  STA xPointLo,X
  LDA xTempHi
  STA xPointHi,X
- LDA yTempLo
+
+ LDA yTempLo            \ Set point X's y-coordinate to (yTempHi yTempLo)
  STA yPointLo,X
  LDA yTempHi
  STA yPointHi,X
- LDA zTempLo
+
+ LDA zTempLo            \ Set point X's z-coordinate to (zTempHi zTempLo)
  STA zPointLo,X
  LDA zTempHi
  STA zPointHi,X
- RTS
 
- BRK
- EQUB &49
+ RTS                    \ Return from the subroutine
 
- RTS
+ EQUB &00, &49, &60     \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
@@ -10325,7 +10366,7 @@ ORG CODE%
 
 .fire1
 
- JSR L1E1A
+ JSR CopyTempToPoint
 
  INX
  CPX #&E8
@@ -10367,7 +10408,7 @@ ORG CODE%
 
  LDX #&62
  LDY #&60
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
  LDY #&0F
  LDX #&62
@@ -14827,7 +14868,7 @@ ORG CODE%
  LDY #&D9
  STY objectAnchorPoint
  LDX #1
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
  LDA #2
  STA GG
@@ -14848,7 +14889,7 @@ ORG CODE%
 
  LDY #2
  LDX #3
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
  LDA showLine
  BEQ L3222
@@ -14924,11 +14965,11 @@ ORG CODE%
 
  LDY #2
  LDX #&15
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
  LDY #1
  LDX #5
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
  LDX #5
 
@@ -15059,7 +15100,7 @@ ORG CODE%
 
 .L331C
 
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
  LDX #2
 
@@ -15076,7 +15117,7 @@ ORG CODE%
  BPL L3321
 
  LDX Q
- JSR AddVectorToPoint
+ JSR AddTempToPoint
 
 .L333A
 
@@ -19845,7 +19886,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: AddVectorToPoint (Part 1 of 2)
+\       Name: AddTempToPoint (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Universe
 \    Summary: Check whether the vector addition overflowed and set the point's
@@ -19856,7 +19897,7 @@ NEXT
 .addv1
 
                         \ This routine follows on directly from the part 1 of
-                        \ AddVectorToPoint
+                        \ AddTempToPoint
 
  PHP                    \ Store the flags for the z-axis addition on the stack,
                         \ so we can check them below
