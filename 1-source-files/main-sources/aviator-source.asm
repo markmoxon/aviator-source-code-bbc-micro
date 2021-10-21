@@ -3492,7 +3492,7 @@ ORG CODE%
 
 .dlin2
 
- LDA #&60               \ Modify the following instruction at dlin33:
+ LDA #LO(Lookup2E60)    \ Modify the following instruction at dlin33:
  STA dlin33+1           \
                         \   LDA Lookup2E60,X -> LDA Lookup2E60,X
                         \
@@ -3539,7 +3539,7 @@ ORG CODE%
 .dlin4
 
                         \ Modify the following instruction at dlin33:
- LDA #&6A               \
+ LDA #LO(Lookup2E6A)    \
  STA dlin33+1           \   LDA Lookup2E60,X -> LDA Lookup2E6A,X
                         \
                         \ The LDA #&6A gets modified by the ModifyDrawRoutine
@@ -4414,7 +4414,7 @@ ORG CODE%
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
  BMI modd1              \ jump down to modd1
 
- LDA #&88               \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
+ LDA #LO(Lookup2E88)    \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
                         \ A to &88 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
@@ -4428,7 +4428,7 @@ ORG CODE%
 
 .modd1
 
- LDA #&92               \ Bit 7 of colourCycle is set, i.e. %11110000, so set
+ LDA #LO(Lookup2E92)    \ Bit 7 of colourCycle is set, i.e. %11110000, so set
                         \ A to &92 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
@@ -4483,10 +4483,10 @@ ORG CODE%
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
- LDA #&74               \
+ LDA #LO(Lookup2E74)    \
  STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&74 : STA dlin33+1
  STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E74,X
- LDA #&7E               \
+ LDA #LO(Lookup2E7E)    \
  STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&74 : STA dlin33+1
  STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E7E,X
 
@@ -4512,10 +4512,10 @@ ORG CODE%
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
- LDA #&60               \
+ LDA #LO(Lookup2E60)    \
  STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&60 : STA dlin33+1
  STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E60,X
- LDA #&6A               \
+ LDA #LO(Lookup2E6A)    \
  STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&6A : STA dlin33+1
  STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E6A,X
                         \
@@ -5775,17 +5775,21 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine multiplies a 4-bit number by a 16-bit number, using the lookup
+\ table at timesTable for fast results.
+
 \ Arguments:
 \
 \   (S R)               A 16-bit number
 \
 \   V                   A 4-bit number (0 to 15), can be positive or negative
+\                       (i.e. bit 7 contains the sign, bits 0-3 the magnitude)
 \
 \   K                   Determines whether to multiply the result by 2:
 \
-\                         * K = 0, calculate (G W) = V * (S R) / 16
+\                         * If K = 0, calculate (G W) = V * (S R) / 16
 \
-\                         * K = 1,  calculate (G W) = V * (S R) / 8
+\                         * If K = 1, calculate (G W) = V * (S R) / 8
 \
 \ ******************************************************************************
 
@@ -5878,16 +5882,16 @@ ORG CODE%
 .msvr1
 
  ASL A                  \ Set (G W A) = (G W A) * 2
- ROL W
- ROL G
+ ROL W                  \
+ ROL G                  \ so the result is doubled when bit 7 of K is set
 
 .msvr2
 
  LDA V                  \ If V is positive, skip the following
  BPL msvr3
 
- LDA #0                 \ V is negative, so negate (G W)
- SEC
+ LDA #0                 \ V is negative, so we now negate (G W) by subtracting
+ SEC                    \ it from 0, first the low byte and then the high byte
  SBC W
  STA W
  LDA #0
@@ -5903,27 +5907,55 @@ ORG CODE%
 \       Name: SetObjectPoints (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Universe
-\    Summary: 
+\    Summary: Calculate the coordinates for a point within an object
 \
 \ ------------------------------------------------------------------------------
 \
-\ If the object point has object coordinates of xObjectPoint, yObjectPoint and
-\ zObjectPoint (which are relative to the object's origin), then this applies a
-\ rotation matrix to the coordinates as follows:
+\ This routine calculates the coordinates for a point within an object. It does
+\ this by taking the point's coordinates relative to the object's anchor (i.e.
+\ the vector from the anchor to the point), rotating this vector by applying a
+\ matrix to orientate the point correctly, and adding the result to the object's
+\ anchor point. This gives us the point's final coordinates.
 \
-\ [ xTemp ]     [ m0 m1 m2 ]   [ xObjectPoint ]
-\ [ yTemp ]  =  [ m3 m4 m5 ] x [ yObjectPoint ]
-\ [ zTemp ]     [ m6 m7 m8 ]   [ zObjectPoint ]
+\ Specifically, if we take an example:
 \
-\ where m0 = (matrix1Hi matrix1Lo), m1 = (matrix1Hi+1 matrix1Lo+1), and so on
-\ (if matrix 1 is being used).
+\   * The object point is at coordinates (xPoint, yPoint, zPoint)
 \
-\ The result is then scaled by the scale factor in bits 4 to 7 of zObjectPoint
-\ in part 2.
+\   * It has coordinates of (xObjectPoint, yObjectPoint, zObjectPoint) relative
+\     to the object's anchor (in other words, this is the vector from the anchor
+\     to the point)
+\
+\   * The object's anchor point is at (xAnchor, yAnchor, zAnchor)
+\
+\   * We want to rotate the object by matrix 1, so:
+\
+\       m0 = (matrix1Hi matrix1Lo)
+\       m1 = (matrix1Hi+1 matrix1Lo+1)
+\       ...
+\       m8 = (matrix1Hi+8 matrix1Lo+8)
+\
+\ then this routine sets the point's coordinates as follows:
+\
+\   [ xPoint ]   [ xAnchor ]   [ xTemp ]
+\   [ yPoint ] = [ yAnchor ] + [ yTemp ]
+\   [ zPoint ]   [ zAnchor ]   [ zTemp ]
+\
+\ where:
+\
+\   [ xTemp ]     [ m0 m1 m2 ]   [ xObjectPoint ]
+\   [ yTemp ]  =  [ m3 m4 m5 ] x [ yObjectPoint ] x 2^scaleFactor / 16
+\   [ zTemp ]     [ m6 m7 m8 ]   [ zObjectPoint ]
+\
+\ The scale factor is a power of 2 whose exponent is extracted from bits 4 to 7
+\ of zObjectPoint, and in the final result we drop the least significant byte
+\ of the calculation, so the result is effectively divided by another 256.
+\
+\ Only bits 0 to 3 of xObjectPoint, yObjectPoint and zObjectPoint are used in
+\ the matrix multiplication.
 \
 \ Arguments:
 \
-\   GG                  Point ID to process and update
+\   GG                  The ID of the point to process and update
 \
 \   matrixNumber        The matrix to use in the calculation:
 \
@@ -5939,60 +5971,64 @@ ORG CODE%
 
 .SetObjectPoints
 
- LDX GG                 \ Set X to the point ID
+ LDX GG                 \ Set X to the point ID whose coordinates we want to
+                        \ calculate
 
- LDY xObjectPoint,X     \ Set PP to the point's object x-coordinate from
- STY PP                 \ xObjectPoint
+ LDY xObjectPoint,X     \ Set PP to the point's anchor-relative x-coordinate
+ STY PP                 \ from xObjectPoint
 
- LDY yObjectPoint,X     \ Set QQ to the point's object y-coordinate from
- STY QQ                 \ yObjectPoint
+ LDY yObjectPoint,X     \ Set QQ to the point's anchor-relative y-coordinate
+ STY QQ                 \ from yObjectPoint
 
- LDY zObjectPoint,X     \ Set Y and RR to the point's object z-coordinate from
- STY RR                 \ zObjectPoint, which also contains the scale factor in
-                        \ bits 4 to 7
+ LDY zObjectPoint,X     \ Set RR (and Y) to the point's anchor-relative
+ STY RR                 \ z-coordinate from zObjectPoint, which also contains
+                        \ the scale factor in bits 4 to 7
 
- LDA shift4Right,Y      \ Set A and UU to Y >> 4, which is the scale factor in
- STA UU                 \ bits 4 to 7 of the zFactor entry
+ LDA shift4Right,Y      \ Set UU (and A) to Y >> 4, to extract the scale factor
+ STA UU                 \ from bits 4 to 7 of the zObjectPoint entry
  
- CMP #9                 \ If A >= 9, set bit 7 of K so the result of the call to
- ROR K                  \ MultiplyVxSR is doubled, i.e. (G W) is doubled, giving
-                        \ us an effective overall scale factor of 2^9, as
-                        \ required
+ CMP #9                 \ If the scale factor in A >= 9, set bit 7 of K so the
+ ROR K                  \ result of the call to MultiplyVxSR below is doubled,
+                        \ i.e. (G W) is doubled. This gives us an extra factor
+                        \ of 2 on top of the maximum 2^8 factor we would get by
+                        \ left-shifting the result (see part 2 for the scaling
+                        \ code)
 
- LDX #5                 \ We now zero the three 16-bit xTemp, yTemp and zTemp
-                        \ variables, which live in the six bytes from XTempLo
-                        \ to zTempHi, so set a counter in X to count the bytes
+ LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) vector, which is
+                        \ stored in six bytes to give us three 16-bit coordinate
+                        \ values (from XTempLo to zTempHi), so set a counter in
+                        \ X to count the bytes
 
  LDA #0                 \ Set A = 0 to use as our zero
 
 .objp1
 
- STA xTempLo,X          \ Zero the X-th byte of the six-byte xTemp coordinate
-                        \ block
+ STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
+                        \ between XTempLo and zTempHi
 
  DEX                    \ Decrement the loop counter
 
  BPL objp1              \ Loop back until we have zeroed all six bytes
 
- LDA matrixNumber       \ Set P = matrixNumber + 8
- CLC                    \
- ADC #8                 \ so we do 9 iterations of the following loop, with P
- STA P                  \ going from matrixNumber + 8 to matrixNumber across
-                        \ three iterations of the outer loop, each with three
-                        \ iterations of the inner loop
-
- LDA #2                 \ Set VV = 2, to act as an outer loop counter 2, 1, 0,
- STA VV                 \ so the first three inner loop iterations affect zTemp,
-                        \ the next three affect yTemp, and the last three affect
-                        \ xTemp
-
-.objp2
-
- LDX #2                 \ Set X = 2, to act as an inner loop counter, 2, 1, 0,
-                        \ so V and I iterate through RR, then QQ, then PP, i.e.
-                        \ zObjectPoint then yObjectPoint then xObjectPoint
+                        \ We now do the matrix multiplication:
                         \
-                        \ So the calculations in order are:
+                        \   [ xTemp ]     [ m0 m1 m2 ]   [ xObjectPoint ]
+                        \   [ yTemp ]  =  [ m3 m4 m5 ] x [ yObjectPoint ]
+                        \   [ zTemp ]     [ m6 m7 m8 ]   [ zObjectPoint ]
+                        \
+                        \ We do this in three loops of three, using an outer and
+                        \ inner loop. We set two loop counters, VV and X, for the
+                        \ outer and inner loops respectively. They both iterate
+                        \ through 2, 1 and 0, with VV iterating through zTemp,
+                        \ yTemp and xTemp, and X iterating through zObjectPoint,
+                        \ yObjectPoint and xObjectPoint
+                        \
+                        \ We also iterate a counter in P for the matrix entries,
+                        \ which counts down from m8 to m0, decreasing by 1 on
+                        \ each iteration
+                        \
+                        \ All the iterators count backwards, so the calculations
+                        \ in order are:
                         \
                         \   * zTemp += zObjectPoint * m8
                         \   * zTemp += yObjectPoint * m7
@@ -6007,7 +6043,8 @@ ORG CODE%
                         \   * xTemp += xObjectPoint * m0
                         \
                         \ Or, to switch it around the othee way and plug in the
-                        \ initial value of xTemp = yTemp = zTemp = 0, we get:
+                        \ initial value of (xTemp, yTemp, zTemp) = (0, 0, 0),
+                        \ we get:
                         \
                         \   * xTemp = m0 * xObjectPoint + m1 * yObjectPoint
                         \                               + m2 * zObjectPoint
@@ -6018,15 +6055,37 @@ ORG CODE%
                         \   * zTemp = m6 * xObjectPoint + m7 * yObjectPoint
                         \                               + m8 * zObjectPoint
                         \
-                        \ which gives us the matrix product that we want
+                        \ which gives us the matrix multiplication that we want
+                        \ to calculate
+
+ LDA matrixNumber       \ Set P = matrixNumber + 8
+ CLC                    \
+ ADC #8                 \ In the following loop, P counts down from m8 to m0,
+ STA P                  \ which we implement as an index that counts down from
+                        \ matrixNumber + 8 to matrixNumber, so that it iterates
+                        \ through the correct matrix table
+                        \
+                        \ This works because matrixNumber contains 0 for matrix
+                        \ 1, 9 for matrix 2 and so on, and each matrix table,
+                        \ such as matrix1Lo, contains 9 entries
+
+ LDA #2                 \ Set VV = 2, to act as our outer loop counter that
+ STA VV                 \ iterates through zTemp, yTemp and xTemp
+
+.objp2
+
+ LDX #2                 \ Set X = 2, to act as our inner loop counter that
+                        \ iterates through zObjectPoint, yObjectPoint and
+                        \ xObjectPoint (i.e. RR, QQ and PP)
 
 .objp3
 
- LDY P                  \ Set Y to P, the number of the matrix element to
-                        \ multiply next
+ LDY P                  \ Set Y = P, which is the number of the matrix element
+                        \ to multiply next
 
- LDA PP,X               \ Set A = PP, QQ or RR, when X = 0, 1 or 2, to give the
-                        \ object point coordinate to multiple next
+ LDA PP,X               \ Set A = PP, QQ or RR (when X = 0, 1 or 2), which is
+                        \ the correct zObjectPoint, yObjectPoint or xObjectPoint
+                        \ to multiply next
 
  STA I                  \ Store A in I (this doesn't appear to be used)
 
@@ -6035,39 +6094,43 @@ ORG CODE%
                         \ fit into bits 0 to 3)
 
  BEQ objp5              \ If V = 0, jump to objp5 to move onto the next loop,
-                        \ as the (G W) calculation would return zero and have
-                        \ no effect anyway
+                        \ as we already know the result of V * (S R) will be
+                        \ zero
 
  LDA matrix1Hi,Y        \ Set S = P-th entry of matrix1Hi
  STA S
 
  LDA matrix1Lo,Y        \ Set R = P-th entry of matrix1Lo
- STA R
+ STA R                  \
+                        \ so now (S R) is the 16-bit matrix element that we want
+                        \ to multiply
 
- AND #1                 \ If bit 0 of R is clear, skip the following
- BEQ objp4
+ AND #1                 \ If bit 0 of R is clear, then the matrix entry is
+ BEQ objp4              \ positive, skip the following three instructions
 
- LDA V                  \ Bit 0 of R is set, so flip bit 7 of V
- EOR #%10000000
- STA V
+ LDA V                  \ Bit 0 of R is set, which means this matrix entry is
+ EOR #%10000000         \ negative, so set bit 7 of V to make it negative, to
+ STA V                  \ give the result of the multiplication below the
+                        \ correct sign
 
 .objp4
 
  STX Q                  \ Store the loop counter in X, so we can retrieve it
                         \ after the call to MultiplyVxSR
 
- JSR MultiplyVxSR       \ Calculate:
+ JSR MultiplyVxSR       \ Call MultiplyVxSR to calculate:
                         \
                         \   (G W) = V * (S R) / 16      if bit 7 of K = 0
                         \
                         \   (G W) = V * (S R) / 8       if bit 7 of K = 1
                         \
                         \ K is only set to 1 if the scale factor is 9, in which
-                        \ case we 
+                        \ case we effectively do one of the factors of 2 at this
+                        \ point (and the other 8 in part 2)
 
  LDX Q                  \ Restore the value of X
 
- LDY VV                 \ Fetch the coordinate index from VV, which points to
+ LDY VV                 \ Fetch the vector index from VV, which points to the
                         \ relevant xTemp, yTemp or ztemp coordinate
 
  LDA W                  \ Add (G W) to the xTemp coordinate, starting with the
@@ -6075,71 +6138,111 @@ ORG CODE%
  ADC xTempLo,Y
  STA xTempLo,Y
 
- LDA G                  \ And then the low bytes, so we have the following:
- ADC xTempHi,Y          \
- STA xTempHi,Y          \   xTemp/yTemp/zTemp += (G W)
+ LDA G                  \ And then the low bytes, so we have the following (if
+ ADC xTempHi,Y          \ we are working with xTemp, for example):
+ STA xTempHi,Y          \
+                        \   xTemp += (G W)
 
 .objp5
 
- LDA P                  \ If P = matrixNumber, jump to objp6 as we have now done
- CMP matrixNumber       \ all 9 calculations
- BEQ objp6
+ LDA P                  \ If P = matrixNumber then we have done all nine
+ CMP matrixNumber       \ calculations, so jump down to objp6 to apply the
+ BEQ objp6              \ correct scale factor
 
  DEC P                  \ Otherwise we have more calculations to do, so
-                        \ to decrement P to point to the next matrix entry
+                        \ decrement P to point to the next matrix entry
 
- DEX                    \ Decrement the inner loop counter
+ DEX                    \ Decrement the inner loop counter to work our way
+                        \ through zObjectPoint, yObjectPoint and xObjectPoint
 
- BPL objp3              \ Loop back until X has iterated through 2, 1 and 0
+ BPL objp3              \ Loop back until we have worked through all three
+                        \ anchor-relative points
 
- DEC VV                 \ Decrement the outer loop counter, so we iterate
+ DEC VV                 \ Decrement the outer loop counter to work our way
                         \ through zTemp, yTemp and xTemp
 
- JMP objp2              \ Loop back to objp2
+ JMP objp2              \ Jump back to objp2 to do the next calculation
 
 \ ******************************************************************************
 \
 \       Name: SetObjectPoints (Part 2 of 2)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: Apply the correct scale factor to the matrix multiplication
 \
 \ ******************************************************************************
 
 .objp6
 
+                        \ We now want to apply the scale factor that we
+                        \ extracted into UU above. The scale factor is given as
+                        \ a power of 2, so a scale factor of n means we scale
+                        \ the result by 2^n, which we can do by shifting left
+                        \ by n places (where n is in the range 0 to 8)
+                        \
+                        \ Note that n can also be 9, in which case we aleady
+                        \ doubled the result in part 1, so by this point we only
+                        \ need to shift a maximum of 8 places
+                        \
+                        \ Note also that we are scaling up 16-bit numbers, so
+                        \ in order to capture these scaled-up values, we add a
+                        \ third byte to the significant end, giving us a 24-bit
+                        \ number to shift, and we take the top two bytes as our
+                        \ final result, discarding the least significant byte
+                        \
+                        \ This means the result we end up with is divided by
+                        \ another 256 but fits into two bytes
+
  LDX #2                 \ Set X = 2 to act as a loop counter, to iterate through
                         \ 2, 1 and 0, which we use to work through zTemp, yTemp
-                        \ and zTemp
+                        \ and xTemp, scaling each one separately
+                        \
+                        \ The comments below refer to xTemp, for simplicity
 
 .objp7
 
- LDY UU                 \ Set Y = UU = %0000ZZZZ, from the zObjectPoint lookup
+ LDY UU                 \ Set Y = UU = %0000ZZZZ, which is our scale factor
 
- BEQ objp10             \ If UU = 0, jump to objp10
+ BEQ objp10             \ If UU = 0, then the scale factor is 2^0, or 1, so
+                        \ there is no scaling to do, so jump to objp10 to drop
+                        \ the least significant byte without any shifting
 
- CPY #8                 \ If Y >= 8, jump to objp9 to move on to the next
- BCS objp9              \ iteration
+ CPY #8                 \ If Y >= 8 then we can skip doing 8 shifts as the xTemp
+ BCS objp9              \ result is already correct. To see this, consider the
+                        \ process below, which creates (0 xTempHi xTempLo) and
+                        \ shifts it left by the number of places, which would be
+                        \ this if Y = 8:
+                        \
+                        \   (0 xTempHi xTempLo) << 8 = (xTempHi xTempLo 0)
+                        \
+                        \ from which we would then drop the least significant
+                        \ byte to give (xTempHi xTempLo)... which is what we
+                        \ already have, so when Y >= 8 we can simply jump to
+                        \ objp9 to move on to the next axis
+                        \
+                        \ (As noted above, if Y = 9 then we already doubled the
+                        \ result in part 1, so the above approach works for both
+                        \ Y = 8 and 9)
 
- LDA xTempLo,X          \ Set P = xTempLo
+ LDA xTempLo,X          \ Set P to the low byte of xTemp
  STA P
 
- LDA #0                 \ Set R = 0
- STA R
+ LDA #0                 \ Set R = 0 to act as the new highest byte in our 24-bit
+ STA R                  \ number
 
- LDA xTempHi,X          \ Set A = xTempHi/yTempH/zTempHi
-                        \
-                        \ so we now have the following 24-bit number:
+ LDA xTempHi,X          \ Set A to the high byte of xTemp, so we now have the
+                        \ following 24-bit number:
                         \
                         \   (R A P) = (0 xTempHi xTempLo)
 
- BPL objp8              \ If xTempHi is positive, skip the following instruction
+ BPL objp8              \ If the high byte of xTemp is positive, skip the following
+                        \ instruction
 
  DEC R                  \ xTempHi is negative, so decrement R to &FF so (R A P)
-                        \ is a 24-bit negative number
+                        \ is a correctly signed 24-bit negative number
 
-                        \ We now shift (R A P) left by Y places (we know Y is 7
-                        \ or less from above)
+                        \ We now shift (R A P) left by Y places (where Y is in
+                        \ the range 1 to 7)
 
 .objp8
 
@@ -6149,12 +6252,13 @@ ORG CODE%
 
  DEY                    \ Decrement the shift counter in Y
 
- BNE objp8              \ Loop back to objp8 until we have shifted (R A P) by Y
-                        \ places
+ BNE objp8              \ Loop back to objp8 until we have shifted (R A P) left
+                        \ by Y places
 
- STA xTempLo,X          \ Set xTemp/yTemp/zTemp = (R A)
- LDA R
- STA xTempHi,X
+ STA xTempLo,X          \ Set xTemp = (R A)
+ LDA R                  \
+ STA xTempHi,X          \ so we drop the least significant byte, as discussed
+                        \ above
 
 .objp9
 
@@ -6169,6 +6273,10 @@ ORG CODE%
 
 .objp10
 
+                        \ If we get here then the scale factor is 0, so we can
+                        \ simply drop the least significant byte without any
+                        \ shifting, as discussed above
+
  LDA #0                 \ Set (R A) = (0 xTempHi)
  STA R
  LDA xTempHi,X
@@ -6180,70 +6288,102 @@ ORG CODE%
 
 .objp11
 
- STA xTempLo,X          \ Set xTemp/yTemp/zTemp = (R A)
+ STA xTempLo,X          \ Set xTemp = (R A)
  LDA R
  STA xTempHi,X
 
- JMP objp9              \ Jump up to objp9 to move onto the next axis
+ JMP objp9              \ Jump back to objp9 to move onto the next axis (i.e.
+                        \ yTemp or zTemp)
 
 .objp12
 
- LDX GG                 \ Set X to the point ID passed to the routine
+                        \ Our vector in (xTemp, yTemp, zTemp) is now scaled
+                        \ properly, so it's time for the addition:
+                        \
+                        \   [ xPoint ]   [ xAnchor ]   [ xTemp ]
+                        \   [ yPoint ] = [ yAnchor ] + [ yTemp ]
+                        \   [ zPoint ]   [ zAnchor ]   [ zTemp ]
+
+ LDX GG                 \ Set X to the point ID whose coordinates we want to
+                        \ calculate, so the original point is updated with the
+                        \ final result
 
  LDY objectAnchorPoint  \ Set Y to the point ID of the object's anchor point
 
-                        \ Fall through into L1A67 to update the original point
-                        \ by setting it to objectAnchorPoint + our result above
+                        \ Fall through into AddVectorToPoint to add the anchor
+                        \ point to the (xTemp, yTemp, zTemp) vector and store
+                        \ the result in (xPoint, yPoint, zPoint)
 
 \ ******************************************************************************
 \
-\       Name: L1A67
+\       Name: AddVectorToPoint (Part 1 of 2)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: Add a vector to a point, store the result in another point, and
+\             set the result to hidden if it overflows
 \
 \ ------------------------------------------------------------------------------
 \
-\ X-th (xPoint, yPoint, zPoint) = (xTemp yTemp zTemp) + Y-th point
+\ Set point X to the sum of the xTemp vector and point Y. In other words, add
+\ the following:
+\
+\   (xTemp yTemp zTemp) + point Y's coordinate in (xPoint, yPoint, zPoint)
+\
+\ and store the results in point X's coordinate in (xPoint, yPoint, zPoint).
+\
+\ We also set showLine to "hidden" if the addition overflows in any of the axes.
 \
 \ Arguments:
 \
-\   X                   Point ID to update with the result
+\   X                   The ID of the point in which to store the result
 \
-\   Y                   Point ID to add to xTemp
+\   Y                   The ID of the point to add to the xTemp vector
+\
+\ Results:
+\
+\   showLine            Set to hidden if the addition is beyond the bounds of
+\                       our universe
 \
 \ ******************************************************************************
 
-.L1A67
+.AddVectorToPoint
 
- LDA xTempLo
- CLC
- ADC xPointLo,Y
- STA xPointLo,X
- LDA xTempHi
+ LDA xTempLo            \ Set point X's x-coordinate to the following:
+ CLC                    \
+ ADC xPointLo,Y         \  (xTempHi xTempLo) + (xPointHi+Y xPointLo+Y)
+ STA xPointLo,X         \
+ LDA xTempHi            \ i.e. we add xTemp and the Y-th point's x-coordinate
  ADC xPointHi,Y
  STA xPointHi,X
- PHP
- CLC
- LDA yTempLo
- ADC yPointLo,Y
- STA yPointLo,X
- LDA yTempHi
+
+ PHP                    \ Store the flags for the x-axis addition on the stack,
+                        \ so we can check them in part 2
+
+ CLC                    \ Set point X's y-coordinate to the following:
+ LDA yTempLo            \
+ ADC yPointLo,Y         \  (yTempHi yTempLo) + (yPointHi+Y yPointLo+Y)
+ STA yPointLo,X         \
+ LDA yTempHi            \ i.e. we add yTemp and the Y-th point's y-coordinate
  ADC yPointHi,Y
  STA yPointHi,X
- PHP
- CLC
- LDA zTempLo
- ADC zPointLo,Y
- STA zPointLo,X
- LDA zTempHi
+
+ PHP                    \ Store the flags for the y-axis addition on the stack,
+                        \ so we can check them in part 2
+
+ CLC                    \ Set point X's z-coordinate to the following:
+ LDA zTempLo            \
+ ADC zPointLo,Y         \  (zTempHi zTempLo) + (zPointHi+Y zPointLo+Y)
+ STA zPointLo,X         \
+ LDA zTempHi            \ i.e. we add zTemp and the Y-th point's z-coordinate
  ADC zPointHi,Y
  STA zPointHi,X
 
- JMP L4B8C              \ Set showLine according to the overflow flag from each
-                        \ of the results (if any axes overflow, hide line)
+ JMP addv1              \ Jump to part 2 to set showLine according to the
+                        \ overflow flag from each of the results (so if any axes
+                        \ overflow, we hide the line containing the point)
 
- NOP
+ NOP                    \ This instruction is not used; perhaps at one point the
+                        \ JMP above was a JSR instruction, and this was an RTS?
 
 \ ******************************************************************************
 \
@@ -10227,7 +10367,7 @@ ORG CODE%
 
  LDX #&62
  LDY #&60
- JSR L1A67
+ JSR AddVectorToPoint
 
  LDY #&0F
  LDX #&62
@@ -12123,11 +12263,12 @@ ORG CODE%
  STA showLine
 
  LDY isObject           \ If we processed an object above, then its ID will be
-                        \ in isObject, so fetch this into Y for the call to
-                        \ NextObjectGroup
+                        \ in isObject, so fetch this into Y for the following
+                        \ call
 
- JSR NextObjectGroup    \ Cycle to the next object group, if we just processed
-                        \ an object that's in an object group
+ JSR NextObjectGroup    \ If we just processed an object in an object group,
+                        \ i.e. isObject is 6, 7, 8 or 9, then increment the
+                        \ object's group number
 
 .plin20
 
@@ -12465,7 +12606,8 @@ ORG CODE%
                         \ status byte
 
  BNE objc13             \ Jump to objc13 to set the object's status byte and
-                        \ return from the subroutine
+                        \ return from the subroutine (this BNE is effectively a
+                        \ JMP as A is never zero)
 
 \ ******************************************************************************
 \
@@ -12479,10 +12621,11 @@ ORG CODE%
 .objc10
 
                         \ We jump here if this is a bullet with a negative
-                        \ y-coordinate and it's object ID 12 or 14
+                        \ y-coordinate and it's object ID 12 or 14, or if the
+                        \ result of JSR L2BC0 was BNE in part 8
 
- JSR NextObjectGroup    \ Cycle to the next object group if this object is part
-                        \ of an object group (i.e. Y = 6, 7, 8 or 9)
+ JSR NextObjectGroup    \ If this object is in an object group, i.e. Y is 6, 7,
+                        \ 8 or 9, then increment the object's group number
 
  BCC objc11             \ If the C flag is clear then this object is not part of
                         \ an object group, so jump to objc11 to skip the
@@ -14684,7 +14827,7 @@ ORG CODE%
  LDY #&D9
  STY objectAnchorPoint
  LDX #1
- JSR L1A67
+ JSR AddVectorToPoint
 
  LDA #2
  STA GG
@@ -14705,7 +14848,7 @@ ORG CODE%
 
  LDY #2
  LDX #3
- JSR L1A67
+ JSR AddVectorToPoint
 
  LDA showLine
  BEQ L3222
@@ -14781,11 +14924,11 @@ ORG CODE%
 
  LDY #2
  LDX #&15
- JSR L1A67
+ JSR AddVectorToPoint
 
  LDY #1
  LDX #5
- JSR L1A67
+ JSR AddVectorToPoint
 
  LDX #5
 
@@ -14916,7 +15059,7 @@ ORG CODE%
 
 .L331C
 
- JSR L1A67
+ JSR AddVectorToPoint
 
  LDX #2
 
@@ -14933,7 +15076,7 @@ ORG CODE%
  BPL L3321
 
  LDX Q
- JSR L1A67
+ JSR AddVectorToPoint
 
 .L333A
 
@@ -15255,7 +15398,26 @@ ORG CODE%
 \       Name: xObjectPoint
 \       Type: Variable
 \   Category: Universe
-\    Summary: Scaled x-coordinates of the points that make up objects
+\    Summary: Scaled x-coordinates of the points that make up objects, relative
+\             to the object's anchor point
+\
+\ ------------------------------------------------------------------------------
+\
+\ For a point within an object, (xObjectPoint, yObjectPoint, zObjectPoint) are
+\ the coordinates of this point relative to the object's anchor.
+\
+\ This is the same as saying (xObjectPoint, yObjectPoint, zObjectPoint) is the
+\ vector from the object's anchor to the point.
+\
+\ This table effectively defines the shape of each object.
+\
+\ Each vector is stored as three coordinates, with each coordinate being in the
+\ range 0 to 15, plus a scale factor, which is stored in bits 4 to 7 of the
+\ z-coordinate in zObjectPoint. The scale is given as a power of 2, so a scale
+\ factor of n means we scale the coordinates by 2^n (where n = 0 to 9).
+\
+\ All vectors are positive in all three axes, so the anchor point for an object
+\ is therefore the closest point to the origin.
 \
 \ ******************************************************************************
 
@@ -15483,7 +15645,12 @@ ORG CODE%
 \       Name: yObjectPoint
 \       Type: Variable
 \   Category: Universe
-\    Summary: Scaled y-coordinates of the points that make up objects
+\    Summary: Scaled y-coordinates of the points that make up objects, relative
+\             to the object's anchor point
+\
+\ ------------------------------------------------------------------------------
+\
+\ See xObjectPoint for an explanation of object points.
 \
 \ ******************************************************************************
 
@@ -15711,7 +15878,12 @@ ORG CODE%
 \       Name: zObjectPoint
 \       Type: Variable
 \   Category: Universe
-\    Summary: Scaled y-coordinates of the points that make up objects
+\    Summary: Scaled y-coordinates of the points that make up objects, relative
+\             to the object's anchor point
+\
+\ ------------------------------------------------------------------------------
+\
+\ See xObjectPoint for an explanation of object points.
 \
 \ ******************************************************************************
 
@@ -17096,22 +17268,18 @@ NEXT
 \
 \       Name: objectGroup
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: The current group number for object IDs 6, 7, 8 and 9
 \
 \ ------------------------------------------------------------------------------
 \
 \ The current object number in each of the four object groups. The values in
 \ this table cycle through the following values:
 \
-\   * 0,  8, 16, 24
-\   * 1,  9, 17, 25
-\   * 2, 10, 18, 26
-\   * 3, 11, 19, 27
-\   * 4, 12, 20, 28
-\   * 5, 13, 21, 29
-\   * 6, 14, 22, 30
-\   * 7, 15, 23, 31
+\   * 0 to 7    the current group number for object ID 6
+\   * 8 to 15   the current group number for object ID 7
+\   * 16 to 23  the current group number for object ID 8
+\   * 24 to 31  the current group number for object ID 9
 \
 \ and then back round to the start. The cycling is performed by successive calls
 \ to the NextObjectGroup routine.
@@ -17126,12 +17294,13 @@ NEXT
 \
 \       Name: groupStart
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Universe
+\    Summary: The starting value for each object's group number
 \
 \ ------------------------------------------------------------------------------
 \
-\ The starting point for the four object groups, so the groups cycle through the
+\ The starting point for the four object groups, to which we add a number in the
+\ range 0 to 7 to get the next number, so the group numbers cycle through the
 \ following values:
 \
 \   * 0 to 7
@@ -17156,38 +17325,41 @@ NEXT
 
 .xGroupHi
 
- EQUB &C8               \ Group 0: object 6 has coordinate (&C800, &0000, &5200)
- EQUB &2A               \ Group 1: object 6 has coordinate (&2A00, &0000, &D200)
- EQUB &CF               \ Group 2: object 6 has coordinate (&CF00, &0000, &9A00)
- EQUB &82               \ Group 3: object 6 has coordinate (&8200, &0000, &C900)
- EQUB &1D               \ Group 4: object 6 has coordinate (&1D00, &0000, &3E00)
- EQUB &75               \ Group 5: object 6 has coordinate (&7500, &0000, &3300)
- EQUB &1A               \ Group 6: object 6 has coordinate (&1A00, &0000, &8A00)
- EQUB &CF               \ Group 7: object 6 has coordinate (&CF00, &0000, &EC00)
- EQUB &9C               \ Group 0: object 7 has coordinate (&9C00, &0000, &C600)
- EQUB &43               \ Group 1: object 7 has coordinate (&4300, &0000, &E200)
- EQUB &E5               \ Group 2: object 7 has coordinate (&E500, &0000, &BA00)
- EQUB &8A               \ Group 3: object 7 has coordinate (&8A00, &0000, &7000)
- EQUB &EA               \ Group 4: object 7 has coordinate (&EA00, &0000, &6E00)
- EQUB &22               \ Group 5: object 7 has coordinate (&2200, &0000, &4400)
- EQUB &6A               \ Group 6: object 7 has coordinate (&6A00, &0000, &2000)
- EQUB &C5               \ Group 7: object 7 has coordinate (&C500, &0000, &1B00)
- EQUB &15               \ Group 0: object 8 has coordinate (&1500, &0000, &2F00)
- EQUB &C4               \ Group 1: object 8 has coordinate (&C400, &0000, &0500)
- EQUB &C4               \ Group 2: object 8 has coordinate (&C400, &0000, &0500)
- EQUB &CE               \ Group 3: object 8 has coordinate (&CE00, &0000, &F500)
- EQUB &CE               \ Group 4: object 8 has coordinate (&CE00, &0000, &F500)
- EQUB &CE               \ Group 5: object 8 has coordinate (&CE00, &0000, &F500)
- EQUB &15               \ Group 6: object 8 has coordinate (&1500, &0000, &2F00)
- EQUB &11               \ Group 7: object 8 has coordinate (&1100, &0000, &D600)
- EQUB &38               \ Group 0: object 9 has coordinate (&3800, &0000, &1C00)
- EQUB &D5               \ Group 1: object 9 has coordinate (&D500, &0000, &2E00)
- EQUB &D5               \ Group 2: object 9 has coordinate (&D500, &0000, &2E00)
- EQUB &DA               \ Group 3: object 9 has coordinate (&DA00, &0000, &D300)
- EQUB &DA               \ Group 4: object 9 has coordinate (&DA00, &0000, &D300)
- EQUB &0D               \ Group 5: object 9 has coordinate (&0D00, &0000, &D900)
- EQUB &38               \ Group 6: object 9 has coordinate (&3800, &0000, &1C00)
- EQUB &0D               \ Group 7: object 9 has coordinate (&0D00, &0000, &D900)
+ EQUB &C8               \ Object 6: group 0 has coordinate (&C800, &0000, &5200)
+ EQUB &2A               \ Object 6: group 1 has coordinate (&2A00, &0000, &D200)
+ EQUB &CF               \ Object 6: group 2 has coordinate (&CF00, &0000, &9A00)
+ EQUB &82               \ Object 6: group 3 has coordinate (&8200, &0000, &C900)
+ EQUB &1D               \ Object 6: group 4 has coordinate (&1D00, &0000, &3E00)
+ EQUB &75               \ Object 6: group 5 has coordinate (&7500, &0000, &3300)
+ EQUB &1A               \ Object 6: group 6 has coordinate (&1A00, &0000, &8A00)
+ EQUB &CF               \ Object 6: group 7 has coordinate (&CF00, &0000, &EC00)
+
+ EQUB &9C               \ Object 7: group 0 has coordinate (&9C00, &0000, &C600)
+ EQUB &43               \ Object 7: group 1 has coordinate (&4300, &0000, &E200)
+ EQUB &E5               \ Object 7: group 2 has coordinate (&E500, &0000, &BA00)
+ EQUB &8A               \ Object 7: group 3 has coordinate (&8A00, &0000, &7000)
+ EQUB &EA               \ Object 7: group 4 has coordinate (&EA00, &0000, &6E00)
+ EQUB &22               \ Object 7: group 5 has coordinate (&2200, &0000, &4400)
+ EQUB &6A               \ Object 7: group 6 has coordinate (&6A00, &0000, &2000)
+ EQUB &C5               \ Object 7: group 7 has coordinate (&C500, &0000, &1B00)
+
+ EQUB &15               \ Object 8: group 0 has coordinate (&1500, &0000, &2F00)
+ EQUB &C4               \ Object 8: group 1 has coordinate (&C400, &0000, &0500)
+ EQUB &C4               \ Object 8: group 2 has coordinate (&C400, &0000, &0500)
+ EQUB &CE               \ Object 8: group 3 has coordinate (&CE00, &0000, &F500)
+ EQUB &CE               \ Object 8: group 4 has coordinate (&CE00, &0000, &F500)
+ EQUB &CE               \ Object 8: group 5 has coordinate (&CE00, &0000, &F500)
+ EQUB &15               \ Object 8: group 6 has coordinate (&1500, &0000, &2F00)
+ EQUB &11               \ Object 8: group 7 has coordinate (&1100, &0000, &D600)
+
+ EQUB &38               \ Object 9: group 0 has coordinate (&3800, &0000, &1C00)
+ EQUB &D5               \ Object 9: group 1 has coordinate (&D500, &0000, &2E00)
+ EQUB &D5               \ Object 9: group 2 has coordinate (&D500, &0000, &2E00)
+ EQUB &DA               \ Object 9: group 3 has coordinate (&DA00, &0000, &D300)
+ EQUB &DA               \ Object 9: group 4 has coordinate (&DA00, &0000, &D300)
+ EQUB &0D               \ Object 9: group 5 has coordinate (&0D00, &0000, &D900)
+ EQUB &38               \ Object 9: group 6 has coordinate (&3800, &0000, &1C00)
+ EQUB &0D               \ Object 9: group 7 has coordinate (&0D00, &0000, &D900)
 
 \ ******************************************************************************
 \
@@ -17200,38 +17372,41 @@ NEXT
 
 .zGroupHi
 
- EQUB &52               \ Group 0: object 6 has coordinate (&C800, &0000, &5200)
- EQUB &D2               \ Group 1: object 6 has coordinate (&2A00, &0000, &D200)
- EQUB &9A               \ Group 2: object 6 has coordinate (&CF00, &0000, &9A00)
- EQUB &C9               \ Group 3: object 6 has coordinate (&8200, &0000, &C900)
- EQUB &3E               \ Group 4: object 6 has coordinate (&1D00, &0000, &3E00)
- EQUB &33               \ Group 5: object 6 has coordinate (&7500, &0000, &3300)
- EQUB &8A               \ Group 6: object 6 has coordinate (&1A00, &0000, &8A00)
- EQUB &EC               \ Group 7: object 6 has coordinate (&CF00, &0000, &EC00)
- EQUB &C6               \ Group 0: object 7 has coordinate (&9C00, &0000, &C600)
- EQUB &E2               \ Group 1: object 7 has coordinate (&4300, &0000, &E200)
- EQUB &BA               \ Group 2: object 7 has coordinate (&E500, &0000, &BA00)
- EQUB &70               \ Group 3: object 7 has coordinate (&8A00, &0000, &7000)
- EQUB &6E               \ Group 4: object 7 has coordinate (&EA00, &0000, &6E00)
- EQUB &44               \ Group 5: object 7 has coordinate (&2200, &0000, &4400)
- EQUB &20               \ Group 6: object 7 has coordinate (&6A00, &0000, &2000)
- EQUB &1B               \ Group 7: object 7 has coordinate (&C500, &0000, &1B00)
- EQUB &2F               \ Group 0: object 8 has coordinate (&1500, &0000, &2F00)
- EQUB &05               \ Group 1: object 8 has coordinate (&C400, &0000, &0500)
- EQUB &05               \ Group 2: object 8 has coordinate (&C400, &0000, &0500)
- EQUB &F5               \ Group 3: object 8 has coordinate (&CE00, &0000, &F500)
- EQUB &F5               \ Group 4: object 8 has coordinate (&CE00, &0000, &F500)
- EQUB &F5               \ Group 5: object 8 has coordinate (&CE00, &0000, &F500)
- EQUB &2F               \ Group 6: object 8 has coordinate (&1500, &0000, &2F00)
- EQUB &D6               \ Group 7: object 8 has coordinate (&1100, &0000, &D600)
- EQUB &1C               \ Group 0: object 9 has coordinate (&3800, &0000, &1C00)
- EQUB &2E               \ Group 1: object 9 has coordinate (&D500, &0000, &2E00)
- EQUB &2E               \ Group 2: object 9 has coordinate (&D500, &0000, &2E00)
- EQUB &D3               \ Group 3: object 9 has coordinate (&DA00, &0000, &D300)
- EQUB &D3               \ Group 4: object 9 has coordinate (&DA00, &0000, &D300)
- EQUB &D9               \ Group 5: object 9 has coordinate (&0D00, &0000, &D900)
- EQUB &1C               \ Group 6: object 9 has coordinate (&3800, &0000, &1C00)
- EQUB &D9               \ Group 7: object 9 has coordinate (&0D00, &0000, &D900)
+ EQUB &52               \ Object 6: group 0 has coordinate (&C800, &0000, &5200)
+ EQUB &D2               \ Object 6: group 1 has coordinate (&2A00, &0000, &D200)
+ EQUB &9A               \ Object 6: group 2 has coordinate (&CF00, &0000, &9A00)
+ EQUB &C9               \ Object 6: group 3 has coordinate (&8200, &0000, &C900)
+ EQUB &3E               \ Object 6: group 4 has coordinate (&1D00, &0000, &3E00)
+ EQUB &33               \ Object 6: group 5 has coordinate (&7500, &0000, &3300)
+ EQUB &8A               \ Object 6: group 6 has coordinate (&1A00, &0000, &8A00)
+ EQUB &EC               \ Object 6: group 7 has coordinate (&CF00, &0000, &EC00)
+
+ EQUB &C6               \ Object 7: group 0 has coordinate (&9C00, &0000, &C600)
+ EQUB &E2               \ Object 7: group 1 has coordinate (&4300, &0000, &E200)
+ EQUB &BA               \ Object 7: group 2 has coordinate (&E500, &0000, &BA00)
+ EQUB &70               \ Object 7: group 3 has coordinate (&8A00, &0000, &7000)
+ EQUB &6E               \ Object 7: group 4 has coordinate (&EA00, &0000, &6E00)
+ EQUB &44               \ Object 7: group 5 has coordinate (&2200, &0000, &4400)
+ EQUB &20               \ Object 7: group 6 has coordinate (&6A00, &0000, &2000)
+ EQUB &1B               \ Object 7: group 7 has coordinate (&C500, &0000, &1B00)
+
+ EQUB &2F               \ Object 8: group 0 has coordinate (&1500, &0000, &2F00)
+ EQUB &05               \ Object 8: group 1 has coordinate (&C400, &0000, &0500)
+ EQUB &05               \ Object 8: group 2 has coordinate (&C400, &0000, &0500)
+ EQUB &F5               \ Object 8: group 3 has coordinate (&CE00, &0000, &F500)
+ EQUB &F5               \ Object 8: group 4 has coordinate (&CE00, &0000, &F500)
+ EQUB &F5               \ Object 8: group 5 has coordinate (&CE00, &0000, &F500)
+ EQUB &2F               \ Object 8: group 6 has coordinate (&1500, &0000, &2F00)
+ EQUB &D6               \ Object 8: group 7 has coordinate (&1100, &0000, &D600)
+
+ EQUB &1C               \ Object 9: group 0 has coordinate (&3800, &0000, &1C00)
+ EQUB &2E               \ Object 9: group 1 has coordinate (&D500, &0000, &2E00)
+ EQUB &2E               \ Object 9: group 2 has coordinate (&D500, &0000, &2E00)
+ EQUB &D3               \ Object 9: group 3 has coordinate (&DA00, &0000, &D300)
+ EQUB &D3               \ Object 9: group 4 has coordinate (&DA00, &0000, &D300)
+ EQUB &D9               \ Object 9: group 5 has coordinate (&0D00, &0000, &D900)
+ EQUB &1C               \ Object 9: group 6 has coordinate (&3800, &0000, &1C00)
+ EQUB &D9               \ Object 9: group 7 has coordinate (&0D00, &0000, &D900)
 
 \ ******************************************************************************
 \
@@ -17800,7 +17975,11 @@ NEXT
 \       Name: matrix1Lo
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The low bytes of matrix 1
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
@@ -17815,7 +17994,11 @@ NEXT
 \       Name: matrix2Lo
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The low bytes of matrix 2
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
@@ -17830,7 +18013,11 @@ NEXT
 \       Name: matrix3Lo
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The low bytes of matrix 3
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
@@ -17845,28 +18032,18 @@ NEXT
 \       Name: matrix4Lo
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The low bytes of matrix 4
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
 .matrix4Lo
 
- EQUB &20               \ Bit 0 used as sign for matrix4Hi in artificial
-                        \ horizon calculations when Y = 0 (x-axis)
-
- EQUB &4C
-
- EQUB &44               \ Bit 0 used as sign for matrix4Hi+2 in artificial
-                        \ horizon calculations when Y = 0 (x-axis)
-
- EQUB &58               \ Bit 0 used as sign for matrix4Hi+3 in artificial
-                        \ horizon calculations when Y = 3 (y-axis)
-
- EQUB &20               \ Bit 0 used as sign for matrix4Hi+4 in artificial
-                        \ horizon calculations when Y = 3 (y-axis)
-
- EQUB &50
-
+ EQUB &20, &4C, &44
+ EQUB &58, &20, &50
  EQUB &00, &52, &4E
 
 \ ******************************************************************************
@@ -17924,7 +18101,11 @@ NEXT
 \       Name: matrix1Hi
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The high bytes of matrix 1
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
@@ -17939,7 +18120,11 @@ NEXT
 \       Name: matrix2Hi
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The high bytes of matrix 2
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
@@ -17954,7 +18139,11 @@ NEXT
 \       Name: matrix3Hi
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The high bytes of matrix 3
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
@@ -17969,27 +18158,18 @@ NEXT
 \       Name: matrix4Hi
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: The high bytes of matrix 4
+\
+\ ------------------------------------------------------------------------------
+\
+\ If bit 0 is set in the low byte of a matrix entry, then it is negative.
 \
 \ ******************************************************************************
 
 .matrix4Hi
 
- EQUB &FA               \ Used as a value in artificial horizon calculations
-                        \ when Y = 0 (x-axis), sign bit is in matrix4Lo
-
- EQUB &32
-
- EQUB &0D               \ Used as a value in artificial horizon calculations
-                        \ when Y = 0 (x-axis), sign bit is in matrix4Lo+2
-
- EQUB &34               \ Used as a value in artificial horizon calculations
-                        \ when Y = 3 (y-axis), sign bit is in matrix4Lo+3
-
- EQUB &F2               \ Used as a value in artificial horizon calculations
-                        \ when Y = 3 (y-axis), sign bit is in matrix4Lo+4
-
- EQUB &3F
+ EQUB &FA, &32, &0D
+ EQUB &34, &F2, &3F
  EQUB &00, &40, &F7
 
 \ ******************************************************************************
@@ -19665,36 +19845,46 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4B8C
+\       Name: AddVectorToPoint (Part 1 of 2)
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Universe
+\    Summary: Check whether the vector addition overflowed and set the point's
+\             visibility accordingly
 \
 \ ******************************************************************************
 
-.L4B8C
+.addv1
 
- PHP
- LDX #2
+                        \ This routine follows on directly from the part 1 of
+                        \ AddVectorToPoint
 
-.L4B8F
+ PHP                    \ Store the flags for the z-axis addition on the stack,
+                        \ so we can check them below
 
- PLP
- BVC L4B97
+ LDX #2                 \ We now want to check whether the vector addition
+                        \ overflowed in any direction, so set as a counter for
+                        \ the three axes
 
- LDA #&40
- STA showLine
+.addv2
 
-.L4B97
+ PLP                    \ Retrieve the flags from the stack, so we work through
+                        \ the flags from the z-, y- and x-axes in turn
 
- DEX
- BPL L4B8F
+ BVC addv3              \ If the C flag is clear then this addition didn't
+                        \ overflow, so jump to addv3 to move on to the next axis
 
- RTS
+ LDA #%01000000         \ The addition overflowed for this axis, so set bit 6 of
+ STA showLine           \ showLine so the line containing this point is marked
+                        \ as being hidden
+
+.addv3
+
+ DEX                    \ Decrement the counter to move on to the next axis
+
+ BPL addv2              \ Loop back until we have checked the flags from all
+                        \ three additions
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -20015,10 +20205,19 @@ NEXT
 \
 \       Name: NextObjectGroup
 \       Type: Subroutine
-\   Category: 
+\   Category: Universe
 \    Summary: Cycle to the next object group
 \
 \ ------------------------------------------------------------------------------
+\
+\ If the object ID passed to the routine is 6, 7, 8 or 9, then this object is
+\ part of an object group, in which case this routine increments the value
+\ in objectGroup for this object, so:
+\
+\   * Object 6 increments objectGroup+0 through  0 to  7 and round again
+\   * Object 7 increments objectGroup+1 through  8 to 15 and round again
+\   * Object 8 increments objectGroup+2 through 16 to 23 and round again
+\   * Object 9 increments objectGroup+3 through 24 to 31 and round again
 \
 \ Arguments:
 \
@@ -20026,35 +20225,36 @@ NEXT
 \
 \ Returns:
 \
-\   C flag              Set if this object is part of an object group
-\                         (Y = 6, 7, 8 or 9)
-\                       Clear otherwise
+\   C flag              The result of the operation:
+\
+\                         * Set if this object ID is 6, 7, 8 or 9
+\
+\                         * Clear otherwise
 \
 \ ******************************************************************************
 
 .NextObjectGroup
 
- CPY #6                 \ If Y < 6, jump to L4CAE to return from the subroutine
- BCC L4CAE              \ with the C flag clear
+ CPY #6                 \ If Y < 6, jump to nobj1 to return from the subroutine
+ BCC nobj1              \ with the C flag clear
 
- CPY #10                \ If Y >= 10, jump to L4CAE to return from the
- BCS L4CAE              \ subroutine with the C flag clear
+ CPY #10                \ If Y >= 10, jump to nobj1 to return from the
+ BCS nobj1              \ subroutine with the C flag clear
 
                         \ If we get here then Y = 6, 7, 8 or 9
 
  LDA objectGroup-6,Y    \ Increment the value in objectGroup for this object
- CLC                    \ from 0-7, adding in the value from groupStart, so:
- ADC #1                 \
- AND #7                 \   * Object 6 goes from 0-7 and round again
- ORA groupStart-6,Y  \   * Object 7 goes from 8-15 and round again
- STA objectGroup-6,Y    \   * Object 8 goes from 16-23 and round again
-                        \   * Object 9 goes from 24-31 and round again
+ CLC                    \ from 0-7, adding in the value from groupStart (which
+ ADC #1                 \ contains the start value for each group, i.e. 0, 8,
+ AND #7                 \ 16 and 24)
+ ORA groupStart-6,Y
+ STA objectGroup-6,Y
 
  SEC                    \ Set the C flag
 
  RTS                    \ Return from the subroutine
 
-.L4CAE
+.nobj1
 
  CLC                    \ Clear the C flag
 
