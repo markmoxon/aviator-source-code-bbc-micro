@@ -338,18 +338,18 @@ linesToShow = &0500
 
 \ ******************************************************************************
 \
-\       Name: L05C8
+\       Name: relatedPoints
 \       Type: Variable
-\   Category: 
+\   Category: Universe
 \    Summary: 
 \
 \ ******************************************************************************
 
-L05C8 = &05C8           \ Contains a list, from L05C8+1 onwards, with the list
-                        \ size in L05C8
+relatedPoints = &05C8   \ Contains a list, from relatedPoints+1 onwards, with
+                        \ the list size in relatedPoints
                         \
-                        \ Point IDs (?) are added in IsLineVisible part 3 when
-                        \ those points are part of a linked object - only points
+                        \ Point IDs get added in part 3 of ProcessLine when
+                        \ those points are part of an object - only points
                         \ that we haven't already processed are added
                         \
                         \ Zeroed in ResetVariables
@@ -865,14 +865,14 @@ ORG &0C00
 .isObject
 
  SKIP 1                 \ Temporary storage, used to store the object ID when we
-                        \ check the visibility of an object in IsLineVisible and
+                        \ check the visibility of an object in ProcessLine and
                         \ call SetObjectCoords to set its coordinates
 
 .pointId
 
  SKIP 1                 \ Temporary storage, used to store the ID of the current
                         \ point when checking a line's visibility in the
-                        \ IsLineVisible routine
+                        \ ProcessLine routine
 
 .maxCoord
 
@@ -942,7 +942,7 @@ ORG &0C00
 
 .pointCount
 
- SKIP 1                 \ Temporary storage, used as a counter in IsLineVisible
+ SKIP 1                 \ Temporary storage, used as a counter in ProcessLine
                         \ to check the start and end points of the line
 
 .pressingT
@@ -5771,21 +5771,21 @@ ORG CODE%
 \       Name: MultiplyVxSR
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Calculate (G W) = V * (S R) / 16 or V * (S R) / 8
+\    Summary: Calculate (G W) = V * (S R)
 \
 \ ------------------------------------------------------------------------------
 \
-\ If bit 7 of K is clear, calculate (G W) = V * (S R) / 16
-\
-\ If bit 7 of K is set, calculate (G W) = V * (S R) / 8
-\
 \ Arguments:
 \
-\   (S R)               
+\   (S R)               A 16-bit number
 \
-\   V                   Magnitude 0-15, can be positive or negative
+\   V                   A 4-bit number (0 to 15), can be positive or negative
 \
-\   K                   Determines the calculation
+\   K                   Determines whether to multiply the result by 2:
+\
+\                         * K = 0, calculate (G W) = V * (S R) / 16
+\
+\                         * K = 1,  calculate (G W) = V * (S R) / 8
 \
 \ ******************************************************************************
 
@@ -5900,9 +5900,9 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: SetObjectPoints (Part 1 of )
+\       Name: SetObjectPoints (Part 1 of 2)
 \       Type: Subroutine
-\   Category: 
+\   Category: Universe
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6099,7 +6099,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: SetObjectPoints (Part 2 of )
+\       Name: SetObjectPoints (Part 2 of 2)
 \       Type: Subroutine
 \   Category: 
 \    Summary: 
@@ -6118,8 +6118,8 @@ ORG CODE%
 
  BEQ objp10             \ If UU = 0, jump to objp10
 
- CPY #8                 \ If Y >= 8, jump to objp9 to move on to the next iteration
- BCS objp9
+ CPY #8                 \ If Y >= 8, jump to objp9 to move on to the next
+ BCS objp9              \ iteration
 
  LDA xTempLo,X          \ Set P = xTempLo
  STA P
@@ -9163,7 +9163,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ matrix4Lo, matrix4Lo+2, matrix4Lo+3, matrix4Lo+4 are only used to provide signs in bit 0:
+\ matrix4Lo, matrix4Lo+2, matrix4Lo+3, matrix4Lo+4 are only used to provide
+\ signs in bit 0:
 \   Negative if bit 0 is set, positive if clear
 \
 \ matrix4Hi, matrix4Hi+3 provide values for T calculations
@@ -10614,7 +10615,7 @@ ORG CODE%
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
                         \ in the rset2 loop
 
- STA L05C8              \ Set L05C8 = 0 to reset the L05C8 list to length zero
+ STA relatedPoints      \ Set relatedPoints = 0 to reset the relatedPoints list
 
  STA mainLoopCounter    \ Set mainLoopCounter = 0
 
@@ -10927,7 +10928,7 @@ ORG CODE%
  LDA #0                 \ Set L0CCA = 0
  STA L0CCA
 
- STA L05C8              \ Set L05C8 = 0 to reset the L05C8 list to length zero
+ STA relatedPoints      \ Set relatedPoints = 0 to reset the relatedPoints list
 
 .main4
 
@@ -10989,7 +10990,7 @@ ORG CODE%
 
 .main6
 
- JSR UpdateLineLists
+ JSR UpdateLinesToShow
 
  JSR L4CB0
 
@@ -11248,12 +11249,12 @@ ORG CODE%
 
 .main20
 
- LDA L05C8              \ If the L05C8 list contains 35 or more entries, jump to
- CMP #35                \ main21 to skip the following three instructions
- BCS main21
+ LDA relatedPoints      \ If the relatedPoints list contains 35 or more entries,
+ CMP #35                \ jump to main21 to skip the following three
+ BCS main21             \ instructions
 
- JSR ProcessLinesToHide \ Process three lines from the linesToHide list
- JSR ProcessLinesToHide
+ JSR ProcessLinesToHide \ Process three lines from the linesToHide list, if
+ JSR ProcessLinesToHide \ there are any unprocessed lines there
  JSR ProcessLinesToHide
 
 .main21
@@ -11394,15 +11395,15 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateLineLists
+\       Name: UpdateLinesToShow
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Process the linesToShow list, moving any lines that aren't visible
+\    Summary: Update the linesToShow list, moving any lines that aren't visible
 \             into the linesToHide list
 \
 \ ******************************************************************************
 
-.UpdateLineLists
+.UpdateLinesToShow
 
  LDX linesToShowEnd     \ If the linesToShow list is empty, jump to upll5 to
  BEQ upll5              \ return from the subroutine, as there is nothing to
@@ -11421,11 +11422,11 @@ ORG CODE%
  LDA linesToShow,X      \ linesToShow list
  STA lineId
 
- LDA #1                 \ Set HH = 1, so in the following call to IsLineVisible
+ LDA #1                 \ Set HH = 1, so in the following call to ProcessLine
  STA HH                 \ we do not check the line's distance against
                         \ visibleDistance in the visibility checks
 
- JSR IsLineVisible      \ Check whether this line is visible, returning the
+ JSR ProcessLine        \ Check whether this line is visible, returning the
                         \ result in showLine
 
  LDA lineId             \ If lineId = 0, then this is the runway, so skip the
@@ -11569,14 +11570,14 @@ ORG CODE%
 
 .L2929
 
- LDX L05C8
- BEQ L2939
+ LDX relatedPoints      \ Reset the point statuses to 0 for all points in the
+ BEQ L2939              \ relatedPoints list
 
  LDA #0
 
 .L2930
 
- LDY L05C8,X
+ LDY relatedPoints,X
  STA pointStatus,Y
  DEX
  BNE L2930
@@ -11590,11 +11591,7 @@ ORG CODE%
 \       Name: ProcessLinesToHide
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Process an unprocessed line from the linesToHide list
 \
 \ ******************************************************************************
 
@@ -11604,8 +11601,8 @@ ORG CODE%
                         \ to which we have processed lines
 
  CMP linesToHideEnd     \ If we have processed all the way to the end of the
- BEQ IsLineVisible-1    \ list, then linesToHidePointer = linesToHideEnd, so
-                        \ return from the subroutine (as IsLineVisible-1
+ BEQ ProcessLine-1      \ list, then linesToHidePointer = linesToHideEnd, so
+                        \ return from the subroutine (as ProcessLine-1
                         \ contains an RTS)
 
  CLC                    \ Otherwise we have lines on the end of the linesToHide
@@ -11623,11 +11620,12 @@ ORG CODE%
  CMP #61                \ If lineId = 61, jump back to ProcessLinesToHide to
  BEQ ProcessLinesToHide \ pick another line
 
-                        \ Fall through into ProcessLine to process the line
+                        \ Fall through into ShowOrHideLine to process the line
+                        \ and add it to the linesToShow or linesToHide list
 
 \ ******************************************************************************
 \
-\       Name: ProcessLine
+\       Name: ShowOrHideLine
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Process a line, working out its visibility and adding it to the
@@ -11644,19 +11642,19 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.ProcessLine
+.ShowOrHideLine
 
- LDA #0                 \ Set HH = 0, so in the following call to IsLineVisible
+ LDA #0                 \ Set HH = 0, so in the following call to ProcessLine
  STA HH                 \ we check the line's distance against visibleDistance
                         \ in the visibility checks
 
- JSR IsLineVisible      \ Check whether this line is visible, returning the
+ JSR ProcessLine        \ Check whether this line is visible, returning the
                         \ result in showLine
 
  LDA lineId             \ Fetch the line ID into A
 
  LDX showLine           \ If showLine = 0 then the line is visible, so jump down
- BEQ addl1              \ to addl1 to add the line to the linesToShow list
+ BEQ shli1              \ to shli1 to add the line to the linesToShow list
 
                         \ The value of showLine is non-zero, so the line is not
                         \ visible and we now add it to the linesToHide list
@@ -11669,7 +11667,7 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
-.addl1
+.shli1
 
                         \ The value of showLine is zero, so the line is visible
                         \ and we now add it to the linesToShow list
@@ -11689,7 +11687,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 1 of 7)
+\       Name: ProcessLine (Part 1 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check whether a line is visible, starting with the horizon
@@ -11717,11 +11715,11 @@ ORG CODE%
 \
 \ Other entry points:
 \
-\   IsLineVisible-1     Contains an RTS
+\   ProcessLine-1       Contains an RTS
 \
 \ ******************************************************************************
 
-.IsLineVisible
+.ProcessLine
 
  LDA #0                 \ Set showLine = 0 as a starting point for the return
  STA showLine           \ value (so we start out by assuming the line is
@@ -11739,43 +11737,43 @@ ORG CODE%
  LDY lineStartPointId,X \ Set L to the point ID for the line's start point,
  STY L                  \ which is in the lineId-th entry of lineStartPointId
 
- CPX #12                \ If lineId >= 12, jump to lvis2
- BCS lvis2
+ CPX #12                \ If lineId >= 12, jump to plin2
+ BCS plin2
 
- CPX #0                 \ If lineId is not zero, jump to lvis1
- BNE lvis1
+ CPX #0                 \ If lineId is not zero, jump to plin1
+ BNE plin1
 
                         \ If we get here then lineId is 0, so this is the
                         \ horizon
 
- JSR IsHorizonVisible   \ Check whether the horizon is visible and set showLine
+ JSR ProcessHorizon     \ Check whether the horizon is visible and set showLine
                         \ accordingly
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 2 of 7)
+\       Name: ProcessLine (Part 2 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check whether the runway is visible
 \
 \ ******************************************************************************
 
-.lvis1
+.plin1
 
                         \ If we get here then lineId is in the range 1 to 11,
                         \ so this is the runway
 
- JSR IsRunwayVisible    \ Check whether this runway line is visible and set
+ JSR ProcessRunway      \ Check whether this runway line is visible and set
                         \ showLine accordingly
 
- JMP lvis19             \ Jump down to lvis19 to check the line's z-coordinates
+ JMP plin19             \ Jump down to plin19 to check the line's z-coordinates
                         \ and return the visibility result
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 3 of 7)
+\       Name: ProcessLine (Part 3 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: If a line is part of a multi-point object, extract the other
@@ -11783,7 +11781,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.lvis2
+.plin2
 
                         \ If we get here, lineId >= 12 and Y contains the point
                         \ ID for the line's start point
@@ -11795,16 +11793,16 @@ ORG CODE%
  LDA #2                 \ Set pointCount = 2 to act as a counter so we can check
  STA pointCount         \ the start point first, and then the end point
 
-.lvis3
+.plin3
 
  LDA pointStatus,Y      \ If bit 7 of the point's status byte is clear, skip
- BPL lvis4              \ the following instruction
+ BPL plin4              \ the following instruction
 
- JMP lvis17             \ Bit 7 of the point's status byte is set, which means
-                        \ we have already checked this point, so jump to lvis17
+ JMP plin17             \ Bit 7 of the point's status byte is set, which means
+                        \ we have already checked this point, so jump to plin17
                         \ to do the distance and z-coordinate tests
 
-.lvis4
+.plin4
 
                         \ We get here if lineId >= 12 and we haven't already
                         \ checked the point whose ID is in Y
@@ -11824,23 +11822,23 @@ ORG CODE%
                         \ matches the value of pointId (see parts 5 and 6 to
                         \ see this in action)
 
-.lvis5
+.plin5
 
  LDA objectPoints,Y     \ Fetch this point's entry from objectPoints, which
                         \ will tell us if this point is related to any other
                         \ points as part of a larger object
 
  CMP #40                \ If object ID < 40 then this point does not link to
- BCC lvis8              \ another point, or it's the last point in a linked
-                        \ object, so jump to lvis8 to check the visibility of
+ BCC plin8              \ another point, or it's the last point in a linked
+                        \ object, so jump to plin8 to check the visibility of
                         \ this point
 
                         \ If we get here then this point links to another point
                         \ in the object table, so we follow the links and add
-                        \ all of the point IDs to the stack and to the L05C8
-                        \ list, looping back until we reach the last point, at
-                        \ which point we jump to lvis8 with a stack full of
-                        \ points
+                        \ all of the point IDs to the stack and to the
+                        \ relatedPoints list, looping back until we reach the
+                        \ last point, at which point we jump to plin8 with a
+                        \ stack full of points
 
  SEC                    \ Subtract 40 from A to get the point ID of the new
  SBC #40                \ point to check
@@ -11851,40 +11849,40 @@ ORG CODE%
                         \ an index into pointStatus
 
  LDA pointStatus,Y      \ If bit 7 of the new point's status byte is set, then
- BMI lvis14             \ we have already checked this new point, which means
+ BMI plin14             \ we have already checked this new point, which means
                         \ we have already processed the rest of the points in
-                        \ the linked object, so jump down to lvis14 to check
+                        \ the linked object, so jump down to plin14 to check
                         \ the points we added to the stack
 
  TYA                    \ Set A = the new point's ID
 
  PHA                    \ Store the new point's ID on the stack
 
- LDX L05C8              \ If L05C8 >= 49, then there are 48 values in the L05C8
- CPX #49                \ list, so jump to lvis11 to set this line as not being
- BCS lvis11             \ visible, as the L05C8 list is full
+ LDX relatedPoints      \ If relatedPoints >= 49, then the relatedPoints list is
+ CPX #49                \ full, so jump to plin11 to set this line as not being
+ BCS plin11             \ visible
 
- INC L05C8              \ Increment the value in L05C8, which contains a count
-                        \ of values in the list, as we are about to add a new
+ INC relatedPoints      \ Increment the value in relatedPoints, which contains
+                        \ the size of the list, as we are about to add a new
                         \ entry to the end of the list
 
- LDX L05C8              \ Add A, the new point's ID, to the end of the L05C8
- STA L05C8,X            \ list
+ LDX relatedPoints      \ Add A, the new point's ID, to the end of the
+ STA relatedPoints,X    \ relatedPoints list
 
- BNE lvis5              \ Jump back to lvis5 to recurse through the new point
+ BNE plin5              \ Jump back to plin5 to recurse through the new point
                         \ (this BNE is effectively a JMP as A is is never zero,
                         \ because objectPoints does not contain a value of 40)
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 4 of 7)
+\       Name: ProcessLine (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check the visibility of the bullets
 \
 \ ******************************************************************************
 
-.lvis6
+.plin6
 
                         \ If we get here then the point is not part of a linked
                         \ object, and object ID is in the range 12 to 15, so
@@ -11894,7 +11892,7 @@ ORG CODE%
  STA GG
 
  LDA objectStatus,Y     \ If bit 7 of the object's status byte is set, jump to
- BMI lvis7              \ lvis16 via lvis7
+ BMI plin7              \ plin16 via plin7
 
                         \ If we get here then bit 7 of the object's status byte
                         \ is clear
@@ -11904,22 +11902,22 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
-.lvis7
+.plin7
 
- JMP lvis16             \ Jump down to lvis16 with the next point ID in GG, to
+ JMP plin16             \ Jump down to plin16 with the next point ID in GG, to
                         \ check distance and z-coordinates and return the final
                         \ result
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 5 of 7)
+\       Name: ProcessLine (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: 
 \
 \ ******************************************************************************
 
-.lvis8
+.plin8
 
                         \ If we get here then the point is either the last one
                         \ in a linked object, or it's not part of a linked
@@ -11928,47 +11926,47 @@ ORG CODE%
  TAY                    \ Store the object ID in objectId
  STY objectId
 
- CMP #16                \ If the object ID >= 16, jump to lvis9 to skip the
- BCS lvis9              \ following
+ CMP #16                \ If the object ID >= 16, jump to plin9 to skip the
+ BCS plin9              \ following
 
  CMP #12                \ If the object ID >= 12, then the object ID is in the
- BCS lvis6              \ range 12 to 15, which means it's a bullet line, so
-                        \ jump to lvis6 to work out its visibility
+ BCS plin6              \ range 12 to 15, which means it's a bullet line, so
+                        \ jump to plin6 to work out its visibility
 
-.lvis9
+.plin9
 
  LDA objectStatus,Y     \ Fetch the object's status byte
 
  AND #%01000000         \ If bit 6 of the object's status byte is set then we
- BNE lvis10             \ have already set this object's coordinates in this
+ BNE plin10             \ have already set this object's coordinates in this
                         \ iteration of the main loop, so skip the following
 
  JSR SetObjectCoords    \ Calculate the object's coordinates, setting bit 6 of
                         \ the object's status byte and setting isObject to the
                         \ object ID
 
-.lvis10
+.plin10
 
  LDY objectId           \ Fetch the object ID from objectId
 
  LDA objectStatus,Y     \ If bit 7 of the object's status byte is set, jump
- BMI lvis13             \ to lvis13
+ BMI plin13             \ to plin13
 
-.lvis11
+.plin11
 
  LDA #%10000000         \ Set showLine to say that the line is not in view
  STA showLine
 
-.lvis12
+.plin12
 
  PLA                    \ Pull numbers off the stack until we reach the first
  CMP pointId            \ number that we put on, which will match pointId, so
- BNE lvis12             \ by the time we are done we have removed all the IDs
+ BNE plin12             \ by the time we are done we have removed all the IDs
                         \ we added to the stack during the routine
 
  RTS                    \ Return from the subroutine
 
-.lvis13
+.plin13
 
  TYA                    \ Set objectAnchorPoint = object ID + 216
  CLC
@@ -11977,14 +11975,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 6 of 7)
+\       Name: ProcessLine (Part 6 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check the visibility of all points on the stack
 \
 \ ******************************************************************************
 
-.lvis14
+.plin14
 
                         \ We jump straight here if we are working through a
                         \ linked object and come across a point with bit 7 set
@@ -12000,7 +11998,7 @@ ORG CODE%
  PLA                    \ Pull the next point ID from the stack
 
  CMP pointId            \ If the point ID matches pointId, then we have no other
- BEQ lvis15             \ points on the stack to process, so jump down to lvis15
+ BEQ plin15             \ points on the stack to process, so jump down to plin15
                         \ to calculate its visibility
 
  STA GG                 \ Store the point ID in GG so its coordinates get
@@ -12015,7 +12013,7 @@ ORG CODE%
  JSR SetObjectPoints    \ ???
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
- BNE lvis12             \ so jump to lvis12 to clear down the stack and return
+ BNE plin12             \ so jump to plin12 to clear down the stack and return
                         \ from the subroutine
 
  LDY GG                 \ Set objectAnchorPoint = the point ID in GG
@@ -12025,10 +12023,10 @@ ORG CODE%
  ORA pointStatus,Y
  STA pointStatus,Y
 
- BNE lvis14             \ Jump to lvis14 (this BNE is effectively a JMP as A is
+ BNE plin14             \ Jump to plin14 (this BNE is effectively a JMP as A is
                         \ never zero)
 
-.lvis15
+.plin15
 
  STA GG                 \ Store the point ID in GG
 
@@ -12041,31 +12039,31 @@ ORG CODE%
  JSR SetObjectPoints    \ ???
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
- BNE lvis20             \ so jump to lvis20 to return from the subroutine (as
-                        \ lvis20 contains an RTS)
+ BNE plin20             \ so jump to plin20 to return from the subroutine (as
+                        \ plin20 contains an RTS)
 
 \ ******************************************************************************
 \
-\       Name: IsLineVisible (Part 7 of 7)
+\       Name: ProcessLine (Part 7 of 7)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check distance and z-coordinates and return the final result
 \
 \ ******************************************************************************
 
-.lvis16
+.plin16
 
  LDY GG                 \ Set Y to the point ID, which we stored in GG before
                         \ jumping here or falling through from above
 
-.lvis17
+.plin17
 
                         \ We jump straight here if line ID >= 12 and bit 7 of
                         \ the point's status byte is set (which means we have
                         \ already processed this point)
 
- LDA HH                 \ If HH is non-zero, jump to lvis18 to move on to the
- BNE lvis18             \ end point and then check the z-coordinates
+ LDA HH                 \ If HH is non-zero, jump to plin18 to move on to the
+ BNE plin18             \ end point and then check the z-coordinates
 
  LDX lineId             \ Check whether this line ID is close enough to be
  JSR CheckDistance      \ visible (so it gets hidden if it is further away than
@@ -12076,15 +12074,15 @@ ORG CODE%
                         \ enough to be shown, so store the updated response in
                         \ showLine
 
- BNE lvis20             \ If the response is non-zero then the line is not
+ BNE plin20             \ If the response is non-zero then the line is not
                         \ visible and showLine contains a non-zero response, so
-                        \ jump to lvis20 to return from the subroutine
+                        \ jump to plin20 to return from the subroutine
 
                         \ Otherwise the line is close enough to be visible and
                         \ has passed all the other visibility checks so far, so
                         \ now we check the z-coordinates
 
-.lvis18
+.plin18
 
  LDA #%10000000         \ Set bit 7 of the start point's status byte
  ORA pointStatus,Y
@@ -12092,8 +12090,8 @@ ORG CODE%
 
  DEC pointCount         \ Decrement pointCount so we check the end point next
 
- BEQ lvis19             \ If pointCount = 0 then we have checked both the start
-                        \ and end point, so jump to lvis19 to check the line's
+ BEQ plin19             \ If pointCount = 0 then we have checked both the start
+                        \ and end point, so jump to plin19 to check the line's
                         \ z-coordinates
 
                         \ If we get here then we have checked the start point,
@@ -12103,18 +12101,18 @@ ORG CODE%
                         \ when we run through the process above, we do it for
                         \ the end point instead of the start point
 
- JMP lvis3              \ Jump back to lvis3 to check the visibility of the end
+ JMP plin3              \ Jump back to plin3 to check the visibility of the end
                         \ point
 
-.lvis19
+.plin19
 
  LDY M                  \ If the end point's z-coordinate is positive, jump to
- LDA zPointHi,Y         \ lvis20 to return from the subroutine
- BPL lvis20
+ LDA zPointHi,Y         \ plin20 to return from the subroutine
+ BPL plin20
 
  LDY L                  \ If the start point's z-coordinate is positive, jump to
- LDA zPointHi,Y         \ lvis20 to return from the subroutine
- BPL lvis20
+ LDA zPointHi,Y         \ plin20 to return from the subroutine
+ BPL plin20
 
                         \ If we get here then both the start and end point have
                         \ negative z-coordinates, so they are both behind us and
@@ -12131,7 +12129,7 @@ ORG CODE%
  JSR NextObjectGroup    \ Cycle to the next object group, if we just processed
                         \ an object that's in an object group
 
-.lvis20
+.plin20
 
  RTS                    \ Return from the subroutine
 
@@ -12148,7 +12146,7 @@ ORG CODE%
 \
 \   objectId            The object ID, for example:
 \
-\                         * 1 for the runway when called from IsRunwayVisible
+\                         * 1 for the runway when called from ProcessRunway
 \
 \                         * 15 for bullets when called from UpdateBullets
 \
@@ -12197,7 +12195,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 2 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Process the bullets (objects 12, 13, 14 or 15)
+\    Summary: Pre-process the bullets (objects 12, 13, 14 or 15)
 \
 \ ******************************************************************************
 
@@ -12243,7 +12241,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 4 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Pre-process the object groups (objects 6, 7, 8 or 9)
 \
 \ ******************************************************************************
 
@@ -12295,7 +12293,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 6 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Process the alien (object 30)
+\    Summary: Pre-process the alien (object 30)
 \
 \ ******************************************************************************
 
@@ -12373,6 +12371,9 @@ ORG CODE%
 \ ******************************************************************************
 
 .objc9
+
+                        \ By this point we have pre-processed any special
+                        \ objects, so now to process it
 
                         \ We now translate the base location of the object,
                         \ in (xObject, yObject, zObject), by subtracting the
@@ -12471,7 +12472,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 9 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Process the bullets
 \
 \ ******************************************************************************
 
@@ -12503,7 +12504,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 10 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Process the next alien (object 30)
 \
 \ ******************************************************************************
 
@@ -12531,7 +12532,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 11 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Update the object status and return from the subroutine
 \
 \ ******************************************************************************
 
@@ -12661,7 +12662,7 @@ ORG CODE%
 
 .rell1
 
- JSR ProcessLine        \ Process the line with ID lineId, adding it to either
+ JSR ShowOrHideLine     \ Process the line with ID lineId, adding it to either
                         \ the linesToShow or the linesToHide list
 
  INC lineId             \ Increment lineId to move on to the next line
@@ -13010,7 +13011,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsHorizonVisible
+\       Name: ProcessHorizon
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: 
@@ -13025,7 +13026,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.IsHorizonVisible
+.ProcessHorizon
 
  LDX M                  \ Set the end point to (0, 0, 0)
  JSR SetPointToOrigin
@@ -14626,7 +14627,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: IsRunwayVisible
+\       Name: ProcessRunway
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: 
@@ -14637,7 +14638,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.IsRunwayVisible
+.ProcessRunway
 
  LDA objectStatus+1
  BEQ L31D4
@@ -17850,19 +17851,19 @@ NEXT
 
 .matrix4Lo
 
- EQUB &20               \ Bit 0 used as sign for matrix4Hi in artificial horizon
-                        \ calculations when Y = 0 (x-axis)
+ EQUB &20               \ Bit 0 used as sign for matrix4Hi in artificial
+                        \ horizon calculations when Y = 0 (x-axis)
 
  EQUB &4C
 
- EQUB &44               \ Bit 0 used as sign for matrix4Hi+2 in artificial horizon
-                        \ calculations when Y = 0 (x-axis)
+ EQUB &44               \ Bit 0 used as sign for matrix4Hi+2 in artificial
+                        \ horizon calculations when Y = 0 (x-axis)
 
- EQUB &58               \ Bit 0 used as sign for matrix4Hi+3 in artificial horizon
-                        \ calculations when Y = 3 (y-axis)
+ EQUB &58               \ Bit 0 used as sign for matrix4Hi+3 in artificial
+                        \ horizon calculations when Y = 3 (y-axis)
 
- EQUB &20               \ Bit 0 used as sign for matrix4Hi+4 in artificial horizon
-                        \ calculations when Y = 3 (y-axis)
+ EQUB &20               \ Bit 0 used as sign for matrix4Hi+4 in artificial
+                        \ horizon calculations when Y = 3 (y-axis)
 
  EQUB &50
 
@@ -19424,7 +19425,7 @@ NEXT
 \   FireGuns            X = &ED, Y = 96
 \   L2CD3               X = &A8, Y = 0
 \   L3053               X = &A8, Y = 0
-\   IsRunwayVisible     X = &A8, Y = range
+\   ProcessRunway       X = &A8, Y = range
 \   L4CB0               X = &A8, Y = range
 \   ApplyFlightModel    X = &89, Y = 255
 \                       X = &00, Y = 254
@@ -19477,7 +19478,7 @@ NEXT
 \
 \ Called as follows:
 \
-\   IsRunwayVisible     X = &A8, Y = 5
+\   ProcessRunway       X = &A8, Y = 5
 \   L4CB0               X = &A8, Y = range
 \   ApplyFlightModel    X = &03, Y = 255
 \                       X = &83, Y = 252
@@ -20025,7 +20026,8 @@ NEXT
 \
 \ Returns:
 \
-\   C flag              Set if this object is part of an object group (Y = 6, 7, 8 or 9)
+\   C flag              Set if this object is part of an object group
+\                         (Y = 6, 7, 8 or 9)
 \                       Clear otherwise
 \
 \ ******************************************************************************
