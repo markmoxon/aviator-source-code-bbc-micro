@@ -671,17 +671,20 @@ ORG &0900
 
  SKIP 3
 
-.L0C6D
+.xPlaneTop
 
- SKIP 1
+ SKIP 1                 \ The top byte of the plane's location, so the byte
+                        \ above the high byte in xPlaneHi
 
-.L0C6E
+.yPlaneTop
 
- SKIP 1
+ SKIP 1                 \ The top byte of the plane's location, so the byte
+                        \ above the high byte in yPlaneHi
 
-.L0C6F
+.zPlaneTop
 
- SKIP 1
+ SKIP 1                 \ The top byte of the plane's location, so the byte
+                        \ above the high byte in zPlaneHi
 
 .L0C70
 
@@ -11601,7 +11604,7 @@ ORG CODE%
 
  LDA #1                 \ Set HH = 1, so in the following call to ProcessLine
  STA HH                 \ we do not check the line's distance against
-                        \ visibleDistance in the visibility checks
+                        \ maxLineDistance in the visibility checks
 
  JSR ProcessLine        \ Check whether this line is visible, returning the
                         \ result in showLine
@@ -11822,7 +11825,7 @@ ORG CODE%
 .ShowOrHideLine
 
  LDA #0                 \ Set HH = 0, so in the following call to ProcessLine
- STA HH                 \ we check the line's distance against visibleDistance
+ STA HH                 \ we check the line's distance against maxLineDistance
                         \ in the visibility checks
 
  JSR ProcessLine        \ Check whether this line is visible, returning the
@@ -11878,7 +11881,7 @@ ORG CODE%
 \   HH                  Determines whether we check for distance:
 \
 \                         * 0 = check the line's distance against the maximum
-\                               visible distance in visibleDistance
+\                               visible distance in maxLineDistance
 \
 \                         * Non-zero = skip the distance check
 \
@@ -12247,7 +12250,7 @@ ORG CODE%
  BNE plin18             \ end point and then check the z-coordinates
 
  LDX lineId             \ Check whether this line ID is close enough to be
- JSR CheckDistance      \ visible (so it gets hidden if it is further away than
+ JSR CheckLineDistance  \ visible (so it gets hidden if it is further away than
                         \ the visibility distance for this line)
 
  STA showLine           \ The above call returns 1 if the line is too far away,
@@ -12354,8 +12357,11 @@ ORG CODE%
  ADC #216               \ so N is in the range 217 to 255 and is the point ID
  STA N                  \ that we use for storing the object's anchor point
 
- LDA #1                 \ Set K = 1 to pass to the L2BC0 routine
- STA K
+ LDA #1                 \ Set K = 1, so the CheckObjDistance routine returns
+ STA K                  \ the correct 0 or 1 value when checking an object's
+                        \ distance, which is the default behaviour (we set K to
+                        \ 0 below for bullets only, as we always want them to
+                        \ remain visible at distance)
 
                         \ We now check for some specific groups of object:
                         \
@@ -12382,8 +12388,9 @@ ORG CODE%
                         \ If we get here then the object ID is 12, 13, 14 or 15,
                         \ so this is a bullet
 
- LDA #0                 \ Set K = 0 to pass to the L2BC0 routine
- STA K
+ LDA #0                 \ Set K = 0, so the CheckObjDistance routine always
+ STA K                  \ returns 0, which means the bullet trails never get
+                        \ too far away to be hidden
 
  LDA yObjectHi,Y        \ If the object's y-coordinate is positive, jump to
  BPL objc3              \ objc3 to check the next range
@@ -12574,68 +12581,95 @@ ORG CODE%
                         \ So the in the following, we set the coordinates of
                         \ the point whose ID is in GG, i.e. point GG
 
+                        \ We do the following calculation with 24-bit values,
+                        \ so we can do the visibility checks. This means we
+                        \ calculate:
+                        \
+                        \   xPoint = xObject - xPlane
+                        \   yPoint = yObject - yPlane
+                        \   zPoint = zObject - zPlane
+                        \
+                        \ but in each case, the values have three bytes. To take
+                        \ the x-axis calculation:
+                        \
+                        \   xPoint  is (A xPointHi xPointLo)
+                        \   xObject is (0 xObjectHi xObjectLo)
+                        \   xPlane  is (xPlaneTop xPlaneHi xPlaneLo)
+                        \
+                        \ and we pass the top byte of the result, in A, to the
+                        \ CheckObjDistance routine, so it can be used in the
+                        \ visibility check (a high value in A means the object
+                        \ is a very long way away)
+
  SEC                    \ Set the x-coordinate of point GG:
  LDA xObjectLo,Y        \
- SBC xPlaneLo           \   (xPointHi xPointLo) = (xObjectHi xObjectLo)
- STA xPointLo,X         \                         - (xPlaneHi xPlaneLo)
-                        \
+ SBC xPlaneLo           \   xPoint = xObject - xPlane
+ STA xPointLo,X         \
                         \ starting with the low bytes
 
  LDA xObjectHi,Y        \ And then the high bytes
  SBC xPlaneHi
  STA xPointHi,X
 
- STA T                  \ Set T = the high byte of the result, i.e. xPointHi
+ STA T                  \ Set T = xPointHi to pass to CheckObjDistance
 
- LDA #0                 \ Set A = 0 - L0C6D
- SBC L0C6D
+ LDA #0                 \ And then the top bytes
+ SBC xPlaneTop
 
- JSR L2BC0
+ JSR CheckObjDistance   \ Check whether the object is close enough to be visible
+                        \ in the direction of the x-axis
 
- BNE objc10
+ BNE objc10             \ If it is too far away to be visible, jump to objc10 to
+                        \ either move on to the next object in the group, or
+                        \ return from the subroutine
 
  SEC                    \ Set the y-coordinate of point GG:
  LDA yObjectLo,Y        \
- SBC yPlaneLo           \   (yPointHi yPointLo) = (yObjectHi yObjectLo)
- STA yPointLo,X         \                         - (yPlaneHi yPlaneLo)
-                        \
+ SBC yPlaneLo           \   yPoint = yObject - yPlane
+ STA yPointLo,X         \
                         \ starting with the low bytes
 
  LDA yObjectHi,Y        \ And then the high bytes
  SBC yPlaneHi
  STA yPointHi,X
 
- STA T                  \ Set T = the high byte of the result, i.e. yPointHi
+ STA T                  \ Set T = yPointHi to pass to CheckObjDistance
 
- LDA #0                 \ Set A = 0 - L0C6E
- SBC L0C6E
+ LDA #0                 \ And then the top bytes
+ SBC yPlaneTop
 
- JSR L2BC0
+ JSR CheckObjDistance   \ Check whether the object is close enough to be visible
+                        \ in the direction of the y-axis
 
- BNE objc10
+ BNE objc10             \ If it is too far away to be visible, jump to objc10 to
+                        \ either move on to the next object in the group, or
+                        \ return from the subroutine
 
  SEC                    \ Set the z-coordinate of point GG:
  LDA zObjectLo,Y        \
- SBC zPlaneLo           \   (zPointHi zPointLo) = (zObjectHi zObjectLo)
- STA zPointLo,X         \                         - (zPlaneHi zPlaneLo)
-                        \
+ SBC zPlaneLo           \   zPoint = zObject - zPlane
+ STA zPointLo,X         \
                         \ starting with the low bytes
 
  LDA zObjectHi,Y        \ And then the high bytes
  SBC zPlaneHi
  STA zPointHi,X
 
- STA T                  \ Set T = the high byte of the result, i.e. zPointHi
+ STA T                  \ Set T = zPointHi to pass to CheckObjDistance
 
- LDA #0                 \ Set A = 0 - L0C6F
- SBC L0C6F
+ LDA #0                 \ And then the top bytes
+ SBC zPlaneTop
 
- JSR L2BC0
+ JSR CheckObjDistance   \ Check whether the object is close enough to be visible
+                        \ in the direction of the z-axis
 
- BNE objc10
+ BNE objc10             \ If it is too far away to be visible, jump to objc10 to
+                        \ either move on to the next object in the group, or
+                        \ return from the subroutine
 
  LDA #0
  STA matrixNumber
+
  JSR L1D8D
 
  LDY objectId
@@ -12665,7 +12699,7 @@ ORG CODE%
 
                         \ We jump here if this is a bullet with a negative
                         \ y-coordinate and it's object ID 12 or 14, or if the
-                        \ result of JSR L2BC0 was BNE in part 8
+                        \ object is too far away to be visible
 
  JSR NextObjectGroup    \ If this object is in an object group, i.e. Y is 6, 7,
                         \ 8 or 9, then increment the object's group number
@@ -12737,46 +12771,66 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2BC0
+\       Name: CheckObjDistance
 \       Type: Subroutine
-\   Category: Maths
-\    Summary: 
+\   Category: Visibility
+\    Summary: Check whether an object is within the visible distance for that
+\             object, along just one axis
 \
 \ ------------------------------------------------------------------------------
 \
-\ Arguments:
+\ The object's
 \
-\   K                   The value to return in A if A = -1 or A = 1 to 127
-\
-\   Y                   The object ID
-\
-\   T                   High byte of point, i.e. xPointHi, yPointHi or zPointHi
-\
-\ Returns:
-\
-\   A                   K if:
+\ Returns 0 if  < the object's maxObjDistance value, otherwise returns K.
+\   A                   K  to indicate that the object is not visible, if:
 \
 \                         * A = -128 to -2
 \
 \                         * A = 1 to 127
 \
-\                         * A = 0 and T >= object's Lookup3BD8 value
+\                         * A = 0 and T >= object's maxObjDistance value
 \
-\                         * A = -1 and ~T >= object's Lookup3BD8 value
+\                         * A = -1 and ~T >= object's maxObjDistance value
 \
 \                       0 if:
 \
-\                         * A = 0 and T < object's Lookup3BD8 value
+\                         * A = 0 and T < object's maxObjDistance value
 \
-\                         * A = -1 and ~T < object's Lookup3BD8 value
+\                         * A = -1 and ~T < object's maxObjDistance value
+
+\
+\ Arguments:
+\
+\   Y                   The object ID of the object to check
+\
+\   A                   The top byte of the object's coordinates in the axis we
+\                       want to check (i.e. the byte above xPointHi, yPointHi or
+\                       zPointHi)
+\
+\   T                   The high byte the object's coordinates in the axis we
+\                       want to check (i.e. xPointHi, yPointHi or zPointHi)
+\
+\   K                   The non-zero return value (see below), so setting this
+\                       to 0 will ensure that the object is always reported as
+\                       being visible
+\
+\
+\ Returns:
+\
+\   A                   Contains the result as follows:
+\
+\                         * 0 if the object is close enough to be visible
+\
+\                         * K if the object is too far away to be visible
 \
 \ ******************************************************************************
 
-.L2BC0
+.CheckObjDistance
 
  BPL L2BCD              \ If A is positive, i.e. 0 to 127, jump to L2BCD
 
- CMP #&FF               \ If A <> -1, i.e. A is -128 to -2, jump to L2BD9
+ CMP #&FF               \ If A <> -1, i.e. A is -128 to -2, jump to L2BD9 as
+                        \ the object is too far away to be visible
  BNE L2BD9
 
                         \ If we get here, then A = -1
@@ -12784,21 +12838,22 @@ ORG CODE%
  LDA T                  \ Set A = ~T
  EOR #&FF
 
- JMP L2BD1              \ Jump to L2BD1
+ JMP L2BD1              \ Jump to L2BD1 to check the object's distance
 
 .L2BCD
 
                         \ If we get here, then A is positive (0 to 127)
 
- BNE L2BD9              \ If A is non-zero, jump to L2BD9
+ BNE L2BD9              \ If A is non-zero, jump to L2BD9 as the object is too
+                        \ far away to be visible
 
                         \ If we get here then A = 0
 
- LDA T                  \ Set A = T
+ LDA T                  \ Set A = T so we now check the middle byte
 
 .L2BD1
 
- CMP Lookup3BD8,Y       \ If A >= the object's maximum value in Lookup3BD8,
+ CMP maxObjDistance,Y   \ If A >= the object's maximum visible distance,
  BCS L2BD9              \ jump to L2BD9
 
  LDA #0                 \ Set A = 0 as the return value
@@ -13304,7 +13359,7 @@ ORG CODE%
  SBC xPlaneHi,X
  STA L0CA8,X
  LDA #0
- SBC L0C6D,X
+ SBC xPlaneTop,X
  STA L0CB8,X
  TYA
  CLC
@@ -14134,7 +14189,7 @@ ORG CODE%
 
  LDY GG
  LDX #&3C
- JSR CheckDistance
+ JSR CheckLineDistance
 
  BEQ L2F0F
 
@@ -14914,7 +14969,7 @@ ORG CODE%
 
 .L322B
 
- JSR CheckDistance
+ JSR CheckLineDistance
 
  STA showLine
  BNE L323B
@@ -16608,7 +16663,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: visibleDistance
+\       Name: maxLineDistance
 \       Type: Variable
 \   Category: Visibility
 \    Summary: The furthest distance at which each line is visible
@@ -16618,12 +16673,13 @@ NEXT
 \ Lines are only shown if they are closer than the distance in this table, so
 \ this table contains the maximum visible distance for each line.
 \
-\ The table is indexed by line ID, so for line ID X, visibleDistance,X contains
-\ the maximum distance at which that line is visible.
+\ The table is indexed by line ID, so for line ID X, maxLineDistance,X contains
+\ the maximum distance at which that line is visible, in any of the individual
+\ axes.
 \
 \ ******************************************************************************
 
-.visibleDistance
+.maxLineDistance
 
  EQUB 16                \ Line ID:   0
  EQUB 125               \ Line ID:   1
@@ -16833,14 +16889,19 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3BD8
+\       Name: maxObjDistance
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Visibility
+\    Summary: The furthest distance at which each object is visible
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Objects are only shown if they are closer than the distance in this table, so
+\ this table contains the maximum visible distance for each object.
+\
+\ The table is indexed by object ID, so for object ID X, maxObjDistance,X
+\ contains the maximum distance at which that object is visible, in any of the
+\ individual axes.
 \
 \ The initial contents of the last five bytes of this table contains workspace
 \ noise and is ignored. It actually contains snippets of the original source
@@ -16848,7 +16909,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.Lookup3BD8
+.maxObjDistance
 
  EQUB 108               \ Object ID:  0
  EQUB 125               \ Object ID:  1
@@ -19808,7 +19869,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: CheckDistance
+\       Name: CheckLineDistance
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check whether a point on a line is within the visible distance for
@@ -19824,7 +19885,7 @@ NEXT
 \
 \ Returns:
 \
-\   A                   Returns the result as follows:
+\   A                   Contains the result as follows:
 \
 \                         * The current value of showLine if the point is close
 \                           enough to be visible
@@ -19833,7 +19894,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.CheckDistance
+.CheckLineDistance
 
  LDA xPointHi,Y         \ Set A to the high byte of the point's x-coordinate
 
@@ -19846,7 +19907,7 @@ NEXT
 
 .dist1
 
- CMP visibleDistance,X  \ If A >= this line's visible distance, then the point
+ CMP maxLineDistance,X  \ If A >= this line's visible distance, then the point
  BCS dist4              \ is too far away to be seen in the x-axis, so jump to
                         \ dist4 to return a "not visible" result
 
@@ -19861,7 +19922,7 @@ NEXT
 
 .dist2
 
- CMP visibleDistance,X  \ If A >= this line's visible distance, then the point
+ CMP maxLineDistance,X  \ If A >= this line's visible distance, then the point
  BCS dist4              \ is too far away to be seen in the y-axis, so jump to
                         \ dist4 to return a "not visible" result
 
@@ -19876,7 +19937,7 @@ NEXT
 
 .dist3
 
- CMP visibleDistance,X  \ If A < this line's visible distance, then the point
+ CMP maxLineDistance,X  \ If A < this line's visible distance, then the point
  BCC dist5              \ is close enough to be visible in the z-axis, so jump
                         \ to dist5 to return an "is visible" result
 
@@ -22330,9 +22391,9 @@ NEXT
  LDA xPlaneHi,X
  ADC R
  STA xPlaneHi,X
- LDA L0C6D,X
+ LDA xPlaneTop,X
  ADC R
- STA L0C6D,X
+ STA xPlaneTop,X
  LDA L0CEA,X
  CLC
  ADC L0C86,X
