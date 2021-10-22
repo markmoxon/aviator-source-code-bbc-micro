@@ -12779,25 +12779,20 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ The object's
+\ We pass the distance from the plane to the object along the axis we are
+\ checking in (A T x), ignoring the low byte.
 \
-\ Returns 0 if  < the object's maxObjDistance value, otherwise returns K.
-\   A                   K  to indicate that the object is not visible, if:
+\ First we check the top byte to make sure it is either 0 or -1, as otherwise
+\ the distance is definitely too far for the object to be visible.
 \
-\                         * A = -128 to -2
+\ Assuming the top byte is within range, we then check the high byte in T
+\ against the maximum visible distance for the object in question. The object
+\ is visible only if |T| < the object's maxObjDistance value, otherwise it is
+\ too far away to be seen.
 \
-\                         * A = 1 to 127
-\
-\                         * A = 0 and T >= object's maxObjDistance value
-\
-\                         * A = -1 and ~T >= object's maxObjDistance value
-\
-\                       0 if:
-\
-\                         * A = 0 and T < object's maxObjDistance value
-\
-\                         * A = -1 and ~T < object's maxObjDistance value
-
+\ When called with K = 0, this routine will always return 0 to indicate that the
+\ object is visible. This is used by the bullets, to ensure that they remain
+\ visible, whatever their distance from the plane.
 \
 \ Arguments:
 \
@@ -12827,40 +12822,40 @@ ORG CODE%
 
 .CheckObjDistance
 
- BPL L2BCD              \ If A is positive, i.e. 0 to 127, jump to L2BCD
+ BPL objd1              \ If A is positive, i.e. 0 to 127, jump to objd1
 
- CMP #&FF               \ If A <> -1, i.e. A is -128 to -2, jump to L2BD9 as
+ CMP #&FF               \ If A <> -1, i.e. A is -128 to -2, jump to objd3 as
                         \ the object is too far away to be visible
- BNE L2BD9
+ BNE objd3
 
                         \ If we get here, then A = -1
 
  LDA T                  \ Set A = ~T
  EOR #&FF
 
- JMP L2BD1              \ Jump to L2BD1 to check the object's distance
+ JMP objd2              \ Jump to objd2 to check the object's distance
 
-.L2BCD
+.objd1
 
                         \ If we get here, then A is positive (0 to 127)
 
- BNE L2BD9              \ If A is non-zero, jump to L2BD9 as the object is too
+ BNE objd3              \ If A is non-zero, jump to objd3 as the object is too
                         \ far away to be visible
 
                         \ If we get here then A = 0
 
  LDA T                  \ Set A = T so we now check the middle byte
 
-.L2BD1
+.objd2
 
  CMP maxObjDistance,Y   \ If A >= the object's maximum visible distance,
- BCS L2BD9              \ jump to L2BD9
+ BCS objd3              \ jump to objd3
 
  LDA #0                 \ Set A = 0 as the return value
 
  RTS                    \ Return from the subroutine
 
-.L2BD9
+.objd3
 
                         \ If we get here then A = -1 or A is 1 to 127
 
