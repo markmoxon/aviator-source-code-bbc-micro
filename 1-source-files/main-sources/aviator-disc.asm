@@ -2,7 +2,7 @@
 \
 \ AVIATOR DISC IMAGE SCRIPT
 \
-\ Aviator was written by Geoffrey J Crammond and is copyright Acornsoft 1984
+\ Aviator was written by Geoffrey J Crammond and is copyright Acornsoft 1983
 \
 \ ------------------------------------------------------------------------------
 \

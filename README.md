@@ -37,7 +37,7 @@ My hope is that this repository will be useful for those who want to learn more 
 
 ## Acknowledgements
 
-Aviator was written by Geoffrey J Crammond and is copyright &copy; Acornsoft 1984.
+Aviator was written by Geoffrey J Crammond and is copyright &copy; Acornsoft 1983.
 
 The code on this site has been disassembled from the version released on the [Complete BBC Micro Games Archive at bbcmicro.co.uk](http://bbcmicro.co.uk/game.php?id=39).
 

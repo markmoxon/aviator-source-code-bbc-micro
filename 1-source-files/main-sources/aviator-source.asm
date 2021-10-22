@@ -2,7 +2,7 @@
 \
 \ AVIATOR SOURCE
 \
-\ Aviator was written by Geoffrey J Crammond and is copyright Acornsoft 1984
+\ Aviator was written by Geoffrey J Crammond and is copyright Acornsoft 1983
 \
 \ The code on this site has been disassembled from the original game discs
 \
@@ -269,11 +269,11 @@ ORG &0070
 
 \ ******************************************************************************
 \
-\       Name: lineBufferU
+\       Name: Non-zero page variables (block 1)
 \       Type: Workspace
-\    Address: &0100 to &0175
+\    Address: &0100 to &7FF
 \   Category: Workspaces
-\    Summary: 
+\    Summary: The main block of game variables
 \
 \ ******************************************************************************
 
@@ -290,62 +290,108 @@ ORG &0100
                         \ drawn by the DrawClippedLine routine, and is read by
                         \ the EraseCanopyLines routine when the line is erased
 
-L0160 = &0160
-L0161 = &0161
-L0162 = &0162
-L0163 = &0163
-L0164 = &0164
-L0165 = &0165
-L0170 = &0170
-L0171 = &0171
-L0172 = &0172
-L0173 = &0173
-L0174 = &0174
-L0175 = &0175
+ORG &0160
 
-\ ******************************************************************************
-\
-\       Name: pointStatus
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: 
-\
-\ ******************************************************************************
+.L0160
 
-pointStatus = &0400    \ Whole page zeroed in ResetVariables
+ SKIP 1
 
-\ ******************************************************************************
-\
-\       Name: objectStatus
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: 
-\
-\ ******************************************************************************
+.L0161
 
-objectStatus = &04D8    \ Zeroed in ResetVariables and in main loop part 2
+ SKIP 1
 
-\ ******************************************************************************
-\
-\       Name: linesToShow
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: 
-\
-\ ******************************************************************************
+.L0162
 
-linesToShow = &0500
+ SKIP 1
 
-\ ******************************************************************************
-\
-\       Name: relatedPoints
-\       Type: Variable
-\   Category: Universe
-\    Summary: 
-\
-\ ******************************************************************************
+.L0163
 
-relatedPoints = &05C8   \ Contains a list, from relatedPoints+1 onwards, with
+ SKIP 1
+
+.L0164
+
+ SKIP 1
+
+.L0165
+
+ SKIP 1
+
+ORG &0170
+
+.L0170
+
+ SKIP 1
+
+.L0171
+
+ SKIP 1
+
+.L0172
+
+ SKIP 1
+
+.L0173
+
+ SKIP 1
+
+.L0174
+
+ SKIP 1
+
+.L0175
+
+ SKIP 1
+
+ORG &0400
+
+.pointStatus
+
+ SKIP 216               \ Each point's status byte
+                        \
+                        \   * Bits 0-3:
+                        \
+                        \     * ?? (set in L0D01)
+                        \
+                        \   * Bit 7:
+                        \
+                        \     * 0 = the point's coordinates and visibility have not
+                        \           been calculated
+                        \
+                        \     * 1 = the point's coordinates and visibility have
+                        \           already been calculated
+                        \
+                        \ Zeroed in ResetVariables
+
+.objectStatus
+
+ SKIP 40                \ Each object's status byte
+                        \
+                        \   * Bit 6:
+                        \
+                        \     * 0 = the object's coordinates and visibility have
+                        \           not been calculated in this iteration of the
+                        \           main loop
+                        \
+                        \     * 1 = the object's coordinates and visibility have
+                        \           already been calculated in this iteration of
+                        \           the main loop
+                        \
+                        \   * Bit 7:
+                        \
+                        \     * 0 = the object is not visible
+                        \
+                        \     * 1 = the object is visible
+                        \
+                        \ Zeroed in ResetVariables and in part 2 of the main
+                        \ loop
+
+.linesToShow
+
+ SKIP 200               \ A list of line IDs for lines that are visible
+
+.relatedPoints
+
+ SKIP 56                \ Contains a list, from relatedPoints+1 onwards, with
                         \ the list size in relatedPoints
                         \
                         \ Point IDs get added in part 3 of ProcessLine when
@@ -354,99 +400,41 @@ relatedPoints = &05C8   \ Contains a list, from relatedPoints+1 onwards, with
                         \
                         \ Zeroed in ResetVariables
 
-\ ******************************************************************************
-\
-\       Name: linesToHide
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: 
-\
-\ ******************************************************************************
+.linesToHide
 
-linesToHide = &0600
+ SKIP 256               \ A list of line IDs for lines that are not visible
+
+.zPointLo
+
+ SKIP 256               \ The low byte of the z-coordinate for the point with
+                        \ ID X is at zPointLo,X
 
 \ ******************************************************************************
 \
-\       Name: zPointLo
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: Low byte of the z-coordinate for a point
-\
-\ ------------------------------------------------------------------------------
-\
-\ The low byte of the z-coordinate for the point with ID X is at zPointLo,X.
-\
-\ ******************************************************************************
-
-zPointLo = &0700
-
-L075F = &075F
-L07E4 = &07E4
-L07FC = &07FC
-
-\ ******************************************************************************
-\
-\       Name: xPointLo
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: Low byte of the x-coordinate for a point
-\
-\ ------------------------------------------------------------------------------
-\
-\ The low byte of the x-coordinate for the point with ID X is at xPointLo,X.
-\
-\ ******************************************************************************
-
-xPointLo = &0900
-
-L095F = &095F
-L09FC = &09FC
-
-\ ******************************************************************************
-\
-\       Name: yPointLo
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: Low byte of the y-coordinate for a point
-\
-\ ------------------------------------------------------------------------------
-\
-\ The low byte of the y-coordinate for the point with ID X is at yPointLo,X.
-\
-\ ******************************************************************************
-
-yPointLo = &0A00
-
-L0A5F = &0A5F
-L0AFC = &0AFC
-L0AFD = &0AFD
-
-\ ******************************************************************************
-\
-\       Name: yPointHi
-\       Type: Variable
-\   Category: Drawing lines
-\    Summary: High byte of the y-coordinate for a point
-\
-\ ------------------------------------------------------------------------------
-\
-\ The high byte of the y-coordinate for the point with ID X is at yPointHi,X.
-\
-\ ******************************************************************************
-
-yPointHi = &0B00
-
-\ ******************************************************************************
-\
-\       Name: L0C00
+\       Name: Non-zero page variables (block 2)
 \       Type: Workspace
-\    Address: &0C00 to &0CFF
+\    Address: &0900 to &0CFF
 \   Category: Workspaces
 \    Summary: The main block of game variables
 \
 \ ******************************************************************************
 
-ORG &0C00
+ORG &0900
+
+.xPointLo
+
+ SKIP 256               \ The low byte of the x-coordinate for the point with
+                        \ ID X is at xPointLo,X
+
+.yPointLo
+
+ SKIP 256               \ The low byte of the y-coordinate for the point with
+                        \ ID X is at yPointLo,X
+
+.yPointHi
+
+ SKIP 256               \ The high byte of the y-coordinate for the point with
+                        \ ID X is at yPointHi,X
 
 .L0C00
 
@@ -1275,7 +1263,7 @@ ORG &0C00
 \
 \ ******************************************************************************
 
-CLEAR &0C00, &0D00      \ Clear the guard on the &0C00 workspace so we can
+CLEAR &0B00, &0D00      \ Clear the guard on the &0B00-&0CFF workspace so we can
                         \ assemble the loader code into this address range
 
 ORG CODE%
@@ -1887,7 +1875,7 @@ ORG CODE%
 \
 \       Name: L0D01
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -2157,7 +2145,7 @@ ORG CODE%
 \
 \       Name: L0E69
 \       Type: Subroutine
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -2328,7 +2316,7 @@ ORG CODE%
 \
 \       Name: L0F48
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -2381,7 +2369,7 @@ ORG CODE%
 \
 \       Name: L0F77
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -2442,7 +2430,7 @@ ORG CODE%
 \
 \       Name: L0FA7
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -5511,7 +5499,7 @@ ORG CODE%
 \
 \       Name: L17E3
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -5576,7 +5564,7 @@ ORG CODE%
 \
 \       Name: L1821
 \       Type: Subroutine
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -5625,7 +5613,7 @@ ORG CODE%
 \
 \       Name: L1862
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -5729,7 +5717,7 @@ ORG CODE%
 \
 \       Name: L1902
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -5906,10 +5894,12 @@ ORG CODE%
 \
 \       Name: SetObjectPoints (Part 1 of 2)
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Calculate the coordinates for a point within an object
 \
 \ ------------------------------------------------------------------------------
+\
+\ Deep dive: Orientating and translating multi-point objects in 3D space
 \
 \ This routine calculates the coordinates for a point within an object. It does
 \ this by taking the point's coordinates relative to the object's anchor (i.e.
@@ -6167,7 +6157,7 @@ ORG CODE%
 \
 \       Name: SetObjectPoints (Part 2 of 2)
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Apply the correct scale factor to the matrix multiplication
 \
 \ ******************************************************************************
@@ -6318,7 +6308,7 @@ ORG CODE%
 \
 \       Name: AddTempToPoint (Part 1 of 2)
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Add the xTemp vector to a point, store the result in another
 \             point, and set the result to hidden if it overflows
 \
@@ -6352,7 +6342,7 @@ ORG CODE%
  CLC                    \
  ADC xPointLo,Y         \  (xTempHi xTempLo) + (xPointHi+Y xPointLo+Y)
  STA xPointLo,X         \
- LDA xTempHi            \ i.e. we add xTemp and the Y-th point's x-coordinate
+ LDA xTempHi            \ i.e. we add xTemp and point Y's x-coordinate
  ADC xPointHi,Y
  STA xPointHi,X
 
@@ -6363,7 +6353,7 @@ ORG CODE%
  LDA yTempLo            \
  ADC yPointLo,Y         \  (yTempHi yTempLo) + (yPointHi+Y yPointLo+Y)
  STA yPointLo,X         \
- LDA yTempHi            \ i.e. we add yTemp and the Y-th point's y-coordinate
+ LDA yTempHi            \ i.e. we add yTemp and point Y's y-coordinate
  ADC yPointHi,Y
  STA yPointHi,X
 
@@ -6374,7 +6364,7 @@ ORG CODE%
  LDA zTempLo            \
  ADC zPointLo,Y         \  (zTempHi zTempLo) + (zPointHi+Y zPointLo+Y)
  STA zPointLo,X         \
- LDA zTempHi            \ i.e. we add zTemp and the Y-th point's z-coordinate
+ LDA zTempHi            \ i.e. we add zTemp and point Y's z-coordinate
  ADC zPointHi,Y
  STA zPointHi,X
 
@@ -6463,7 +6453,7 @@ ORG CODE%
 \
 \       Name: L1AFC
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6704,7 +6694,7 @@ ORG CODE%
 \
 \       Name: L1CF0
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6732,7 +6722,7 @@ ORG CODE%
 \
 \       Name: L1D03
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6756,7 +6746,7 @@ ORG CODE%
 \
 \       Name: L1D13
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6795,7 +6785,7 @@ ORG CODE%
 \
 \       Name: L1D3A
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6856,7 +6846,7 @@ ORG CODE%
 \
 \       Name: L1D77
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6888,7 +6878,7 @@ ORG CODE%
 \
 \       Name: L1D8D
 \       Type: Subroutine
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -7030,7 +7020,7 @@ ORG CODE%
 \
 \       Name: CopyTempToPoint
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Set a specified point to (xTemp, yTemp, zTemp)
 \
 \ ------------------------------------------------------------------------------
@@ -7070,6 +7060,8 @@ ORG CODE%
 \    Summary: Update a single indicator on the dashboard
 \
 \ ------------------------------------------------------------------------------
+\
+\ Deep dive: Hard-coded division in the dashboard routines
 \
 \ This long routine performs calculations for the various indicators on the
 \ dashboard. This typically involves taking the relevant measurement, scaling it
@@ -8701,6 +8693,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ Deep dive: Clock hands and dial indicators
+\
 \ This routine performs a calculation to work out the vector for a dial
 \ indicator hand, given a value to show on the dial. It calculates this using a
 \ simple triangle model - there's no trigonometry here.
@@ -10317,7 +10311,7 @@ ORG CODE%
 \
 \       Name: FireGuns
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -10340,18 +10334,18 @@ ORG CODE%
  LDA airspeedHi
  CLC
  ADC #&C8
- STA L07E4
+ STA zPointLo+228
 
  LDA #&FF               \ Set the point with ID 95 to (-1, -1, -1)
  LDX #95
  JSR SetPoint
 
  LDA #&14
- STA L075F
+ STA zPointLo+95
  LDA #&F6
- STA L095F
+ STA xPointLo+95
  LDA #&FC
- STA L0A5F
+ STA yPointLo+95
  LDA #&E4
  STA GG
  LDA #9
@@ -10380,22 +10374,23 @@ ORG CODE%
  LDY #&60
  JSR CopyWorkToPoint
 
- LDY #&0C
- LDX #&60
+ LDY #12
+ LDX #96
 
 .fire2
 
- JSR L25B5
+ JSR ResetObjectCoords  \ Move object 12-15 to the origin
 
- JSR L257B
+ JSR AddPointToObject   \ Move object 12-15 by the vector in point 96, so this
+                        \ sets the location of the object to that of point 96
 
  INY
- CPY #&10
+ CPY #16
  BNE fire2
 
- LDY #&0C
- LDX #&5F
- JSR L257B
+ LDY #12                \ Move object 12 by the vector in point 95
+ LDX #95
+ JSR AddPointToObject
 
  STX objectAnchorPoint
  LDA #&60
@@ -10410,16 +10405,16 @@ ORG CODE%
  LDY #&60
  JSR AddTempToPoint
 
- LDY #&0F
- LDX #&62
+ LDY #15
+ LDX #98
 
 .fire3
 
- JSR L257B
+ JSR AddPointToObject   \ Move object 13-15 by the vector in point 96-98
 
  DEX
  DEY
- CPY #&0C
+ CPY #12
  BNE fire3
 
  RTS
@@ -10616,86 +10611,83 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L257B
+\       Name: AddPointToObject
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: 3D geometry
+\    Summary: Add a point vector to an object's coordinates
 \
 \ ------------------------------------------------------------------------------
+\
+\ This routine adds a point vector in (xPoint, yPoint, zPoint) to the object
+\ coordinates in (xObject, yObject, zObject), storing the result in the object
+\ coordinates. In other words, this moves an object by the xPoint vector.
 \
 \ This is called MOBJ or UOBJ in the original source code.
 \
-\ Called as follows:
+\ Arguments:
 \
-\   from FireGuns:
-\   LDY #12, LDX #96
-\   LDY #12, LDX #95
-\   LDY #15, LDX #&62 to LDY #13, LDX #96
+\   X                   The ID of the point vector to add to the object
 \
-\   from UpdateBullets:
-\    LDY #15 to 12, X = Y+216
-\
-\   from L3053:
-\     LDX #0, LDY #0
+\   Y                   The ID of the object to update
 \
 \ ******************************************************************************
 
-.L257B
+.AddPointToObject
 
- LDA xObjectLo,Y
- CLC
- ADC xPointLo,X
- STA xObjectLo,Y
- LDA xObjectHi,Y
- ADC xPointHi,X
+ LDA xObjectLo,Y        \ Set object Y's x-coordinate to the following:
+ CLC                    \
+ ADC xPointLo,X         \  (xObjectHi+Y xObjectLo+Y) + (xPointHi+X xPointLo+X)
+ STA xObjectLo,Y        \
+ LDA xObjectHi,Y        \ i.e. we add object Y's x-coordinate and point X's
+ ADC xPointHi,X         \ x-coordinate
  STA xObjectHi,Y
 
- LDA yObjectLo,Y
- CLC
- ADC yPointLo,X
- STA yObjectLo,Y
- LDA yObjectHi,Y
- ADC yPointHi,X
+ LDA yObjectLo,Y        \ Set object Y's y-coordinate to the following:
+ CLC                    \
+ ADC yPointLo,X         \  (yObjectHi+Y yObjectLo+Y) + (yPointHi+X yPointLo+X)
+ STA yObjectLo,Y        \
+ LDA yObjectHi,Y        \ i.e. we add object Y's y-coordinate and point X's
+ ADC yPointHi,X         \ y-coordinate
  STA yObjectHi,Y
 
- LDA zObjectLo,Y
- CLC
- ADC zPointLo,X
- STA zObjectLo,Y
- LDA zObjectHi,Y
- ADC zPointHi,X
+ LDA zObjectLo,Y        \ Set object Y's z-coordinate to the following:
+ CLC                    \
+ ADC zPointLo,X         \  (zObjectHi+Y zObjectLo+Y) + (zPointHi+X zPointLo+X)
+ STA zObjectLo,Y        \
+ LDA zObjectHi,Y        \ i.e. we add object Y's z-coordinate and point X's
+ ADC zPointHi,X         \ z-coordinate
  STA zObjectHi,Y
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L25B5
+\       Name: ResetObjectCoords
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: 3D geometry
+\    Summary: Set an object's coordinates to (0, 0, 0)
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called with Y = &0C to &0F in FireGuns
+\ Arguments:
 \
-\ Called with Y = &21 in ResetRadar
+\   Y                   The ID of the object to set to (0, 0, 0)
 \
 \ ******************************************************************************
 
-.L25B5
+.ResetObjectCoords
 
- LDA #0
+ LDA #0                 \ Zero the object's x-coordinate
  STA xObjectLo,Y
  STA xObjectHi,Y
 
- STA xObjectLo+40,Y
- STA xObjectHi+40,Y
+ STA yObjectLo,Y        \ Zero the object's y-coordinate
+ STA yObjectHi,Y
 
- STA xObjectLo+80,Y
- STA xObjectHi+80,Y
+ STA zObjectLo,Y        \ Zero the object's z-coordinate
+ STA zObjectHi,Y
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -10941,7 +10933,7 @@ ORG CODE%
                         \ a new one, as xPointLo is off-radar
 
  LDY #&21
- JSR L25B5
+ JSR ResetObjectCoords
 
  RTS                    \ Return from the subroutine
 
@@ -11154,7 +11146,7 @@ ORG CODE%
  LDA themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
  BMI main6              \ enabled, so jump to main6
 
- JSR L2DAC              \ Theme-related
+ JSR AlienInAcornsville \ Check to see whether an alien has reached Acornsville
 
 \ ******************************************************************************
 \
@@ -11525,9 +11517,10 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ If we have added any lines to linesToHide list during the main loop (and
-\ therefore incremented linesToHideEnd), we reset their start and points'
-\ statuses in pointStatus to zero.
+\ If we have added any lines to the linesToHide list during the main loop (and
+\ therefore incremented linesToHideEnd), we reset the point status bytes for the
+\ line's start and end points, so they are no longer flagged as having had their
+\ visibility checked already.
 \
 \ ******************************************************************************
 
@@ -11564,12 +11557,15 @@ ORG CODE%
 
  LDX lineStartPointId,Y \ Set X to the ID of this line's start point
 
- LDA #0                 \ Zero the status byte for the start point
- STA pointStatus,X
+ LDA #0                 \ Zero the start point's status byte, so it is no longer
+ STA pointStatus,X      \ marked as having had its coordinates and visibility
+                        \ calculated
 
  LDX lineEndPointId,Y   \ Set X to the ID of this line's end point
 
- STA pointStatus,X      \ Zero the status byte for the end point
+ STA pointStatus,X      \ Zero the end point's status byte, so it is no longer
+                        \ marked as having had its coordinates and visibility
+                        \ calculated
 
  JMP main25             \ Jump back to main25 to repeat this process until we
                         \ have zeroed all the new additions to linesToHide
@@ -11976,12 +11972,15 @@ ORG CODE%
 
 .plin3
 
- LDA pointStatus,Y      \ If bit 7 of the point's status byte is clear, skip
- BPL plin4              \ the following instruction
+ LDA pointStatus,Y      \ If bit 7 of the point's status byte is clear, then the
+ BPL plin4              \ point has not yet had its coordinates and visibility
+                        \ calculated, so skip the following instruction to move
+                        \ on to those calculations
 
  JMP plin17             \ Bit 7 of the point's status byte is set, which means
-                        \ we have already checked this point, so jump to plin17
-                        \ to do the distance and z-coordinate tests
+                        \ we have already calculated this point's coordinates
+                        \ and visibility, so jump to plin17 to do the distance
+                        \ and z-coordinate tests
 
 .plin4
 
@@ -12030,10 +12029,11 @@ ORG CODE%
                         \ an index into pointStatus
 
  LDA pointStatus,Y      \ If bit 7 of the new point's status byte is set, then
- BMI plin14             \ we have already checked this new point, which means
-                        \ we have already processed the rest of the points in
-                        \ the linked object, so jump down to plin14 to check
-                        \ the points we added to the stack
+ BMI plin14             \ we have already calculated the coordinates and
+                        \ visibility this new point, which means we have already
+                        \ done this the rest of the points in the linked object,
+                        \ so jump down to plin14 to check the points we added
+                        \ to the stack
 
  TYA                    \ Set A = the new point's ID
 
@@ -12200,9 +12200,9 @@ ORG CODE%
  LDY GG                 \ Set objectAnchorPoint = the point ID in GG
  STY objectAnchorPoint
 
- LDA #%10000000         \ Set bit 7 of the point's status byte
- ORA pointStatus,Y
- STA pointStatus,Y
+ LDA #%10000000         \ Set bit 7 of the point's status byte, to indicate that
+ ORA pointStatus,Y      \ the point has now had its coordinates and visibility
+ STA pointStatus,Y      \ calculated
 
  BNE plin14             \ Jump to plin14 (this BNE is effectively a JMP as A is
                         \ never zero)
@@ -12265,9 +12265,9 @@ ORG CODE%
 
 .plin18
 
- LDA #%10000000         \ Set bit 7 of the start point's status byte
- ORA pointStatus,Y
- STA pointStatus,Y
+ LDA #%10000000         \ Set bit 7 of the point's status byte, to indicate that
+ ORA pointStatus,Y      \ the point has now had its coordinates and visibility
+ STA pointStatus,Y      \ calculated
 
  DEC pointCount         \ Decrement pointCount so we check the end point next
 
@@ -12320,25 +12320,23 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 1 of 11)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Set the coordinates for an object and update the status bytes
+\    Summary: Calculate the coordinates for an object's points
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   objectId            The object ID, for example:
+\   objectId            The object ID (1 to 39)
 \
-\                         * 1 for the runway when called from ProcessRunway
-\
-\                         * 15 for bullets when called from UpdateBullets
-\
-\   GG                  &62 when called from UpdateBullets
+\   GG                  For bullets only (12, 13, 14 or 15), the point ID for
+\                       the bullet anchor point
 \                       
 \ Results:
 \
 \   objectStatus        The object's status byte: bits 6 and 7 affected
 \
-\   isObject            The object ID
+\   isObject            The object ID, i.e. a non-zero value so callers of this
+\                       routine will know we just processed an object
 \
 \   xObjectHi etc.      Set to the object's coordinates, relative to the plane
 \
@@ -12352,9 +12350,9 @@ ORG CODE%
                         \ routine will know we just processed an object
 
  TYA                    \ Set N = 216 + object ID
- CLC
- ADC #216
- STA N
+ CLC                    \
+ ADC #216               \ so N is in the range 217 to 255 and is the point ID
+ STA N                  \ that we use for storing the object's anchor point
 
  LDA #1                 \ Set K = 1 to pass to the L2BC0 routine
  STA K
@@ -12482,7 +12480,8 @@ ORG CODE%
                         \ If we get here then the object ID is 30
 
  LDA themeStatus        \ If themeStatus is non-zero then the Theme is ???, so
- BNE objc8              \ jump to objc8 to skip the following
+ BNE objc8              \ jump to objc12 via objc8 to return from the
+                        \ subroutine
 
  LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
  STA TC                 \ we work through all 8 items in this group
@@ -12541,7 +12540,7 @@ ORG CODE%
 
 .objc8
 
- JMP objc12
+ JMP objc12             \ Jump to objc12 to return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12640,11 +12639,14 @@ ORG CODE%
  JSR L1D8D
 
  LDY objectId
- LDA showLine
- BNE objc12
+
+ LDA showLine           \ If showLine is non-zero, which means the line is not
+ BNE objc12             \ visible, jump to objc12 to return from the subroutine
+                        \ without setting bit 7 of the object's status byte
 
  LDA #%11000000         \ Set A = %11000000 to set bits 6 and 7 of the object's
-                        \ status byte
+                        \ status byte, to denote that the object has had its
+                        \ coordinates calculated, and that it is visible
 
  BNE objc13             \ Jump to objc13 to set the object's status byte and
                         \ return from the subroutine (this BNE is effectively a
@@ -12694,8 +12696,8 @@ ORG CODE%
 
 .objc11
 
- CPY #30                \ If the object ID <> 30, jump to objc12 to skip the
- BNE objc12             \ following
+ CPY #30                \ If the object ID <> 30, jump to objc12 to return from
+ BNE objc12             \ the subroutine
 
  LDA alienCounter       \ Increment alienCounter to iterate through values
  CLC                    \ 0 to 7 and round again
@@ -12723,7 +12725,8 @@ ORG CODE%
 .objc12
 
  LDA #%01000000         \ Set A = %01000000 to set bit 6 of the object's status
-                        \ byte
+                        \ byte, to denote that the object has had its
+                        \ coordinates calculated
 
 .objc13
 
@@ -12736,7 +12739,7 @@ ORG CODE%
 \
 \       Name: L2BC0
 \       Type: Subroutine
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13017,6 +13020,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ Deep dive: Flicker-free animation with colour cycling
+\
 \ The DrawCanopyView routine updates the main 3D view out of the canopy, using
 \ colour cycling to make the animation smooth. Although Aviator is a
 \ black-and-white game, it actually uses mode 5, which is a four-colour screen
@@ -13134,13 +13139,16 @@ ORG CODE%
  LDY lineEndPointId,X
  STY M
 
- LDA #0                 \ Zero the end point's status byte
- STA pointStatus,Y
+ LDA #0                 \ Zero the end point's status byte, so it is no longer
+ STA pointStatus,Y      \ marked as having had its coordinates and visibility
+                        \ calculated
 
  LDY lineStartPointId,X \ Set L to the point ID for the line's start point
  STY L
 
- STA pointStatus,Y      \ Zero the start point's status byte
+ STA pointStatus,Y      \ Zero the start point's status byte, so it is no longer
+                        \ marked as having had its coordinates and visibility
+                        \ calculated
 
  JSR DrawClippedLine    \ Draw the line, clipping it to the canopy view if
                         \ required
@@ -13270,7 +13278,7 @@ ORG CODE%
 \
 \       Name: L2CD3
 \       Type: Subroutine
-\   Category: 
+\   Category: Dashboard
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13472,10 +13480,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2DAC
+\       Name: AlienInAcornsville
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Check to see whether an alien has reached Acornsville
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13483,7 +13491,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L2DAC
+.AlienInAcornsville
 
  LDY L4205
  BMI L2DCC
@@ -13783,7 +13791,7 @@ ORG CODE%
 \
 \       Name: Lookup2E60
 \       Type: Variable
-\   Category: 
+\   Category: Drawing lines
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13900,7 +13908,7 @@ ORG CODE%
 \
 \       Name: L2E9D
 \       Type: Variable
-\   Category: 
+\   Category: Visibility
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -13911,9 +13919,7 @@ ORG CODE%
 
 .L2E9D
 
- EQUB &20
-
- EQUB &20, &20
+ EQUB &20, &20, &20
 
 \ ******************************************************************************
 \
@@ -14095,7 +14101,7 @@ ORG CODE%
 \
 \       Name: UpdateBullets
 \       Type: Subroutine
-\   Category: Universe
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -14118,7 +14124,7 @@ ORG CODE%
  CLC
  ADC #&D8
  TAX
- JSR L257B
+ JSR AddPointToObject
 
  LDA #0
  STA showLine
@@ -14208,7 +14214,7 @@ ORG CODE%
 \
 \       Name: L2F4E
 \       Type: Subroutine
-\   Category: Theme
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -14409,7 +14415,7 @@ ORG CODE%
 \
 \       Name: L302C
 \       Type: Subroutine
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -14606,9 +14612,9 @@ ORG CODE%
  DEY
  BPL L30EE
 
- LDX #0
+ LDX #0                 \ Move object 0 by the vector in point 0
  LDY #0
- JSR L257B
+ JSR AddPointToObject
 
  LDY #&D8
  JSR L3152
@@ -15438,7 +15444,7 @@ ORG CODE%
 \
 \       Name: xObjectPoint
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Scaled x-coordinates of the points that make up objects, relative
 \             to the object's anchor point
 \
@@ -15685,7 +15691,7 @@ ORG CODE%
 \
 \       Name: yObjectPoint
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Scaled y-coordinates of the points that make up objects, relative
 \             to the object's anchor point
 \
@@ -15918,7 +15924,7 @@ ORG CODE%
 \
 \       Name: zObjectPoint
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Scaled y-coordinates of the points that make up objects, relative
 \             to the object's anchor point
 \
@@ -16517,7 +16523,7 @@ NEXT
 \
 \       Name: Lookup3900
 \       Type: Variable
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -17093,7 +17099,7 @@ NEXT
 \
 \       Name: lineEndPointId
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: The point ID for a line's end point
 \
 \ ------------------------------------------------------------------------------
@@ -17309,7 +17315,7 @@ NEXT
 \
 \       Name: objectGroup
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: The current group number for object IDs 6, 7, 8 and 9
 \
 \ ------------------------------------------------------------------------------
@@ -17335,7 +17341,7 @@ NEXT
 \
 \       Name: groupStart
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: The starting value for each object's group number
 \
 \ ------------------------------------------------------------------------------
@@ -17359,7 +17365,7 @@ NEXT
 \
 \       Name: xGroupHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for objects in a group (6 to 9)
 \
 \ ******************************************************************************
@@ -17406,7 +17412,7 @@ NEXT
 \
 \       Name: zGroupHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for objects in a group (6 to 9)
 \
 \ ******************************************************************************
@@ -17453,7 +17459,7 @@ NEXT
 \
 \       Name: L3F10
 \       Type: Subroutine
-\   Category: 
+\   Category: Visibility
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -17505,7 +17511,7 @@ NEXT
 \
 \       Name: lineStartPointId
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: The point ID for a line's start point
 \
 \ ------------------------------------------------------------------------------
@@ -17753,7 +17759,7 @@ NEXT
 \
 \       Name: Lookup4000
 \       Type: Variable
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -17802,7 +17808,7 @@ NEXT
 \
 \       Name: Lookup4101
 \       Type: Variable
-\   Category: 
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -17868,7 +17874,7 @@ NEXT
 \
 \       Name: alienCounter
 \       Type: Variable
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ******************************************************************************
@@ -17936,7 +17942,7 @@ NEXT
 \
 \       Name: numberOfLines
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: The total number of lines in the universe
 \
 \ ******************************************************************************
@@ -17999,7 +18005,7 @@ NEXT
 \
 \       Name: bulletStatus
 \       Type: Variable
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ******************************************************************************
@@ -18365,7 +18371,7 @@ NEXT
 \
 \       Name: xObjectLo
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Low byte of the x-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -18464,7 +18470,7 @@ NEXT
 \
 \       Name: yObjectLo
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Low byte of the y-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -18520,7 +18526,7 @@ NEXT
 \
 \       Name: zObjectLo
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Low byte of the z-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -18576,7 +18582,7 @@ NEXT
 \
 \       Name: xObjectHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -18634,7 +18640,7 @@ NEXT
 \
 \       Name: yObjectHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the y-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -18690,7 +18696,7 @@ NEXT
 \
 \       Name: zObjectHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for an object
 \
 \ ------------------------------------------------------------------------------
@@ -18790,10 +18796,14 @@ NEXT
 \
 \       Name: objectPoints
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Sequences of related points that together make up objects
 \
 \ ------------------------------------------------------------------------------
+\
+\ Deep dive: Multi-point objects
+\
+\ To do: lots more to say about this (e.g. object groups)
 \
 \ Objects in Aviator are collections of points. These points are stored in
 \ sequences in the objectPoints table. The last point in a sequence always has
@@ -19187,6 +19197,8 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
+\ Deep dive: Converting pixel coordinates to screen addresses
+\
 \ Each character row contains &140 bytes, so this lookup table lets us convert a
 \ pixel y-coordinate to the 16-bit address of the start of that row. There are
 \ two twists, however.
@@ -19455,6 +19467,10 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
+\ Deep dive: Source code clues hidden in the game binary
+\
+\ To do: add the other snippets of source code into this deep dive, e.g. Delay
+\
 \ Interestingly, in the original game binary, this variable contains workspace
 \ noise that disassembles into code that is never called and is totally ignored,
 \ and which doesn't appear in the main game code. It contains slightly different
@@ -19534,7 +19550,7 @@ NEXT
 \
 \       Name: zPointHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for a point
 \
 \ ------------------------------------------------------------------------------
@@ -19585,7 +19601,7 @@ NEXT
 \
 \       Name: xPointHi
 \       Type: Variable
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for a point
 \
 \ ------------------------------------------------------------------------------
@@ -19745,7 +19761,7 @@ NEXT
 \
 \       Name: SetPointToOrigin
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Set a point's coordinates to the origin at (0, 0, 0)
 \
 \ ------------------------------------------------------------------------------
@@ -19764,7 +19780,7 @@ NEXT
 \
 \       Name: SetPoint
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Set a point's coordinates to the value (a, a, a)
 \
 \ ------------------------------------------------------------------------------
@@ -19888,7 +19904,7 @@ NEXT
 \
 \       Name: AddTempToPoint (Part 1 of 2)
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Check whether the vector addition overflowed and set the point's
 \             visibility accordingly
 \
@@ -20246,7 +20262,7 @@ NEXT
 \
 \       Name: NextObjectGroup
 \       Type: Subroutine
-\   Category: Universe
+\   Category: 3D geometry
 \    Summary: Cycle to the next object group
 \
 \ ------------------------------------------------------------------------------
@@ -20419,7 +20435,7 @@ NEXT
 \
 \       Name: L4D35
 \       Type: Subroutine
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -21149,7 +21165,7 @@ NEXT
 \       Name: tooLateText
 \       Type: Variable
 \   Category: Theme
-\    Summary: The "TOO LATE!" message shown when the aliens land in Acornville
+\    Summary: The "TOO LATE!" message shown when the aliens land in Acornsville
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21894,7 +21910,7 @@ NEXT
  ROR Q
  ROR A
  EOR #&FF
- STA L0AFD
+ STA yPointLo+253
  LDA #&FE
  CLC
  SBC Q
@@ -21957,7 +21973,7 @@ NEXT
 
  JSR L555D
 
- LDA L09FC
+ LDA xPointLo+252
  EOR #&80
  ASL A
  LDA #0
@@ -22057,7 +22073,7 @@ NEXT
  BCS L5115
 
  LDA #0
- STA L07FC
+ STA zPointLo+252
  LDA #&FF
  STA zPointHi+252
  BNE L5123
@@ -22103,7 +22119,7 @@ NEXT
  TXA
  SEC
  SBC V
- STA L09FC
+ STA xPointLo+252
  TXA
  SBC Q
  STA xPointHi+252
@@ -23026,7 +23042,7 @@ NEXT
 
  LDA #0
  STA S
- LDA L0AFD
+ LDA yPointLo+253
  CLC
  ADC L0C30
  STA L0C30
@@ -23055,14 +23071,14 @@ NEXT
  SEC
  LDA #0
  SBC L0C63
- STA L09FC
+ STA xPointLo+252
  LDA #0
  SBC L0C73
  STA xPointHi+252
  SEC
  LDA L0C67
  SBC L0C64
- STA L0AFC
+ STA yPointLo+252
  LDA L0C77
  SBC L0C74
  STA yPointHi+252
@@ -23153,7 +23169,7 @@ NEXT
  TXA
  SEC
  SBC L0C65
- STA L07FC
+ STA zPointLo+252
  TYA
  SBC L0C75
 
