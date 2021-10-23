@@ -354,8 +354,8 @@ ORG &0400
                         \
                         \   * Bit 7:
                         \
-                        \     * 0 = the point's coordinates and visibility have not
-                        \           been calculated
+                        \     * 0 = the point's coordinates and visibility have
+                        \           not been calculated
                         \
                         \     * 1 = the point's coordinates and visibility have
                         \           already been calculated
@@ -848,10 +848,10 @@ ORG &0900
 
  SKIP 1                 \ Gun sights status
                         \
-                        \ Bit 6 = 1 while "I" is being held down
+                        \   * Bit 6 = 1 while "I" is being held down
                         \
-                        \ Bit 7 = 1 when sights are being shown
-                        \         0 when sights are not being shown
+                        \   * Bit 7 = 1 when sights are being shown
+                        \             0 when sights are not being shown
 
 .isObject
 
@@ -942,9 +942,16 @@ ORG &0900
                         \ otherwise set to 1, to prevent holding down "T" from
                         \ constantly switching the engine on and off
 
-.L0CCA
+.showRunway
 
- SKIP 1
+ SKIP 1                 \ Stores whether the runway is visible, so we can apply
+                        \ the same status to every runway line:
+                        \
+                        \   * Bit 7:
+                        \
+                        \     * 0 = the runway is visible
+                        \
+                        \     * 1 = the runway is not visible
 
 .matrixNumber
 
@@ -970,18 +977,20 @@ ORG &0900
  SKIP 1                 \ Bit 7 determines whether TAB is being pressed
                         \
                         \   * 0 = not being pressed
+                        \
                         \   * 128 = being pressed
                         \
                         \ This value is set in the ToggleJoystick routine
 
 .showLine
 
- SKIP 1                 \ Determines whether a line should be shown (i.e. it is
-                        \ in front of us)
+ SKIP 1                 \ Determines whether a line is visible:
                         \
-                        \   * 0 = show line
+                        \   * Bit 7:
                         \
-                        \   * Negative = hide line
+                        \     * 0 = the line is visible
+                        \
+                        \     * 1 = the line is not visible
 
 .objectAnchorPoint
 
@@ -1105,6 +1114,16 @@ ORG &0900
  SKIP 1                 \ Set to %01000000 when speed is 0 in L50F7
                         \
                         \ Gets shifted left with a 1 inserted in bit 0 in L5670
+                        \ if we are not on the runway
+                        \
+                        \   * Positive = do all "landed" tasks in the main loop
+                        \
+                        \   * 0 = do not enable the Theme on firing
+                        \         do not fill up with fuel
+                        \         do not award points for landing
+                        \
+                        \   * Negative = do not enable the Theme on firing
+                        \                do not fill up with fuel
                         \
                         \ Set to 1 in ResetVariables
 
@@ -1113,6 +1132,7 @@ ORG &0900
  SKIP 1                 \ Engine status
                         \
                         \   * 0 = engine is off
+                        \
                         \   * Non-zero = engine is on
 
 .L0CEA
@@ -1155,6 +1175,7 @@ ORG &0900
  SKIP 1                 \ Firing status
                         \
                         \   * 0 = no bullets in the air
+                        \
                         \   * Non-zero = guns fired, bullets in the air
                         \
                         \ This is called FRFLAG in the original source code
@@ -1166,6 +1187,7 @@ ORG &0900
  SKIP 1                 \ Undercarriage status
                         \
                         \   * 0 = undercarriage is up
+                        \
                         \   * Non-zero = undercarriage is down
                         \
                         \ Set to 1 (undercarriage is down) in ResetVariables
@@ -1186,6 +1208,7 @@ ORG &0900
  SKIP 1                 \ Brakes status
                         \
                         \   * 0 = brakes are off
+                        \
                         \   * Non-zero = brakes are on
                         \
                         \ Set to 1 (brakes are on) in ResetVariables
@@ -1197,6 +1220,7 @@ ORG &0900
  SKIP 1                 \ Propellor status
                         \
                         \   * 0 = propellor is working
+                        \
                         \   * Non-zero = propellor is broken
                         \
                         \ If we make a crash landing with the undercarriage up,
@@ -1211,6 +1235,7 @@ ORG &0900
  SKIP 1                 \ Have we reached 512 feet in altitude since taking off?
                         \
                         \   * 0 = no
+                        \
                         \   * Non-zero = yes
                         \
                         \ The height measured is 512 feet, rather than the 500
@@ -11000,11 +11025,7 @@ ORG CODE%
 \       Name: MainLoop (Part 1 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Start the main loop
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Start the main loop by processing gunfire and bullets
 \
 \ ******************************************************************************
 
@@ -11017,19 +11038,6 @@ ORG CODE%
  JSR L2F1C              \ Theme-related
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
-
-\ ******************************************************************************
-\
-\       Name: MainLoop (Part 2 of 14)
-\       Type: Subroutine
-\   Category: Main loop
-\    Summary: Process gunfire and bullets
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
 
  LDA firingStatus       \ If firingStatus is non-zero, then we have already
  BNE main2              \ fired our gun and the bullets are still in the air, so
@@ -11050,43 +11058,47 @@ ORG CODE%
  LDA #2                 \ Set gunSoundCounter = 2, so we make two firing sounds
  STA gunSoundCounter    \ below, one for each bullet
 
- LDY #&21               \ We now copy the status bytes for the four bullet
+ LDY #33                \ We now copy the status bytes for the four bullet
                         \ objects from objectStatus+30 to objectStatus+33 into
                         \ bulletStatus, so set up a counter in Y that can also
                         \ act as the offset
 
 .main1
 
- LDA objectStatus,Y     \ Copy the Y-th byte of objectStatus to bulletStatus,
+ LDA objectStatus,Y     \ Copy the Y-th byte of objectStatus to bulletStatus-30,
  STA bulletStatus-30,Y  \ to give this:
                         \
                         \   objectStatus+30 -> bulletStatus
-                        \   ...
+                        \   objectStatus+31 -> bulletStatus+1
+                        \   objectStatus+32 -> bulletStatus+2
                         \   objectStatus+33 -> bulletStatus+3
 
  DEY                    \ Decrement the loop counter
 
- CPY #&1E               \ Loop back until we have copied all four bytes
+ CPY #30                \ Loop back until we have copied all four bytes
  BCS main1
+
+                        \ We now add the bullet lines (line IDs 60 and 61) to
+                        \ the linesToShow list, so they get displayed
 
  LDY linesToShowEnd     \ Set Y to the first free entry at the end of the
                         \ linesToShow list
 
- LDA #&3C               \ Append &3C to the end of the linesToShow list
+ LDA #60                \ Append line 60 to the end of the linesToShow list
  STA linesToShow,Y
 
  INY                    \ Increment Y to point to the next free entry in the
                         \ list
 
- LDA #&3D               \ Append &3D to the end of the linesToShow list
+ LDA #61                \ Append line 61 to the end of the linesToShow list
  STA linesToShow,Y
 
  INY                    \ Increment Y to point to the next free entry in the
                         \ list
 
  STY linesToShowEnd     \ Update linesToShowEnd with the updated index of the
-                        \ next free entry, which is two more than it was
-                        \ before we added the bullets
+                        \ next free entry, which is two more than it was before
+                        \ we added the bullet lines
 
  JMP main3              \ Skip the following instruction, as we have already
                         \ processed the key logger
@@ -11095,16 +11107,32 @@ ORG CODE%
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 2 of 14)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Reset object statuses and related points, make the sound of firing
+\
+\ ******************************************************************************
+
 .main3
 
- LDX #19                \ We now want to zero the 40 bytes in objectStatus,
-                        \ which we can do as two blocks of 20 bytes, so set a
-                        \ counter in X
+                        \ We now want to zero the 40 bytes in objectStatus, so
+                        \ that all objects are marked as unprocessed, and are
+                        \ ready to be processed in this iteration of the main
+                        \ loop
 
- LDA #0                 \ Set L0CCA = 0
- STA L0CCA
+ LDX #19                \ We do this as two blocks of 20 bytes, so set a counter
+                        \ in X to use in the loop below
 
- STA relatedPoints      \ Set relatedPoints = 0 to reset the relatedPoints list
+ LDA #0                 \ Set showRunway = 0 to reset the visibility of the
+ STA showRunway         \ runway to "visible", so we make the runway lines
+                        \ visible as the default
+
+ STA relatedPoints      \ Set relatedPoints = 0 to reset the relatedPoints list,
+                        \ so we can build a new list of related object points
+                        \ in this iteration of the main loop
 
 .main4
 
@@ -11138,10 +11166,6 @@ ORG CODE%
 \   Category: Main loop
 \    Summary: Call the Theme main loop
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
 .main5
@@ -11150,6 +11174,7 @@ ORG CODE%
  BMI main6              \ enabled, so jump to main6
 
  JSR AlienInAcornsville \ Check to see whether an alien has reached Acornsville
+                        \ and terminate the main loop if it has
 
 \ ******************************************************************************
 \
@@ -11256,7 +11281,7 @@ ORG CODE%
 \       Name: MainLoop (Part 6 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Theme main loop
+\    Summary: Process the terminate key
 \
 \ ******************************************************************************
 
@@ -11283,7 +11308,7 @@ ORG CODE%
 \       Name: MainLoop (Part 7 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Enable the Theme if we fire the guns on the runway
+\    Summary: If we fire the guns on the runway, enable the Theme
 \
 \ ******************************************************************************
 
@@ -11415,11 +11440,8 @@ ORG CODE%
 \       Name: MainLoop (Part 11 of 14)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Spend at least 9 centiseconds processing oines from the
+\             linesToHide list
 \
 \ ******************************************************************************
 
@@ -11437,12 +11459,16 @@ ORG CODE%
 
  LDX #&70               \ Call OSWORD with A = 1 and (Y X) = &0070, which reads
  LDY #&00               \ the system clock and writes the result into the five
- LDA #1                 \ bytes from &0070 to &0074 (P, Q, R, S and T)
- JSR OSWORD
+ LDA #1                 \ bytes from &0070 to &0074 (P, Q, R, S and T). For the
+ JSR OSWORD             \ purposes of the call to CheckTimePassed, P is set to
+                        \ the least significant byte of the time, which
+                        \ increments 100 times a second
 
- JSR L3F10
-
- BCC main20
+ JSR CheckTimePassed    \ If fewer than 9 centiseconds have passed since the
+ BCC main20             \ first time we were here on this iteration of the main
+                        \ loop, then we haven't yet spent enough time processing
+                        \ lines from the linesToHide list, so jump back to
+                        \ main20 to do a few more
 
 \ ******************************************************************************
 \
@@ -11450,10 +11476,6 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
 \
 \ ******************************************************************************
 
@@ -12322,7 +12344,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 1 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Calculate the coordinates for an object's points
 \
 \ ------------------------------------------------------------------------------
@@ -12380,7 +12402,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 2 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Pre-process the bullets (objects 12, 13, 14 or 15)
 \
 \ ******************************************************************************
@@ -12405,7 +12427,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 3 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Logic for checking which object to process
 \
 \ ******************************************************************************
@@ -12427,7 +12449,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 4 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Pre-process the object groups (objects 6, 7, 8 or 9)
 \
 \ ******************************************************************************
@@ -12456,7 +12478,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 5 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Logic for checking which object to process
 \
 \ ******************************************************************************
@@ -12479,7 +12501,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 6 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Pre-process the alien (object 30)
 \
 \ ******************************************************************************
@@ -12522,7 +12544,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 7 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ******************************************************************************
@@ -12553,7 +12575,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 8 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: 
 \
 \ ******************************************************************************
@@ -12690,7 +12712,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 9 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Process the bullets
 \
 \ ******************************************************************************
@@ -12723,7 +12745,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 10 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Process the next alien (object 30)
 \
 \ ******************************************************************************
@@ -12751,7 +12773,7 @@ ORG CODE%
 \
 \       Name: SetObjectCoords (Part 11 of 11)
 \       Type: Subroutine
-\   Category: Visibility
+\   Category: 3D geometry
 \    Summary: Update the object status and return from the subroutine
 \
 \ ******************************************************************************
@@ -12779,11 +12801,13 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ We pass the distance from the plane to the object along the axis we are
-\ checking in (A T x), ignoring the low byte.
+\ We call this routine by passing in the distance from the plane to the object,
+\ along the axis we are checking. We pass it as the top two bytes of a 24-bit
+\ number, (A T x), containing the object's coordinate in the relevant axis. We
+\ can ignore the low byte as it doesn't affect object visibility.
 \
-\ First we check the top byte to make sure it is either 0 or -1, as otherwise
-\ the distance is definitely too far for the object to be visible.
+\ First we check the top byte in A to make sure it is either 0 or -1, as
+\ otherwise the distance is definitely too far for the object to be visible.
 \
 \ Assuming the top byte is within range, we then check the high byte in T
 \ against the maximum visible distance for the object in question. The object
@@ -12822,34 +12846,44 @@ ORG CODE%
 
 .CheckObjDistance
 
- BPL objd1              \ If A is positive, i.e. 0 to 127, jump to objd1
+ BPL objd1              \ If A is positive, jump to objd1
 
- CMP #&FF               \ If A <> -1, i.e. A is -128 to -2, jump to objd3 as
-                        \ the object is too far away to be visible
- BNE objd3
+ CMP #&FF               \ If A <> -1, jump to objd3 as the object is too far
+ BNE objd3              \ away to be visible
 
-                        \ If we get here, then A = -1
+                        \ If we get here, then A = -1, so now we need to check
+                        \ the middle byte against the object's maximum visible
+                        \ distance, though we need to negate the middle byte
+                        \ first, as the coordinate is negative and the values in
+                        \ maxObjDistance are positive
 
- LDA T                  \ Set A = ~T
+ LDA T                  \ Set A = ~T to negate it
  EOR #&FF
 
- JMP objd2              \ Jump to objd2 to check the object's distance
+ JMP objd2              \ Jump to objd2 to check against the object's maximum
+                        \ visible distance
 
 .objd1
 
-                        \ If we get here, then A is positive (0 to 127)
+                        \ If we get here, then A is positive
 
  BNE objd3              \ If A is non-zero, jump to objd3 as the object is too
                         \ far away to be visible
 
-                        \ If we get here then A = 0
+                        \ If we get here then A = 0, so now we need to check the
+                        \ middle byte against the object's maximum visible
+                        \ distance
 
- LDA T                  \ Set A = T so we now check the middle byte
+ LDA T                  \ Set A = T so we check the middle byte in the following
 
 .objd2
 
- CMP maxObjDistance,Y   \ If A >= the object's maximum visible distance,
- BCS objd3              \ jump to objd3
+ CMP maxObjDistance,Y   \ If A >= the object's maximum visible distance, then
+ BCS objd3              \ the object is too far away to be visible, so jump to
+                        \ objd3
+
+                        \ If we get here then we want to return a "visible"
+                        \ result
 
  LDA #0                 \ Set A = 0 as the return value
 
@@ -12857,7 +12891,8 @@ ORG CODE%
 
 .objd3
 
-                        \ If we get here then A = -1 or A is 1 to 127
+                        \ If we get here then we want to return a "not visible"
+                        \ result
 
  LDA K                  \ Set A = K as the return value
 
@@ -13956,20 +13991,19 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2E9D
+\       Name: previousTime
 \       Type: Variable
-\   Category: Visibility
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Main loop
+\    Summary: Stores the current time (low byte only), so we can process lines
+\             in a timely fashion during the main loop
 \
 \ ******************************************************************************
 
-.L2E9D
+.previousTime
 
- EQUB &20, &20, &20
+ EQUB &20
+
+ EQUB &20, &20          \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
@@ -14514,7 +14548,7 @@ ORG CODE%
 \
 \       Name: L3053
 \       Type: Subroutine
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -14893,7 +14927,7 @@ ORG CODE%
  CMP #5
  BCC L31D3
 
- LDA L0CCA
+ LDA showRunway
  STA showLine
 
 .L31D3
@@ -14977,8 +15011,9 @@ ORG CODE%
 
 .L323B
 
- LDA #&80
- STA L0CCA
+ LDA #%10000000
+ STA showRunway
+
  LDA lineId
  CMP #5
  BCC L324A
@@ -17513,37 +17548,59 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3F10
+\       Name: CheckTimePassed
 \       Type: Subroutine
-\   Category: Visibility
-\    Summary: 
+\   Category: Utility routines
+\    Summary: Flag whether 9 centiseconds have passed since the last call
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   P                   The current time, incrementing 100 times a second
+\
+\ Returns:
+\
+\   C flag              Returns:
+\
+\                         * Clear if fewer than 9 centiseconds have passed since
+\                           the last call to this routine that reset the counter
+\
+\                         * Set if 9 centiseconds or more have passed since the
+\                           last call to this routine, in which case the counter
+\                           resets
 \
 \ ******************************************************************************
 
-.L3F10
+.CheckTimePassed
 
- LDX P
- TXA
- SEC
- SBC L2E9D
- BPL L3F1E
- EOR #&FF
- CLC
- ADC #1
+ LDX P                  \ Set X = P
+
+ TXA                    \ Set A = P - previousTime
+ SEC                    \
+ SBC previousTime       \ so A is the number of centiseconds that have passed
+                        \ since the last call to this routine (unless the time
+                        \ has wrapped, in which case it will be negative)
+
+ BPL L3F1E              \ If A is positive, skip the following three
+                        \ instructions
+
+ EOR #&FF               \ A is negative, so negate A using two's complement, so:
+ CLC                    \
+ ADC #1                 \   A = |P - previousTime|
 
 .L3F1E
 
- CMP #9
+ CMP #9                 \ If |A| < 9, skip the following instruction
  BCC L3F25
- STX L2E9D
+
+ STX previousTime       \ Update previousTime to the current timer in X, so the
+                        \ count of 9 centiseconds since the last call can start
+                        \ again
 
 .L3F25
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
