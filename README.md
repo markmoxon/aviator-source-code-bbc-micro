@@ -53,7 +53,7 @@ The reason for this is that my commentary is intertwined with the original Aviat
 
 Under GitHub's rules, you have the right to read and fork this repository... but that's it. No other use is permitted, I'm afraid.
 
-My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation. I do hope, though, that along with the various other disassemblies and commentaries of this source, it will remain viable.
+My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation. I do hope, though, that it will remain viable.
 
 ## Browsing the source in an IDE
 
@@ -61,9 +61,9 @@ If you want to browse the source in an IDE, you might find the following useful.
 
 * The most interesting files are in the [main-sources](1-source-files/main-sources) folder:
 
-  * The main game's source code is in the [aviator-source.asm](1-source-files/main-sources/aviator-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `*AVIA?` that contains the entire game.
+  * The main game's source code is in the [aviator-source.asm](1-source-files/main-sources/aviator-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `AVIA?` that contains the entire game.
 
-  * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they are, however, completely optional, and it is possible to skip these and run the game using `*AVIA?`.
+  * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they are, however, completely optional, and it is possible to skip these and run the game using `*RUN AVIA?` or just plain `*AVIA?`.
 
 * It's probably worth skimming through the [notes on terminology and notations](https://www.bbcelite.com/about_site/terminology_used_in_this_commentary.html) on the accompanying website, as this explains a number of terms used in the commentary, without which it might be a bit tricky to follow at times (in particular, you should understand the terminology I use for multi-byte numbers).
 
@@ -77,15 +77,15 @@ I hope you enjoy exploring the inner-workings of Aviator as much as I have.
 
 There are five main folders in this repository, which reflect the order of the build process.
 
-* [1-source-files](1-source-files) contains all the different source files, such as the main assembler source files, image binaries, BASIC loader programs, boot files and so on
+* [1-source-files](1-source-files) contains all the different source files, such as the main assembler source files, image binaries, BASIC loader programs, boot files and so on.
 
-* [2-build-files](2-build-files) contains build-related scripts, such as the crc32 verification scripts
+* [2-build-files](2-build-files) contains build-related scripts, such as the crc32 verification scripts.
 
-* [3-assembled-output](3-assembled-output) contains the output from the assembly process, when the source files are assembled and the results processed by the build files
+* [3-assembled-output](3-assembled-output) contains the output from the assembly process, when the source files are assembled and the results processed by the build files.
 
-* [4-reference-binaries](4-reference-binaries) contains the correct binaries for each release, so we can verify that our assembled output matches the reference
+* [4-reference-binaries](4-reference-binaries) contains the correct binaries for each release, so we can verify that our assembled output matches the reference.
 
-* [5-compiled-game-discs](5-compiled-game-discs) contains the final output of the build process: an SSD disc image that contains the compiled game and which can be run on real hardware or in an emulator
+* [5-compiled-game-discs](5-compiled-game-discs) contains the final output of the build process: an SSD disc image that contains the compiled game and which can be run on real hardware or in an emulator.
 
 ## Building Aviator from the source
 
