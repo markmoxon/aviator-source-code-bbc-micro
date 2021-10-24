@@ -1154,7 +1154,7 @@ ORG &0900
 
 .L0CEA
 
- SKIP 2
+ SKIP 2                 \ Low byte in (L0CFA L0CEA)
 
 .L0CEC
 
@@ -1262,6 +1262,8 @@ ORG &0900
 .L0CFA
 
  SKIP 1                 \ Set to 7 in ResetVariables
+                        \
+                        \ High byte in (L0CFA L0CEA)
 
 .compassHeading
 
@@ -5544,18 +5546,26 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L17E3
+\       Name: Multiply16x16
 \       Type: Subroutine
-\   Category: 3D geometry
-\    Summary: 
+\   Category: Maths
+\    Summary: Calculate (H G) = (I J) * (S R)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine multiplies a 16-bit number by a 16-bit number.
+
+\ Arguments:
+\
+\   (S R)               A 16-bit number
+\
+\   (I J)               A 16-bit number
+\
+\   K                   ???
 \
 \ ******************************************************************************
 
-.L17E3
+.Multiply16x16
 
  LDA J
  BPL L17FA
@@ -5567,6 +5577,7 @@ ORG CODE%
  LDA #0
  SBC J
  STA J
+
  LDA K
  EOR #&80
  STA K
@@ -5805,7 +5816,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MultiplyVxSR
+\       Name: Multiply4x16
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Calculate (G W) = V * (S R)
@@ -5830,7 +5841,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.MultiplyVxSR
+.Multiply4x16
 
  LDX S                  \ Set X = S = %SSSSssss
 
@@ -5964,7 +5975,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Deep dive: Orientating and translating multi-point objects in 3D space
+\ Deep dive: Rotating and translating multi-point objects in 3D space
 \
 \ This routine calculates the coordinates for a point within an object. It does
 \ this by taking the point's coordinates relative to the object's anchor (i.e.
@@ -5972,7 +5983,7 @@ ORG CODE%
 \ matrix to orientate the point correctly, and adding the result to the object's
 \ anchor point. This gives us the point's final coordinates.
 \
-\ Specifically, if we take an example:
+\ Specifically, let's take an example:
 \
 \   * The object point is at coordinates (xPoint, yPoint, zPoint)
 \
@@ -5989,7 +6000,7 @@ ORG CODE%
 \       ...
 \       m8 = (matrix1Hi+8 matrix1Lo+8)
 \
-\ then this routine sets the point's coordinates as follows:
+\ Given the above, this routine sets the point's coordinates as follows:
 \
 \   [ xPoint ]   [ xAnchor ]   [ xTemp ]
 \   [ yPoint ] = [ yAnchor ] + [ yTemp ]
@@ -6029,7 +6040,7 @@ ORG CODE%
  STA UU                 \ from bits 4 to 7 of the zObjectPoint entry
  
  CMP #9                 \ If the scale factor in A >= 9, set bit 7 of K so the
- ROR K                  \ result of the call to MultiplyVxSR below is doubled,
+ ROR K                  \ result of the call to Multiply4x16 below is doubled,
                         \ i.e. (G W) is doubled. This gives us an extra factor
                         \ of 2 on top of the maximum 2^8 factor we would get by
                         \ left-shifting the result (see part 2 for the scaling
@@ -6157,9 +6168,9 @@ ORG CODE%
 .objp4
 
  STX Q                  \ Store the loop counter in X, so we can retrieve it
-                        \ after the call to MultiplyVxSR
+                        \ after the call to Multiply4x16
 
- JSR MultiplyVxSR       \ Call MultiplyVxSR to calculate:
+ JSR Multiply4x16       \ Call Multiply4x16 to calculate:
                         \
                         \   (G W) = V * (S R) / 16      if bit 7 of K = 0
                         \
@@ -6175,14 +6186,19 @@ ORG CODE%
                         \ the relevant xTemp, yTemp or ztemp coordinate
 
  LDA W                  \ Add (G W) to the xTemp coordinate, starting with the
- CLC                    \ high bytes
+ CLC                    \ low bytes
  ADC xTempLo,Y
  STA xTempLo,Y
 
- LDA G                  \ And then the low bytes, so we have the following (if
- ADC xTempHi,Y          \ we are working with xTemp, for example):
+ LDA G                  \ And then the high bytes, so we have the following (if
+ ADC xTempHi,Y          \ we are working with xTemp and m0, for example):
  STA xTempHi,Y          \
                         \   xTemp += (G W)
+                        \         += V * (S R)
+                        \         += xObjectPoint * m0
+                        \
+                        \ which is the result we want for this element of the
+                        \ matrix multiplication
 
 .objp5
 
@@ -6836,7 +6852,7 @@ ORG CODE%
 \
 \       Name: L1D3A
 \       Type: Subroutine
-\   Category: 3D geometry
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -6927,18 +6943,58 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1D8D
+\       Name: SetPointCoords
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: 
+\    Summary: Calculate the coordinates for a point
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   GG                  The ID of the point to process
+\
+\   matrixNumber        The matrix to use in the calculation:
+\
+\                         * 0 = matrix 1
+\                         * 9 = matrix 2
+\                         * 18 = matrix 3
+\                         * 27 = matrix 4
+\
+\ Results:
+\
+\   xPointHi etc.       Set to the points's coordinates
+\
+\ ------------------------------------------------------------------------------
+\
+\ Deep dive: Rotating points in 3D space
+\
+\ This routine calculates the new coordinates for a point after a rotation. It
+\ does this by taking the point's coordinates, rotating them by applying a
+\ matrix to orientate the point correctly, and storing the result to give us
+\ the point's new coordinates.
+\
+\ Specifically, let's take an example:
+\
+\   * The point is at coordinates (xPoint, yPoint, zPoint), where each
+\     coordinate is a 16-bit value, e.g. xPoint = (xPointHi xPointLo)
+\
+\   * We want to rotate the object by matrix 1, so:
+\
+\       m0 = (matrix1Hi matrix1Lo)
+\       m1 = (matrix1Hi+1 matrix1Lo+1)
+\       ...
+\       m8 = (matrix1Hi+8 matrix1Lo+8)
+\
+\ Given the above, this routine updates the point's coordinates as follows:
+\
+\   [ xPoint ]     [ m0 m1 m2 ]   [ xPoint ]
+\   [ yPoint ]  =  [ m3 m4 m5 ] x [ yPoint ]
+\   [ zPoint ]     [ m6 m7 m8 ]   [ zPoint ]
 \
 \ ******************************************************************************
 
-.L1D8D
+.SetPointCoords
 
  LDX GG                 \ Set X to the point ID whose coordinates we want to
                         \ calculate
@@ -6965,14 +7021,59 @@ ORG CODE%
 
  LDA #0                 \ Set A = 0 to use as our zero
 
-.L1DB1
+.pcrd1
 
  STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
                         \ between XTempLo and zTempHi
 
  DEX                    \ Decrement the loop counter
 
- BPL L1DB1              \ Loop back until we have zeroed all six bytes
+ BPL pcrd1              \ Loop back until we have zeroed all six bytes
+
+                        \ We now do the matrix multiplication:
+                        \
+                        \   [ xTemp ]     [ m0 m1 m2 ]   [ xPoint ]
+                        \   [ yTemp ]  =  [ m3 m4 m5 ] x [ yPoint ]
+                        \   [ zTemp ]     [ m6 m7 m8 ]   [ zPoint ]
+                        \
+                        \ We do this in three loops of three, using an outer and
+                        \ inner loop. We set two loop counters, VV and X, for
+                        \ the outer and inner loops respectively. They both
+                        \ iterate through 2, 1 and 0, with VV iterating through
+                        \ zTemp, yTemp and xTemp, and X iterating through
+                        \ zPoint, yPoint and xPoint
+                        \
+                        \ We also iterate a counter in P for the matrix entries,
+                        \ which counts down from m8 to m0, decreasing by 1 on
+                        \ each iteration
+                        \
+                        \ All the iterators count backwards, so the calculations
+                        \ in order are:
+                        \
+                        \   * zTemp += zPoint * m8
+                        \   * zTemp += yPoint * m7
+                        \   * ztemp += xPoint * m6
+                        \
+                        \   * yTemp += zPoint * m5
+                        \   * yTemp += yPoint * m4
+                        \   * ytemp += xPoint * m3
+                        \
+                        \   * xTemp += zPoint * m2
+                        \   * xTemp += yPoint * m1
+                        \   * xTemp += xPoint * m0
+                        \
+                        \ Or, to switch it around the othee way and plug in the
+                        \ initial value of (xTemp, yTemp, zTemp) = (0, 0, 0),
+                        \ we get:
+                        \
+                        \   * xTemp = m0 * xPoint + m1 * yPoint + m2 * zPoint
+                        \
+                        \   * yTemp = m3 * xPoint + m4 * yPoint + m5 * zPoint
+                        \
+                        \   * zTemp = m6 * xPoint + m7 * yPoint + m8 * zPoint
+                        \
+                        \ which gives us the matrix multiplication that we want
+                        \ to calculate
 
  LDA matrixNumber       \ Set P = matrixNumber + 8
  CLC                    \
@@ -6988,77 +7089,98 @@ ORG CODE%
  LDA #2                 \ Set VV = 2, to act as our outer loop counter that
  STA VV                 \ iterates through zTemp, yTemp and xTemp
 
-.L1DC3
+.pcrd2
 
  LDX #2                 \ Set X = 2, to act as our inner loop counter that
                         \ iterates through zPoint, yPoint and xPoint
 
-.L1DC5
+.pcrd3
 
  LDY P                  \ Set Y = P, which is the number of the matrix element
                         \ to multiply next
 
- LDA matrix1Hi,Y
+ LDA matrix1Hi,Y        \ Set S = P-th entry of matrix1Hi
  STA S
- BNE L1DD5
 
- LDA matrix1Lo,Y
- CMP #5
- BCC L1E07
+ BNE pcrd4              
 
-.L1DD5
+ LDA matrix1Lo,Y        \ If the P-th entry of matrix1Lo is < 5, jump to pcrd5
+ CMP #5                 \ to move on to the next loop
+ BCC pcrd5
 
- LDA matrix1Lo,Y
- STA R
- LDA PP,X
- STA I
- LDA SS,X
- STA J
- LDA #0
+.pcrd4
+
+ LDA matrix1Lo,Y        \ Set R = P-th entry of matrix1Lo
+ STA R                  \
+                        \ so now (S R) is the 16-bit matrix element that we want
+                        \ to multiply
+
+ LDA PP,X               \ Set I = PP, QQ or RR (when X = 0, 1 or 2), which is
+ STA I                  \ the correct zPointLo, yPointLo or xPointLo to multiply
+                        \ next
+
+ LDA SS,X               \ Set J = SS, TT or UU (when X = 0, 1 or 2), which is
+ STA J                  \ the correct zPointHi, yPointHi or xPointHi to multiply
+                        \ next so now (J I) is the 16-bit point coordinate that
+                        \ we want to multiply
+
+ LDA #0                 \ Set K = 0, to pass to Multiply16x16
  STA K
- STX Q
- JSR L17E3
 
- LDX Q
+ STX Q                  \ Store the loop counter in X, so we can retrieve it
+                        \ after the call to Multiply16x16
 
- LDY VV
+ JSR Multiply16x16      \ Call Multiply16x16 to calculate:
+                        \
+                        \   (H G) = (I J) * (S R) / 256
 
- LDA G
- CLC
+ LDX Q                  \ Restore the value of X
+
+ LDY VV                 \ Fetch the outer loop counter from VV, which points to
+                        \ the relevant xTemp, yTemp or ztemp coordinate
+
+ LDA G                  \ Add (H G) to the xTemp coordinate, starting with the
+ CLC                    \ low bytes
  ADC xTempLo,Y
  STA xTempLo,Y
 
- LDA H
- ADC xTempHi,Y
- STA xTempHi,Y
+ LDA H                  \ And then the high bytes, so we have the following (if
+ ADC xTempHi,Y          \ we are working with xTemp and m0, for example):
+ STA xTempHi,Y          \
+                        \   xTemp += (H G)
+                        \         += (I J) * (S R)
+                        \         += xPoint * m0
+                        \
+                        \ which is the result we want for this element of the
+                        \ matrix multiplication
 
- BVC L1E07
+ BVC pcrd5
 
  LDA #%01000000         \ The addition overflowed for this axis, so set bit 6 of
  STA showLine           \ showLine so the line containing this point is marked
                         \ as being hidden
 
-.L1E07
+.pcrd5
 
  LDY P                  \ If P = matrixNumber then we have done all nine
- CPY matrixNumber       \ calculations, so jump down to objp6 to apply the
- BEQ L1E18              \ correct scale factor
+ CPY matrixNumber       \ calculations, so jump down to objp6 to update the
+ BEQ pcrd6              \ point's coordinates with the result
 
  DEC P                  \ Otherwise we have more calculations to do, so
                         \ decrement P to point to the next matrix entry
 
  DEX                    \ Decrement the inner loop counter to work our way
-                        \ through zObjectPoint, yObjectPoint and xObjectPoint
+                        \ through zPoint, yPoint and xPoint
 
- BPL L1DC5              \ Loop back until we have worked through all three
+ BPL pcrd3              \ Loop back until we have worked through all three
                         \ anchor-relative points
 
  DEC VV                 \ Decrement the outer loop counter to work our way
                         \ through zTemp, yTemp and xTemp
 
- JMP L1DC3              \ Jump back to objp2 to do the next calculation
+ JMP pcrd2              \ Jump back to objp2 to do the next calculation
 
-.L1E18
+.pcrd6
 
  LDX GG                 \ Set X to the point ID whose coordinates we want to
                         \ calculate, so the original point is updated with the
@@ -10402,15 +10524,17 @@ ORG CODE%
  STA xPointLo+95
  LDA #&FC
  STA yPointLo+95
- LDA #&E4
- STA GG
- LDA #9
- STA matrixNumber
+
+ LDA #228               \ Set GG to point ID 228, to pass to the call to 
+ STA GG                 \ SetPointCoords
+
+ LDA #9                 \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 2 in the calculation
 
  STA firingStatus       \ Set firingStatus = 9, which is a non-zero value, to
                         \ indicate that there are bullets are in the air
 
- JSR L1D8D
+ JSR SetPointCoords     \ Calculate the coordinates for point 228
 
  LDX #&E5
 
@@ -10422,9 +10546,10 @@ ORG CODE%
  CPX #&E8
  BNE fire1
 
- LDA #&5F
- STA GG
- JSR L1D8D
+ LDA #95                \ Set GG to point ID 95, to pass to the call to 
+ STA GG                 \ SetPointCoords
+
+ JSR SetPointCoords     \ Calculate the coordinates for point 95
 
  LDX #&ED
  LDY #&60
@@ -12382,7 +12507,7 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   objectId            The object ID (1 to 39)
+\   objectId            The ID of the object to process (1 to 39)
 \
 \   GG                  For bullets only (12, 13, 14 or 15), the point ID for
 \                       the bullet anchor point
@@ -12640,7 +12765,7 @@ ORG CODE%
                         \     passed to the routine, i.e. 98
                         \
                         \   * For other objects, this is 216 + object ID, so
-                        \     points 216 to 255 contain the translated
+                        \     points 216 to 255 contain the calculated
                         \     coordinates for objects 0 to 39
                         \
                         \ So the in the following, we set the coordinates of
@@ -12732,10 +12857,16 @@ ORG CODE%
                         \ either move on to the next object in the group, or
                         \ tidy up and return from the subroutine
 
- LDA #0
- STA matrixNumber
+ LDA #0                 \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 1 in the calculation
 
- JSR L1D8D
+ JSR SetPointCoords     \ Calculate the coordinates for point GG:
+                        \
+                        \   * For bullets, this is point 98
+                        \
+                        \   * For other objects, this is 216 + object ID, so
+                        \     points 216 to 255 will contain the calculated
+                        \     coordinates for objects 0 to 39
 
  LDY objectId
 
@@ -13350,7 +13481,7 @@ ORG CODE%
 \       Name: ProcessHorizon
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Calculate coordinates for the horizon's start and end points
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13377,46 +13508,75 @@ ORG CODE%
  STX GG                 \ Set GG = the point ID of the horizon line's start
                         \ point
 
+                        \ We now do the following loop twice, once for the
+                        \ horizon's start point, and again for the end point
+
 .horv1
 
- BIT L0CFA
+ BIT L0CFA              \ If bit 7 of (L0CFA L0CEA) is set, jump to horv3
  BMI horv3
 
- BVS horv4
+ BVS horv4              \ If bit 6 of (L0CFA L0CEA) is set (so bit 7 is clear
+                        \ and bit 6 is set), jump to horv4
 
 .horv2
 
- LDA #&28
- BNE horv5
+                        \ We get here if in (L0CFA L0CEA):
+                        \
+                        \   * Bit 7 set, bit 6 set
+                        \   * Bit 7 clear, bit 6 clear
+                        \
+                        \ i.e. if bit 6 and 7 match
+
+ LDA #40                \ Set A = 40 and jump to horv5 to set this as the
+ BNE horv5              \ point's z-coordinate (this BNE is effectively a JMP
+                        \ as A is never zero)
 
 .horv3
 
- BVS horv2
+ BVS horv2              \ If bit 6 of (L0CFA L0CEA) is set (so both bits 6 and 7
+                        \ are set), jump to horv2
 
 .horv4
 
- LDA #&D8
+                        \ We get here if in (L0CFA L0CEA):
+                        \
+                        \   * Bit 7 clear, bit 6 set
+                        \   * Bit 7 set, bit 6 clear
+                        \
+                        \ i.e. if bit 6 and 7 differ
+
+ LDA #216               \ Set A = 216 to use as the point's z-coordinate
 
 .horv5
 
- STA zPointHi,X
- LDA #&80
- ORA pointStatus,X
- STA pointStatus,X
- LDA #&1B
- STA matrixNumber
- JSR L1D8D
+ STA zPointHi,X         \ Set the z-coordinate of the horizon line's start (or
+                        \ end) point to A
 
- CPX M
- BEQ horv6
+ LDA #%10000000         \ Set bit 7 of point X's status byte, to indicate that
+ ORA pointStatus,X      \ the point's coordinates and visibility have been
+ STA pointStatus,X      \ calculated
 
- LDX M
- STX GG
- BNE horv1
+ LDA #27                \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 4 in the calculation
+
+ JSR SetPointCoords     \ Calculate the coordinates for point GG, which will
+                        \ be the start or end point of the horizon
+
+ CPX M                  \ If we just calculated the coordinates for the horizon
+ BEQ horv6              \ line's end point, then we have now done both points,
+                        \ so jump to horv6 to return from the subroutine
+
+ LDX M                  \ Set GG and X to the point ID for the horizon line's
+ STX GG                 \ end point
+
+ BNE horv1              \ Loop back to horv1 to calculate the coordinates for
+                        \ the end point (this BNE is effectively a JMP as X is
+                        \ never zero)
 
 .horv6
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -13459,13 +13619,16 @@ ORG CODE%
  BNE L2CE1
 
  LDX #&A8
- LDY #0
- STY GG
+
+ LDY #0                 \ Set GG to point ID 0, to pass to the call to 
+ STY GG                 \ SetPointCoords
+
  JSR CopyWorkToPoint
 
- LDA #0
- STA matrixNumber
- JSR L1D8D
+ LDA #0                 \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 1 in the calculation
+
+ JSR SetPointCoords     \ Calculate the coordinates for point 0
 
  LDA xPointHi
  STA R
@@ -22158,20 +22321,26 @@ NEXT
 .L502B
 
  STA yPointHi+253
- LDA #&FD
- STA GG
- LDA #&1B
- STA matrixNumber
- JSR L1D8D
+
+ LDA #253               \ Set GG to point ID 253, to pass to the call to 
+ STA GG                 \ SetPointCoords
+
+ LDA #27                \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 4 in the calculation
+
+ JSR SetPointCoords     \ Calculate the coordinates for point 253
 
  LDX #&89
- LDY #&FF
- STY GG
+
+ LDY #255               \ Set GG to point ID 255, to pass to the call to 
+ STY GG                 \ SetPointCoords
+
  JSR CopyWorkToPoint
 
- LDA #0
- STA matrixNumber
- JSR L1D8D
+ LDA #0                 \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 1 in the calculation
+
+ JSR SetPointCoords     \ Calculate the coordinates for point 255
 
  LDX #3
  LDY #&FF
@@ -22366,11 +22535,13 @@ NEXT
 
 .L5151
 
- LDA #9
- STA matrixNumber
- LDA #&FC
- STA GG
- JSR L1D8D
+ LDA #9                 \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 2 in the calculation
+
+ LDA #252               \ Set GG to point ID 252, to pass to the call to 
+ STA GG                 \ SetPointCoords
+
+ JSR SetPointCoords     \ Calculate the coordinates for point 252
 
  LDA yPointHi+252
  SEC
@@ -22385,13 +22556,16 @@ NEXT
  JSR L51D7
 
  LDX #0
- LDY #&FE
- STY GG
+
+ LDY #254               \ Set GG to point ID 254, to pass to the call to 
+ STY GG                 \ SetPointCoords
+
  JSR CopyWorkToPoint
 
- LDA #&12
- STA matrixNumber
- JSR L1D8D
+ LDA #18                \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ uses matrix 3 in the calculation
+
+ JSR SetPointCoords     \ Calculate the coordinates for point 254
 
  LDX #&86
  LDY #&FE
@@ -22791,7 +22965,7 @@ NEXT
  LDA #0
  STA K
  STX VV
- JSR L17E3
+ JSR Multiply16x16
 
  LDA K
  BPL L5395
