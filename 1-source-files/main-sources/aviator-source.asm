@@ -12541,10 +12541,10 @@ ORG CODE%
                         \ 0 below for bullets only, as we always want them to
                         \ remain visible at distance)
 
-                        \ We now check for some specific groups of object:
+                        \ We now check for some specific objects:
                         \
-                        \   * Bullets (12, 13, 14 or 15)
                         \   * Object groups, e.g. trees (6, 7, 8 or 9)
+                        \   * Bullets (12, 13, 14 or 15)
                         \   * ??? (30)
                         \   * ??? (31, 32 or 33)
                         \
@@ -12721,19 +12721,24 @@ ORG CODE%
 
                         \ If we get here then the object ID is 31, 32 or 33
 
- LDX L41E4,Y
- BMI objc7
+ LDX L41E4,Y            \ If the alien's L41E4 entry is negative, jump to
+ BMI objc7              \ objc11 via objc7 to move onto the next alien in the
+                        \ group
 
- LDA L4210,X
- CMP #27
+ LDA L4210,X            \ If the alien's L4210 entry is >= 27, jump to objc9
+ CMP #27                \ to process this object
  BCS objc9
 
- LDA L4208,X
- BPL objc5
+ LDA L4208,X            \ Set A = the alien's L4208 entry, which gives the
+                        \ object ID for alien number alienCounter
+
+ BPL objc5              \ If A is positive, jump to objc5 to set the object
+                        \ coordinates and process this object
 
 .objc7
 
- JMP objc11
+ JMP objc11             \ Jump to objc11 to move onto the next alien in the
+                        \ group
 
 .objc8
 
@@ -12768,7 +12773,7 @@ ORG CODE%
                         \     points 216 to 255 contain the calculated
                         \     coordinates for objects 0 to 39
                         \
-                        \ So the in the following, we set the coordinates of
+                        \ So in the the following, we set the coordinates of
                         \ the point whose ID is in GG, i.e. point GG
 
                         \ We do the following calculation with 24-bit values,
@@ -12860,15 +12865,17 @@ ORG CODE%
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 1 in the calculation
 
- JSR SetPointCoords     \ Calculate the coordinates for point GG:
+ JSR SetPointCoords     \ Rotate the coordinates for point GG:
                         \
                         \   * For bullets, this is point 98
                         \
                         \   * For other objects, this is 216 + object ID, so
                         \     points 216 to 255 will contain the calculated
                         \     coordinates for objects 0 to 39
+                        \
+                        \ and update the coordinates in (xPoint, yPoint, zPoint)
 
- LDY objectId
+ LDY objectId           \ Fetch the object ID into Y
 
  LDA showLine           \ If showLine is non-zero, which means the line is not
  BNE objc12             \ visible, jump to objc12 to return from the subroutine
