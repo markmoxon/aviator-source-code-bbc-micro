@@ -5952,7 +5952,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: SetObjectPoints (Part 1 of 2)
+\       Name: SetObjPointCoords (Part 1 of 2)
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinates for a point within an object
@@ -6021,7 +6021,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.SetObjectPoints
+.SetObjPointCoords
 
  LDX GG                 \ Set X to the point ID whose coordinates we want to
                         \ calculate
@@ -6222,7 +6222,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: SetObjectPoints (Part 2 of 2)
+\       Name: SetObjPointCoords (Part 2 of 2)
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Apply the correct scale factor to the matrix multiplication
@@ -10576,11 +10576,11 @@ ORG CODE%
  STX objectAnchorPoint
  LDA #&60
  STA GG
- JSR SetObjectPoints
+ JSR SetObjPointCoords
 
  LDA #&61
  STA GG
- JSR SetObjectPoints
+ JSR SetObjPointCoords
 
  LDX #&62
  LDY #&60
@@ -11160,7 +11160,9 @@ ORG CODE%
 
  JSR ProcessKeyLogger   \ Process any key presses in the key logger
 
- JSR ResetLineLists     \ Reset the line lists at linesToShow and linesToHide
+ JSR ResetLineLists     \ Reset the line lists at linesToShow and linesToHide,
+                        \ which will populate them with the correct lines to
+                        \ show for the starting point on the runway
 
  JSR IndicatorF         \ Update the flaps indicator
 
@@ -11176,7 +11178,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 1 of 14)
+\       Name: MainLoop (Part 1 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Start the main loop by processing gunfire and bullets
@@ -11263,10 +11265,10 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 2 of 14)
+\       Name: MainLoop (Part 2 of 15)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Reset object statuses and related points, make the sound of firing
+\    Summary: Reset object statuses and related points
 \
 \ ******************************************************************************
 
@@ -11298,6 +11300,15 @@ ORG CODE%
 
  BPL main4              \ Loop back until we have zeroed all 40 bytes
 
+\ ******************************************************************************
+\
+\       Name: MainLoop (Part 3 of 15)
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Make the sound of firing, if appropriate
+\
+\ ******************************************************************************
+
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
  BEQ main5              \ the air, so jump to main5 to skip updating the bullet
                         \ positions
@@ -11315,7 +11326,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 3 of 14)
+\       Name: MainLoop (Part 4 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Call the Theme main loop
@@ -11332,7 +11343,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 4 of 14)
+\       Name: MainLoop (Part 5 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: 
@@ -11378,7 +11389,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 5 of 14)
+\       Name: MainLoop (Part 6 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: 
@@ -11391,8 +11402,8 @@ ORG CODE%
 
 .main7
 
- LDA themeStatus
- BNE main12
+ LDA themeStatus        \ If themeStatus is non-zero then either the Theme is
+ BNE main12             \ not enabled, or ??? so jump to main12
 
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
  BEQ main11             \ the air, so jump to main11
@@ -11432,7 +11443,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 6 of 14)
+\       Name: MainLoop (Part 7 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Process the terminate key
@@ -11459,7 +11470,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 7 of 14)
+\       Name: MainLoop (Part 8 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: If we fire the guns on the runway, enable the Theme
@@ -11495,7 +11506,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 8 of 14)
+\       Name: MainLoop (Part 9 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Fill up the tank if the engine is switched off, and process the
@@ -11517,7 +11528,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 9 of 14)
+\       Name: MainLoop (Part 10 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Award points for a successful landing
@@ -11540,7 +11551,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 10 of 14)
+\       Name: MainLoop (Part 11 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Process engine start and stop
@@ -11592,7 +11603,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 11 of 14)
+\       Name: MainLoop (Part 12 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Spend at least 9 centiseconds processing lines from the
@@ -11627,7 +11638,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 12 of 14)
+\       Name: MainLoop (Part 13 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Process more lines and update the view out of the canopy
@@ -11643,7 +11654,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 13 of 14)
+\       Name: MainLoop (Part 14 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Handle the score display
@@ -11691,7 +11702,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MainLoop (Part 14 of 14)
+\       Name: MainLoop (Part 15 of 15)
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Update the status of any new line points
@@ -12364,15 +12375,15 @@ ORG CODE%
                         \ to calculate its visibility
 
  STA GG                 \ Store the point ID in GG so its coordinates get
-                        \ calculated in the call to SetObjectPoints
+                        \ calculated in the call to SetObjPointCoords
 
  LDA #0                 \ Set L0CC4 = 0
  STA L0CC4
 
  STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
-                        \ object points in the call toSetObjectPoints
+                        \ object points in the call toSetObjPointCoords
 
- JSR SetObjectPoints    \ ???
+ JSR SetObjPointCoords  \ ???
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
  BNE plin12             \ so jump to plin12 to clear down the stack and return
@@ -12396,9 +12407,9 @@ ORG CODE%
  STA L0CC4
 
  STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
-                        \ object points in the call toSetObjectPoints
+                        \ object points in the call toSetObjPointCoords
 
- JSR SetObjectPoints    \ ???
+ JSR SetObjPointCoords  \ ???
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
  BNE plin20             \ so jump to plin20 to return from the subroutine (as
@@ -12676,9 +12687,9 @@ ORG CODE%
 
                         \ If we get here then the object ID is 30
 
- LDA themeStatus        \ If themeStatus is non-zero then the Theme is ???, so
- BNE objc8              \ jump to objc12 via objc8 to return from the
-                        \ subroutine
+ LDA themeStatus        \ If themeStatus is non-zero then either the Theme is
+ BNE objc8              \ not enabled, or ??? so jump to objc8 to return from
+                        \ the subroutine
 
  LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
  STA TC                 \ we work through all 8 items in this group
@@ -13686,10 +13697,10 @@ ORG CODE%
  LDX TC                 \ Set X = TC to point to the item to update on the radar
                         \ (0 for the runway, 1 for the alien)
 
- LDA radarX,X           \ Set I = the X-th byte of radarX, the x-coordinate of
+ LDA xRadar,X           \ Set I = the X-th byte of xRadar, the x-coordinate of
  STA I                  \ the current line or dot on the radar
 
- LDA radarY,X           \ Set J = the X-th byte of radarY, the y-coordinate of
+ LDA yRadar,X           \ Set J = the X-th byte of yRadar, the y-coordinate of
  STA J                  \ the current line or dot on the radar
 
  LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
@@ -13765,7 +13776,7 @@ ORG CODE%
  ADC #140               \ to move the coordinate onto the radar, whose centre
  STA I                  \ cross on-screen is at (140, 207)
 
- STA radarX,X           \ Store the x-coordinate as the X-th byte of radarX, so
+ STA xRadar,X           \ Store the x-coordinate as the X-th byte of xRadar, so
                         \ we can erase this item from the radar later
 
  LDA zPointLo           \ Set J = zPointLo + 208
@@ -13773,7 +13784,7 @@ ORG CODE%
  ADC #208               \ to move the coordinate onto the radar, whose centre
  STA J                  \ cross on-screen is at (140, 207)
 
- STA radarY,X           \ Store the x-coordinate as the X-th byte of radarY, so
+ STA yRadar,X           \ Store the x-coordinate as the X-th byte of yRadar, so
                         \ we can erase this item from the radar later
 
  LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the
@@ -14481,21 +14492,23 @@ ORG CODE%
 
 .L2F1C
 
- LDX themeStatus
- BMI L2F4D
+ LDX themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
+ BMI L2F4D              \ enabled, so jump to L2F4D to return from the
+                        \ subroutine
 
- BEQ L2F4D
+ BEQ L2F4D              \ If themeStatus is zero, return from the subroutine
 
- LDA onGround
- BNE L2F4D
+ LDA onGround           \ If onGround is non-zero, then we are on the ground, so
+ BNE L2F4D              \ jump to L2F4D to return from the subroutine
 
- STA L420F,X
+ STA L4210-1,X          \ X is 1 to 8, so this updates the X-th entry in L4210
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
                         \ second so this will be pretty random
 
- AND #&0F
+ AND #15                \ Reduce the random number to the range 0 to 15
+
  CMP #&0E
  BCS L2F4D
 
@@ -14510,7 +14523,8 @@ ORG CODE%
  BNE L2F45
 
  STA L4208,X
- RTS
+
+ RTS                    \ Return from the subroutine
 
 .L2F45
 
@@ -14521,13 +14535,13 @@ ORG CODE%
 
 .L2F4D
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: L2F4E
 \       Type: Subroutine
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15191,7 +15205,7 @@ ORG CODE%
 
  LDA #2
  STA GG
- JSR SetObjectPoints
+ JSR SetObjPointCoords
 
  LDX #5
 
@@ -15204,7 +15218,7 @@ ORG CODE%
 
  LDA #4
  STA GG
- JSR SetObjectPoints
+ JSR SetObjPointCoords
 
  LDY #2
  LDX #3
@@ -16531,14 +16545,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: radarX
+\       Name: xRadar
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: The x-coordinates of the runway and alien on the radar
 \
 \ ******************************************************************************
 
-.radarX
+.xRadar
 
  EQUB &8A               \ The x-coordinate of the runway on the radar, stored so
                         \ we can erase it again
@@ -16548,14 +16562,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: radarY
+\       Name: yRadar
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: The y-coordinates of the runway and alien on the radar
 \
 \ ******************************************************************************
 
-.radarY
+.yRadar
 
  EQUB &D0               \ The y-coordinate of the runway on the radar, stored so
                         \ we can erase it again
@@ -18356,7 +18370,7 @@ NEXT
 \
 \       Name: L4208
 \       Type: Variable
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -18370,26 +18384,13 @@ NEXT
  EQUB &65, &64          \ Zeroed in ResetVariables
  EQUB &62, &61
  EQUB &60, &5F
- EQUB &5E  
-
-\ ******************************************************************************
-\
-\       Name: L420F
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L420F
-
- EQUB &5C               \ Zeroed in ResetVariables
+ EQUB &5E, &5C
 
 \ ******************************************************************************
 \
 \       Name: L4210
 \       Type: Variable
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ******************************************************************************
