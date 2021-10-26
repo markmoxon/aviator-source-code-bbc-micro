@@ -1,5 +1,7 @@
 # Source code for Aviator on the BBC Micro
 
+![Screenshot of Aviator on the BBC Micro](https://aviator.bbcelite.com/images/github/Aviator.png)
+
 This repository contains source code for Aviator on the BBC Micro.
 
 I am slowly adding commentary to the code. Check out the [main source file](1-source-files/main-sources/aviator-source.asm) to see how I'm getting on, as well as the work-in-progress collection of [deep dives](https://aviator.bbcelite.com/deep_dives/). It might take some time... it's complicated stuff!
