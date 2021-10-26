@@ -822,7 +822,7 @@ ORG &0900
 
  SKIP 2
 
-.L0CA8
+.xRadarLo
 
  SKIP 8
 
@@ -842,7 +842,7 @@ ORG &0900
 
  SKIP 2
 
-.L0CB8
+.xRadarHi
 
  SKIP 2
 
@@ -11106,12 +11106,12 @@ ORG CODE%
  STA xPointLo           \ radar (as this coordinate is off the radar)
 
  LDA #1                 \ Set TC = 1, so we remove the alien from the radar
- STA TC                 \ rather than the runway when we call UpdateRadar
+ STA TC                 \ rather than the runway when we call DrawRadarBlip
 
  STA xPointHi           \ Set xPointHi = 1, so the value in xPointLo is treated
                         \ as positive
 
- JSR UpdateRadar        \ Remove the current dot from the radar, but don't draw
+ JSR DrawRadarBlip      \ Remove the current dot from the radar, but don't draw
                         \ a new one, as xPointLo is off-radar
 
  LDY #&21
@@ -11375,7 +11375,7 @@ ORG CODE%
  BNE main7
 
  LDY #1
- JSR L2CD3
+ JSR UpdateRadarBlip
 
  LDX L4205
  BMI main7
@@ -11385,7 +11385,7 @@ ORG CODE%
  CMP #&1B
  BCC main7
 
- JSR L2CD3
+ JSR UpdateRadarBlip
 
 \ ******************************************************************************
 \
@@ -12059,15 +12059,17 @@ ORG CODE%
 \       Name: ProcessLine (Part 1 of 7)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Check whether a line is visible, starting with the horizon
+\    Summary: Process a line, rotating and transforming it to the correct
+\             coordinates and calculating its visibility
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   lineId              The line ID of the line to check
+\   lineId              The line ID of the line to process
 \
-\   HH                  Determines whether we check for distance:
+\   HH                  Determines whether we check against the line's maximum
+\                       visible distance during the visibility checks:
 \
 \                         * 0 = check the line's distance against the maximum
 \                               visible distance in maxLineDistance
@@ -12094,29 +12096,29 @@ ORG CODE%
  STA showLine           \ value (so we start out by assuming the line is
                         \ visible, and change this if we find that it isn't)
 
- STA isObject           \ Set isObject = 0, which we set to a non-zero object ID
-                        \ if we end up processing an object
+ STA isObject           \ Set isObject = 0, which we will set to a non-zero
+                        \ object ID below if we end up processing an object
 
  LDX lineId             \ Set X = lineId, so X contains the ID of the line we
                         \ want to check for visibility
 
- LDY lineEndPointId,X   \ Set M to the point ID of the line's end point, which
- STY M                  \ is in the lineId-th entry of lineEndPointId
+ LDY lineEndPointId,X   \ Set M to the point ID of the line's end point
+ STY M
 
- LDY lineStartPointId,X \ Set L to the point ID for the line's start point,
- STY L                  \ which is in the lineId-th entry of lineStartPointId
+ LDY lineStartPointId,X \ Set L to the point ID for the line's start point
+ STY L
 
- CPX #12                \ If lineId >= 12, jump to plin2
- BCS plin2
+ CPX #12                \ If lineId >= 12, then this is not the horizon or a
+ BCS plin2              \ runway line, so jump to plin2 to process the line
 
- CPX #0                 \ If lineId is not zero, jump to plin1
- BNE plin1
+ CPX #0                 \ If lineId is not zero, then this is not the horizon,
+ BNE plin1              \ so it must be a runway line, so jump to plin1 to
+                        \ process it
 
                         \ If we get here then lineId is 0, so this is the
                         \ horizon
 
- JSR ProcessHorizon     \ Check whether the horizon is visible and set showLine
-                        \ accordingly
+ JSR ProcessHorizon     \ Process the horizon and set showLine accordingly
 
  RTS                    \ Return from the subroutine
 
@@ -12132,13 +12134,12 @@ ORG CODE%
 .plin1
 
                         \ If we get here then lineId is in the range 1 to 11,
-                        \ so this is the runway
+                        \ so this is a runway line
 
- JSR ProcessRunway      \ Check whether this runway line is visible and set
-                        \ showLine accordingly
+ JSR ProcessRunway      \ Process the runway line and set showLine accordingly
 
  JMP plin19             \ Jump down to plin19 to check the line's z-coordinates
-                        \ and return the visibility result
+                        \ and return the final visibility result
 
 \ ******************************************************************************
 \
@@ -12171,42 +12172,44 @@ ORG CODE%
 
  JMP plin17             \ Bit 7 of the point's status byte is set, which means
                         \ we have already calculated this point's coordinates
-                        \ and visibility, so jump to plin17 to do the distance
-                        \ and z-coordinate tests
+                        \ and visibility, so jump to plin17 to do the final
+                        \ distance and z-coordinate tests
 
 .plin4
 
-                        \ We get here if lineId >= 12 and we haven't already
-                        \ checked the point whose ID is in Y
+                        \ We get here if we haven't already calculated the
+                        \ coordinates and visibility for the point whose ID is
+                        \ in Y, so that's what we do now
 
  TYA                    \ Store the point ID of this point on the stack and in
  PHA                    \ pointId. We are about to check whether this point is
- STA pointId            \ part of a multi-point line, and if so we're going to
-                        \ add the IDs of all the other points in the line to
+ STA pointId            \ part of a multi-point object, and if so we're going to
+                        \ add the IDs of all the other points in the object to
                         \ the stack and then work our way through the stacked
-                        \ values, checking the visibility for each of them
+                        \ values, processing each of them in turn
                         \
                         \ Adding the starting point ID to the stack and to
                         \ pointId at the same time lets us use this ID as a
                         \ backstop - in other words, we'll know we have
-                        \ processed all the other point IDs that we added to
-                        \ the stack when we pull a value off the stack that
-                        \ matches the value of pointId (see parts 5 and 6 to
-                        \ see this in action)
+                        \ processed all the other point that we added to the
+                        \ stack when we pull a value off the stack that matches
+                        \ the value of pointId (see parts 5 and 6 to see this in
+                        \ action)
 
 .plin5
 
  LDA objectPoints,Y     \ Fetch this point's entry from objectPoints, which
                         \ will tell us if this point is related to any other
-                        \ points as part of a larger object
+                        \ points as part of a multi-point object
 
  CMP #40                \ If object ID < 40 then this point does not link to
- BCC plin8              \ another point, or it's the last point in a linked
-                        \ object, so jump to plin8 to check the visibility of
-                        \ this point
+ BCC plin8              \ another point, so it's the last point in a linked
+                        \ object - i.e. the ID of the object itself - so jump to
+                        \ plin8 to process the point and any others we already
+                        \ put on the stack
 
                         \ If we get here then this point links to another point
-                        \ in the object table, so we follow the links and add
+                        \ in objectPoints, so we now follow the links and add
                         \ all of the point IDs to the stack and to the
                         \ relatedPoints list, looping back until we reach the
                         \ last point, at which point we jump to plin8 with a
@@ -12215,17 +12218,19 @@ ORG CODE%
  SEC                    \ Subtract 40 from A to get the point ID of the new
  SBC #40                \ point to check
 
- STA objectAnchorPoint  \ Store the new point's ID as the object's anchor point
-
+ STA objectAnchorPoint  \ Store the new point's ID as the object's anchor point,
+                        \ so it contains the ID of the last point before the
+                        \ object ID at the end of the linked list of points
+ 
  TAY                    \ Copy the new point's ID into Y so we can use it as an
                         \ an index into pointStatus
 
  LDA pointStatus,Y      \ If bit 7 of the new point's status byte is set, then
  BMI plin14             \ we have already calculated the coordinates and
-                        \ visibility this new point, which means we have already
-                        \ done this the rest of the points in the linked object,
-                        \ so jump down to plin14 to check the points we added
-                        \ to the stack
+                        \ visibility for this new point, which means we have
+                        \ also done the rest of the points in the linked object,
+                        \ so jump down to plin14 to check the new points we
+                        \ added to the stack
 
  TYA                    \ Set A = the new point's ID
 
@@ -12277,7 +12282,7 @@ ORG CODE%
 
 .plin7
 
- JMP plin16             \ Jump down to plin16 with the next point ID in GG, to
+ JMP plin16             \ Jump down to plin16 with the bullet point ID in GG, to
                         \ check distance and z-coordinates and return the final
                         \ result
 
@@ -12286,15 +12291,16 @@ ORG CODE%
 \       Name: ProcessLine (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Calculate the object's coordinates and visibility
 \
 \ ******************************************************************************
 
 .plin8
 
-                        \ If we get here then the point is either the last one
-                        \ in a linked object, or it's not part of a linked
-                        \ object, and the point's object ID in A is < 40
+                        \ By the time we get here, Y contains the last entry
+                        \ from objectPoints for this multi-point object (so it
+                        \ contains the object ID), and any previous points from
+                        \ the objectPoints entry are on the stack
 
  TAY                    \ Store the object ID in objectId
  STY objectId
@@ -12304,7 +12310,7 @@ ORG CODE%
 
  CMP #12                \ If the object ID >= 12, then the object ID is in the
  BCS plin6              \ range 12 to 15, which means it's a bullet line, so
-                        \ jump to plin6 to work out its visibility
+                        \ jump up to plin6 to work out its visibility
 
 .plin9
 
@@ -12322,8 +12328,9 @@ ORG CODE%
 
  LDY objectId           \ Fetch the object ID from objectId
 
- LDA objectStatus,Y     \ If bit 7 of the object's status byte is set, jump
- BMI plin13             \ to plin13
+ LDA objectStatus,Y     \ If bit 7 of the object's status byte is set, then the
+ BMI plin13             \ object is visible, so jump to plin13 to set the anchor
+                        \ point and work our way through the points on the stack
 
 .plin11
 
@@ -12342,16 +12349,16 @@ ORG CODE%
 .plin13
 
  TYA                    \ Set objectAnchorPoint = object ID + 216
- CLC
- ADC #216
- STA objectAnchorPoint
+ CLC                    \
+ ADC #216               \ so it contains the point ID associated with the anchor
+ STA objectAnchorPoint  \ point of this object
 
 \ ******************************************************************************
 \
 \       Name: ProcessLine (Part 6 of 7)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Check the visibility of all points on the stack
+\    Summary: Check the visibility of all the object's points on the stack
 \
 \ ******************************************************************************
 
@@ -12361,7 +12368,8 @@ ORG CODE%
                         \ linked object and come across a point with bit 7 set
                         \ in the point's status byte (which means we have
                         \ already processed the rest of the points in the
-                        \ linked object)
+                        \ linked object), otherwise we got here after processing
+                        \ the object in the previous part
 
                         \ We now loop through any points we have added to the
                         \ stack and process them all. If we find any that are
@@ -12383,14 +12391,16 @@ ORG CODE%
  STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
                         \ object points in the call toSetObjPointCoords
 
- JSR SetObjPointCoords  \ ???
+ JSR SetObjPointCoords  \ Calculate the coordinates for this object point
 
- LDA showLine           \ If showLine is non-zero, then the line is not visible,
- BNE plin12             \ so jump to plin12 to clear down the stack and return
-                        \ from the subroutine
+ LDA showLine           \ If showLine is non-zero, then the point is not
+ BNE plin12             \ visible, so jump to plin12 to clear down the stack and
+                        \ return from the subroutine
 
- LDY GG                 \ Set objectAnchorPoint = the point ID in GG
- STY objectAnchorPoint
+ LDY GG                 \ Set objectAnchorPoint = the point ID in GG, so it
+ STY objectAnchorPoint  \ contains the ID of the last point before the object ID
+                        \ at the end of the linked list of points (as the last
+                        \ ID, the object ID, is processed by plin15 below)
 
  LDA #%10000000         \ Set bit 7 of the point's status byte, to indicate that
  ORA pointStatus,Y      \ the point has now had its coordinates and visibility
@@ -12409,7 +12419,7 @@ ORG CODE%
  STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
                         \ object points in the call toSetObjPointCoords
 
- JSR SetObjPointCoords  \ ???
+ JSR SetObjPointCoords  \ Calculate the coordinates for this object point
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
  BNE plin20             \ so jump to plin20 to return from the subroutine (as
@@ -12926,8 +12936,8 @@ ORG CODE%
                         \     part 10)
                         \
                         \   * If this object is not caught by the above, then
-                        \     finally, we finally return from the subroutine
-                        \     (see part 11)
+                        \     we finally return from the subroutine (see part
+                        \     11)
 
  JSR NextObjectGroup    \ If this object is in an object group, i.e. Y is 6, 7,
                         \ 8 or 9, then increment the object's group number
@@ -13598,93 +13608,166 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L2CD3
+\       Name: UpdateRadarBlip
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: 
+\    Summary: Update a blip on the radar (runway or alien)
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine calculates the screen coordinates for a blip on the radar, which
+\ it then passes to DrawRadarBlip to update the blip.
+\
+\ Arguments:
+\
+\   Y                   The item to update on the radar:
+\
+\                         * 1 = update the runway
+\
+\                         * 33 = update the alien
 \
 \ ******************************************************************************
 
-.L2CD3
+.UpdateRadarBlip
 
- LDX #0
- STX TC
- CPY #&21
- BNE L2CE1
+ LDX #0                 \ Set X = 0 act as an offset in the loop below, so we
+                        \ iterate through the x, y and z axes
 
- LDA #1
- STA TC
+ STX TC                 \ Set TC = 0, to indicate that we should draw the runway
+                        \ for when we fall through into DrawRadarBlip below
 
-.L2CE1
+ CPY #33                \ If Y = 33, skip the following two instructions
+ BNE upbl1
 
- LDA xObjectHi,Y
- SEC
- SBC xPlaneHi,X
- STA L0CA8,X
- LDA #0
- SBC xPlaneTop,X
- STA L0CB8,X
- TYA
- CLC
- ADC #&28
+ LDA #1                 \ Y = 33, which is the alien, so set TC = 1, to indicate
+ STA TC                 \ that we should draw the alien for when we fall through
+                        \ into DrawRadarBlip below
+
+                        \ We now loop through the x-, y- and z-axes to do the
+                        \ following, where the object is either the runway or
+                        \ the alien:
+                        \
+                        \   xRadar = xObject - xPlane
+                        \   yRadar = yObject - yPlane
+                        \   zRadar = zObject - zPlane
+                        \
+                        \ so xRadar contains the vector from the plane to the
+                        \ object, which is the same as the vector from the
+                        \ centre of the radar to the blip
+                        \
+                        \ Note that we only bother with the top and high bytes
+                        \ of the calculation (where top, high and low are the
+                        \ bytes in a 24-bit number), as the radar isn't accurate
+                        \ enough to show the low byte, so we can just ignore it
+                        \
+                        \ The loop comments are for the xRadar iteration
+.upbl1
+
+ LDA xObjectHi,Y        \ Set (xRadarHi xRadarLo) to the following:
+ SEC                    \
+ SBC xPlaneHi,X         \   (0 xObjectHi) - (xPlaneTop xPlaneHi)
+ STA xRadarLo,X         \
+                        \ starting with the top bytes
+
+ LDA #0                 \ and then the high bytes (we don't bother with the low
+ SBC xPlaneTop,X        \ bytes)
+ STA xRadarHi,X
+
+ TYA                    \ Set Y = Y + 40
+ CLC                    \
+ ADC #40                \ so Y points to xObject, then yObject, and then zObject
  TAY
- INX
- CPX #3
- BNE L2CE1
 
- LDX #&A8
+ INX                    \ Increment X to move on to the next axis
 
- LDY #0                 \ Set GG to point ID 0, to pass to the call to 
- STY GG                 \ SetPointCoords
+ CPX #3                 \ Loop back until we have done all 3 axes
+ BNE upbl1
 
- JSR CopyWorkToPoint
+                        \ We now want to calculate the coordinates for this
+                        \ vector when rotated correctly, so we first set up
+                        \ the coordinates, and then rotate them
+
+ LDX #LO(xRadarLo)      \ Set X so the call to CopyWorkToPoint copies from
+                        \ (xRadar, yRadar, zRadar) to (xPoint, yPoint, zPoint)
+
+ LDY #0                 \ Set Y to point ID 0, so the call to SetPointCoords
+                        \ copies the coordinates to (xPoint, yPoint, zPoint)
+
+ STY GG                 \ Set GG = 0
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xRadar, yRadar, zRadar)
+                        \ to (xPoint, yPoint, zPoint)
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 1 in the calculation
 
- JSR SetPointCoords     \ Calculate the coordinates for point 0
+ JSR SetPointCoords     \ Calculate the coordinates for point 0, so they are
+                        \ rotated and stored in (xPoint, yPoint, zPoint)
 
- LDA xPointHi
- STA R
- LDA zPointHi
- STA S
- LDX #3
+                        \ We now take the rotated x- and z-coordinates and
+                        \ scale them down so they work as screen coordinates
+                        \ within the range of the radar display (we can ignore
+                        \ the y-coordinate, as the radar is a top-down display
+                        \ that ignores altitude)
+                        
+ LDA xPointHi           \ Set R = xPointHi so we can shift xPoint below without
+ STA R                  \ affecting the value of xPointHi
 
-.L2D1A
+ LDA zPointHi           \ Set S = zPointHi so we can shift zPoint below without
+ STA S                  \ affecting the value of zPointHi
 
- LSR R
- ROR xPointLo
- LSR S
- ROR zPointLo
- DEX
- BPL L2D1A
+ LDX #3                 \ We now want to shift the point values right by 3
+                        \ places, so set a shift counter in X
 
- LSR R
+.upbl2
+
+ LSR R                  \ Set (R xPointLo) = (R xPointLo) >> 1
+ ROR xPointLo           \                  = xPoint / 2
+
+ LSR S                  \ Set (S zPointLo) = (S zPointLo) >> 1
+ ROR zPointLo           \                  = zPoint / 2
+
+ DEX                    \ Decrement the shift counter
+
+ BPL upbl2              \ Loop back until we have shifted right three times
+
+                        \ Because mode 5 pixels are twice as wide as they are
+                        \ high, we need to halve the x-coordinate one more time
+                        \ to get the correct result for the pixel x-coordinate
+
+ LSR R                  \ Set (R A) = (R xPointLo) >> 1
  LDA xPointLo
  ROR A
- ADC #0
- STA xPointLo
+
+ ADC #0                 \ Add bit 0 of the original value to round up the
+ STA xPointLo           \ division and store the result in xPointLo
+
+                        \ We now fall through into DrawRadarBlip to erase and
+                        \ redraw the blip on the radar at the coordinates in
+                        \ (xPointLo, zPointLo)
 
 \ ******************************************************************************
 \
-\       Name: UpdateRadar
+\       Name: DrawRadarBlip
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Update an item on the radar (runway or alien)
+\    Summary: Draw a blip on the radar (runway or alien)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   (xPointHi xPointLo) The radar x-coordinate of the item to display
+\   xPointLo            The radar x-coordinate of the blip to update
 \
-\   (zPointLo zPointHi) The radar y-coordinate of the item to display
+\   xPointHi            The sign of the x-coordinate in bit 7
 \
-\   TC                  The item to update on the radar:
+\   zPointLo            The radar y-coordinate of the blip to update (we use the
+\                       real-world z-coordinate, as the radar is a top-down
+\                       view)
+\
+\   zPointHi            The sign of the y-coordinate in bit 7
+\
+\   TC                  The blip to update on the radar:
 \
 \                         * 0 = update the runway
 \
@@ -13692,16 +13775,18 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.UpdateRadar
+.DrawRadarBlip
 
- LDX TC                 \ Set X = TC to point to the item to update on the radar
+ LDX TC                 \ Set X = TC to point to the blip to update on the radar
                         \ (0 for the runway, 1 for the alien)
 
- LDA xRadar,X           \ Set I = the X-th byte of xRadar, the x-coordinate of
- STA I                  \ the current line or dot on the radar
+ LDA xRadarBuffer,X     \ Set I = the X-th byte of xRadarBuffer, which contains
+ STA I                  \ the x-coordinate of the current line or dot on the
+                        \ radar from a previous call to DrawRadarBlip
 
- LDA yRadar,X           \ Set J = the X-th byte of yRadar, the y-coordinate of
- STA J                  \ the current line or dot on the radar
+ LDA yRadarBuffer,X     \ Set J = the X-th byte of yRadarBuffer, which contains
+ STA J                  \ the y-coordinate of the current line or dot on the
+                        \ radar from a previous call to DrawRadarBlip
 
  LDA #128               \ Set N = 128 so the call to DrawVectorLine erases the
  STA N                  \ current line
@@ -13716,7 +13801,7 @@ ORG CODE%
                         \ direction V
 
  LDX TC                 \ If TC is non-zero then we just erased a dot from the
- BNE radl1              \ radar, so jump to radl1 as we don't need to redraw the
+ BNE drbl1              \ radar, so jump to drbl1 as we don't need to redraw the
                         \ cross at the centre of the radar
                         
                         \ If we get here then we just erased a line from the
@@ -13735,7 +13820,7 @@ ORG CODE%
  LDA #%11001100         \ Redraw the centre and right pixels of the cross
  STA row25_block35_7
 
-.radl1
+.drbl1
 
                         \ Now to calculate the position of the new line or dot
                         \ to draw on the radar
@@ -13744,31 +13829,31 @@ ORG CODE%
                         \ runway
 
  BIT xPointHi           \ If the high byte in xPointHi is positive, jump to
- BPL radl2              \ radl2 to skip the following three instructions
+ BPL drbl2              \ drbl2 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
  CLC                    \ positive, i.e. A = |xPointLo|
  ADC #1
 
-.radl2
+.drbl2
 
- CMP #13                \ If A >= 13, jump to radl4 to return from the
- BCS radl4              \ subroutine, as the item is off the side of the radar
+ CMP #13                \ If A >= 13, jump to drbl4 to return from the
+ BCS drbl4              \ subroutine, as the item is off the side of the radar
 
  LDA zPointLo           \ Set A = zPointLo, the y-coordinate of the alien or
                         \ runway
 
  BIT zPointHi           \ If the high byte in zPointHi is positive, jump to
- BPL radl3              \ radl3 to skip the following three instructions
+ BPL drbl3              \ drbl3 to skip the following three instructions
 
  EOR #&FF               \ Otherwise negate A using two's complement, so A is
  CLC                    \ positive, i.e. A = |zPointLo|
  ADC #1
 
-.radl3
+.drbl3
 
- CMP #26                \ If A >= 26, jump to radl4 to return from the
- BCS radl4              \ subroutine, as the item is off the top or bottom of
+ CMP #26                \ If A >= 26, jump to drbl4 to return from the
+ BCS drbl4              \ subroutine, as the item is off the top or bottom of
                         \ the radar
 
  LDA xPointLo           \ Set I = xPointLo + 140
@@ -13776,16 +13861,18 @@ ORG CODE%
  ADC #140               \ to move the coordinate onto the radar, whose centre
  STA I                  \ cross on-screen is at (140, 207)
 
- STA xRadar,X           \ Store the x-coordinate as the X-th byte of xRadar, so
-                        \ we can erase this item from the radar later
+ STA xRadarBuffer,X     \ Store the x-coordinate in the relevant byte of
+                        \ xRadarBuffer, so we can easily erase this item from
+                        \ the radar when we want to move it again
 
  LDA zPointLo           \ Set J = zPointLo + 208
  CLC                    \
  ADC #208               \ to move the coordinate onto the radar, whose centre
  STA J                  \ cross on-screen is at (140, 207)
 
- STA yRadar,X           \ Store the x-coordinate as the X-th byte of yRadar, so
-                        \ we can erase this item from the radar later
+ STA yRadarBuffer,X     \ Store the x-coordinate in the relevant byte of
+                        \ yRadarBuffer, so we can easily erase this item from
+                        \ the radar when we want to move it again
 
  LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the
  STA N                  \ new line
@@ -13799,7 +13886,7 @@ ORG CODE%
  JSR DrawVectorLine     \ Draw a line from (I, J) as a vector (T, U) with
                         \ direction V
 
-.radl4
+.drbl4
 
  RTS                    \ Return from the subroutine
 
@@ -13818,91 +13905,93 @@ ORG CODE%
 
 .AlienInAcornsville
 
- LDY L4205
- BMI L2DCC
+ LDY L4205              \ Set Y = L4205
 
- LDA L4210,Y
- CMP #&1B
- BNE L2DFA
+ BMI acrn1              \ If Y is negative, jump to acrn1 to return from the
+                        \ subroutine
 
- LDA yObjectHi+33
- CMP #&0C
- BCS L2DCD
+ LDA L4210,Y            \ If the Y-th entry in L4210 <> 27, jump to acrn7
+ CMP #27
+ BNE acrn7
 
- LDA yObjectLo+33
- ADC #&0A
+ LDA yObjectHi+33       \ If the alien's yObjectHi coordinate >= 12, jump to
+ CMP #12                \ acrn2
+ BCS acrn2
+
+ LDA yObjectLo+33       \ Add 10 to the alien's yObject coordinate, starting
+ ADC #10                \ with the low bytes
  STA yObjectLo+33
- BCC L2DCC
 
- INC yObjectHi+33
+ BCC acrn1              \ If the addition of the low bytes overflowed, increment
+ INC yObjectHi+33       \ the high byte
 
-.L2DCC
+.acrn1
 
- RTS
+ RTS                    \ Return from the subroutine
 
-.L2DCD
+.acrn2
 
  LDX #0
  STX T
 
-.L2DD1
+.acrn3
 
  LDA xObjectHi+33,X
- BEQ L2DE9
+ BEQ acrn5
 
  LDA xObjectLo+33,X
  SEC
  SBC L0CF8
  STA xObjectLo+33,X
- BCS L2DE5
+ BCS acrn4
 
  DEC xObjectHi+33,X
 
-.L2DE5
+.acrn4
 
  LDA #1
  STA T
 
-.L2DE9
+.acrn5
 
  CPX #&50
- BEQ L2DF1
+ BEQ acrn6
 
  LDX #&50
- BNE L2DD1
+ BNE acrn3
 
-.L2DF1
+.acrn6
 
  LDA T
- BNE L2DCC
+ BNE acrn1
 
  LDA #&1C
  STA L4210,Y
 
-.L2DFA
+.acrn7
 
  CMP #&1C
- BNE L2DCC
+ BNE acrn1
 
  LDA L368F
- BNE L2DCC
+ BNE acrn1
 
  LDA yObjectLo+33
  SEC
  SBC #&0A
  STA yObjectLo+33
- BCS L2E11
+ BCS acrn8
 
  DEC yObjectHi+33
 
-.L2E11
+.acrn8
 
  LDA yObjectHi+33
- BNE L2DCC
+ BNE acrn1
 
  LDA yObjectLo+33
  CMP #&0A
- BCS L2DCC
+ BCS acrn1
 
  JSR PrintTooLate
 
@@ -14509,29 +14598,34 @@ ORG CODE%
 
  AND #15                \ Reduce the random number to the range 0 to 15
 
- CMP #&0E
- BCS L2F4D
+ CMP #14                \ If the random number is >= 14 (12.5% chance), jump to
+ BCS L2F4D              \ L2F4D to return from the subroutine
 
- ORA #&10
- DEC themeStatus
- LDX #8
+ ORA #16                \ Increase the random number to the range 16 to 29
+
+ DEC themeStatus        \ Decrement the alien counter in themeStatus
+
+ LDX #8                 \ Set X to act as a loop counter, going from 8 down to
+                        \ themeStatus
 
 .L2F3B
 
- DEX
- CPX themeStatus
+ DEX                    \ Decrement the loop counter
+
+ CPX themeStatus        \ If X <> themeStatus, jump to L2F45
  BNE L2F45
 
- STA L4208,X
+ STA L4208,X            \ X = themeStatus, so store the random number (in the
+                        \ range 16 to 29) in the X-th byte of L4208
 
  RTS                    \ Return from the subroutine
 
 .L2F45
 
- CMP L4208,X
- BNE L2F3B
+ CMP L4208,X            \ If the X-th byte of L4208 <> our random number, jump
+ BNE L2F3B              \ back to L2F3B to move on to the next alien
 
- INC themeStatus
+ INC themeStatus        \ Increment the alien counter in themeStatus again
 
 .L2F4D
 
@@ -14878,9 +14972,9 @@ ORG CODE%
  JSR L3181
 
  LDY Q
- STA L0CB8,Y
+ STA xRadarHi,Y
  LDA V
- STA L0CA8,Y
+ STA xRadarLo,Y
  LDA R
  STA xTempLo,Y
  INY
@@ -14921,8 +15015,8 @@ ORG CODE%
 
  LDA xTempLo,Y
  CLC
- ADC L0CB8,Y
- STA L0CB8,Y
+ ADC xRadarHi,Y
+ STA xRadarHi,Y
  BCC L3102
 
  INC xObjectLo,X
@@ -15212,7 +15306,7 @@ ORG CODE%
 .L3200
 
  LDA xTempLo,X
- STA L0CB8,X
+ STA xRadarHi,X
  DEX
  BPL L3200
 
@@ -15340,7 +15434,7 @@ ORG CODE%
  LSR R
  ROR A
  STA xTempHi,X
- LDA L0CB8,X
+ LDA xRadarHi,X
  ROR A
  ROR T,X
  LDY #2
@@ -15372,12 +15466,12 @@ ORG CODE%
  LDA W,X
  ADC T,X
  STA W,X
- LDA L0CA8,X
+ LDA xRadarLo,X
  ADC xTempLo,X
- STA L0CA8,X
- LDA L0CB8,X
+ STA xRadarLo,X
+ LDA xRadarHi,X
  ADC xTempHi,X
- STA L0CB8,X
+ STA xRadarHi,X
  DEX
  BPL L32BE
 
@@ -16545,14 +16639,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: xRadar
+\       Name: xRadarBuffer
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: The x-coordinates of the runway and alien on the radar
 \
 \ ******************************************************************************
 
-.xRadar
+.xRadarBuffer
 
  EQUB &8A               \ The x-coordinate of the runway on the radar, stored so
                         \ we can erase it again
@@ -16562,14 +16656,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: yRadar
+\       Name: yRadarBuffer
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: The y-coordinates of the runway and alien on the radar
 \
 \ ******************************************************************************
 
-.yRadar
+.yRadarBuffer
 
  EQUB &D0               \ The y-coordinate of the runway on the radar, stored so
                         \ we can erase it again
@@ -17505,198 +17599,198 @@ NEXT
 
 .lineEndPointId
 
- EQUB 30                \ Line ID:   0
- EQUB 2                 \ Line ID:   1
- EQUB 3                 \ Line ID:   2
- EQUB 4                 \ Line ID:   3
- EQUB 1                 \ Line ID:   4
- EQUB 7                 \ Line ID:   5
- EQUB 9                 \ Line ID:   6
- EQUB 11                \ Line ID:   7
- EQUB 13                \ Line ID:   8
- EQUB 15                \ Line ID:   9
- EQUB 17                \ Line ID:  10
- EQUB 19                \ Line ID:  11
- EQUB 59                \ Line ID:  12
- EQUB 114               \ Line ID:  13
- EQUB 42                \ Line ID:  14
- EQUB 43                \ Line ID:  15
- EQUB 44                \ Line ID:  16
- EQUB 46                \ Line ID:  17
- EQUB 47                \ Line ID:  18
- EQUB 48                \ Line ID:  19
- EQUB 53                \ Line ID:  20
- EQUB 54                \ Line ID:  21
- EQUB 55                \ Line ID:  22
- EQUB 56                \ Line ID:  23
- EQUB 58                \ Line ID:  24
- EQUB 57                \ Line ID:  25
- EQUB 51                \ Line ID:  26
- EQUB 60                \ Line ID:  27
- EQUB 61                \ Line ID:  28
- EQUB 62                \ Line ID:  29
- EQUB 63                \ Line ID:  30
- EQUB 64                \ Line ID:  31
- EQUB 65                \ Line ID:  32
- EQUB 66                \ Line ID:  33
- EQUB 116               \ Line ID:  34
- EQUB 113               \ Line ID:  35
- EQUB 113               \ Line ID:  36
- EQUB 112               \ Line ID:  37
- EQUB 111               \ Line ID:  38
- EQUB 67                \ Line ID:  39
- EQUB 119               \ Line ID:  40
- EQUB 120               \ Line ID:  41
- EQUB 68                \ Line ID:  42
- EQUB 69                \ Line ID:  43
- EQUB 70                \ Line ID:  44
- EQUB 71                \ Line ID:  45
- EQUB 117               \ Line ID:  46
- EQUB 81                \ Line ID:  47
- EQUB 85                \ Line ID:  48
- EQUB 85                \ Line ID:  49
- EQUB 85                \ Line ID:  50
- EQUB 118               \ Line ID:  51
- EQUB 72                \ Line ID:  52
- EQUB 73                \ Line ID:  53
- EQUB 74                \ Line ID:  54
- EQUB 75                \ Line ID:  55
- EQUB 90                \ Line ID:  56
- EQUB 94                \ Line ID:  57
- EQUB 94                \ Line ID:  58
- EQUB 94                \ Line ID:  59
- EQUB 96                \ Line ID:  60
- EQUB 98                \ Line ID:  61
- EQUB 76                \ Line ID:  62
- EQUB 77                \ Line ID:  63
- EQUB 78                \ Line ID:  64
- EQUB 79                \ Line ID:  65
- EQUB 101               \ Line ID:  66
- EQUB 100               \ Line ID:  67
- EQUB 102               \ Line ID:  68
- EQUB 103               \ Line ID:  69
- EQUB 105               \ Line ID:  70
- EQUB 104               \ Line ID:  71
- EQUB 107               \ Line ID:  72
- EQUB 106               \ Line ID:  73
- EQUB 109               \ Line ID:  74
- EQUB 109               \ Line ID:  75
- EQUB 215               \ Line ID:  76
- EQUB 110               \ Line ID:  77
- EQUB 122               \ Line ID:  78
- EQUB 121               \ Line ID:  79
- EQUB 123               \ Line ID:  80
- EQUB 123               \ Line ID:  81
- EQUB 145               \ Line ID:  82
- EQUB 145               \ Line ID:  83
- EQUB 147               \ Line ID:  84
- EQUB 147               \ Line ID:  85
- EQUB 148               \ Line ID:  86
- EQUB 158               \ Line ID:  87
- EQUB 159               \ Line ID:  88
- EQUB 160               \ Line ID:  89
- EQUB 160               \ Line ID:  90
- EQUB 161               \ Line ID:  91
- EQUB 162               \ Line ID:  92
- EQUB 161               \ Line ID:  93
- EQUB 163               \ Line ID:  94
- EQUB 168               \ Line ID:  95
- EQUB 166               \ Line ID:  96
- EQUB 167               \ Line ID:  97
- EQUB 168               \ Line ID:  98
- EQUB 172               \ Line ID:  99
- EQUB 171               \ Line ID: 100
- EQUB 124               \ Line ID: 101
- EQUB 171               \ Line ID: 102
- EQUB 175               \ Line ID: 103
- EQUB 174               \ Line ID: 104
- EQUB 173               \ Line ID: 105
- EQUB 174               \ Line ID: 106
- EQUB 151               \ Line ID: 107
- EQUB 151               \ Line ID: 108
- EQUB 149               \ Line ID: 109
- EQUB 150               \ Line ID: 110
- EQUB 138               \ Line ID: 111
- EQUB 138               \ Line ID: 112
- EQUB 137               \ Line ID: 113
- EQUB 139               \ Line ID: 114
- EQUB 133               \ Line ID: 115
- EQUB 135               \ Line ID: 116
- EQUB 134               \ Line ID: 117
- EQUB 134               \ Line ID: 118
- EQUB 129               \ Line ID: 119
- EQUB 130               \ Line ID: 120
- EQUB 131               \ Line ID: 121
- EQUB 131               \ Line ID: 122
- EQUB 209               \ Line ID: 123
- EQUB 126               \ Line ID: 124
- EQUB 126               \ Line ID: 125
- EQUB 127               \ Line ID: 126
- EQUB 141               \ Line ID: 127
- EQUB 124               \ Line ID: 128
- EQUB 143               \ Line ID: 129
- EQUB 142               \ Line ID: 130
- EQUB 154               \ Line ID: 131
- EQUB 155               \ Line ID: 132
- EQUB 156               \ Line ID: 133
- EQUB 153               \ Line ID: 134
- EQUB 179               \ Line ID: 135
- EQUB 180               \ Line ID: 136
- EQUB 180               \ Line ID: 137
- EQUB 184               \ Line ID: 138
- EQUB 185               \ Line ID: 139
- EQUB 185               \ Line ID: 140
- EQUB 186               \ Line ID: 141
- EQUB 184               \ Line ID: 142
- EQUB 185               \ Line ID: 143
- EQUB 189               \ Line ID: 144
- EQUB 190               \ Line ID: 145
- EQUB 190               \ Line ID: 146
- EQUB 191               \ Line ID: 147
- EQUB 189               \ Line ID: 148
- EQUB 190               \ Line ID: 149
- EQUB 215               \ Line ID: 150
- EQUB 194               \ Line ID: 151
- EQUB 195               \ Line ID: 152
- EQUB 195               \ Line ID: 153
- EQUB 196               \ Line ID: 154
- EQUB 194               \ Line ID: 155
- EQUB 195               \ Line ID: 156
- EQUB 200               \ Line ID: 157
- EQUB 198               \ Line ID: 158
- EQUB 198               \ Line ID: 159
- EQUB 200               \ Line ID: 160
- EQUB 88                \ Line ID: 161
- EQUB 87                \ Line ID: 162
- EQUB 201               \ Line ID: 163
- EQUB 40                \ Line ID: 164
- EQUB 25                \ Line ID: 165
- EQUB 28                \ Line ID: 166
- EQUB 23                \ Line ID: 167
- EQUB 24                \ Line ID: 168
- EQUB 88                \ Line ID: 169
- EQUB 99                \ Line ID: 170
- EQUB 99                \ Line ID: 171
- EQUB 202               \ Line ID: 172
- EQUB 28                \ Line ID: 173
- EQUB 26                \ Line ID: 174
- EQUB 27                \ Line ID: 175
- EQUB 28                \ Line ID: 176
- EQUB 29                \ Line ID: 177
- EQUB 40                \ Line ID: 178
- EQUB 34                \ Line ID: 179
- EQUB 37                \ Line ID: 180
- EQUB 38                \ Line ID: 181
- EQUB 209               \ Line ID: 182
- EQUB 210               \ Line ID: 183
- EQUB 208               \ Line ID: 184
- EQUB 208               \ Line ID: 185
- EQUB 204               \ Line ID: 186
- EQUB 206               \ Line ID: 187
- EQUB 207               \ Line ID: 188
- EQUB 211               \ Line ID: 189
- EQUB 211               \ Line ID: 190
- EQUB 211               \ Line ID: 191
+ EQUB 30                \ Line ID   0 goes from point  31 to point  30
+ EQUB 2                 \ Line ID   1 goes from point   1 to point   2
+ EQUB 3                 \ Line ID   2 goes from point   2 to point   3
+ EQUB 4                 \ Line ID   3 goes from point   3 to point   4
+ EQUB 1                 \ Line ID   4 goes from point   4 to point   1
+ EQUB 7                 \ Line ID   5 goes from point   6 to point   7
+ EQUB 9                 \ Line ID   6 goes from point   8 to point   9
+ EQUB 11                \ Line ID   7 goes from point  10 to point  11
+ EQUB 13                \ Line ID   8 goes from point  12 to point  13
+ EQUB 15                \ Line ID   9 goes from point  14 to point  15
+ EQUB 17                \ Line ID  10 goes from point  16 to point  17
+ EQUB 19                \ Line ID  11 goes from point  18 to point  19
+ EQUB 59                \ Line ID  12 goes from point 114 to point  59
+ EQUB 114               \ Line ID  13 goes from point 115 to point 114
+ EQUB 42                \ Line ID  14 goes from point  41 to point  42
+ EQUB 43                \ Line ID  15 goes from point  42 to point  43
+ EQUB 44                \ Line ID  16 goes from point  43 to point  44
+ EQUB 46                \ Line ID  17 goes from point  45 to point  46
+ EQUB 47                \ Line ID  18 goes from point  46 to point  47
+ EQUB 48                \ Line ID  19 goes from point  47 to point  48
+ EQUB 53                \ Line ID  20 goes from point  49 to point  53
+ EQUB 54                \ Line ID  21 goes from point  50 to point  54
+ EQUB 55                \ Line ID  22 goes from point  51 to point  55
+ EQUB 56                \ Line ID  23 goes from point  52 to point  56
+ EQUB 58                \ Line ID  24 goes from point  59 to point  58
+ EQUB 57                \ Line ID  25 goes from point  58 to point  57
+ EQUB 51                \ Line ID  26 goes from point  57 to point  51
+ EQUB 60                \ Line ID  27 goes from point  52 to point  60
+ EQUB 61                \ Line ID  28 goes from point  60 to point  61
+ EQUB 62                \ Line ID  29 goes from point  49 to point  62
+ EQUB 63                \ Line ID  30 goes from point  50 to point  63
+ EQUB 64                \ Line ID  31 goes from point  62 to point  64
+ EQUB 65                \ Line ID  32 goes from point  63 to point  65
+ EQUB 66                \ Line ID  33 goes from point  64 to point  66
+ EQUB 116               \ Line ID  34 goes from point 115 to point 116
+ EQUB 113               \ Line ID  35 goes from point 116 to point 113
+ EQUB 113               \ Line ID  36 goes from point 112 to point 113
+ EQUB 112               \ Line ID  37 goes from point 111 to point 112
+ EQUB 111               \ Line ID  38 goes from point  61 to point 111
+ EQUB 67                \ Line ID  39 goes from point  65 to point  67
+ EQUB 119               \ Line ID  40 goes from point  66 to point 119
+ EQUB 120               \ Line ID  41 goes from point  67 to point 120
+ EQUB 68                \ Line ID  42 goes from point 119 to point  68
+ EQUB 69                \ Line ID  43 goes from point 120 to point  69
+ EQUB 70                \ Line ID  44 goes from point  68 to point  70
+ EQUB 71                \ Line ID  45 goes from point  69 to point  71
+ EQUB 117               \ Line ID  46 goes from point  70 to point 117
+ EQUB 81                \ Line ID  47 goes from point  80 to point  81
+ EQUB 85                \ Line ID  48 goes from point  82 to point  85
+ EQUB 85                \ Line ID  49 goes from point  83 to point  85
+ EQUB 85                \ Line ID  50 goes from point  84 to point  85
+ EQUB 118               \ Line ID  51 goes from point  71 to point 118
+ EQUB 72                \ Line ID  52 goes from point 117 to point  72
+ EQUB 73                \ Line ID  53 goes from point 118 to point  73
+ EQUB 74                \ Line ID  54 goes from point  72 to point  74
+ EQUB 75                \ Line ID  55 goes from point  73 to point  75
+ EQUB 90                \ Line ID  56 goes from point  89 to point  90
+ EQUB 94                \ Line ID  57 goes from point  91 to point  94
+ EQUB 94                \ Line ID  58 goes from point  92 to point  94
+ EQUB 94                \ Line ID  59 goes from point  93 to point  94
+ EQUB 96                \ Line ID  60 goes from point  95 to point  96
+ EQUB 98                \ Line ID  61 goes from point  97 to point  98
+ EQUB 76                \ Line ID  62 goes from point  74 to point  76
+ EQUB 77                \ Line ID  63 goes from point  75 to point  77
+ EQUB 78                \ Line ID  64 goes from point  76 to point  78
+ EQUB 79                \ Line ID  65 goes from point  77 to point  79
+ EQUB 101               \ Line ID  66 goes from point  78 to point 101
+ EQUB 100               \ Line ID  67 goes from point  79 to point 100
+ EQUB 102               \ Line ID  68 goes from point 101 to point 102
+ EQUB 103               \ Line ID  69 goes from point 100 to point 103
+ EQUB 105               \ Line ID  70 goes from point 102 to point 105
+ EQUB 104               \ Line ID  71 goes from point 103 to point 104
+ EQUB 107               \ Line ID  72 goes from point 105 to point 107
+ EQUB 106               \ Line ID  73 goes from point 104 to point 106
+ EQUB 109               \ Line ID  74 goes from point 107 to point 109
+ EQUB 109               \ Line ID  75 goes from point 106 to point 109
+ EQUB 215               \ Line ID  76 goes from point 213 to point 215
+ EQUB 110               \ Line ID  77 goes from point 109 to point 110
+ EQUB 122               \ Line ID  78 goes from point 121 to point 122
+ EQUB 121               \ Line ID  79 goes from point 177 to point 121
+ EQUB 123               \ Line ID  80 goes from point 122 to point 123
+ EQUB 123               \ Line ID  81 goes from point 177 to point 123
+ EQUB 145               \ Line ID  82 goes from point 144 to point 145
+ EQUB 145               \ Line ID  83 goes from point 146 to point 145
+ EQUB 147               \ Line ID  84 goes from point 146 to point 147
+ EQUB 147               \ Line ID  85 goes from point 148 to point 147
+ EQUB 148               \ Line ID  86 goes from point 144 to point 148
+ EQUB 158               \ Line ID  87 goes from point 157 to point 158
+ EQUB 159               \ Line ID  88 goes from point 158 to point 159
+ EQUB 160               \ Line ID  89 goes from point 159 to point 160
+ EQUB 160               \ Line ID  90 goes from point 157 to point 160
+ EQUB 161               \ Line ID  91 goes from point 164 to point 161
+ EQUB 162               \ Line ID  92 goes from point 163 to point 162
+ EQUB 161               \ Line ID  93 goes from point 162 to point 161
+ EQUB 163               \ Line ID  94 goes from point 164 to point 163
+ EQUB 168               \ Line ID  95 goes from point 165 to point 168
+ EQUB 166               \ Line ID  96 goes from point 165 to point 166
+ EQUB 167               \ Line ID  97 goes from point 166 to point 167
+ EQUB 168               \ Line ID  98 goes from point 167 to point 168
+ EQUB 172               \ Line ID  99 goes from point 169 to point 172
+ EQUB 171               \ Line ID 100 goes from point 169 to point 171
+ EQUB 124               \ Line ID 101 goes from point 142 to point 124
+ EQUB 171               \ Line ID 102 goes from point 172 to point 171
+ EQUB 175               \ Line ID 103 goes from point 176 to point 175
+ EQUB 174               \ Line ID 104 goes from point 175 to point 174
+ EQUB 173               \ Line ID 105 goes from point 176 to point 173
+ EQUB 174               \ Line ID 106 goes from point 173 to point 174
+ EQUB 151               \ Line ID 107 goes from point 150 to point 151
+ EQUB 151               \ Line ID 108 goes from point 152 to point 151
+ EQUB 149               \ Line ID 109 goes from point 152 to point 149
+ EQUB 150               \ Line ID 110 goes from point 149 to point 150
+ EQUB 138               \ Line ID 111 goes from point 139 to point 138
+ EQUB 138               \ Line ID 112 goes from point 137 to point 138
+ EQUB 137               \ Line ID 113 goes from point 136 to point 137
+ EQUB 139               \ Line ID 114 goes from point 136 to point 139
+ EQUB 133               \ Line ID 115 goes from point 132 to point 133
+ EQUB 135               \ Line ID 116 goes from point 132 to point 135
+ EQUB 134               \ Line ID 117 goes from point 135 to point 134
+ EQUB 134               \ Line ID 118 goes from point 133 to point 134
+ EQUB 129               \ Line ID 119 goes from point 128 to point 129
+ EQUB 130               \ Line ID 120 goes from point 129 to point 130
+ EQUB 131               \ Line ID 121 goes from point 130 to point 131
+ EQUB 131               \ Line ID 122 goes from point 128 to point 131
+ EQUB 209               \ Line ID 123 goes from point 203 to point 209
+ EQUB 126               \ Line ID 124 goes from point 125 to point 126
+ EQUB 126               \ Line ID 125 goes from point 127 to point 126
+ EQUB 127               \ Line ID 126 goes from point 125 to point 127
+ EQUB 141               \ Line ID 127 goes from point 140 to point 141
+ EQUB 124               \ Line ID 128 goes from point 141 to point 124
+ EQUB 143               \ Line ID 129 goes from point 140 to point 143
+ EQUB 142               \ Line ID 130 goes from point 143 to point 142
+ EQUB 154               \ Line ID 131 goes from point 153 to point 154
+ EQUB 155               \ Line ID 132 goes from point 154 to point 155
+ EQUB 156               \ Line ID 133 goes from point 155 to point 156
+ EQUB 153               \ Line ID 134 goes from point 156 to point 153
+ EQUB 179               \ Line ID 135 goes from point 178 to point 179
+ EQUB 180               \ Line ID 136 goes from point 178 to point 180
+ EQUB 180               \ Line ID 137 goes from point 179 to point 180
+ EQUB 184               \ Line ID 138 goes from point 183 to point 184
+ EQUB 185               \ Line ID 139 goes from point 183 to point 185
+ EQUB 185               \ Line ID 140 goes from point 184 to point 185
+ EQUB 186               \ Line ID 141 goes from point 183 to point 186
+ EQUB 184               \ Line ID 142 goes from point 186 to point 184
+ EQUB 185               \ Line ID 143 goes from point 186 to point 185
+ EQUB 189               \ Line ID 144 goes from point 188 to point 189
+ EQUB 190               \ Line ID 145 goes from point 188 to point 190
+ EQUB 190               \ Line ID 146 goes from point 189 to point 190
+ EQUB 191               \ Line ID 147 goes from point 188 to point 191
+ EQUB 189               \ Line ID 148 goes from point 191 to point 189
+ EQUB 190               \ Line ID 149 goes from point 191 to point 190
+ EQUB 215               \ Line ID 150 goes from point 108 to point 215
+ EQUB 194               \ Line ID 151 goes from point 193 to point 194
+ EQUB 195               \ Line ID 152 goes from point 193 to point 195
+ EQUB 195               \ Line ID 153 goes from point 194 to point 195
+ EQUB 196               \ Line ID 154 goes from point 193 to point 196
+ EQUB 194               \ Line ID 155 goes from point 196 to point 194
+ EQUB 195               \ Line ID 156 goes from point 196 to point 195
+ EQUB 200               \ Line ID 157 goes from point 193 to point 200
+ EQUB 198               \ Line ID 158 goes from point 194 to point 198
+ EQUB 198               \ Line ID 159 goes from point 197 to point 198
+ EQUB 200               \ Line ID 160 goes from point 199 to point 200
+ EQUB 88                \ Line ID 161 goes from point  86 to point  88
+ EQUB 87                \ Line ID 162 goes from point  99 to point  87
+ EQUB 201               \ Line ID 163 goes from point  39 to point 201
+ EQUB 40                \ Line ID 164 goes from point 202 to point  40
+ EQUB 25                \ Line ID 165 goes from point  22 to point  25
+ EQUB 28                \ Line ID 166 goes from point  21 to point  28
+ EQUB 23                \ Line ID 167 goes from point  26 to point  23
+ EQUB 24                \ Line ID 168 goes from point  27 to point  24
+ EQUB 88                \ Line ID 169 goes from point 201 to point  88
+ EQUB 99                \ Line ID 170 goes from point  88 to point  99
+ EQUB 99                \ Line ID 171 goes from point 202 to point  99
+ EQUB 202               \ Line ID 172 goes from point 201 to point 202
+ EQUB 28                \ Line ID 173 goes from point  25 to point  28
+ EQUB 26                \ Line ID 174 goes from point  25 to point  26
+ EQUB 27                \ Line ID 175 goes from point  26 to point  27
+ EQUB 28                \ Line ID 176 goes from point  27 to point  28
+ EQUB 29                \ Line ID 177 goes from point  22 to point  29
+ EQUB 40                \ Line ID 178 goes from point  33 to point  40
+ EQUB 34                \ Line ID 179 goes from point 205 to point  34
+ EQUB 37                \ Line ID 180 goes from point  40 to point  37
+ EQUB 38                \ Line ID 181 goes from point 205 to point  38
+ EQUB 209               \ Line ID 182 goes from point 207 to point 209
+ EQUB 210               \ Line ID 183 goes from point 209 to point 210
+ EQUB 208               \ Line ID 184 goes from point 210 to point 208
+ EQUB 208               \ Line ID 185 goes from point 207 to point 208
+ EQUB 204               \ Line ID 186 goes from point 210 to point 204
+ EQUB 206               \ Line ID 187 goes from point 208 to point 206
+ EQUB 207               \ Line ID 188 goes from point 205 to point 207
+ EQUB 211               \ Line ID 189 goes from point  35 to point 211
+ EQUB 211               \ Line ID 190 goes from point 212 to point 211
+ EQUB 211               \ Line ID 191 goes from point  36 to point 211
 
  EQUB &D7, &D7          \ These bytes appear to be unused
  EQUB &74, &72
@@ -17939,198 +18033,198 @@ NEXT
 
 .lineStartPointId
 
- EQUB 31                \ Line ID:   0
- EQUB 1                 \ Line ID:   1
- EQUB 2                 \ Line ID:   2
- EQUB 3                 \ Line ID:   3
- EQUB 4                 \ Line ID:   4
- EQUB 6                 \ Line ID:   5
- EQUB 8                 \ Line ID:   6
- EQUB 10                \ Line ID:   7
- EQUB 12                \ Line ID:   8
- EQUB 14                \ Line ID:   9
- EQUB 16                \ Line ID:  10
- EQUB 18                \ Line ID:  11
- EQUB 114               \ Line ID:  12
- EQUB 115               \ Line ID:  13
- EQUB 41                \ Line ID:  14
- EQUB 42                \ Line ID:  15
- EQUB 43                \ Line ID:  16
- EQUB 45                \ Line ID:  17
- EQUB 46                \ Line ID:  18
- EQUB 47                \ Line ID:  19
- EQUB 49                \ Line ID:  20
- EQUB 50                \ Line ID:  21
- EQUB 51                \ Line ID:  22
- EQUB 52                \ Line ID:  23
- EQUB 59                \ Line ID:  24
- EQUB 58                \ Line ID:  25
- EQUB 57                \ Line ID:  26
- EQUB 52                \ Line ID:  27
- EQUB 60                \ Line ID:  28
- EQUB 49                \ Line ID:  29
- EQUB 50                \ Line ID:  30
- EQUB 62                \ Line ID:  31
- EQUB 63                \ Line ID:  32
- EQUB 64                \ Line ID:  33
- EQUB 115               \ Line ID:  34
- EQUB 116               \ Line ID:  35
- EQUB 112               \ Line ID:  36
- EQUB 111               \ Line ID:  37
- EQUB 61                \ Line ID:  38
- EQUB 65                \ Line ID:  39
- EQUB 66                \ Line ID:  40
- EQUB 67                \ Line ID:  41
- EQUB 119               \ Line ID:  42
- EQUB 120               \ Line ID:  43
- EQUB 68                \ Line ID:  44
- EQUB 69                \ Line ID:  45
- EQUB 70                \ Line ID:  46
- EQUB 80                \ Line ID:  47
- EQUB 82                \ Line ID:  48
- EQUB 83                \ Line ID:  49
- EQUB 84                \ Line ID:  50
- EQUB 71                \ Line ID:  51
- EQUB 117               \ Line ID:  52
- EQUB 118               \ Line ID:  53
- EQUB 72                \ Line ID:  54
- EQUB 73                \ Line ID:  55
- EQUB 89                \ Line ID:  56
- EQUB 91                \ Line ID:  57
- EQUB 92                \ Line ID:  58
- EQUB 93                \ Line ID:  59
- EQUB 95                \ Line ID:  60
- EQUB 97                \ Line ID:  61
- EQUB 74                \ Line ID:  62
- EQUB 75                \ Line ID:  63
- EQUB 76                \ Line ID:  64
- EQUB 77                \ Line ID:  65
- EQUB 78                \ Line ID:  66
- EQUB 79                \ Line ID:  67
- EQUB 101               \ Line ID:  68
- EQUB 100               \ Line ID:  69
- EQUB 102               \ Line ID:  70
- EQUB 103               \ Line ID:  71
- EQUB 105               \ Line ID:  72
- EQUB 104               \ Line ID:  73
- EQUB 107               \ Line ID:  74
- EQUB 106               \ Line ID:  75
- EQUB 213               \ Line ID:  76
- EQUB 109               \ Line ID:  77
- EQUB 121               \ Line ID:  78
- EQUB 177               \ Line ID:  79
- EQUB 122               \ Line ID:  80
- EQUB 177               \ Line ID:  81
- EQUB 144               \ Line ID:  82
- EQUB 146               \ Line ID:  83
- EQUB 146               \ Line ID:  84
- EQUB 148               \ Line ID:  85
- EQUB 144               \ Line ID:  86
- EQUB 157               \ Line ID:  87
- EQUB 158               \ Line ID:  88
- EQUB 159               \ Line ID:  89
- EQUB 157               \ Line ID:  90
- EQUB 164               \ Line ID:  91
- EQUB 163               \ Line ID:  92
- EQUB 162               \ Line ID:  93
- EQUB 164               \ Line ID:  94
- EQUB 165               \ Line ID:  95
- EQUB 165               \ Line ID:  96
- EQUB 166               \ Line ID:  97
- EQUB 167               \ Line ID:  98
- EQUB 169               \ Line ID:  99
- EQUB 169               \ Line ID: 100
- EQUB 142               \ Line ID: 101
- EQUB 172               \ Line ID: 102
- EQUB 176               \ Line ID: 103
- EQUB 175               \ Line ID: 104
- EQUB 176               \ Line ID: 105
- EQUB 173               \ Line ID: 106
- EQUB 150               \ Line ID: 107
- EQUB 152               \ Line ID: 108
- EQUB 152               \ Line ID: 109
- EQUB 149               \ Line ID: 110
- EQUB 139               \ Line ID: 111
- EQUB 137               \ Line ID: 112
- EQUB 136               \ Line ID: 113
- EQUB 136               \ Line ID: 114
- EQUB 132               \ Line ID: 115
- EQUB 132               \ Line ID: 116
- EQUB 135               \ Line ID: 117
- EQUB 133               \ Line ID: 118
- EQUB 128               \ Line ID: 119
- EQUB 129               \ Line ID: 120
- EQUB 130               \ Line ID: 121
- EQUB 128               \ Line ID: 122
- EQUB 203               \ Line ID: 123
- EQUB 125               \ Line ID: 124
- EQUB 127               \ Line ID: 125
- EQUB 125               \ Line ID: 126
- EQUB 140               \ Line ID: 127
- EQUB 141               \ Line ID: 128
- EQUB 140               \ Line ID: 129
- EQUB 143               \ Line ID: 130
- EQUB 153               \ Line ID: 131
- EQUB 154               \ Line ID: 132
- EQUB 155               \ Line ID: 133
- EQUB 156               \ Line ID: 134
- EQUB 178               \ Line ID: 135
- EQUB 178               \ Line ID: 136
- EQUB 179               \ Line ID: 137
- EQUB 183               \ Line ID: 138
- EQUB 183               \ Line ID: 139
- EQUB 184               \ Line ID: 140
- EQUB 183               \ Line ID: 141
- EQUB 186               \ Line ID: 142
- EQUB 186               \ Line ID: 143
- EQUB 188               \ Line ID: 144
- EQUB 188               \ Line ID: 145
- EQUB 189               \ Line ID: 146
- EQUB 188               \ Line ID: 147
- EQUB 191               \ Line ID: 148
- EQUB 191               \ Line ID: 149
- EQUB 108               \ Line ID: 150
- EQUB 193               \ Line ID: 151
- EQUB 193               \ Line ID: 152
- EQUB 194               \ Line ID: 153
- EQUB 193               \ Line ID: 154
- EQUB 196               \ Line ID: 155
- EQUB 196               \ Line ID: 156
- EQUB 193               \ Line ID: 157
- EQUB 194               \ Line ID: 158
- EQUB 197               \ Line ID: 159
- EQUB 199               \ Line ID: 160
- EQUB 86                \ Line ID: 161
- EQUB 99                \ Line ID: 162
- EQUB 39                \ Line ID: 163
- EQUB 202               \ Line ID: 164
- EQUB 22                \ Line ID: 165
- EQUB 21                \ Line ID: 166
- EQUB 26                \ Line ID: 167
- EQUB 27                \ Line ID: 168
- EQUB 201               \ Line ID: 169
- EQUB 88                \ Line ID: 170
- EQUB 202               \ Line ID: 171
- EQUB 201               \ Line ID: 172
- EQUB 25                \ Line ID: 173
- EQUB 25                \ Line ID: 174
- EQUB 26                \ Line ID: 175
- EQUB 27                \ Line ID: 176
- EQUB 22                \ Line ID: 177
- EQUB 33                \ Line ID: 178
- EQUB 205               \ Line ID: 179
- EQUB 40                \ Line ID: 180
- EQUB 205               \ Line ID: 181
- EQUB 207               \ Line ID: 182
- EQUB 209               \ Line ID: 183
- EQUB 210               \ Line ID: 184
- EQUB 207               \ Line ID: 185
- EQUB 210               \ Line ID: 186
- EQUB 208               \ Line ID: 187
- EQUB 205               \ Line ID: 188
- EQUB 35                \ Line ID: 189
- EQUB 212               \ Line ID: 190
- EQUB 36                \ Line ID: 191
+ EQUB 31                \ Line ID   0 goes from point  31 to point  30
+ EQUB 1                 \ Line ID   1 goes from point   1 to point   2
+ EQUB 2                 \ Line ID   2 goes from point   2 to point   3
+ EQUB 3                 \ Line ID   3 goes from point   3 to point   4
+ EQUB 4                 \ Line ID   4 goes from point   4 to point   1
+ EQUB 6                 \ Line ID   5 goes from point   6 to point   7
+ EQUB 8                 \ Line ID   6 goes from point   8 to point   9
+ EQUB 10                \ Line ID   7 goes from point  10 to point  11
+ EQUB 12                \ Line ID   8 goes from point  12 to point  13
+ EQUB 14                \ Line ID   9 goes from point  14 to point  15
+ EQUB 16                \ Line ID  10 goes from point  16 to point  17
+ EQUB 18                \ Line ID  11 goes from point  18 to point  19
+ EQUB 114               \ Line ID  12 goes from point 114 to point  59
+ EQUB 115               \ Line ID  13 goes from point 115 to point 114
+ EQUB 41                \ Line ID  14 goes from point  41 to point  42
+ EQUB 42                \ Line ID  15 goes from point  42 to point  43
+ EQUB 43                \ Line ID  16 goes from point  43 to point  44
+ EQUB 45                \ Line ID  17 goes from point  45 to point  46
+ EQUB 46                \ Line ID  18 goes from point  46 to point  47
+ EQUB 47                \ Line ID  19 goes from point  47 to point  48
+ EQUB 49                \ Line ID  20 goes from point  49 to point  53
+ EQUB 50                \ Line ID  21 goes from point  50 to point  54
+ EQUB 51                \ Line ID  22 goes from point  51 to point  55
+ EQUB 52                \ Line ID  23 goes from point  52 to point  56
+ EQUB 59                \ Line ID  24 goes from point  59 to point  58
+ EQUB 58                \ Line ID  25 goes from point  58 to point  57
+ EQUB 57                \ Line ID  26 goes from point  57 to point  51
+ EQUB 52                \ Line ID  27 goes from point  52 to point  60
+ EQUB 60                \ Line ID  28 goes from point  60 to point  61
+ EQUB 49                \ Line ID  29 goes from point  49 to point  62
+ EQUB 50                \ Line ID  30 goes from point  50 to point  63
+ EQUB 62                \ Line ID  31 goes from point  62 to point  64
+ EQUB 63                \ Line ID  32 goes from point  63 to point  65
+ EQUB 64                \ Line ID  33 goes from point  64 to point  66
+ EQUB 115               \ Line ID  34 goes from point 115 to point 116
+ EQUB 116               \ Line ID  35 goes from point 116 to point 113
+ EQUB 112               \ Line ID  36 goes from point 112 to point 113
+ EQUB 111               \ Line ID  37 goes from point 111 to point 112
+ EQUB 61                \ Line ID  38 goes from point  61 to point 111
+ EQUB 65                \ Line ID  39 goes from point  65 to point  67
+ EQUB 66                \ Line ID  40 goes from point  66 to point 119
+ EQUB 67                \ Line ID  41 goes from point  67 to point 120
+ EQUB 119               \ Line ID  42 goes from point 119 to point  68
+ EQUB 120               \ Line ID  43 goes from point 120 to point  69
+ EQUB 68                \ Line ID  44 goes from point  68 to point  70
+ EQUB 69                \ Line ID  45 goes from point  69 to point  71
+ EQUB 70                \ Line ID  46 goes from point  70 to point 117
+ EQUB 80                \ Line ID  47 goes from point  80 to point  81
+ EQUB 82                \ Line ID  48 goes from point  82 to point  85
+ EQUB 83                \ Line ID  49 goes from point  83 to point  85
+ EQUB 84                \ Line ID  50 goes from point  84 to point  85
+ EQUB 71                \ Line ID  51 goes from point  71 to point 118
+ EQUB 117               \ Line ID  52 goes from point 117 to point  72
+ EQUB 118               \ Line ID  53 goes from point 118 to point  73
+ EQUB 72                \ Line ID  54 goes from point  72 to point  74
+ EQUB 73                \ Line ID  55 goes from point  73 to point  75
+ EQUB 89                \ Line ID  56 goes from point  89 to point  90
+ EQUB 91                \ Line ID  57 goes from point  91 to point  94
+ EQUB 92                \ Line ID  58 goes from point  92 to point  94
+ EQUB 93                \ Line ID  59 goes from point  93 to point  94
+ EQUB 95                \ Line ID  60 goes from point  95 to point  96
+ EQUB 97                \ Line ID  61 goes from point  97 to point  98
+ EQUB 74                \ Line ID  62 goes from point  74 to point  76
+ EQUB 75                \ Line ID  63 goes from point  75 to point  77
+ EQUB 76                \ Line ID  64 goes from point  76 to point  78
+ EQUB 77                \ Line ID  65 goes from point  77 to point  79
+ EQUB 78                \ Line ID  66 goes from point  78 to point 101
+ EQUB 79                \ Line ID  67 goes from point  79 to point 100
+ EQUB 101               \ Line ID  68 goes from point 101 to point 102
+ EQUB 100               \ Line ID  69 goes from point 100 to point 103
+ EQUB 102               \ Line ID  70 goes from point 102 to point 105
+ EQUB 103               \ Line ID  71 goes from point 103 to point 104
+ EQUB 105               \ Line ID  72 goes from point 105 to point 107
+ EQUB 104               \ Line ID  73 goes from point 104 to point 106
+ EQUB 107               \ Line ID  74 goes from point 107 to point 109
+ EQUB 106               \ Line ID  75 goes from point 106 to point 109
+ EQUB 213               \ Line ID  76 goes from point 213 to point 215
+ EQUB 109               \ Line ID  77 goes from point 109 to point 110
+ EQUB 121               \ Line ID  78 goes from point 121 to point 122
+ EQUB 177               \ Line ID  79 goes from point 177 to point 121
+ EQUB 122               \ Line ID  80 goes from point 122 to point 123
+ EQUB 177               \ Line ID  81 goes from point 177 to point 123
+ EQUB 144               \ Line ID  82 goes from point 144 to point 145
+ EQUB 146               \ Line ID  83 goes from point 146 to point 145
+ EQUB 146               \ Line ID  84 goes from point 146 to point 147
+ EQUB 148               \ Line ID  85 goes from point 148 to point 147
+ EQUB 144               \ Line ID  86 goes from point 144 to point 148
+ EQUB 157               \ Line ID  87 goes from point 157 to point 158
+ EQUB 158               \ Line ID  88 goes from point 158 to point 159
+ EQUB 159               \ Line ID  89 goes from point 159 to point 160
+ EQUB 157               \ Line ID  90 goes from point 157 to point 160
+ EQUB 164               \ Line ID  91 goes from point 164 to point 161
+ EQUB 163               \ Line ID  92 goes from point 163 to point 162
+ EQUB 162               \ Line ID  93 goes from point 162 to point 161
+ EQUB 164               \ Line ID  94 goes from point 164 to point 163
+ EQUB 165               \ Line ID  95 goes from point 165 to point 168
+ EQUB 165               \ Line ID  96 goes from point 165 to point 166
+ EQUB 166               \ Line ID  97 goes from point 166 to point 167
+ EQUB 167               \ Line ID  98 goes from point 167 to point 168
+ EQUB 169               \ Line ID  99 goes from point 169 to point 172
+ EQUB 169               \ Line ID 100 goes from point 169 to point 171
+ EQUB 142               \ Line ID 101 goes from point 142 to point 124
+ EQUB 172               \ Line ID 102 goes from point 172 to point 171
+ EQUB 176               \ Line ID 103 goes from point 176 to point 175
+ EQUB 175               \ Line ID 104 goes from point 175 to point 174
+ EQUB 176               \ Line ID 105 goes from point 176 to point 173
+ EQUB 173               \ Line ID 106 goes from point 173 to point 174
+ EQUB 150               \ Line ID 107 goes from point 150 to point 151
+ EQUB 152               \ Line ID 108 goes from point 152 to point 151
+ EQUB 152               \ Line ID 109 goes from point 152 to point 149
+ EQUB 149               \ Line ID 110 goes from point 149 to point 150
+ EQUB 139               \ Line ID 111 goes from point 139 to point 138
+ EQUB 137               \ Line ID 112 goes from point 137 to point 138
+ EQUB 136               \ Line ID 113 goes from point 136 to point 137
+ EQUB 136               \ Line ID 114 goes from point 136 to point 139
+ EQUB 132               \ Line ID 115 goes from point 132 to point 133
+ EQUB 132               \ Line ID 116 goes from point 132 to point 135
+ EQUB 135               \ Line ID 117 goes from point 135 to point 134
+ EQUB 133               \ Line ID 118 goes from point 133 to point 134
+ EQUB 128               \ Line ID 119 goes from point 128 to point 129
+ EQUB 129               \ Line ID 120 goes from point 129 to point 130
+ EQUB 130               \ Line ID 121 goes from point 130 to point 131
+ EQUB 128               \ Line ID 122 goes from point 128 to point 131
+ EQUB 203               \ Line ID 123 goes from point 203 to point 209
+ EQUB 125               \ Line ID 124 goes from point 125 to point 126
+ EQUB 127               \ Line ID 125 goes from point 127 to point 126
+ EQUB 125               \ Line ID 126 goes from point 125 to point 127
+ EQUB 140               \ Line ID 127 goes from point 140 to point 141
+ EQUB 141               \ Line ID 128 goes from point 141 to point 124
+ EQUB 140               \ Line ID 129 goes from point 140 to point 143
+ EQUB 143               \ Line ID 130 goes from point 143 to point 142
+ EQUB 153               \ Line ID 131 goes from point 153 to point 154
+ EQUB 154               \ Line ID 132 goes from point 154 to point 155
+ EQUB 155               \ Line ID 133 goes from point 155 to point 156
+ EQUB 156               \ Line ID 134 goes from point 156 to point 153
+ EQUB 178               \ Line ID 135 goes from point 178 to point 179
+ EQUB 178               \ Line ID 136 goes from point 178 to point 180
+ EQUB 179               \ Line ID 137 goes from point 179 to point 180
+ EQUB 183               \ Line ID 138 goes from point 183 to point 184
+ EQUB 183               \ Line ID 139 goes from point 183 to point 185
+ EQUB 184               \ Line ID 140 goes from point 184 to point 185
+ EQUB 183               \ Line ID 141 goes from point 183 to point 186
+ EQUB 186               \ Line ID 142 goes from point 186 to point 184
+ EQUB 186               \ Line ID 143 goes from point 186 to point 185
+ EQUB 188               \ Line ID 144 goes from point 188 to point 189
+ EQUB 188               \ Line ID 145 goes from point 188 to point 190
+ EQUB 189               \ Line ID 146 goes from point 189 to point 190
+ EQUB 188               \ Line ID 147 goes from point 188 to point 191
+ EQUB 191               \ Line ID 148 goes from point 191 to point 189
+ EQUB 191               \ Line ID 149 goes from point 191 to point 190
+ EQUB 108               \ Line ID 150 goes from point 108 to point 215
+ EQUB 193               \ Line ID 151 goes from point 193 to point 194
+ EQUB 193               \ Line ID 152 goes from point 193 to point 195
+ EQUB 194               \ Line ID 153 goes from point 194 to point 195
+ EQUB 193               \ Line ID 154 goes from point 193 to point 196
+ EQUB 196               \ Line ID 155 goes from point 196 to point 194
+ EQUB 196               \ Line ID 156 goes from point 196 to point 195
+ EQUB 193               \ Line ID 157 goes from point 193 to point 200
+ EQUB 194               \ Line ID 158 goes from point 194 to point 198
+ EQUB 197               \ Line ID 159 goes from point 197 to point 198
+ EQUB 199               \ Line ID 160 goes from point 199 to point 200
+ EQUB 86                \ Line ID 161 goes from point  86 to point  88
+ EQUB 99                \ Line ID 162 goes from point  99 to point  87
+ EQUB 39                \ Line ID 163 goes from point  39 to point 201
+ EQUB 202               \ Line ID 164 goes from point 202 to point  40
+ EQUB 22                \ Line ID 165 goes from point  22 to point  25
+ EQUB 21                \ Line ID 166 goes from point  21 to point  28
+ EQUB 26                \ Line ID 167 goes from point  26 to point  23
+ EQUB 27                \ Line ID 168 goes from point  27 to point  24
+ EQUB 201               \ Line ID 169 goes from point 201 to point  88
+ EQUB 88                \ Line ID 170 goes from point  88 to point  99
+ EQUB 202               \ Line ID 171 goes from point 202 to point  99
+ EQUB 201               \ Line ID 172 goes from point 201 to point 202
+ EQUB 25                \ Line ID 173 goes from point  25 to point  28
+ EQUB 25                \ Line ID 174 goes from point  25 to point  26
+ EQUB 26                \ Line ID 175 goes from point  26 to point  27
+ EQUB 27                \ Line ID 176 goes from point  27 to point  28
+ EQUB 22                \ Line ID 177 goes from point  22 to point  29
+ EQUB 33                \ Line ID 178 goes from point  33 to point  40
+ EQUB 205               \ Line ID 179 goes from point 205 to point  34
+ EQUB 40                \ Line ID 180 goes from point  40 to point  37
+ EQUB 205               \ Line ID 181 goes from point 205 to point  38
+ EQUB 207               \ Line ID 182 goes from point 207 to point 209
+ EQUB 209               \ Line ID 183 goes from point 209 to point 210
+ EQUB 210               \ Line ID 184 goes from point 210 to point 208
+ EQUB 207               \ Line ID 185 goes from point 207 to point 208
+ EQUB 210               \ Line ID 186 goes from point 210 to point 204
+ EQUB 208               \ Line ID 187 goes from point 208 to point 206
+ EQUB 205               \ Line ID 188 goes from point 205 to point 207
+ EQUB 35                \ Line ID 189 goes from point  35 to point 211
+ EQUB 212               \ Line ID 190 goes from point 212 to point 211
+ EQUB 36                \ Line ID 191 goes from point  36 to point 211
 
  EQUB &D6, &6C          \ These bytes appear to be unused
  EQUB &03, &0A
@@ -20061,7 +20155,7 @@ NEXT
 \ Called as follows:
 \
 \   FireGuns            X = &ED, Y = 96
-\   L2CD3               X = &A8, Y = 0
+\   UpdateRadarBlip     X = &A8, Y = 0
 \   L3053               X = &A8, Y = 0
 \   ProcessRunway       X = &A8, Y = range
 \   L4CB0               X = &A8, Y = range
@@ -20078,8 +20172,8 @@ NEXT
 \                         * &89 = L0C89, verticalSpeedLo, L0C8A
 \                                 L0C99, verticalSpeedHi, L0C9A
 \
-\                         * &A8 = L0CA8, L0CA9, L0CAA
-\                                 L0CB8, L0CB9, L0CBA
+\                         * &A8 = xRadarLo, L0CA9, L0CAA
+\                                 xRadarHi, L0CB9, L0CBA
 \
 \                         * &ED = xPlaneLo, yPlaneLo, zPlaneLo
 \                                 xPlaneHi, yPlaneHi, zPlaneHi
@@ -20137,8 +20231,8 @@ NEXT
 \                         * &86 = L0C86, L0C87, L0C88
 \                                 L0C96, L0C97, L0C98
 \
-\                         * &A8 = L0CA8, L0CA9, L0CAA
-\                                 L0CB8, L0CB9, L0CBA
+\                         * &A8 = xRadarLo, L0CA9, L0CAA
+\                                 xRadarHi, L0CB9, L0CBA
 \
 \ ******************************************************************************
 
@@ -20786,11 +20880,11 @@ NEXT
 
 .L4CF4
 
- ADC L0CA8,Y
- STA L0CA8,Y
+ ADC xRadarLo,Y
+ STA xRadarLo,Y
  LDA R
- ADC L0CB8,Y
- STA L0CB8,Y
+ ADC xRadarHi,Y
+ STA xRadarHi,Y
  DEY
  BPL L4CE0
 
