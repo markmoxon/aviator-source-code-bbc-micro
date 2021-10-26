@@ -12,6 +12,9 @@
 \ The terminology and notations used in this commentary are explained at
 \ https://www.bbcelite.com/about_site/terminology_used_in_this_commentary.html
 \
+\ The deep dive articles referred to in this commentary can be found at
+\ https://aviator.bbcelite.com/deep_dives
+\
 \ ------------------------------------------------------------------------------
 \
 \ This source file produces the following binary file:
@@ -5956,6 +5959,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinates for a point within an object
+\  Deep dive: Rotating and translating multi-point objects in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5972,52 +5976,6 @@ ORG CODE%
 \
 \   objectAnchorPoint   Point ID of the anchor point to which we add the final
 \                       result to
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Rotating and translating multi-point objects in 3D space
-\
-\ This routine calculates the coordinates for a point within an object. It does
-\ this by taking the point's coordinates relative to the object's anchor (i.e.
-\ the vector from the anchor to the point), rotating this vector by applying a
-\ matrix to orientate the point correctly, and adding the result to the object's
-\ anchor point. This gives us the point's final coordinates.
-\
-\ Specifically, let's take an example:
-\
-\   * The object point is at coordinates (xPoint, yPoint, zPoint)
-\
-\   * It has coordinates of (xObjectPoint, yObjectPoint, zObjectPoint) relative
-\     to the object's anchor (in other words, this is the vector from the anchor
-\     to the point)
-\
-\   * The object's anchor point is at (xAnchor, yAnchor, zAnchor)
-\
-\   * We want to rotate the object by matrix 1, so:
-\
-\       m0 = (matrix1Hi matrix1Lo)
-\       m1 = (matrix1Hi+1 matrix1Lo+1)
-\       ...
-\       m8 = (matrix1Hi+8 matrix1Lo+8)
-\
-\ Given the above, this routine sets the point's coordinates as follows:
-\
-\   [ xPoint ]   [ xAnchor ]   [ xTemp ]
-\   [ yPoint ] = [ yAnchor ] + [ yTemp ]
-\   [ zPoint ]   [ zAnchor ]   [ zTemp ]
-\
-\ where:
-\
-\   [ xTemp ]     [ m0 m1 m2 ]   [ xObjectPoint ]
-\   [ yTemp ]  =  [ m3 m4 m5 ] x [ yObjectPoint ] x 2^scaleFactor / 16
-\   [ zTemp ]     [ m6 m7 m8 ]   [ zObjectPoint ]
-\
-\ The scale factor is a power of 2 whose exponent is extracted from bits 4 to 7
-\ of zObjectPoint, and in the final result we drop the least significant byte
-\ of the calculation, so the result is effectively divided by another 256.
-\
-\ Only bits 0 to 3 of xObjectPoint, yObjectPoint and zObjectPoint are used in
-\ the matrix multiplication.
 \
 \ ******************************************************************************
 
@@ -6947,6 +6905,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinates for a point
+\  Deep dive: Rotating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6964,33 +6923,6 @@ ORG CODE%
 \ Results:
 \
 \   xPointHi etc.       Set to the points's coordinates
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Rotating points in 3D space
-\
-\ This routine calculates the new coordinates for a point after a rotation. It
-\ does this by taking the point's coordinates, rotating them by applying a
-\ matrix to orientate the point correctly, and storing the result to give us
-\ the point's new coordinates.
-\
-\ Specifically, let's take an example:
-\
-\   * The point is at coordinates (xPoint, yPoint, zPoint), where each
-\     coordinate is a 16-bit value, e.g. xPoint = (xPointHi xPointLo)
-\
-\   * We want to rotate the object by matrix 1, so:
-\
-\       m0 = (matrix1Hi matrix1Lo)
-\       m1 = (matrix1Hi+1 matrix1Lo+1)
-\       ...
-\       m8 = (matrix1Hi+8 matrix1Lo+8)
-\
-\ Given the above, this routine updates the point's coordinates as follows:
-\
-\   [ xPoint ]     [ m0 m1 m2 ]   [ xPoint ]
-\   [ yPoint ]  =  [ m3 m4 m5 ] x [ yPoint ]
-\   [ zPoint ]     [ m6 m7 m8 ]   [ zPoint ]
 \
 \ ******************************************************************************
 
@@ -7231,6 +7163,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update a single indicator on the dashboard
+\  Deep dive: Hard-coded division in the dashboard routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7263,187 +7196,6 @@ ORG CODE%
 \                         * 9 = Rudder indicator
 \
 \                         * 11 = Thrust indicator
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Hard-coded division in the dashboard routines
-\
-\ This long routine performs calculations for the various indicators on the
-\ dashboard. This typically involves taking the relevant measurement, scaling it
-\ to fit on the relevant indicator, and then preparing a suitable vector line
-\ (for dial hands), orthogonal line (for vertical bar indicators), joystick
-\ cross (for the joystick position display) or artificial horizon line.
-\
-\ A common feature of a number of these calculations is scaling, which is done
-\ by multiplying the measurement by a specific scale factor. Shift-and-add
-\ multiplication is used to do this, but instead of using a generic multiply
-\ routine, the relevant indicators contain hard-coded multiply routines that
-\ have their scale factors backed into the code.
-\
-\ Generally, if we want to calculate A * T / 256, then the traditional approach
-\ if to use a shift-and-add loop like this:
-\
-\   LSR A               \ Set P = A >> 1 and C flag = bit 0 of A
-\   STA P
-\
-\   LDX T               \ Set T1 = T - 1
-\   DEX                 \
-\   STX T1              \ We subtract 1 as the C flag will be set when we want
-\                       \ to do an addition in the loop below
-\
-\                       \ We are now going to work our way through the bits of
-\                       \ P, and do a shift-add for any bits that are set,
-\                       \ keeping the running total in A. We already set up
-\                       \ the first shift at the start of this routine, as
-\                       \ P = |A| >> 1 and C = bit 0 of A, so we now need to set
-\                       \ up a loop to sift through the other 7 bits in P
-\
-\   LDA #0              \ Set A = 0 so we can start building the answer in A
-\
-\   LDX #7              \ Set up a counter in X to count the 7 bits remaining
-\                       \ in P
-\
-\  .MUL4
-\
-\   BCC P%+4            \ If C (i.e. the next bit from P) is set, do the
-\   ADC T1              \ addition for this bit of P:
-\                       \
-\                       \   A = A + T1 + C
-\                       \     = A + T - 1 + 1
-\                       \     = A + T
-\
-\   ROR A               \ As mentioned above, this ROR shifts A right and
-\                       \ catches bit 0 in C - giving another digit for our
-\                       \ result - and the next ROR sticks that bit into the
-\                       \ left end of P while also extracting the next bit of P
-\                       \ for the next addition
-\
-\   ROR P               \ Add the overspill from shifting A to the right onto
-\                       \ the start of P, and shift P right to fetch the next
-\                       \ bit for the calculation
-\
-\   DEX                 \ Decrement the loop counter
-\
-\   BNE MUL4            \ Loop back for the next bit until P has been rotated
-\                       \ all the way
-\
-\   LSR A               \ Rotate (A P) once more to get the final result, as
-\   ROR P               \ we only pushed 7 bits through the above process
-\
-\ You can read all about this algorithm in the Elite source code at:
-\
-\ https://www.bbcelite.com/deep_dives/shift-and-add_multiplication.html
-\
-\ and you can see it in situ in the Elite source code here:
-\
-\ https://www.bbcelite.com/cassette/main/subroutine/mult1.html
-\
-\ If we aren't worried about memory usage, then we can unroll the central loop
-\ of the algorithm like this, to save a bit of time going around the loop:
-\
-\   BCC P%+4            \ Shift-and-add the first bit of P
-\   ADC T1
-\   ROR A
-\   ROR P
-\
-\   BCC P%+4            \ Repeat for the second bit
-\   ADC T1
-\   ROR A
-\   ROR P
-\
-\   BCC P%+4            \ Repeat for the third bit
-\   ADC T1
-\   ROR A
-\   ROR P
-\
-\ and so on for all the bits of n. You can see this approach in the 6502 Second
-\ Processor version of Elite, here:
-\
-\ https://www.bbcelite.com/6502sp/main/subroutine/mult1.html
-\
-\ Note that we still have to shift the result right by one place after the
-\ unrolled loop (i.e. the LSR A and ROR P after the end of the loop).
-\
-\ Aviator takes this to the next level by hard-coding a specific value of T into
-\ the code itself - let's refer to this fixed value of T as n, so our routine
-\ will now calculate A * n / 256, for a fixed n.
-\
-\ Given this, let's look at the above unrolled code. If a bit of n is 0 above,
-\ then the BCC P%+4 will skip the next instruction (ADC T), leaving just the
-\ ROR A and ROR P instructions. Also, in this case, we know the C flag is clear,
-\ as we took the BCC, so the ROR A is identical to LSR A.
-\
-\ We can therefore hard-code the value of n into the code by replacing each of
-\ these unrolled blocks:
-\
-\   BCC P%+4
-\   ADC T1
-\   ROR A
-\   ROR P
-\
-\ with either this, when that bit of n is 0:
-\
-\   LSR A
-\   ROR P
-\
-\ or this, when that bit of n is 1:
-\
-\   ADC T1
-\   ROR A
-\   ROR P
-\
-\ We can also ditch the need to calculate T1 = T - 1 by adding in a CLC, like
-\ this:
-\
-\   CLC
-\   ADC T
-\   ROR A
-\   ROR P
-\
-\ Finally, we only need to keep the ROR P instructions if we need to keep the
-\ overspill from the result, as we are no longer shifting P to see whether or
-\ not to branch over each bit's addition. If we don't need the overspill, we
-\ can replace the unrolled calculation with this, when that bit of n is 0:
-\
-\   LSR A
-\
-\ or this, when that bit of n is 1:
-\
-\   CLC
-\   ADC T
-\   ROR A
-\
-\ Putting this all together into a working example, the following code
-\ calculates A = T * 68 / 256, using a value of n = 34 (%00100010). The factor
-\ of 2 is because the following omits the final LSR A that normally appears
-\ after the loop, for optimal performance.
-\
-\   LDA T               \ Set A = T
-\
-\   LSR A               \ Bit 0 of n is 0
-\
-\   CLC                 \ Bit 1 of n is 1
-\   ADC T
-\   ROR A
-\
-\   LSR A               \ Bit 2 of n is 0
-\
-\   LSR A               \ Bit 3 of n is 0
-\
-\   LSR A               \ Bit 4 of n is 0
-\
-\   CLC                 \ Bit 5 of n is 1
-\   ADC T
-\   ROR A
-\
-\   LSR A               \ Bit 6 of n is 0
-\
-\                       \ Bit 7 of n is 0 and the final right shift is missing
-\
-\ You can see this exact code in part 7 below.
-\
-\ The result is a streamlined multiplication algorithm that is tailored to the
-\ specific requirements of the UpdateIndicator routine.
 \
 \ ******************************************************************************
 
@@ -8865,6 +8617,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Vector line calculation for a hand on indicators 0 to 6
+\  Deep dive: Clock hands and dial indicators
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8894,66 +8647,6 @@ ORG CODE%
 \                         * x-delta -ve, y-delta -ve: 6 to 9 o'clock
 \
 \                         * x-delta -ve, y-delta +ve: 9 to 12 o'clock
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Clock hands and dial indicators
-\
-\ This routine performs a calculation to work out the vector for a dial
-\ indicator hand, given a value to show on the dial. It calculates this using a
-\ simple triangle model - there's no trigonometry here.
-\
-\ First, we work out which quadrant of the dial we want to draw the hand in, and
-\ set the direction in R accordingly. We do this by repeatedly subtracting the
-\ range of a single quadrant from the value to show, counting quadrants as we
-\ go, until we go past zero, at which point we now which quadrant we the dial
-\ hand is in.
-\
-\ Then we work out the vector from the centre point of the dial to the end of
-\ the hand, using a simple triangle. Imagine the possible positions of the end
-\ of the dial hand as a vertical diamond shape, like this:
-\
-\                         ^                         ^
-\                       .´ `.                       |`. (x, y)
-\                     .´     `.  r                  |  /.
-\                   .´         `.                   | /  `.
-\                 .´             `.                 |/     `.
-\                <        +        >                +--------> 
-\                 `.             .´          (0, 0)     w
-\                   `.         .´
-\                     `.     .´
-\                       `. .´
-\                         v
-\
-\ It doesn't necessarily look like it in in ASCII, but imagine that the diamond
-\ is a rotated square, so all the angles are right angles.
-\
-\ If the end of our hand is always on the outside of the diamond shape above,
-\ then if we consider the top-right quadrant, the equation of the edge line is
-\ is y = - x + w. So as the hand goes from pointing straight up to pointing to
-\ the right (12 o'clock to 3 o'clock), x goes from 0 to w, y goes from w to 3,
-\ and y = x - w. For the next quadrant down, 3 to 6 o'clock, we can negate y to
-\ get y = -(x - w) = w - x, and we can do a similar sign switch for the other
-\ two quadrants.
-\
-\ So, given an x-coordinate for our hand, we can work out the y-coordinate using
-\ y = x - w or y = w - x, depending on the quadrant. Ans because we chose to set
-\ the origin at the centre of the dial, the x and y-coordinates are effectively
-\ x and y-deltas, which is what we want to generate for use in the vector line
-\ routine at DrawVectorLine.
-\
-\ If we then cap the values of x and y, this has the effect of "blunting" the
-\ corners of the diamond, like this:
-\
-\                     _______
-\                   .´       `.
-\                  |           |
-\                  |     +     |
-\                  |           |
-\                   `._______.´
-\
-\ It turns out that this kind of movement for the end of a dial hand is pretty
-\ good, even though it isn't describing anything like a perfect circle.
 \
 \ ******************************************************************************
 
@@ -13319,83 +13012,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Draw the main view out of the canopy
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Flicker-free animation with colour cycling
-\
-\ The DrawCanopyView routine updates the main 3D view out of the canopy, using
-\ colour cycling to make the animation smooth. Although Aviator is a
-\ black-and-white game, it actually uses mode 5, which is a four-colour screen
-\ mode, and it uses those extra colours to switch between animation frames
-\ smoothly.
-\
-\ In this flicker-free approach, colour 0 is always mapped to black and is used
-\ for the background, and colour 3 is always mapped to white and is used for the
-\ dashboard and the canopy edges. We then use colours 1 and 2 inside the canopy,
-\ with one of these mapped to black (so it's invisible against the black
-\ background), and the other mapped to white (so it's visible).
-\
-\ To achieve smooth, flicker-free animation, we update the invisible screen,
-\ erasing and re-drawing lines so that it contains an up-to-date view out of the
-\ canopy. When we've finished this relatively slow drawing process, we then
-\ re-map colours 1 and 2, which flips the two screens in the blink of an eye.
-\ This flipping process is very simple and very quick - we simply map the
-\ visible colour to black, so the old scene disappears from view, and then we
-\ map the invisible colour to white, so the new, updated scene suddenly becomes
-\ visible. We then repeat this process to animate the 3D view without flicker.
-\
-\ The DrawCanopyView implements this approach with the following steps:
-\
-\   * Modify the draw routines so that they draw in the currently hidden colour
-\     (by calling ModifyDrawRoutine)
-\
-\   * Draw the updated lines in the hidden colour (by calling DrawHalfHorizon,
-\     DrawClippedLine and DrawGunSights)
-\
-\   * Re-map colours 1 and 2 to change what's shown on screen
-\
-\   * Erase all the lines from the now-hidden screen (by calling
-\     EraseCanopyLines)
-\
-\   * Flip the colour variables, ready for the next iteration (by calling
-\     FlipColours)
-\
-\ There are two main variables that manage this process: colourLogic and
-\ colourCycle.
-\
-\ The colourLogic variable controls the drawing routines, and has three values:
-\
-\   * %00000000 = erase lines from the screen
-\   * %01000000 = draw lines in colour 2
-\   * &10000000 = draw lines in colour 1
-\
-\ The colourCycle variable keeps track of which colour screen is visible and
-\ which is invisible, and flips between these two values:
-\
-\   * %00001111 = show colour 1, hide colour 2
-\   * %11110000 = show colour 2, hide colour 1
-\
-\ To save space, the main drawing routine at DrawCanopyLine is modified in-place
-\ so it draws the correct colour, and either erases or draws as neccessary. The
-\ code modifications are performed by the ModifyDrawRoutine routine, which
-\ physically pokes new values and instructions into the DrawCanopyLine routine
-\ to change its operation. To add to the complexity, the ModifyDrawRoutine
-\ routine also modifies code within DrawCanopyLine that then modifies even more
-\ code within a different part of DrawCanopyLine; in other words, the
-\ modification code sometimes modifies the modification code.
-\
-\ To speed things up, the on-screen lines are stored in line buffers, so they
-\ can be quickly erased from the hidden screeen by the EraseCanopyLines routine.
-\ This routine sets colourLogic to %00000000, then calls ModifyDrawRoutine to
-\ modify the DrawCanopyLine routine so it erases the currently hidden colour,
-\ and then it erases all of the lines stored in the line buffer. This clears the
-\ hidden screen in the most efficient way possible, so it's ready to take the
-\ new set of lines.
-\
-\ The result of all this self-modifying code and solour switching is a buttery
-\ smooth view out of the canopy. If you compare it to Elite's much more flickery
-\ space ships, there's no contest; Aviator wins hands down.
+\  Deep dive: Flicker-free animation through colour cycling
 \
 \ ******************************************************************************
 
@@ -19295,49 +18912,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: Sequences of related points that together make up objects
+\  Deep dive: Multi-point objects
 \
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Multi-point objects
-\
-\ Objects in Aviator are collections of points. These points are stored in
-\ sequences in the objectPoints table. The last point in a sequence always has
-\ an ID in the range 0 to 39. This final point ID is known as the object ID, and
-\ each object is made up of one or more sequences, all of which end on the same
-\ object ID.
-\
-\ The objectPoints table maps points to objects. Essentially, it's a table of
-\ point sequences which refer to other entries in the table in a recursive
-\ manner. The X-th entry in objectPoints contains one of the following:
-\
-\   * If point X is the last point in an object, then objectPoints,X will be in
-\     in the range 0 to 39, and is the object ID (so values < 40 indicate end
-\     points in the sequences)
-\
-\   * If point X is part of a sequence of points in an object, then
-\     objectPoints,X will be >= 40, and will contain 40 + the ID of the next
-\     point in the sequence (so values >= 40 link to other entries, whose value
-\     is the entry minus 40)
-\
-\ Given a point ID, we can use this table to follow the sequence of related
-\ points, all the way to the object ID at the end. So if we start with entry 69,
-\ for example, we get the following:
-\
-\   Point ID 69 contains 68 + 40, so it links to point ID 68
-\   Point ID 68 contains 66 + 40, so it links to point ID 66
-\   Point ID 66 contains 2, which doesn't link to anything else
-\
-\ so looking up point 69 gives us the following chain of points:
-\
-\   69 -> 68 -> 66 -> 2
-\
-\ so this is one of the sequences for object 2, while point 210 gives us this
-\ chain:
-\
-\   210 -> 204 -> 203 -> 205 -> 40 -> 39 -> 34
-\
-\ which is one of the sequences for object 34.
-
 \ ******************************************************************************
 
 .objectPoints
@@ -19689,55 +19265,7 @@ NEXT
 \   Category: Graphics
 \    Summary: Lookup table for converting pixel y-coordinate to high byte of
 \             screen address
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Converting pixel coordinates to screen addresses
-\
-\ Each character row contains &140 bytes, so this lookup table lets us convert a
-\ pixel y-coordinate to the 16-bit address of the start of that row. There are
-\ two twists, however.
-\
-\   * The table counts backwards from the bottom of the canopy/top of the
-\     dashboard, so the first entry in this table is for the bottom row of the
-\     canopy, the next entry is for the row above that, and so on until we hit
-\     the top of the canopy, after which we wrap around to the bottom of the
-\     screen (i.e. the bottom of the dashboard) and keep going up until the last
-\     entry, which is for the top row of the dashboard. To be more explicit,
-\     the first 20 entries cover the canopy:
-\
-\        * Entry 0 = &6F28 = row18_block21
-\        * Entry 1 = &6DF0 = row17_block22
-\        * Entry 2 = &6CB8 = row16_block23
-\        * Entry 3 = &6B80 = row15_block24
-\
-\          ...
-\
-\        * Entry 17 = &5A70 = row1_block38
-\        * Entry 18 = &5938 = row0_block39
-\        * Entry 19 = &5800 = row0_block0
-\
-\     while the last 12 entries cover the dashboard:
-\
-\        * Entry 20 = &7DC8 = row30_block9
-\        * Entry 21 = &7C90 = row29_block10
-\
-\          ...
-\
-\        * Entry 30 = &7198 = row20_block19
-\        * Entry 31 = &7060 = row19_block20
-\
-\   * The start addresses for each character row are offset by one character
-\     block (8 bytes) per row, so instead of being a simple lookup table for
-\     multiples of &140, it's actually a lookup table for multiples of &138,
-\     and the addresses in the table are out by +8 bytes for each row above
-\     the top of the dashboard, and -8 bytes for each row below.
-\
-\ The lookup table works this way so the y-coordinates treat the bottom of the
-\ canopy as the origin, with negative coordinates for the dashboard and positive
-\ coordinates for the canopy. The DrawVectorLine subtracts the y-coordinate from
-\ 159 to achieve this effect, which makes the coordinate system for the canopy
-\ a lot simpler, at the expense of making the lookup tables more convoluted. 
+\  Deep dive: Converting pixel coordinates to screen addresses
 \
 \ ******************************************************************************
 
@@ -19953,6 +19481,7 @@ NEXT
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the line direction (V)
+\  Deep dive: Source code clues hidden in the game binary
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19961,68 +19490,6 @@ NEXT
 \ line coordinates. The information is stored when a line is drawn by the
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
-\
-\ ------------------------------------------------------------------------------
-\
-\ Deep dive: Source code clues hidden in the game binary
-\
-\ Interestingly, in the original game binary, this variable contains workspace
-\ noise that disassembles into code that is never called and is totally ignored,
-\ and which doesn't appear in the main game code. It contains slightly different
-\ versions of the DrawCanopyCorners and RemoveScore routines, so perhaps this is
-\ a glimpse into early code that didn't make it into the final game?
-\
-\ .L48A0
-\ 
-\  LDX #7
-\ 
-\ .L48A2
-\ 
-\  LDA #%01110111
-\  STA P
-\  LDA #%10001000
-\  STA Q
-\  LDA #%11101110
-\  STA R
-\  LDA #%00010001
-\  STA S
-\ 
-\ .L48B2
-\ 
-\  LDY #1
-\ 
-\ .L48B4
-\ 
-\  LDA row1_block0_0,X
-\  AND P
-\  ORA Q
-\  STA row1_block0_0,X
-\  LDA row1_block38_0,X
-\  AND R
-\  ORA S
-\  STA row1_block38_0,X
-\  DEX
-\  DEY
-\  BPL L48B4
-\ 
-\  LSR R
-\  LSR S
-\  LSR P
-\  LSR Q
-\  CPX #&FF
-\  BNE L48B2
-\ 
-\  RTS
-\ 
-\ .L48D9
-\ 
-\  LDY #HI(row3_block0_0)
-\  LDX #LO(row3_block0_0)
-\  LDA #8
-\  STA R
-\  LDA #0
-\  JSR FillCanopyRows
-\  RTS
 \
 \ ******************************************************************************
 

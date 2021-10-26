@@ -4,6 +4,17 @@
 \
 \ Aviator was written by Geoffrey J Crammond and is copyright Acornsoft 1983
 \
+\ The code on this site has been disassembled from the original game discs
+\
+\ The commentary is copyright Mark Moxon, and any misunderstandings or mistakes
+\ in the documentation are entirely my fault
+\
+\ The terminology and notations used in this commentary are explained at
+\ https://www.bbcelite.com/about_site/terminology_used_in_this_commentary.html
+\
+\ The deep dive articles referred to in this commentary can be found at
+\ https://aviator.bbcelite.com/deep_dives
+\
 \ ------------------------------------------------------------------------------
 \
 \ This source file produces the following SSD disc image:
