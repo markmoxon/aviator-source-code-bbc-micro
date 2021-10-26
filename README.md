@@ -1,8 +1,8 @@
 # Source code for Aviator on the BBC Micro
 
-This repository contains the source code for Aviator on the BBC Micro.
+This repository contains source code for Aviator on the BBC Micro.
 
-I am slowly adding commentary to the code. Check out the [main source file](1-source-files/main-sources/aviator-source.asm) to see how I'm getting on. I might be some time... it's complicated!
+I am slowly adding commentary to the code. Check out the [main source file](1-source-files/main-sources/aviator-source.asm) to see how I'm getting on, as well as the work-in-progress collection of [deep dives](https://aviator.bbcelite.com/deep_dives/). It might take some time... it's complicated stuff!
 
 See the [introduction](#introduction) for more information.
 
@@ -29,7 +29,7 @@ See the [introduction](#introduction) for more information.
 
 ## Introduction
 
-This repository contains the original source code for Aviator on the BBC Micro.
+This repository contains source code for Aviator on the BBC Micro.
 
 You can build the fully functioning game from this source. One release is currently supported: the version from the Complete BBC Micro Games Archive at bbcmicro.co.uk.
 
