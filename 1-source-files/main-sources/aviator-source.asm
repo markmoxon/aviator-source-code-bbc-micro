@@ -361,7 +361,7 @@ ORG &0400
 
  SKIP 216               \ Each point's status byte
                         \
-                        \   * Bits 0-3:
+                        \   * Bits 0-5:
                         \
                         \     * ?? (set in L0D01)
                         \
@@ -1934,15 +1934,23 @@ ORG CODE%
 \
 \   GG                  The point ID to process
 \
+\ Returns:
+\
+\   pointStatus         Bits 0, 2, 3, 4, 5 are set according to the result
+\
 \ ******************************************************************************
 
 .L0D01
 
  LDX GG
  LDA #0
- STA N
- LDA #&10
+
+ STA N                  \ Set N = 0, which we use for collecting set bits to
+                        \ apply to the point's status byte
+
+ LDA #%00010000
  STA R
+
  LDA pointStatus,X
  TAY
  AND #1
@@ -1952,9 +1960,10 @@ ORG CODE%
 
 .L0D14
 
- TYA
+ TYA                    \ Set bit 0 of the point's status byte in pointStatus
  ORA #1
  STA pointStatus,X
+
  LDA zPointHi,X
  BMI L0D37
 
@@ -2006,8 +2015,9 @@ ORG CODE%
  LDA #0
  SBC xPointHi,X
  STA QQ
- LDA N
- ORA #8
+
+ LDA N                  \ Set bit 3 of N (so we set bit 3 of the point's status
+ ORA #%00001000         \ byte when we're done)
  STA N
 
 .L0D6A
@@ -2033,8 +2043,9 @@ ORG CODE%
  ASL RR
  ROL A
  STA SS
- LDA N
- ORA #4
+
+ LDA N                  \ Set bit 2 of N (so we set bit 2 of the point's status
+ ORA #%00000100         \ byte when we're done)
  STA N
 
 .L0D94
@@ -2051,8 +2062,8 @@ ORG CODE%
 
 .L0DA2
 
- LDA #&20
- ORA N
+ LDA #%00100000         \ Set bit 5 of N (so we set bit 5 of the point's status
+ ORA N                  \ byte when we're done)
  STA N
 
 .L0DA8
@@ -2069,8 +2080,8 @@ ORG CODE%
 
 .L0DB6
 
- LDA N
- ORA #&10
+ LDA N                  \ Set bit 4 of N (so we set bit 4 of the point's status
+ ORA #%00010000         \ byte when we're done)
  STA N
 
 .L0DBC
@@ -2184,10 +2195,11 @@ ORG CODE%
 
 .L0E5D
 
- LDA pointStatus,X
+ LDA pointStatus,X      \ Apply any set bits in N to the point's status byte
  ORA N
  STA pointStatus,X
- RTS
+
+ RTS                    \ Return from the subroutine
 
  JSR L0F48
 
@@ -11546,107 +11558,142 @@ ORG CODE%
 \       Name: ProcessLinesToShow
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Process the linesToShow list, moving any lines that aren't visible
+\             into the linesToHide list
 \
 \ ******************************************************************************
 
 .ProcessLinesToShow
 
- LDA linesToShowEnd
- BEQ L2929
+ LDA linesToShowEnd     \ If the linesToShow list is empty, jump to plns5 to
+ BEQ plns5              \ clear down the relatedPoints list, as there are no
+                        \ visible lines at all
 
- LDA #255
- STA linesToShowPointer
+ LDA #255               \ Set linesToShowPointer = 255, to use as a pointer
+ STA linesToShowPointer \ to the end of the new linesToShow list as we build it
+                        \ up in-situ
 
- LDA #0
- STA lineCounter
+ LDA #0                 \ Set lineCounter = 0, to use as a line counter as we
+ STA lineCounter        \ loop through the linesToShow list
 
-.L28C2
+.plns1
 
- LDX lineCounter
- LDY linesToShow,X
+ LDX lineCounter        \ Set lineId to the ID of the next line in the
+ LDY linesToShow,X      \ linesToShow list
  STY lineId
- LDX lineStartPointId,Y
- STX GG
- STX L
- LDX lineEndPointId,Y
+
+ LDX lineStartPointId,Y \ Set GG to the point ID of the line's start point, to
+ STX GG                 \ pass to the L0D01 routine
+
+ STX L                  \ Set L to the point ID of the line's start point
+
+ LDX lineEndPointId,Y   \ Set M to the point ID of the line's end point
  STX M
- JSR L0D01
 
- LDA M
- STA GG
- JSR L0D01
+ JSR L0D01              \ ??? Sets bits 0, 2, 3, 4, 5 of the point's status byte
 
- LDX L
+ LDA M                  \ Set GG to the point ID of the line's start point, to
+ STA GG                 \ pass to the L0D01 routine
+
+ JSR L0D01              \ ??? Sets bits 0, 2, 3, 4, 5 of the point's status byte
+
+ LDX L                  \ Set L0CC7 to the status byte of the line's start point
  LDA pointStatus,X
  STA L0CC7
- LDX M
+
+ LDX M                  \ Set A and N to the status byte of the line's end point
  LDA pointStatus,X
  STA N
- AND L0CC7
- AND #&30
- BEQ L2904
 
- LSR A
- LSR A
+ AND L0CC7              \ Set A so that bits 4 and 5 are set if bits 4 and 5 are
+ AND #%00110000         \ set in both the start and end point
+
+ BEQ plns2              \ If bits 4 and 5 are clear in the status byte for both
+                        \ points, jump to plns2 to skip the following
+
+ LSR A                  \ Shift bits 4 and 5 into bits 2 and 3 and store the
+ LSR A                  \ result in T
  STA T
- LDA N
- EOR L0CC7
- EOR #&FF
- AND T
- BNE L2910
 
-.L2904
+ LDA N                  \ Set A =     end point status
+ EOR L0CC7              \         EOR start point status   <- 0 if bits are same
+ EOR #&FF               \         EOR %11111111            <- 1 if bits are same
+ AND T                  \         AND T                    <- 1 if 4, 5 both set
+                        \
+                        \ So bit 2 will be set if bit 2 is the same in both
+                        \ status bytes, and bit 4 is set in both status bytes
+                        \
+                        \ And bit 3 will be set if bit 3 is the same in both
+                        \ status bytes, and bit 5 is set in both status bytes
 
- INC linesToShowPointer
- LDX linesToShowPointer
- LDA lineId
+ BNE plns3              \ If A is non-zero, then either bit 2 or bit 3 is set,
+                        \ so jump to plns3 to add this line to the linesToHide
+                        \ list
+
+.plns2
+
+                        \ If we get here then we want to keep this line in the
+                        \ linesToShow list
+
+ INC linesToShowPointer \ Increment the linesToShowPointer pointer to point to
+                        \ the next free slot in the new list we are creating
+
+ LDX linesToShowPointer \ Store the line ID at the end of the new list we are
+ LDA lineId             \ creating
  STA linesToShow,X
- JMP L291B
 
-.L2910
+ JMP plns4              \ Jump to plns4 to move onto the next line
 
- LDA lineId
- BEQ L2904
+.plns3
+
+ LDA lineId             \ If the line Id is 0 then it's the horizon, so jump up
+ BEQ plns2              \ to plns2 add it to the linesToShow list, as we don't
+                        \ want to hide the horizon
 
  INC linesToHideEnd     \ Increment linesToHideEnd to point to the next free
                         \ entry at the end of the linesToHide list
 
- LDX linesToHideEnd     \ Add the line ID in A to the end of the
- STA linesToHide,X      \ linesToHide list
+ LDX linesToHideEnd     \ Add the line ID in A to the end of the linesToHide
+ STA linesToHide,X      \ list
 
-.L291B
+.plns4
 
- INC lineCounter
- LDA lineCounter
- CMP linesToShowEnd
- BCC L28C2
+ INC lineCounter        \ Increment the loop counter to point to the next line
+                        \ in the linesToShow list
 
- LDA linesToShowPointer
- ADC #0
- STA linesToShowEnd
+ LDA lineCounter        \ Loop back to process the next line from linesToShow
+ CMP linesToShowEnd     \ until we have worked our way to the end
+ BCC plns1
 
-.L2929
+ LDA linesToShowPointer \ Set linesToShowEnd = linesToShowPointer + 1
+ ADC #0                 \
+ STA linesToShowEnd     \ so it points to the index of the first empty entry in
+                        \ the newly processed linesToShow list
 
- LDX relatedPoints      \ Reset the point statuses to 0 for all points in the
- BEQ L2939              \ relatedPoints list
+.plns5
 
- LDA #0
+ LDX relatedPoints      \ If the relatedPoints list is empty, jump to plns7 to
+ BEQ plns7              \ return from the subroutine
 
-.L2930
+                        \ Otherwise we now reset the point status bytes for all
+                        \ the points mentioned in the relatedPoints list, so
+                        \ they are no longer marked as having their coordinates
+                        \ and visibility calculated
 
- LDY relatedPoints,X
+ LDA #0                 \ Set A = 0 to use for resetting the status bytes
+
+.plns6
+
+ LDY relatedPoints,X    \ Zero the status byte for the X-th entry in the list
  STA pointStatus,Y
- DEX
- BNE L2930
 
-.L2939
+ DEX                    \ Decrement the loop counter
 
- RTS
+ BNE plns6              \ Loop back until we have reset all the 
+
+.plns7
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
