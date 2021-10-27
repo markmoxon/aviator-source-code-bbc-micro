@@ -1934,34 +1934,44 @@ ORG CODE%
 \
 \   pointStatus         Bits 0, 2, 3, 4, 5 are set according to the result
 \
+\                         * Bit 0:
+\
+\                           * 0 = we have not called L0D01 for this point
+\
+\                           * 1 = we have already called L0D01 for this point
+\
 \ ******************************************************************************
 
 .L0D01
 
- LDX GG
- LDA #0
+ LDX GG                 \ Set X to the point ID to process
 
- STA N                  \ Set N = 0, which we use for collecting set bits to
-                        \ apply to the point's status byte
+ LDA #0                 \ Set N = 0, which we use for collecting set bits to
+ STA N                  \ apply to the point's status byte
 
- LDA #%00010000
+ LDA #%00010000         \ Set bit 4 of R
  STA R
 
- LDA pointStatus,X
+ LDA pointStatus,X      \ Set Y = A = the status byte for the point to process
  TAY
- AND #1
- BEQ L0D14
 
- RTS
+ AND #1                 \ If bit 0 of the status byte is clear, jump to L0D14 to
+ BEQ L0D14              \ skip the following instruction
+
+ RTS                    \ Bit 0 of the point's status byte is set, which means
+                        \ we have already processed this point, so return from
+                        \ the subroutine
 
 .L0D14
 
  TYA                    \ Set bit 0 of the point's status byte in pointStatus
- ORA #1
- STA pointStatus,X
+ ORA #1                 \ to indicate that we have now called L0D01 for this
+ STA pointStatus,X      \ point
 
- LDA zPointHi,X
- BMI L0D37
+ LDA zPointHi,X         \ Set A = the high byte of the point's z-coordinate
+
+ BMI L0D37              \ If the z-coordinate is negative, jump to L0D37 to
+                        \ change its sign
 
  STA Q
  BEQ L0D2B
@@ -10761,13 +10771,13 @@ ORG CODE%
 
 .rset5
 
-                        \ This loop zeroes L4203, L4203 and L4204
+                        \ This loop zeroes alienCounter+1 to alienCounter+3
 
- STA L4203,X            \ Zero the X-th byte of L4203
+ STA alienCounter+1,X   \ Zero the X-th byte of alienCounter+1
 
  DEX                    \ Decrement the byte counter
 
- BPL rset5              \ Loop back until we have zeroed L4203 to L4203+2
+ BPL rset5              \ Loop back until we have zeroed all three bytes
 
  JSR IndicatorT         \ Update the Theme indicator
 
@@ -12480,7 +12490,7 @@ ORG CODE%
 
                         \ If we get here then the object ID is 31, 32 or 33
 
- LDX L41E4,Y            \ If the alien's L41E4 entry is negative, jump to
+ LDX alienCounter-30,Y  \ If the alien's alienCounter is negative, jump to
  BMI objc7              \ objc11 via objc7 to move onto the next alien in the
                         \ group
 
@@ -14366,11 +14376,11 @@ ORG CODE%
 
 .L2F6A
 
- LDY #31
+ LDY #31                \ Loop through object IDs 31 and 32
 
 .L2F6C
 
- LDX L41E4,Y
+ LDX alienCounter-30,Y  \ Points to alienCounter+1 and alienCounter+2
  BMI L2F82
 
  LDA alienState,X
@@ -14383,7 +14393,7 @@ ORG CODE%
 .L2F7D
 
  LDA #&FE
- STA L41E4,Y
+ STA alienCounter-30,Y
 
 .L2F82
 
@@ -14400,19 +14410,19 @@ ORG CODE%
  CPY #31
  BEQ L2F98
 
- CPX L4203
+ CPX alienCounter+1
  JMP L2F9B
 
 .L2F98
 
- CPX L4204
+ CPX alienCounter+2
 
 .L2F9B
 
  BEQ L2FB1
 
  TXA
- STA L41E4,Y
+ STA alienCounter-30,Y
  STX U
  LDA #&80
  JSR L302C
@@ -14433,13 +14443,13 @@ ORG CODE%
  CPY #33
  BNE L2F6C
 
- LDX L41E4,Y
+ LDX alienCounter-30,Y  \ Y = 33 at this point, so this points to alienToMove
  BMI L2FC6
 
  LDA L4208,X
  BPL L2FE3
 
- STA L41E4,Y
+ STA alienCounter-30,Y
 
 .L2FC6
 
@@ -14448,7 +14458,7 @@ ORG CODE%
 
 .L2FC8
 
- LDX L41E4,Y
+ LDX alienCounter-30,Y
  BMI L2FDE
 
  LDA alienState,X
@@ -14481,7 +14491,7 @@ ORG CODE%
 
 .L2FEC
 
- LDX L41E4,Y
+ LDX alienCounter-30,Y
  BMI L3003
 
  LDA alienState,X
@@ -18056,27 +18066,10 @@ NEXT
  EQUB &F1, &F2, &F2, &F3, &F3, &F4, &F4, &F4
  EQUB &F5, &F5, &F6, &F6, &F7, &F7, &F7, &F8
  EQUB &F8, &F9, &F9, &F9, &FA, &FA, &FA, &FB
- EQUB &FB, &FB
-
-\ ******************************************************************************
-\
-\       Name: L41E4
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L41E4
-
- EQUB &FB, &FC, &FC, &FC, &FC, &FD, &FD, &FD
- EQUB &FD, &FE, &FE, &FE, &FE, &FE, &FE, &FF
+ EQUB &FB, &FB, &FB, &FC, &FC, &FC, &FC, &FD
+ EQUB &FD, &FD, &FD, &FE, &FE, &FE, &FE, &FE
+ EQUB &FE, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF
 
 \ ******************************************************************************
 \
@@ -18089,35 +18082,11 @@ NEXT
 
 .alienCounter
 
- EQUB &6C               \ Used as a counter, from 0 to 7, for aliens
+ EQUB &6C               \ Counter for alien 30 ???
+ EQUB &6B               \ Counter for alien 31 ???
+ EQUB &6A               \ Counter for alien 32 ???
                         \
                         \ Zeroed in ResetVariables
-
-\ ******************************************************************************
-\
-\       Name: L4203
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4203
-
- EQUB &6B               \ Zeroed in ResetVariables
-
-\ ******************************************************************************
-\
-\       Name: L4204
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L4204
-
- EQUB &6A               \ Zeroed in ResetVariables
 
 \ ******************************************************************************
 \
@@ -18131,7 +18100,7 @@ NEXT
 
 .alienToMove
 
- EQUB &69               \ Zeroed in ResetVariables
+ EQUB &69               \ Zeroed in ResetVariables, counter for alien 33?
 
 \ ******************************************************************************
 \
@@ -20508,8 +20477,8 @@ NEXT
 
 .L4D44
 
- LDX L41E4,Y
- STA L41E4,Y
+ LDX alienCounter-30,Y
+ STA alienCounter-30,Y
 
 .L4D4A
 
