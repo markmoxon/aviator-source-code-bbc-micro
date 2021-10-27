@@ -977,13 +977,9 @@ ORG &0900
 
 .objectId
 
- SKIP 1                 \ The object ID (i.e. type of object), 0-39
+ SKIP 1                 \ Temporary storage for an object ID (0 to 39)
                         \
                         \ This is called OB in the original source code
-                        \
-                        \   * 30 to 33 = bullets
-                        \
-                        \ Points are mapped to objects via objectPoints
 
 .pressingTab
 
@@ -10695,13 +10691,15 @@ ORG CODE%
 
 .rset3
 
-                        \ This loop zeroes 8 bytes at L4210
+                        \ This loop zeroes 8 bytes at alienState to reset the
+                        \ state of the aliens
 
- STA L4210,X            \ Zero the X-th byte of L4210
+ STA alienState,X       \ Zero the X-th byte of alienState
 
  DEX                    \ Decrement the byte counter
 
- BPL rset3              \ Loop back until we have zeroed L4210 to L4210+7
+ BPL rset3              \ Loop back until we have zeroed alienState to
+                        \ alienState+7
 
  LDA #&48               \ Set zPlaneHi = &48
  STA zPlaneHi
@@ -10819,7 +10817,7 @@ ORG CODE%
  JSR DrawRadarBlip      \ Remove the current dot from the radar, but don't draw
                         \ a new one, as xPointLo is off-radar
 
- LDY #&21
+ LDY #33
  JSR ResetObjectCoords
 
  RTS                    \ Return from the subroutine
@@ -11082,12 +11080,12 @@ ORG CODE%
  LDY #1
  JSR UpdateRadarBlip
 
- LDX L4205
+ LDX alienToMove
  BMI main7
 
- LDY #&21
- LDA L4210,X
- CMP #&1B
+ LDY #33
+ LDA alienState,X
+ CMP #27
  BCC main7
 
  JSR UpdateRadarBlip
@@ -11113,7 +11111,7 @@ ORG CODE%
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
  BEQ main11             \ the air, so jump to main11
 
- LDA #&21
+ LDA #33
  STA objectId
 
 .main8
@@ -11131,7 +11129,7 @@ ORG CODE%
 
  DEC objectId
  LDA objectId
- CMP #&1E
+ CMP #30
  BCS main8
 
  BCC main11
@@ -12306,8 +12304,8 @@ ORG CODE%
                         \
                         \   * Object groups, e.g. trees (6, 7, 8 or 9)
                         \   * Bullets (12, 13, 14 or 15)
-                        \   * ??? (30)
-                        \   * ??? (31, 32 or 33)
+                        \   * Feeding aliens (object group 30)
+                        \   * Flying aliens (31, 32 or 33)
                         \
                         \ so we can pre-process them before moving on to the
                         \ main processing routine in part 8
@@ -12431,7 +12429,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 6 of 11)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Pre-process the alien (object 30)
+\    Summary: Pre-process feeding aliens (object group 30)
 \
 \ ******************************************************************************
 
@@ -12449,8 +12447,8 @@ ORG CODE%
  LDX alienCounter       \ Fetch the current value of alienCounter, which
                         \ contains the number of the alien to process, 0 to 7
 
- LDA L4210,X            \ If the alien's L4210 entry is non-zero, jump to objc11
- BNE objc7              \ via objc7 to move onto the next alien in the group
+ LDA alienState,X       \ If the alien's state is non-zero, jump to objc11 via
+ BNE objc7              \ objc7 to move onto the next alien in the group
 
  LDA L4208,X            \ Set A = the alien's L4208 entry, which gives the
                         \ object ID for alien number alienCounter
@@ -12474,7 +12472,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 7 of 11)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Pre-process objects 31, 32 and 33
+\    Summary: Pre-process flying aliens (objects 31, 32 and 33)
 \
 \ ******************************************************************************
 
@@ -12486,8 +12484,8 @@ ORG CODE%
  BMI objc7              \ objc11 via objc7 to move onto the next alien in the
                         \ group
 
- LDA L4210,X            \ If the alien's L4210 entry is >= 27, jump to objc9
- CMP #27                \ to process this object
+ LDA alienState,X       \ If the alien's state is >= 27, then it is heading for
+ CMP #27                \ Acornsville, so jump to objc9 to process this object
  BCS objc9
 
  LDA L4208,X            \ Set A = the alien's L4208 entry, which gives the
@@ -13559,32 +13557,37 @@ ORG CODE%
 \       Name: AlienInAcornsville
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: Check to see whether an alien has reached Acornsville
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Move an alien towards Acornsville and check whether it has reached
+\             it yet (and if so, end the game)
 \
 \ ******************************************************************************
 
 .AlienInAcornsville
 
- LDY L4205              \ Set Y = L4205
+ LDY alienToMove        \ Set Y to the number of the alien whose turn it is to
+                        \ move towards Acornsville in this iteration of the main
+                        \ loop, which we set in L2F4E
 
- BMI acrn1              \ If Y is negative, jump to acrn1 to return from the
-                        \ subroutine
+ BMI acrn1              \ If Y is negative, then there is no alien to move, so
+                        \ jump to acrn1 to return from the subroutine
 
- LDA L4210,Y            \ If the Y-th entry in L4210 <> 27, jump to acrn7
- CMP #27
+ LDA alienState,Y       \ If the alien's state is 27, then it is heading for the
+ CMP #27                \ town, so jump to acrn7 if this is not the case
  BNE acrn7
 
- LDA yObjectHi+33       \ If the alien's yObjectHi coordinate >= 12, jump to
- CMP #12                \ acrn2
- BCS acrn2
+                        \ The alien is heading towards the town. This happens
+                        \ in three stages: first, the alien takes off; then it
+                        \ flies towards the city; and finally it descends. When
+                        \ the alien's state is 27, it is working through the
+                        \ first two stages, so that's what we do now
 
- LDA yObjectLo+33       \ Add 10 to the alien's yObject coordinate, starting
- ADC #10                \ with the low bytes
- STA yObjectLo+33
+ LDA yObjectHi+33       \ If the high byte of the alien's y-coordinate >= 12,
+ CMP #12                \ then the alien is already flying high, so jump to
+ BCS acrn2              \ acrn2 to move it closer to Acornsville
+
+ LDA yObjectLo+33       \ Otherwise add 10 to the alien's yObject coordinate,
+ ADC #10                \ so that it rises into the air, starting with the low
+ STA yObjectLo+33       \ bytes
 
  BCC acrn1              \ If the addition of the low bytes overflowed, increment
  INC yObjectHi+33       \ the high byte
@@ -13595,81 +13598,108 @@ ORG CODE%
 
 .acrn2
 
- LDX #0
- STX T
+                        \ If we get here then the alien's yObjectHi coordinate
+                        \ is 12 or more, so it's already flying high
+
+ LDX #0                 \ Set X = 0, to use in the following to check either the
+                        \ x-coordinate (X = 0) or the z-coordinate (X = 80)
+
+ STX T                  \ Set T = 0, which we use to record whether we move the
+                        \ alien along the x-axis or z-axis (or both)
 
 .acrn3
 
- LDA xObjectHi+33,X
- BEQ acrn5
+                        \ We either do the following with X = 0 or X = 80, which
+                        \ either checks the x-coordinate or the z-coordinate
+                        \ (as zObjectHi - xObjectHi is 80)
+                        \
+                        \ The comments are for when X = 0, which checks the
+                        \ x-coordinate
 
- LDA xObjectLo+33,X
- SEC
- SBC L0CF8
+ LDA xObjectHi+33,X     \ If the high byte of the alien's x-coordinate is zero,
+ BEQ acrn5              \ then we have already reached the right longitude for
+                        \ Acornsville, so jump to acrn5
+
+ LDA xObjectLo+33,X     \ Subtract L0CF8 from the alien's x-coordinate, starting
+ SEC                    \ with the low bytes, so the alien moves towards
+ SBC L0CF8              \ Acornsville along the x-axis
  STA xObjectLo+33,X
- BCS acrn4
 
- DEC xObjectHi+33,X
+ BCS acrn4              \ If the subtraction of the low bytes underflowed,
+ DEC xObjectHi+33,X     \ decrement the high byte
 
 .acrn4
 
- LDA #1
+ LDA #1                 \ Set T = 1, to record the fact that we moved the alien
  STA T
 
 .acrn5
 
- CPX #&50
- BEQ acrn6
+ CPX #80                \ If X = 80 then we have checked both axes, so jump to
+ BEQ acrn6              \ acrn6 to check the alien's altitude
 
- LDX #&50
- BNE acrn3
+ LDX #80                \ Otherwise jump back to acrn3 with X = 80 to check the
+ BNE acrn3              \ alien's latitude in its z-coordinate (this BNE is
+                        \ effectively a JMP as X is never zero)
 
 .acrn6
 
- LDA T
- BNE acrn1
+ LDA T                  \ If T <> 0 then we moved the alien along at least one
+ BNE acrn1              \ of the axes, so jump to acrn1 to return from the
+                        \ subroutine as the alien is still in the process of
+                        \ flying to Acornsville
 
- LDA #&1C
- STA L4210,Y
+ LDA #28                \ Set the alien's state to 28, so the next time we call
+ STA alienState,Y       \ this routine, we jump straight to the following
 
 .acrn7
 
- CMP #&1C
- BNE acrn1
+ CMP #28                \ If the alien's state is not 28, then it isn't
+ BNE acrn1              \ attacking the town, so jump to acrn1 to return from
+                        \ the subroutine
 
- LDA L368F
- BNE acrn1
+                        \ The alien is heading towards the town. This happens
+                        \ in three stages: first, the alien takes off; then it
+                        \ flies towards the city; and finally it descends. When
+                        \ the alien's state is 28, it is on the final stage, so
+                        \ that's what we do now
 
- LDA yObjectLo+33
- SEC
- SBC #&0A
+ LDA L368F              \ If L368F is non-zero, jump to acrn1 to return from
+ BNE acrn1              \ the subroutine
+
+ LDA yObjectLo+33       \ Subtract 10 from the alien's yObject coordinate, so
+ SEC                    \ that it descends towards the town, starting with the
+ SBC #10                \ low bytes
  STA yObjectLo+33
- BCS acrn8
 
- DEC yObjectHi+33
+ BCS acrn8              \ If the subtraction of the low bytes underflowed,
+ DEC yObjectHi+33       \ decrement the high byte
 
 .acrn8
 
- LDA yObjectHi+33
- BNE acrn1
+ LDA yObjectHi+33       \ If the high byte of the alien's y-coordinate is zero,
+ BNE acrn1              \ then it is still too high to attack, so jump to acrn1
+                        \ to return from the subroutine
 
- LDA yObjectLo+33
- CMP #&0A
- BCS acrn1
+ LDA yObjectLo+33       \ If the low byte of the alien's y-coordinate is 10 or
+ CMP #10                \ more, then it is still too high to attack, so jump to
+ BCS acrn1              \ acrn1 to return from the subroutine
 
- JSR PrintTooLate
+ JSR PrintTooLate       \ Otherwise the alien is close enough to the town to
+                        \ wreak havoc... which means it's game over, so print
+                        \ the "TOO LATE!" message in the middle of the screen
 
- LDA #&5A
+ LDA #90                \ Delay for 90^3 loop iterations
  JSR Delay
 
- JSR TerminateGame
+ JSR TerminateGame      \ Terminate the game
 
- TSX                    \ Remove two bytes from the top of the stack
- INX
- INX
- TXS
+ TSX                    \ Remove the two bytes from the top of the stack that
+ INX                    \ were put there by the JSR that called this routine, so
+ INX                    \ we can jump to NewGame without leaving any trace on
+ TXS                    \ the stack
 
- JMP NewGame
+ JMP NewGame            \ Jump to NewGame to start a new game
 
 \ ******************************************************************************
 \
@@ -14254,7 +14284,7 @@ ORG CODE%
  LDA onGround           \ If onGround is non-zero, then we are on the ground, so
  BNE L2F4D              \ jump to L2F4D to return from the subroutine
 
- STA L4210-1,X          \ X is 1 to 8, so this updates the X-th entry in L4210
+ STA alienState-1,X     \ X is 1 to 8, so this updates the X-th alien's state
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
@@ -14318,16 +14348,16 @@ ORG CODE%
 
 .L2F57
 
- LDA L4210,X
+ LDA alienState,X
  BEQ L2F67
 
- CMP #&16
+ CMP #22
  BEQ L2F67
 
- CMP #&1B
+ CMP #27
  BCS L2F67
 
- INC L4210,X
+ INC alienState,X
 
 .L2F67
 
@@ -14336,15 +14366,15 @@ ORG CODE%
 
 .L2F6A
 
- LDY #&1F
+ LDY #31
 
 .L2F6C
 
  LDX L41E4,Y
  BMI L2F82
 
- LDA L4210,X
- CMP #&18
+ LDA alienState,X
+ CMP #24
  BEQ L2F7D
 
  LDA L4208,X
@@ -14364,10 +14394,10 @@ ORG CODE%
  LDA L4208,X
  BMI L2FB1
 
- LDA L4210,X
+ LDA alienState,X
  BNE L2FB1
 
- CPY #&1F
+ CPY #31
  BEQ L2F98
 
  CPX L4203
@@ -14389,7 +14419,7 @@ ORG CODE%
 
  LDX U
  LDA #1
- STA L4210,X
+ STA alienState,X
  BNE L2FB4
 
 .L2FB1
@@ -14400,7 +14430,7 @@ ORG CODE%
 .L2FB4
 
  INY
- CPY #&21
+ CPY #33
  BNE L2F6C
 
  LDX L41E4,Y
@@ -14413,26 +14443,32 @@ ORG CODE%
 
 .L2FC6
 
- LDY #&1F
+ LDY #31                \ We now work our way through the aliens in objects 31,
+                        \ 32 and 33, so set a counter in Y for the object ID
 
 .L2FC8
 
  LDX L41E4,Y
  BMI L2FDE
 
- LDA L4210,X
- CMP #&16
+ LDA alienState,X
+ CMP #22
  BNE L2FDE
 
- STX L4205
- LDA #&17
- STA L4210,X
- BNE L2FE3
+ STX alienToMove        \ Set this alien as the one to move towards Acornsville
+                        \ in this iteration of the main loop by setting
+                        \ alienToMove to the alien number in X
+
+ LDA #23                \ Set the alien's state to 23
+ STA alienState,X
+
+ BNE L2FE3              \ Jump to L2FE3 to exit the loop (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .L2FDE
 
  INY
- CPY #&21
+ CPY #33
  BNE L2FC8
 
 .L2FE3
@@ -14441,14 +14477,14 @@ ORG CODE%
  AND #127
  BNE L302B
 
- LDY #&1F
+ LDY #31
 
 .L2FEC
 
  LDX L41E4,Y
  BMI L3003
 
- LDA L4210,X
+ LDA alienState,X
  CMP #5
  BCC L3003
 
@@ -14463,7 +14499,7 @@ ORG CODE%
 .L3003
 
  INY
- CPY #&21
+ CPY #33
  BNE L2FEC
 
  LDX #7
@@ -14515,7 +14551,7 @@ ORG CODE%
  STY T
  LDX #3
  LDA #&BA
- CPY #&1F
+ CPY #31
  BEQ L303A
 
  LDA #&BF
@@ -14567,7 +14603,7 @@ ORG CODE%
  LDA #&A0
  STA RR
  STA PP
- CPY #&1F
+ CPY #31
  BCS L306B
 
  LDA #4
@@ -14577,7 +14613,7 @@ ORG CODE%
 .L306B
 
  LDA #0
- CPY #&20
+ CPY #32
  BCS L3075
 
  LDX #&B7
@@ -14626,7 +14662,7 @@ ORG CODE%
 .L30A5
 
  LDX VV
- LDA #&1F
+ LDA #31
  STA WW
  LDY #0
 
@@ -14814,7 +14850,7 @@ ORG CODE%
  INX
  TXS
 
- LDA #&1B
+ LDA #27
  STA L368F
 
 .L3180
@@ -18085,14 +18121,15 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4205
+\       Name: alienToMove
 \       Type: Variable
-\   Category: 
-\    Summary: 
+\   Category: Theme
+\    Summary: The number of the alien to move towards Acornsville in this
+\             iteration of the main loop
 \
 \ ******************************************************************************
 
-.L4205
+.alienToMove
 
  EQUB &69               \ Zeroed in ResetVariables
 
@@ -18146,14 +18183,20 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4210
+\       Name: alienState
 \       Type: Variable
 \   Category: Theme
-\    Summary: 
+\    Summary: The aliens' state bytes
+\
+\ ------------------------------------------------------------------------------
+\
+\ 23 = ???
+\ 27 = flying to Acornsville
+\ 28 = descending towards Acornsville
 \
 \ ******************************************************************************
 
-.L4210
+.alienState
 
  EQUB &5B, &5A          \ Zeroed in ResetVariables
  EQUB &59, &58
@@ -18414,7 +18457,7 @@ NEXT
  LDA #&12
  JSR L4B9B
  BCC L42DF
- LDA #&20
+ LDA #32
  LDX row25_block31_1
  BNE L42EB
 
@@ -20418,12 +20461,12 @@ NEXT
 .L4D19
 
  LDA L368F
- CMP #&1A
+ CMP #26
  BNE L4D34
 
  LDA L0CBA
  LDX L368E
- CPX #&21
+ CPX #33
  BNE L4D31
 
  SEC
@@ -20457,7 +20500,7 @@ NEXT
 
  LDA #&FF
  LDY L368E
- CPY #&1E
+ CPY #30
  BNE L4D44
 
  LDX alienCounter
@@ -20471,7 +20514,7 @@ NEXT
 .L4D4A
 
  STA L4208,X
- CPY #&21
+ CPY #33
  BNE L4D58
 
  JSR ResetRadar
@@ -20482,7 +20525,7 @@ NEXT
 .L4D58
 
  LDX L368D
- CPY #&1F
+ CPY #31
  BCS L4D65
 
  LDA dormantAlienScore  \ Fetch the score for killing a dormant alien (400
