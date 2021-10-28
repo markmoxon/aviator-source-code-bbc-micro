@@ -1919,9 +1919,9 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L0D01
+\       Name: L0D01 (Part 1 of )
 \       Type: Subroutine
-\   Category: 3D geometry
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -1932,13 +1932,37 @@ ORG CODE%
 \
 \ Returns:
 \
-\   pointStatus         Bits 0, 2, 3, 4, 5 are set according to the result
+\   pointStatus         Set according to the following:
 \
 \                         * Bit 0:
 \
 \                           * 0 = we have not called L0D01 for this point
 \
 \                           * 1 = we have already called L0D01 for this point
+\
+\                         * Bit 2:
+\
+\                           * 0 = yPoint is positive
+\
+\                           * 1 = yPoint is negative
+\
+\                         * Bit 3:
+\
+\                           * 0 = xPoint is positive
+\
+\                           * 1 = xPoint is negative
+\
+\                         * Bit 4:
+\
+\                           * 0 = |yPoint| * 2 < |zPoint|
+\
+\                           * 1 = |yPoint| * 2 >= |zPoint|
+\
+\                         * Bit 5:
+\
+\                           * 0 = |xPoint| < |zPoint|
+\
+\                           * 1 = |xPoint| >= |zPoint|
 \
 \ ******************************************************************************
 
@@ -1968,156 +1992,245 @@ ORG CODE%
  ORA #1                 \ to indicate that we have now called L0D01 for this
  STA pointStatus,X      \ point
 
+                        \ We now set (Q P) = |zPoint|
+                        \
+                        \ bumping (Q P) up to 1 if zPoint = 0, so (Q P) has a
+                        \ minimum value of 1
+
  LDA zPointHi,X         \ Set A = the high byte of the point's z-coordinate
 
  BMI L0D37              \ If the z-coordinate is negative, jump to L0D37 to
                         \ change its sign
 
- STA Q
- BEQ L0D2B
+ STA Q                  \ Set Q = the high byte of the point's z-coordinate
 
- LDA zPointLo,X
- STA P
- JMP L0D46
+ BEQ L0D2B              \ If the high byte of the z-coordinate is 0, jump to
+                        \ L0D2B
+
+ LDA zPointLo,X         \ Set P = the low byte of the point's z-coordinate, so
+ STA P                  \ (Q P) now contains the point's z-coordinate, as
+                        \ required
+
+ JMP L0D46              \ Jump to L0D46 to move on to the point's x-coordinate
 
 .L0D2B
 
- LDA zPointLo,X
- BNE L0D32
+                        \ If we get here then the high byte of the z-coordinate
+                        \ is 0
 
- LDA #1
+ LDA zPointLo,X         \ Set A = the low byte of the point's z-coordinate
+
+ BNE L0D32              \ If the low byte of the point's z-coordinate is
+                        \ non-zero, skip the following instructions
+
+                        \ If we get here then both the high and low bytes of the
+                        \ z-coordinate are 0, so zPoint = 0
+
+ LDA #1                 \ Set A = 1 to use as the low byte of (Q P), so we will
+                        \ end up with (Q P) = 1, as required
 
 .L0D32
 
- STA P
- JMP L0D46
+ STA P                  \ Set P = the low byte of the point's z-coordinate, or
+                        \ 1 if the low byte was zero, so (Q P) now contains
+                        \ |zPoint|, with a minimum value of 1, as required
+
+ JMP L0D46              \ Jump to L0D46 to move on to the point's x-coordinate
 
 .L0D37
 
- LDA #0
- SEC
+                        \ If we get here then the high byte of the z-coordinate
+                        \ is negative, so now we negate it to make it positive
+
+ LDA #0                 \ Negate zPoint and store it in (Q P), starting with the
+ SEC                    \ low bytes
  SBC zPointLo,X
  STA P
- LDA #0
- SBC zPointHi,X
- STA Q
+
+ LDA #0                 \ And then the high bytes, so (Q P) now contains the
+ SBC zPointHi,X         \ point's z-coordinate made positive, i.e. |zPoint|,
+ STA Q                  \ as required
 
 .L0D46
 
- LDA xPointHi,X
- BMI L0D55
+                        \ We now set (QQ PP) = |xPoint|
 
- STA QQ
- LDA xPointLo,X
- STA PP
- JMP L0D6A
+ LDA xPointHi,X         \ Set A = the high byte of the point's x-coordinate
+
+ BMI L0D55              \ If the x-coordinate is negative, jump to L0D55 to
+                        \ change its sign
+
+ STA QQ                 \ Set QQ = the high byte of the point's x-coordinate
+
+ LDA xPointLo,X         \ Set PP = the low byte of the point's x-coordinate, so
+ STA PP                 \ so (QQ PP) now contains |xPoint|, as required
+
+ JMP L0D6A              \ Jump to L0D6A to move on to the point's y-coordinate
 
 .L0D55
 
- LDA #0
- SEC
+                        \ If we get here then the high byte of the x-coordinate
+                        \ is negative, so now we negate it to make it positive
+
+ LDA #0                 \ Negate xPoint and store it in (QQ PP), starting with
+ SEC                    \ the low bytes
  SBC xPointLo,X
  STA PP
- LDA #0
- SBC xPointHi,X
- STA QQ
+
+ LDA #0                 \ And then the high bytes, so (QQ PP) now contains the
+ SBC xPointHi,X         \ point's x-coordinate made positive, i.e. |xPoint|,
+ STA QQ                 \ as required
 
  LDA N                  \ Set bit 3 of N (so we set bit 3 of the point's status
- ORA #%00001000         \ byte when we're done)
- STA N
+ ORA #%00001000         \ byte when we're done) to indicate that xPoint is
+ STA N                  \ negative
 
 .L0D6A
 
- LDA yPointHi,X
- BMI L0D7C
+                        \ We now set (SS RR) = |yPoint| * 2
 
- STA SS
- LDA yPointLo,X
- ASL A
- ROL SS
+ LDA yPointHi,X         \ Set A = the high byte of the point's y-coordinate
+
+ BMI L0D7C              \ If the y-coordinate is negative, jump to L0D7C to
+                        \ change its sign
+
+ STA SS                 \ Set SS = the high byte of the point's y-coordinate
+
+ LDA yPointLo,X         \ Set A = the high byte of the point's y-coordinate, so
+                        \ (SS A) now contains |yPoint|
+
+ ASL A                  \ Set (SS R) = (SS A) * 2
+ ROL SS                 \            = |yPoint| * 2
  STA RR
- JMP L0D94
+
+ JMP L0D94              \ Jump to L0D94 to move on to the next stage
 
 .L0D7C
 
- LDA #0
- SEC
+                        \ If we get here then the high byte of the y-coordinate
+                        \ is negative, so now we negate it to make it positive
+                        \ before multiplying by 2
+
+ LDA #0                 \ Negate yPoint and store it in (A RR), starting with
+ SEC                    \ the low bytes
  SBC yPointLo,X
  STA RR
- LDA #0
- SBC yPointHi,X
- ASL RR
- ROL A
+
+ LDA #0                 \ And then the high bytes, so (A RR) now contains the
+ SBC yPointHi,X         \ point's y-coordinate made positive, i.e. |yPoint|
+
+ ASL RR                 \ Set (SS RR) = (A RR) * 2
+ ROL A                  \             = |yPoint| * 2
  STA SS
 
  LDA N                  \ Set bit 2 of N (so we set bit 2 of the point's status
- ORA #%00000100         \ byte when we're done)
- STA N
+ ORA #%00000100         \ byte when we're done) to indicate that yPoint is
+ STA N                  \ negative
 
 .L0D94
 
- LDA QQ
+                        \ We now set bit 5 of the status byte in N by comparing
+                        \ the |xPoint| and |zPoint| values we just calculated
+
+ LDA QQ                 \ If QQ < Q, jump to L0DA8 to leave bit 5 clear
  CMP Q
  BCC L0DA8
 
- BNE L0DA2
+ BNE L0DA2              \ If QQ > Q, jump to L0DA2 to set bit 5
 
- LDA PP
+                        \ If we get here then QQ = Q
+
+ LDA PP                 \ If PP < P, jump to L0DA8 to leave bit 5 clear
  CMP P
  BCC L0DA8
 
 .L0DA2
 
+                        \ If we get here then QQ = Q and PP >= P, which means
+                        \ (QQ PP) >= (Q P), i.e. |xPoint| >= |zPoint|
+
  LDA #%00100000         \ Set bit 5 of N (so we set bit 5 of the point's status
- ORA N                  \ byte when we're done)
- STA N
+ ORA N                  \ byte when we're done) to indicate that
+ STA N                  \ |xPoint| >= |zPoint|
 
 .L0DA8
 
- LDA SS
+                        \ We now set bit 4 of the status byte in N by comparing
+                        \ the |yPoint| and |zPoint| values we just calculated
+
+ LDA SS                 \ If SS < Q, jump to L0DBC to leave bit 4 clear
  CMP Q
  BCC L0DBC
 
- BNE L0DB6
+ BNE L0DB6              \ If SS > Q, jump to L0DB6 to set bit 4
 
- LDA RR
+                        \ If we get here then SS = Q
+
+ LDA RR                 \ If RR < P, jump to L0DBC to leave bit 4 clear
  CMP P
  BCC L0DBC
 
 .L0DB6
 
+                        \ If we get here then SS = Q and RR >= P, which means
+                        \ (SS RR) >= (Q P), i.e. |yPoint| * 2 >= |zPoint|
+
  LDA N                  \ Set bit 4 of N (so we set bit 4 of the point's status
- ORA #%00010000         \ byte when we're done)
- STA N
+ ORA #%00010000         \ byte when we're done) to indicate that
+ STA N                  \ |yPoint| * 2 >= |zPoint|
+
+\ ******************************************************************************
+\
+\       Name: L0D01 (Part 2 of )
+\       Type: Subroutine
+\   Category: Maths
+\    Summary: 
+\
+\ ******************************************************************************
 
 .L0DBC
 
- LDY P
- LDX Q
+                        \ By this point, we have the following:
+                        \
+                        \   (QQ PP) = |xPoint|
+                        \   (SS RR) = |yPoint| * 2
+                        \   (Q P)   = |zPoint|
+                        \
+                        \ with (Q P) set to a minimum value of 1
+
+ LDY P                  \ Set (X Y) = (Q P)
+ LDX Q                  \           = |zPoint|
+
  JSR L0F48
 
  TAX
  LDA Lookup3900,X
  STA TT
+
  LDA Lookup4700,X
- AND #&F8
+ AND #%11111000
+
  STA S
  STY K
  LDA WW
  STA UU
- LDY PP
 
- LDX QQ
+ LDY PP                 \ Set (X Y) = (QQ PP)
+ LDX QQ                 \           = |xPoint|
+
  JSR L0E69
 
- LDA Q
+ LDA Q                  \ Set (QQ PP) = (Q P)
  STA QQ
  LDA P
  STA PP
+
  LDA WW
  STA VV
- LDY RR
- LDX SS
+
+ LDY RR                 \ Set (X Y) = (SS RR)
+ LDX SS                 \           = |yPoint| * 2
+
  JSR L0E69
 
  JSR L0FA7
@@ -2207,7 +2320,7 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
- JSR L0F48
+ EQUB &20, &48, &0F     \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
@@ -2384,21 +2497,27 @@ ORG CODE%
 \
 \       Name: L0F48
 \       Type: Subroutine
-\   Category: 3D geometry
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (X Y)               
+\
+\   Z flag              Set according to the high byte in X (i.e. the routine is
+\                       called after setting register X)
 \
 \ ******************************************************************************
 
 .L0F48
 
- BEQ L0F77
+ BEQ L0F77              \ If the high byte in X = 0, jump down to L0F77
 
- LDA Lookup4700,X
- AND #7
+ LDA Lookup4700,X       \ Set A = int(log2(X))
+ AND #%00000111
+
  CLC
  ADC #8
  STA WW
@@ -2433,26 +2552,14 @@ ORG CODE%
  LDY shift4Left,X
  RTS
 
-\ ******************************************************************************
-\
-\       Name: L0F77
-\       Type: Subroutine
-\   Category: 3D geometry
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
 .L0F77
 
- CPY #0
+ CPY #0                 \ If the low byte in Y = 0, jump down to L0F97
  BEQ L0F97
 
- LDA Lookup4700,Y
- AND #7
+ LDA Lookup4700,Y       \ Set A = int(log2(Y))
+ AND #%00000111
+
  STA WW
  CMP #4
  TYA
@@ -16717,12 +16824,12 @@ NEXT
 \
 \       Name: Lookup3900
 \       Type: Variable
-\   Category: 3D geometry
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Is this a log table for multiplication?
 \
 \ ******************************************************************************
 
@@ -19245,49 +19352,273 @@ NEXT
 \
 \       Name: Lookup4700
 \       Type: Variable
-\   Category: 
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Bits 0 to 2 of Lookup4700,X contain int(log2(X))
 \
 \ ******************************************************************************
 
 .Lookup4700
 
- EQUB &00, &00, &01, &09, &12, &1A, &22, &32
- EQUB &43, &53, &63, &7B, &8B, &A3, &BB, &DB
- EQUB &F4, &14, &34, &54, &74, &9C, &C4, &EC
- EQUB &14, &3C, &6C, &94, &C4, &F4, &2C, &5C
- EQUB &95, &CD, &05, &3D, &75, &B5, &ED, &2D
- EQUB &6D, &AD, &ED, &35, &7D, &BD, &05, &4D
- EQUB &9D, &E5, &2D, &7D, &CD, &1D, &6D, &BD
- EQUB &15, &65, &BD, &15, &6D, &C5, &1D, &75
- EQUB &D6, &2E, &8E, &EE, &4E, &AE, &0E, &6E
- EQUB &D6, &36, &9E, &06, &6E, &D6, &3E, &A6
- EQUB &16, &7E, &EE, &56, &C6, &36, &A6, &16
- EQUB &86, &FE, &6E, &E6, &56, &CE, &46, &BE
- EQUB &36, &AE, &26, &9E, &1E, &96, &16, &96
- EQUB &0E, &8E, &0E, &8E, &0E, &96, &16, &96
- EQUB &1E, &9E, &26, &AE, &36, &B6, &3E, &C6
- EQUB &56, &DE, &66, &EE, &7E, &06, &96, &26
- EQUB &AF, &3F, &CF, &5F, &EF, &7F, &0F, &A7
- EQUB &37, &C7, &5F, &EF, &87, &17, &AF, &47
- EQUB &DF, &77, &0F, &A7, &3F, &D7, &6F, &0F
- EQUB &A7, &47, &DF, &7F, &17, &B7, &57, &EF
- EQUB &8F, &2F, &CF, &6F, &0F, &AF, &57, &F7
- EQUB &97, &37, &DF, &7F, &27, &C7, &6F, &17
- EQUB &BF, &5F, &07, &AF, &57, &FF, &A7, &4F
- EQUB &F7, &9F, &4F, &F7, &9F, &4F, &F7, &A7
- EQUB &4F, &FF, &A7, &57, &07, &AF, &5F, &0F
- EQUB &BF, &6F, &1F, &CF, &7F, &2F, &DF, &8F
- EQUB &47, &F7, &A7, &5F, &0F, &C7, &77, &2F
- EQUB &DF, &97, &47, &FF, &B7, &6F, &1F, &D7
- EQUB &8F, &47, &FF, &B7, &6F, &27, &DF, &97
- EQUB &4F, &0F, &C7, &7F, &3F, &F7, &AF, &6F
- EQUB &27, &E7, &9F, &5F, &17, &D7, &97, &4F
- EQUB &0F, &CF, &8F, &47, &07, &C7, &87, &47
+ EQUB %00000000         \ Index   0 = 00000 ( 0) and 000 (0)
+ EQUB %00000000         \ Index   1 = 00000 ( 0) and 000 (0)
+ EQUB %00000001         \ Index   2 = 00000 ( 0) and 001 (1)
+ EQUB %00001001         \ Index   3 = 00001 ( 1) and 001 (1)
+ EQUB %00010010         \ Index   4 = 00010 ( 2) and 010 (2)
+ EQUB %00011010         \ Index   5 = 00011 ( 3) and 010 (2)
+ EQUB %00100010         \ Index   6 = 00100 ( 4) and 010 (2)
+ EQUB %00110010         \ Index   7 = 00110 ( 6) and 010 (2)
+ EQUB %01000011         \ Index   8 = 01000 ( 8) and 011 (3)
+ EQUB %01010011         \ Index   9 = 01010 (10) and 011 (3)
+ EQUB %01100011         \ Index  10 = 01100 (12) and 011 (3)
+ EQUB %01111011         \ Index  11 = 01111 (15) and 011 (3)
+ EQUB %10001011         \ Index  12 = 10001 (17) and 011 (3)
+ EQUB %10100011         \ Index  13 = 10100 (20) and 011 (3)
+ EQUB %10111011         \ Index  14 = 10111 (23) and 011 (3)
+ EQUB %11011011         \ Index  15 = 11011 (27) and 011 (3)
+ EQUB %11110100         \ Index  16 = 11110 (30) and 100 (4)
+ EQUB %00010100         \ Index  17 = 00010 ( 2) and 100 (4)
+ EQUB %00110100         \ Index  18 = 00110 ( 6) and 100 (4)
+ EQUB %01010100         \ Index  19 = 01010 (10) and 100 (4)
+ EQUB %01110100         \ Index  20 = 01110 (14) and 100 (4)
+ EQUB %10011100         \ Index  21 = 10011 (19) and 100 (4)
+ EQUB %11000100         \ Index  22 = 11000 (24) and 100 (4)
+ EQUB %11101100         \ Index  23 = 11101 (29) and 100 (4)
+ EQUB %00010100         \ Index  24 = 00010 ( 2) and 100 (4)
+ EQUB %00111100         \ Index  25 = 00111 ( 7) and 100 (4)
+ EQUB %01101100         \ Index  26 = 01101 (13) and 100 (4)
+ EQUB %10010100         \ Index  27 = 10010 (18) and 100 (4)
+ EQUB %11000100         \ Index  28 = 11000 (24) and 100 (4)
+ EQUB %11110100         \ Index  29 = 11110 (30) and 100 (4)
+ EQUB %00101100         \ Index  30 = 00101 ( 5) and 100 (4)
+ EQUB %01011100         \ Index  31 = 01011 (11) and 100 (4)
+ EQUB %10010101         \ Index  32 = 10010 (18) and 101 (5)
+ EQUB %11001101         \ Index  33 = 11001 (25) and 101 (5)
+ EQUB %00000101         \ Index  34 = 00000 ( 0) and 101 (5)
+ EQUB %00111101         \ Index  35 = 00111 ( 7) and 101 (5)
+ EQUB %01110101         \ Index  36 = 01110 (14) and 101 (5)
+ EQUB %10110101         \ Index  37 = 10110 (22) and 101 (5)
+ EQUB %11101101         \ Index  38 = 11101 (29) and 101 (5)
+ EQUB %00101101         \ Index  39 = 00101 ( 5) and 101 (5)
+ EQUB %01101101         \ Index  40 = 01101 (13) and 101 (5)
+ EQUB %10101101         \ Index  41 = 10101 (21) and 101 (5)
+ EQUB %11101101         \ Index  42 = 11101 (29) and 101 (5)
+ EQUB %00110101         \ Index  43 = 00110 ( 6) and 101 (5)
+ EQUB %01111101         \ Index  44 = 01111 (15) and 101 (5)
+ EQUB %10111101         \ Index  45 = 10111 (23) and 101 (5)
+ EQUB %00000101         \ Index  46 = 00000 ( 0) and 101 (5)
+ EQUB %01001101         \ Index  47 = 01001 ( 9) and 101 (5)
+ EQUB %10011101         \ Index  48 = 10011 (19) and 101 (5)
+ EQUB %11100101         \ Index  49 = 11100 (28) and 101 (5)
+ EQUB %00101101         \ Index  50 = 00101 ( 5) and 101 (5)
+ EQUB %01111101         \ Index  51 = 01111 (15) and 101 (5)
+ EQUB %11001101         \ Index  52 = 11001 (25) and 101 (5)
+ EQUB %00011101         \ Index  53 = 00011 ( 3) and 101 (5)
+ EQUB %01101101         \ Index  54 = 01101 (13) and 101 (5)
+ EQUB %10111101         \ Index  55 = 10111 (23) and 101 (5)
+ EQUB %00010101         \ Index  56 = 00010 ( 2) and 101 (5)
+ EQUB %01100101         \ Index  57 = 01100 (12) and 101 (5)
+ EQUB %10111101         \ Index  58 = 10111 (23) and 101 (5)
+ EQUB %00010101         \ Index  59 = 00010 ( 2) and 101 (5)
+ EQUB %01101101         \ Index  60 = 01101 (13) and 101 (5)
+ EQUB %11000101         \ Index  61 = 11000 (24) and 101 (5)
+ EQUB %00011101         \ Index  62 = 00011 ( 3) and 101 (5)
+ EQUB %01110101         \ Index  63 = 01110 (14) and 101 (5)
+ EQUB %11010110         \ Index  64 = 11010 (26) and 110 (6)
+ EQUB %00101110         \ Index  65 = 00101 ( 5) and 110 (6)
+ EQUB %10001110         \ Index  66 = 10001 (17) and 110 (6)
+ EQUB %11101110         \ Index  67 = 11101 (29) and 110 (6)
+ EQUB %01001110         \ Index  68 = 01001 ( 9) and 110 (6)
+ EQUB %10101110         \ Index  69 = 10101 (21) and 110 (6)
+ EQUB %00001110         \ Index  70 = 00001 ( 1) and 110 (6)
+ EQUB %01101110         \ Index  71 = 01101 (13) and 110 (6)
+ EQUB %11010110         \ Index  72 = 11010 (26) and 110 (6)
+ EQUB %00110110         \ Index  73 = 00110 ( 6) and 110 (6)
+ EQUB %10011110         \ Index  74 = 10011 (19) and 110 (6)
+ EQUB %00000110         \ Index  75 = 00000 ( 0) and 110 (6)
+ EQUB %01101110         \ Index  76 = 01101 (13) and 110 (6)
+ EQUB %11010110         \ Index  77 = 11010 (26) and 110 (6)
+ EQUB %00111110         \ Index  78 = 00111 ( 7) and 110 (6)
+ EQUB %10100110         \ Index  79 = 10100 (20) and 110 (6)
+ EQUB %00010110         \ Index  80 = 00010 ( 2) and 110 (6)
+ EQUB %01111110         \ Index  81 = 01111 (15) and 110 (6)
+ EQUB %11101110         \ Index  82 = 11101 (29) and 110 (6)
+ EQUB %01010110         \ Index  83 = 01010 (10) and 110 (6)
+ EQUB %11000110         \ Index  84 = 11000 (24) and 110 (6)
+ EQUB %00110110         \ Index  85 = 00110 ( 6) and 110 (6)
+ EQUB %10100110         \ Index  86 = 10100 (20) and 110 (6)
+ EQUB %00010110         \ Index  87 = 00010 ( 2) and 110 (6)
+ EQUB %10000110         \ Index  88 = 10000 (16) and 110 (6)
+ EQUB %11111110         \ Index  89 = 11111 (31) and 110 (6)
+ EQUB %01101110         \ Index  90 = 01101 (13) and 110 (6)
+ EQUB %11100110         \ Index  91 = 11100 (28) and 110 (6)
+ EQUB %01010110         \ Index  92 = 01010 (10) and 110 (6)
+ EQUB %11001110         \ Index  93 = 11001 (25) and 110 (6)
+ EQUB %01000110         \ Index  94 = 01000 ( 8) and 110 (6)
+ EQUB %10111110         \ Index  95 = 10111 (23) and 110 (6)
+ EQUB %00110110         \ Index  96 = 00110 ( 6) and 110 (6)
+ EQUB %10101110         \ Index  97 = 10101 (21) and 110 (6)
+ EQUB %00100110         \ Index  98 = 00100 ( 4) and 110 (6)
+ EQUB %10011110         \ Index  99 = 10011 (19) and 110 (6)
+ EQUB %00011110         \ Index 100 = 00011 ( 3) and 110 (6)
+ EQUB %10010110         \ Index 101 = 10010 (18) and 110 (6)
+ EQUB %00010110         \ Index 102 = 00010 ( 2) and 110 (6)
+ EQUB %10010110         \ Index 103 = 10010 (18) and 110 (6)
+ EQUB %00001110         \ Index 104 = 00001 ( 1) and 110 (6)
+ EQUB %10001110         \ Index 105 = 10001 (17) and 110 (6)
+ EQUB %00001110         \ Index 106 = 00001 ( 1) and 110 (6)
+ EQUB %10001110         \ Index 107 = 10001 (17) and 110 (6)
+ EQUB %00001110         \ Index 108 = 00001 ( 1) and 110 (6)
+ EQUB %10010110         \ Index 109 = 10010 (18) and 110 (6)
+ EQUB %00010110         \ Index 110 = 00010 ( 2) and 110 (6)
+ EQUB %10010110         \ Index 111 = 10010 (18) and 110 (6)
+ EQUB %00011110         \ Index 112 = 00011 ( 3) and 110 (6)
+ EQUB %10011110         \ Index 113 = 10011 (19) and 110 (6)
+ EQUB %00100110         \ Index 114 = 00100 ( 4) and 110 (6)
+ EQUB %10101110         \ Index 115 = 10101 (21) and 110 (6)
+ EQUB %00110110         \ Index 116 = 00110 ( 6) and 110 (6)
+ EQUB %10110110         \ Index 117 = 10110 (22) and 110 (6)
+ EQUB %00111110         \ Index 118 = 00111 ( 7) and 110 (6)
+ EQUB %11000110         \ Index 119 = 11000 (24) and 110 (6)
+ EQUB %01010110         \ Index 120 = 01010 (10) and 110 (6)
+ EQUB %11011110         \ Index 121 = 11011 (27) and 110 (6)
+ EQUB %01100110         \ Index 122 = 01100 (12) and 110 (6)
+ EQUB %11101110         \ Index 123 = 11101 (29) and 110 (6)
+ EQUB %01111110         \ Index 124 = 01111 (15) and 110 (6)
+ EQUB %00000110         \ Index 125 = 00000 ( 0) and 110 (6)
+ EQUB %10010110         \ Index 126 = 10010 (18) and 110 (6)
+ EQUB %00100110         \ Index 127 = 00100 ( 4) and 110 (6)
+ EQUB %10101111         \ Index 128 = 10101 (21) and 111 (7)
+ EQUB %00111111         \ Index 129 = 00111 ( 7) and 111 (7)
+ EQUB %11001111         \ Index 130 = 11001 (25) and 111 (7)
+ EQUB %01011111         \ Index 131 = 01011 (11) and 111 (7)
+ EQUB %11101111         \ Index 132 = 11101 (29) and 111 (7)
+ EQUB %01111111         \ Index 133 = 01111 (15) and 111 (7)
+ EQUB %00001111         \ Index 134 = 00001 ( 1) and 111 (7)
+ EQUB %10100111         \ Index 135 = 10100 (20) and 111 (7)
+ EQUB %00110111         \ Index 136 = 00110 ( 6) and 111 (7)
+ EQUB %11000111         \ Index 137 = 11000 (24) and 111 (7)
+ EQUB %01011111         \ Index 138 = 01011 (11) and 111 (7)
+ EQUB %11101111         \ Index 139 = 11101 (29) and 111 (7)
+ EQUB %10000111         \ Index 140 = 10000 (16) and 111 (7)
+ EQUB %00010111         \ Index 141 = 00010 ( 2) and 111 (7)
+ EQUB %10101111         \ Index 142 = 10101 (21) and 111 (7)
+ EQUB %01000111         \ Index 143 = 01000 ( 8) and 111 (7)
+ EQUB %11011111         \ Index 144 = 11011 (27) and 111 (7)
+ EQUB %01110111         \ Index 145 = 01110 (14) and 111 (7)
+ EQUB %00001111         \ Index 146 = 00001 ( 1) and 111 (7)
+ EQUB %10100111         \ Index 147 = 10100 (20) and 111 (7)
+ EQUB %00111111         \ Index 148 = 00111 ( 7) and 111 (7)
+ EQUB %11010111         \ Index 149 = 11010 (26) and 111 (7)
+ EQUB %01101111         \ Index 150 = 01101 (13) and 111 (7)
+ EQUB %00001111         \ Index 151 = 00001 ( 1) and 111 (7)
+ EQUB %10100111         \ Index 152 = 10100 (20) and 111 (7)
+ EQUB %01000111         \ Index 153 = 01000 ( 8) and 111 (7)
+ EQUB %11011111         \ Index 154 = 11011 (27) and 111 (7)
+ EQUB %01111111         \ Index 155 = 01111 (15) and 111 (7)
+ EQUB %00010111         \ Index 156 = 00010 ( 2) and 111 (7)
+ EQUB %10110111         \ Index 157 = 10110 (22) and 111 (7)
+ EQUB %01010111         \ Index 158 = 01010 (10) and 111 (7)
+ EQUB %11101111         \ Index 159 = 11101 (29) and 111 (7)
+ EQUB %10001111         \ Index 160 = 10001 (17) and 111 (7)
+ EQUB %00101111         \ Index 161 = 00101 ( 5) and 111 (7)
+ EQUB %11001111         \ Index 162 = 11001 (25) and 111 (7)
+ EQUB %01101111         \ Index 163 = 01101 (13) and 111 (7)
+ EQUB %00001111         \ Index 164 = 00001 ( 1) and 111 (7)
+ EQUB %10101111         \ Index 165 = 10101 (21) and 111 (7)
+ EQUB %01010111         \ Index 166 = 01010 (10) and 111 (7)
+ EQUB %11110111         \ Index 167 = 11110 (30) and 111 (7)
+ EQUB %10010111         \ Index 168 = 10010 (18) and 111 (7)
+ EQUB %00110111         \ Index 169 = 00110 ( 6) and 111 (7)
+ EQUB %11011111         \ Index 170 = 11011 (27) and 111 (7)
+ EQUB %01111111         \ Index 171 = 01111 (15) and 111 (7)
+ EQUB %00100111         \ Index 172 = 00100 ( 4) and 111 (7)
+ EQUB %11000111         \ Index 173 = 11000 (24) and 111 (7)
+ EQUB %01101111         \ Index 174 = 01101 (13) and 111 (7)
+ EQUB %00010111         \ Index 175 = 00010 ( 2) and 111 (7)
+ EQUB %10111111         \ Index 176 = 10111 (23) and 111 (7)
+ EQUB %01011111         \ Index 177 = 01011 (11) and 111 (7)
+ EQUB %00000111         \ Index 178 = 00000 ( 0) and 111 (7)
+ EQUB %10101111         \ Index 179 = 10101 (21) and 111 (7)
+ EQUB %01010111         \ Index 180 = 01010 (10) and 111 (7)
+ EQUB %11111111         \ Index 181 = 11111 (31) and 111 (7)
+ EQUB %10100111         \ Index 182 = 10100 (20) and 111 (7)
+ EQUB %01001111         \ Index 183 = 01001 ( 9) and 111 (7)
+ EQUB %11110111         \ Index 184 = 11110 (30) and 111 (7)
+ EQUB %10011111         \ Index 185 = 10011 (19) and 111 (7)
+ EQUB %01001111         \ Index 186 = 01001 ( 9) and 111 (7)
+ EQUB %11110111         \ Index 187 = 11110 (30) and 111 (7)
+ EQUB %10011111         \ Index 188 = 10011 (19) and 111 (7)
+ EQUB %01001111         \ Index 189 = 01001 ( 9) and 111 (7)
+ EQUB %11110111         \ Index 190 = 11110 (30) and 111 (7)
+ EQUB %10100111         \ Index 191 = 10100 (20) and 111 (7)
+ EQUB %01001111         \ Index 192 = 01001 ( 9) and 111 (7)
+ EQUB %11111111         \ Index 193 = 11111 (31) and 111 (7)
+ EQUB %10100111         \ Index 194 = 10100 (20) and 111 (7)
+ EQUB %01010111         \ Index 195 = 01010 (10) and 111 (7)
+ EQUB %00000111         \ Index 196 = 00000 ( 0) and 111 (7)
+ EQUB %10101111         \ Index 197 = 10101 (21) and 111 (7)
+ EQUB %01011111         \ Index 198 = 01011 (11) and 111 (7)
+ EQUB %00001111         \ Index 199 = 00001 ( 1) and 111 (7)
+ EQUB %10111111         \ Index 200 = 10111 (23) and 111 (7)
+ EQUB %01101111         \ Index 201 = 01101 (13) and 111 (7)
+ EQUB %00011111         \ Index 202 = 00011 ( 3) and 111 (7)
+ EQUB %11001111         \ Index 203 = 11001 (25) and 111 (7)
+ EQUB %01111111         \ Index 204 = 01111 (15) and 111 (7)
+ EQUB %00101111         \ Index 205 = 00101 ( 5) and 111 (7)
+ EQUB %11011111         \ Index 206 = 11011 (27) and 111 (7)
+ EQUB %10001111         \ Index 207 = 10001 (17) and 111 (7)
+ EQUB %01000111         \ Index 208 = 01000 ( 8) and 111 (7)
+ EQUB %11110111         \ Index 209 = 11110 (30) and 111 (7)
+ EQUB %10100111         \ Index 210 = 10100 (20) and 111 (7)
+ EQUB %01011111         \ Index 211 = 01011 (11) and 111 (7)
+ EQUB %00001111         \ Index 212 = 00001 ( 1) and 111 (7)
+ EQUB %11000111         \ Index 213 = 11000 (24) and 111 (7)
+ EQUB %01110111         \ Index 214 = 01110 (14) and 111 (7)
+ EQUB %00101111         \ Index 215 = 00101 ( 5) and 111 (7)
+ EQUB %11011111         \ Index 216 = 11011 (27) and 111 (7)
+ EQUB %10010111         \ Index 217 = 10010 (18) and 111 (7)
+ EQUB %01000111         \ Index 218 = 01000 ( 8) and 111 (7)
+ EQUB %11111111         \ Index 219 = 11111 (31) and 111 (7)
+ EQUB %10110111         \ Index 220 = 10110 (22) and 111 (7)
+ EQUB %01101111         \ Index 221 = 01101 (13) and 111 (7)
+ EQUB %00011111         \ Index 222 = 00011 ( 3) and 111 (7)
+ EQUB %11010111         \ Index 223 = 11010 (26) and 111 (7)
+ EQUB %10001111         \ Index 224 = 10001 (17) and 111 (7)
+ EQUB %01000111         \ Index 225 = 01000 ( 8) and 111 (7)
+ EQUB %11111111         \ Index 226 = 11111 (31) and 111 (7)
+ EQUB %10110111         \ Index 227 = 10110 (22) and 111 (7)
+ EQUB %01101111         \ Index 228 = 01101 (13) and 111 (7)
+ EQUB %00100111         \ Index 229 = 00100 ( 4) and 111 (7)
+ EQUB %11011111         \ Index 230 = 11011 (27) and 111 (7)
+ EQUB %10010111         \ Index 231 = 10010 (18) and 111 (7)
+ EQUB %01001111         \ Index 232 = 01001 ( 9) and 111 (7)
+ EQUB %00001111         \ Index 233 = 00001 ( 1) and 111 (7)
+ EQUB %11000111         \ Index 234 = 11000 (24) and 111 (7)
+ EQUB %01111111         \ Index 235 = 01111 (15) and 111 (7)
+ EQUB %00111111         \ Index 236 = 00111 ( 7) and 111 (7)
+ EQUB %11110111         \ Index 237 = 11110 (30) and 111 (7)
+ EQUB %10101111         \ Index 238 = 10101 (21) and 111 (7)
+ EQUB %01101111         \ Index 239 = 01101 (13) and 111 (7)
+ EQUB %00100111         \ Index 240 = 00100 ( 4) and 111 (7)
+ EQUB %11100111         \ Index 241 = 11100 (28) and 111 (7)
+ EQUB %10011111         \ Index 242 = 10011 (19) and 111 (7)
+ EQUB %01011111         \ Index 243 = 01011 (11) and 111 (7)
+ EQUB %00010111         \ Index 244 = 00010 ( 2) and 111 (7)
+ EQUB %11010111         \ Index 245 = 11010 (26) and 111 (7)
+ EQUB %10010111         \ Index 246 = 10010 (18) and 111 (7)
+ EQUB %01001111         \ Index 247 = 01001 ( 9) and 111 (7)
+ EQUB %00001111         \ Index 248 = 00001 ( 1) and 111 (7)
+ EQUB %11001111         \ Index 249 = 11001 (25) and 111 (7)
+ EQUB %10001111         \ Index 250 = 10001 (17) and 111 (7)
+ EQUB %01000111         \ Index 251 = 01000 ( 8) and 111 (7)
+ EQUB %00000111         \ Index 252 = 00000 ( 0) and 111 (7)
+ EQUB %11000111         \ Index 253 = 11000 (24) and 111 (7)
+ EQUB %10000111         \ Index 254 = 10000 (16) and 111 (7)
+ EQUB %01000111         \ Index 255 = 01000 ( 8) and 111 (7)
 
 \ ******************************************************************************
 \
