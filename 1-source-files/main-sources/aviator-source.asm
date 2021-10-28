@@ -1973,7 +1973,7 @@ ORG CODE%
  LDA #0                 \ Set N = 0, which we use for collecting set bits to
  STA N                  \ apply to the point's status byte
 
- LDA #%00010000         \ Set bit 4 of R
+ LDA #%00010000         \ Set bit 4 of R, for use in L0F48
  STA R
 
  LDA pointStatus,X      \ Set Y = A = the status byte for the point to process
@@ -2099,8 +2099,8 @@ ORG CODE%
  LDA yPointLo,X         \ Set A = the high byte of the point's y-coordinate, so
                         \ (SS A) now contains |yPoint|
 
- ASL A                  \ Set (SS R) = (SS A) * 2
- ROL SS                 \            = |yPoint| * 2
+ ASL A                  \ Set (SS RR) = (SS A) * 2
+ ROL SS                 \             = |yPoint| * 2
  STA RR
 
  JMP L0D94              \ Jump to L0D94 to move on to the next stage
@@ -2200,8 +2200,11 @@ ORG CODE%
 
  LDY P                  \ Set (X Y) = (Q P)
  LDX Q                  \           = |zPoint|
+                        \
+                        \ so we call L0F48 with a non-zero (X Y), as we know
+                        \ (Q P) is at least 1
 
- JSR L0F48
+ JSR L0F48              \ Set (A Y) = ???
 
  TAX
  LDA Lookup3900,X
@@ -2218,7 +2221,8 @@ ORG CODE%
  LDY PP                 \ Set (X Y) = (QQ PP)
  LDX QQ                 \           = |xPoint|
 
- JSR L0E69
+ JSR L0E69              \ (Starts with JSR L0F48, does a calculation into (Q P)
+                        \ and WW)
 
  LDA Q                  \ Set (QQ PP) = (Q P)
  STA QQ
@@ -2231,7 +2235,8 @@ ORG CODE%
  LDY RR                 \ Set (X Y) = (SS RR)
  LDX SS                 \           = |yPoint| * 2
 
- JSR L0E69
+ JSR L0E69              \ (Starts with JSR L0F48, does a calculation into (Q P)
+                        \ and WW)
 
  JSR L0FA7
 
@@ -2331,13 +2336,25 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (X Y)               A positive 16-bit number containing a coordinate
+\                       magnitude
+\
+\   Z flag              Set according to the high byte in X (i.e. the routine is
+\                       called after setting register X)
+\
+\   R                   Contains %00010000 (which is set at the start of L0D01)
+\
+\ Returns:
+\
+\   (Q P)          
 \
 \ ******************************************************************************
 
 .L0E69
 
- JSR L0F48
+ JSR L0F48              \ Set (A Y) = ???
 
  STA J
  STY I
@@ -2504,10 +2521,19 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   (X Y)               
+\   (X Y)               A positive 16-bit number containing a coordinate
+\                       magnitude
 \
 \   Z flag              Set according to the high byte in X (i.e. the routine is
 \                       called after setting register X)
+\
+\   R                   Contains %00010000 (which is set at the start of L0D01)
+\
+\ Returns:
+\
+\   (A Y)          
+\
+\   WW                       
 \
 \ ******************************************************************************
 
@@ -2516,90 +2542,150 @@ ORG CODE%
  BEQ L0F77              \ If the high byte in X = 0, jump down to L0F77
 
  LDA Lookup4700,X       \ Set A = int(log2(X))
- AND #%00000111
+ AND #%00000111         \
+                        \ so X fits into A + 1 binary digits
 
- CLC
- ADC #8
- STA WW
- CMP #&0D
- TXA
+ CLC                    \ Set WW = A + 8
+ ADC #8                 \
+ STA WW                 \ so (X Y) fits into WW + 1 binary digits
+
+ CMP #13                \ Set the flags for the WW < 13 comparison below
+
+ TXA                    \ Set (A T) = (X Y)
  STY T
- BCC L0F66
+
+ BCC L0F66              \ If WW < 13, jump to L0F66
 
 .L0F5B
 
- ASL T
- ROL A
+                        \ If we get here, then (X Y) fits into 13 + 1 digits or
+                        \ more, i.e. it fits into 14 digits or more, so 
+                        \ (X Y) = (%XXXXxxxx %YYYYyyyy)
+                        \
+                        \ Also, (A T) = (X Y)
+
+ ASL T                  \ Left-shift (A T) until we shift a 1 out of bit 7 of
+ ROL A                  \ the high byte in A
  BCC L0F5B
 
- LDY T
- RTS
+ LDY T                  \ Set Y = T, so (A Y) = (A T) to give our result
+
+ RTS                    \ Return from the subroutine
 
 .L0F63
 
- ASL T
+ ASL T                  \ Left-shift (A T) by one place
  ROL A
 
 .L0F66
 
- BIT R
- BEQ L0F63
+                        \ If we get here, then (X Y) fits into fewer than 13 + 1
+                        \ binary digits, i.e. it fits into 13 digits or fewer, so
+                        \ (X Y) = (%000Xxxxx %YYYYyyyy)
+                        \
+                        \ Also, (A T) = (X Y)
 
- TAY
- LDX T
- LDA shift4Right,X
- ORA shift4Left,Y
- LDY shift4Left,X
- RTS
+ BIT R                  \ If bit 4 of A is clear, loop back to L0F63 to keep
+ BEQ L0F63              \ shifting (A T) left until bit 4 of A is set (we check
+                        \ bit 4 because R = %00010000)
+
+ TAY                    \ Set (X Y) = (A T)
+ LDX T                  \
+                        \ so (X Y) contains the original value of (X Y), shifted
+                        \ left until bit 4 of X is set. Let's call this:
+                        \
+                        \   (X Y) = (%XXXXxxxx %YYYYyyyy)
+                        \         = (%0001xxxx %YYYYyyyy)
+
+ LDA shift4Right,X      \ Set A = (X >> 4) OR (Y << 4)
+ ORA shift4Left,Y       \       = %yyyy0001
+
+ LDY shift4Left,X       \ Set Y = X << 4
+                        \       = %xxxx0000
+                        \
+                        \ so (A Y) = (%yyyy0001 %xxxx0000)
+
+ RTS                    \ Return from the subroutine
 
 .L0F77
+
+                        \ If we get here, then the high byte in X = 0
 
  CPY #0                 \ If the low byte in Y = 0, jump down to L0F97
  BEQ L0F97
 
- LDA Lookup4700,Y       \ Set A = int(log2(Y))
- AND #%00000111
+ LDA Lookup4700,Y       \ Set WW = int(log2(Y))
+ AND #%00000111         \
+ STA WW                 \ so Y fits into WW + 1 binary digits
 
- STA WW
- CMP #4
- TYA
+ CMP #4                 \ Set the flags for the WW < 4 comparison below
+
+ TYA                    \ Set (A Y) = (Y 0)
  LDY #0
- BCC L0F8E
+
+ BCC L0F8E              \ If WW < 4, jump to L0F8E
 
 .L0F89
 
- ASL A
- BCC L0F89
+                        \ If we get here, then (X Y) fits into 4 + 1 digits or
+                        \ more, i.e. it fits into 5 digits or more, so 
+                        \ (X Y) = (%00000000 %YYYYyyyy)
+                        \
+                        \ Also, (A Y) = (Y 0)
 
- RTS
+ ASL A                  \ Left-shift (A Y) until we shift a 1 out of bit 7 of
+ BCC L0F89              \ the high byte in A (we don't need to shift the low
+                        \ byte as we know it's 0)
+
+ RTS                    \ Return from the subroutine
 
 .L0F8D
 
- ASL A
+                        \ If we get here, then (X Y) fits into fewer than 4 + 1
+                        \ binary digits, i.e. it fits into 4 digits or fewer, so
+                        \ (X Y) = (%00000000 %0000yyyy)
+                        \
+                        \ Also, (A Y) = (Y 0)
+
+ ASL A                  \ Left-shift (A Y) by one place (we don't need to shift
+                        \ the low byte as we know it's 0)
 
 .L0F8E
 
- BIT R
- BEQ L0F8D
+ BIT R                  \ If bit 4 of A is clear, loop back to L0F8D to keep
+ BEQ L0F8D              \ shifting (A Y) left until bit 4 of A is set (we check
+                        \ bit 4 because R = %00010000)
 
- TAX
- LDA shift4Left,X
- RTS
+ TAX                    \ Set A = A << 4
+ LDA shift4Left,X       \
+                        \ which is the same as (A Y) = (A Y) << 4
+
+ RTS                    \ Return from the subroutine
 
 .L0F97
 
- TSX                    \ Remove two bytes from the top of the stack
- INX
- INX
- TXS
+                        \ If we get here, then (X Y) = 0
 
- LDA #0
+ TSX                    \ We can only get here if we called this routine from
+ INX                    \ the L0E69 routine, as the only other call of this
+ INX                    \ routine is from L0D01, when we know we are calling it
+ TXS                    \ with a value of at least 1 in (X Y)
+                        \
+                        \ These instructions remove two bytes from the top of
+                        \ the stack so the RTS below returns an extra level up
+                        \ the call chain, and as L0E69 itself must have been
+                        \ called from L0D01, this returns us to L0D01 with the
+                        \ following results
+
+ LDA #0                 \ Set (Q P) = 0
  STA Q
  STA P
- LDX UU
+
+ LDX UU                 \ Set WW = UU - 1
  DEX
  STX WW
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -5975,12 +6061,12 @@ ORG CODE%
 
  LDY V                  \ Set Y = V = %VVVVvvvv
 
- LDA shift4Left,Y       \ A = V << 4
-                        \   = %vvvv0000
+ LDA shift4Left,Y       \ Set A = V << 4
+                        \       = %vvvv0000
  
- ORA shift4Right,X      \ Y = A OR (S >> 4)
- TAY                    \   = %vvvv0000 OR %0000SSSS
-                        \   = %vvvvSSSS
+ ORA shift4Right,X      \ Set Y = A OR (S >> 4)
+ TAY                    \       = %vvvv0000 OR %0000SSSS
+                        \       = %vvvvSSSS
 
  AND #%11110000         \ Set U = (A AND %11110000) OR (X AND %00001111)
  ORA lowNibble,X        \       = (%vvvvSSSS AND %11110000) OR (X AND %00001111)
@@ -19358,6 +19444,7 @@ NEXT
 \ ------------------------------------------------------------------------------
 \
 \ Bits 0 to 2 of Lookup4700,X contain int(log2(X))
+\ i.e. if Lookup4700,X = n, then X fits into n + 1 binary digits
 \
 \ ******************************************************************************
 
