@@ -2208,16 +2208,17 @@ ORG CODE%
                         \ 16 bits any more, and set WW to the minimum number of
                         \ bits in the original number
 
- TAX
+ TAX                    \ Set TT = the A-th entry from Lookup3900 (logarithm?)
  LDA Lookup3900,X
  STA TT
 
- LDA Lookup4700,X
+ LDA Lookup4700,X       \ Set S = bits 3-7 of the TT-th entry from Lookup4700
  AND #%11111000
-
  STA S
- STY K
- LDA WW
+
+ STY K                  \ Set K = Y
+
+ LDA WW                 \ Set UU = WW
  STA UU
 
  LDY PP                 \ Set (X Y) = (QQ PP)
@@ -2348,6 +2349,10 @@ ORG CODE%
 \
 \   R                   Contains %00010000 (which is set at the start of L0D01)
 \
+\   TT                  ??? A lookup from Lookup3900
+\
+\   S                   ??? A lookup from Lookup4700, bits 3-7
+\
 \ Returns:
 \
 \   (Q P)          
@@ -2360,43 +2365,78 @@ ORG CODE%
                         \ 16 bits any more, and set WW to the minimum number of
                         \ bits in the original number
 
- STA J
+ STA J                  \ Set (J I) = (A Y)
  STY I
- LDX TT
- LDY J
- LDA highNibble,X
- ORA shift4Right,Y
+
+ LDX TT                 \ Set X = TT
+                        \       = %TTTTtttt
+
+ LDY J                  \ Set Y = J
+                        \       = %JJJJjjjj
+
+ LDA highNibble,X       \ Set T = (X AND %11110000) OR (Y >> 4)
+ ORA shift4Right,Y      \       = %TTTTJJJJ
  STA T
- AND #&F0
- ORA lowNibble,Y
+
+ AND #%11110000         \ Set U = (T AND %11110000) OR (Y AND %00001111)
+ ORA lowNibble,Y        \       = %TTTTjjjj
  STA U
- AND #&0F
- ORA shift4Left,X
+
+ AND #%00001111         \ Set V = (U AND %00001111) OR (X << 4)
+ ORA shift4Left,X       \       = %ttttjjjj
  STA V
- AND #&F0
- ORA shift4Right,Y
+
+ AND #%11110000         \ Set Y = (V AND %11110000) OR (Y >> 4)
+ ORA shift4Right,Y      \       = %ttttJJJJ
  TAY
- LDX S
- AND #&0F
- ORA highNibble,X
+
+ LDX S                  \ Set X = S
+                        \       = %SSSSssss
+
+ AND #%00001111         \ Set X = (Y AND %00001111) OR (X AND %11110000)
+ ORA highNibble,X       \       = %SSSSJJJJ
  TAX
- LDA timesTable,X
- CLC
- LDX V
+
+                        \ So by this point we have:
+                        \
+                        \   T = %TTTTJJJJ
+                        \   U = %TTTTjjjj
+                        \   V = %ttttjjjj
+                        \   Y = %ttttJJJJ
+                        \   X = %SSSSJJJJ
+                        \
+                        \ where the following are arguments to the routine:
+                        \
+                        \   TT = %TTTTtttt
+                        \   S = %SSSSssss
+                        \   (J I) contains the argument (A Y) and J = %JJJJjjjj
+
+ LDA timesTable,X       \ Set A = %SSSS * %JJJJ
+
+ CLC                    \ Set P = A + (%tttt * %jjjj)
+ LDX V                  \       = (%SSSS * %JJJJ) + (%tttt * %jjjj)
  ADC timesTable,X
  STA P
- LDX T
+
+ LDX T                  \ Set Q = (%TTTT * %JJJJ) + 1
  LDA timesTable,X
  ADC #1
  STA Q
- LDX U
+
+                        \ So (Q P) = %1JJJJjjjj * %TTTTtttt
+                        \          = (X Y) * TT ???
+
+ LDX U                  \ Set X = (%TTTT * %jjjj) + (%tttt * %JJJJ)
  LDA timesTable,X
  ADC timesTable,Y
  TAX
- LDY #0
- BCC L0EBB
 
- LDY #&10
+ LDY #0                 \ Set Y = 0
+
+ BCC L0EBB              \ If the above addition didn't overflow, skip the
+                        \ following instruction
+
+ LDY #16                \ The above addition overflowed, so set Y = 16
 
 .L0EBB
 
@@ -2547,10 +2587,10 @@ ORG CODE%
 \                       bit pops out of the left end, so the leftmost set bit is
 \                       not in (A Y)
 \
-\   WW                  The minimum number of binary digits that the original
-\                       value of (X Y) fitted into (from which we can calculate
-\                       the number of shifts we had to do to scale the number
-\                       up)
+\   WW                  WW + 1 is the minimum number of binary digits that the
+\                       original value of (X Y) fitted into (from which we can
+\                       calculate the number of shifts we had to do to scale the
+\                       number up)
 \
 \ ******************************************************************************
 
@@ -2560,7 +2600,8 @@ ORG CODE%
 
  LDA Lookup4700,X       \ Set A = int(log2(X))
  AND #%00000111         \
-                        \ so X fits into A + 1 binary digits
+                        \ so we know X fits into a minimum of A + 1 binary
+                        \ digits
 
  CLC                    \ Set WW = A + 8
  ADC #8                 \
@@ -2647,7 +2688,8 @@ ORG CODE%
 
  LDA Lookup4700,Y       \ Set WW = int(log2(Y))
  AND #%00000111         \
- STA WW                 \ so Y fits into WW + 1 binary digits
+ STA WW                 \ so we know Y fits into a minimum of WW + 1 binary
+                        \ digits
 
  CMP #4                 \ Set the flags for the WW < 4 comparison below
 
