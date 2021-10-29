@@ -1973,7 +1973,7 @@ ORG CODE%
  LDA #0                 \ Set N = 0, which we use for collecting set bits to
  STA N                  \ apply to the point's status byte
 
- LDA #%00010000         \ Set bit 4 of R, for use in L0F48
+ LDA #%00010000         \ Set bit 4 of R, for use in ScaleUp
  STA R
 
  LDA pointStatus,X      \ Set Y = A = the status byte for the point to process
@@ -2201,10 +2201,12 @@ ORG CODE%
  LDY P                  \ Set (X Y) = (Q P)
  LDX Q                  \           = |zPoint|
                         \
-                        \ so we call L0F48 with a non-zero (X Y), as we know
+                        \ so we call ScaleUp with a non-zero (X Y), as we know
                         \ (Q P) is at least 1
 
- JSR L0F48              \ Set (A Y) = ???
+ JSR ScaleUp            \ Set (A Y) = (X Y), scaled up until it doesn't fit into
+                        \ 16 bits any more, and set WW to the minimum number of
+                        \ bits in the original number
 
  TAX
  LDA Lookup3900,X
@@ -2221,8 +2223,8 @@ ORG CODE%
  LDY PP                 \ Set (X Y) = (QQ PP)
  LDX QQ                 \           = |xPoint|
 
- JSR L0E69              \ (Starts with JSR L0F48, does a calculation into (Q P)
-                        \ and WW)
+ JSR L0E69              \ (Starts with JSR ScaleUp, does a calculation into
+                        \ (Q P) and WW)
 
  LDA Q                  \ Set (QQ PP) = (Q P)
  STA QQ
@@ -2235,8 +2237,8 @@ ORG CODE%
  LDY RR                 \ Set (X Y) = (SS RR)
  LDX SS                 \           = |yPoint| * 2
 
- JSR L0E69              \ (Starts with JSR L0F48, does a calculation into (Q P)
-                        \ and WW)
+ JSR L0E69              \ (Starts with JSR ScaleUp, does a calculation into
+                        \ (Q P) and WW)
 
  JSR L0FA7
 
@@ -2354,7 +2356,9 @@ ORG CODE%
 
 .L0E69
 
- JSR L0F48              \ Set (A Y) = ???
+ JSR ScaleUp            \ Set (A Y) = (X Y), scaled up until it doesn't fit into
+                        \ 16 bits any more, and set WW to the minimum number of
+                        \ bits in the original number
 
  STA J
  STY I
@@ -2512,12 +2516,20 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L0F48
+\       Name: ScaleUp
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Scale up a 16-bit number until it doesn't fit into 16 bits any
+\             more
 \
 \ ------------------------------------------------------------------------------
+\
+\ Given a positive 16-bit argument, this routine scales the number up until it
+\ doesn't fit into 16 bits any more. It does this by doubling it (i.e. shifting
+\ it left) until a set bit pops out of the left end).
+\
+\ The number of shifts is returned (in the form of the minimum number of binary
+\ digits in the original number) so we know how much the value was scaled up by.
 \
 \ Arguments:
 \
@@ -2531,15 +2543,20 @@ ORG CODE%
 \
 \ Returns:
 \
-\   (A Y)          
+\   (A Y)               The original argument in (X Y), left-shifted until a set
+\                       bit pops out of the left end, so the leftmost set bit is
+\                       not in (A Y)
 \
-\   WW                       
+\   WW                  The minimum number of binary digits that the original
+\                       value of (X Y) fitted into (from which we can calculate
+\                       the number of shifts we had to do to scale the number
+\                       up)
 \
 \ ******************************************************************************
 
-.L0F48
+.ScaleUp
 
- BEQ L0F77              \ If the high byte in X = 0, jump down to L0F77
+ BEQ scup4              \ If the high byte in X = 0, jump down to scup4
 
  LDA Lookup4700,X       \ Set A = int(log2(X))
  AND #%00000111         \
@@ -2554,65 +2571,79 @@ ORG CODE%
  TXA                    \ Set (A T) = (X Y)
  STY T
 
- BCC L0F66              \ If WW < 13, jump to L0F66
+ BCC scup3              \ If WW < 13, jump to scup3
 
-.L0F5B
+.scup1
 
                         \ If we get here, then (X Y) fits into 13 + 1 digits or
-                        \ more, i.e. it fits into 14 digits or more, so 
-                        \ (X Y) = (%XXXXxxxx %YYYYyyyy)
+                        \ more, i.e. it fits into 14 digits or more
                         \
                         \ Also, (A T) = (X Y)
 
  ASL T                  \ Left-shift (A T) until we shift a 1 out of bit 7 of
  ROL A                  \ the high byte in A
- BCC L0F5B
+ BCC scup1
 
- LDY T                  \ Set Y = T, so (A Y) = (A T) to give our result
+ LDY T                  \ Set Y = T
+
+                        \ So now we have:
+                        \
+                        \   (A Y) = (A T)
+                        \
+                        \ which is the result that we want
 
  RTS                    \ Return from the subroutine
 
-.L0F63
+.scup2
 
  ASL T                  \ Left-shift (A T) by one place
  ROL A
 
-.L0F66
+.scup3
 
                         \ If we get here, then (X Y) fits into fewer than 13 + 1
-                        \ binary digits, i.e. it fits into 13 digits or fewer, so
-                        \ (X Y) = (%000Xxxxx %YYYYyyyy)
+                        \ binary digits, i.e. it fits into 13 digits or fewer
                         \
                         \ Also, (A T) = (X Y)
 
- BIT R                  \ If bit 4 of A is clear, loop back to L0F63 to keep
- BEQ L0F63              \ shifting (A T) left until bit 4 of A is set (we check
+ BIT R                  \ If bit 4 of A is clear, loop back to scup2 to keep
+ BEQ scup2              \ shifting (A T) left until bit 4 of A is set (we check
                         \ bit 4 because R = %00010000)
 
- TAY                    \ Set (X Y) = (A T)
+ TAY                    \ Set (Y X) = (A T)
  LDX T                  \
-                        \ so (X Y) contains the original value of (X Y), shifted
-                        \ left until bit 4 of X is set. Let's call this:
+                        \ so (Y X) contains the original value of (X Y), shifted
+                        \ left until bit 4 of X is set (note that the X and Y
+                        \ have swapped round here)
                         \
-                        \   (X Y) = (%XXXXxxxx %YYYYyyyy)
-                        \         = (%0001xxxx %YYYYyyyy)
+                        \ Let's say (Y X) = (%AAAAaaaa %TTTTtttt), which is the
+                        \ original (X Y) shifted left until bit 4 is set
 
  LDA shift4Right,X      \ Set A = (X >> 4) OR (Y << 4)
- ORA shift4Left,Y       \       = %yyyy0001
+ ORA shift4Left,Y       \       = (%TTTTtttt >> 4) OR (%AAAAaaaa << 4)
+                        \       = %aaaaTTTT
 
  LDY shift4Left,X       \ Set Y = X << 4
-                        \       = %xxxx0000
+                        \       = %TTTTtttt << 4
+                        \       = %tttt0000
+
+                        \ So we now have:
                         \
-                        \ so (A Y) = (%yyyy0001 %xxxx0000)
+                        \   (A Y) = (%aaaaTTTT %tttt0000)
+                        \         = (%AAAAaaaa %TTTTtttt) << 4
+                        \         = (A T) << 4
+                        \         = (X Y) << 4
+                        \
+                        \ which is the result that we want
 
  RTS                    \ Return from the subroutine
 
-.L0F77
+.scup4
 
                         \ If we get here, then the high byte in X = 0
 
- CPY #0                 \ If the low byte in Y = 0, jump down to L0F97
- BEQ L0F97
+ CPY #0                 \ If the low byte in Y = 0, jump down to scup8
+ BEQ scup8
 
  LDA Lookup4700,Y       \ Set WW = int(log2(Y))
  AND #%00000111         \
@@ -2623,46 +2654,65 @@ ORG CODE%
  TYA                    \ Set (A Y) = (Y 0)
  LDY #0
 
- BCC L0F8E              \ If WW < 4, jump to L0F8E
+ BCC scup7              \ If WW < 4, jump to scup7
 
-.L0F89
+.scup5
 
                         \ If we get here, then (X Y) fits into 4 + 1 digits or
                         \ more, i.e. it fits into 5 digits or more, so 
-                        \ (X Y) = (%00000000 %YYYYyyyy)
+                        \ (X Y) = (0 Y)
                         \
-                        \ Also, (A Y) = (Y 0)
+                        \ Also, (A Y) = (Y 0), which effectively does the first
+                        \ 8 left-shifts for us, as we know none of those shifts
+                        \ will shift a 1 out of bit 7 of the high byte
 
  ASL A                  \ Left-shift (A Y) until we shift a 1 out of bit 7 of
- BCC L0F89              \ the high byte in A (we don't need to shift the low
+ BCC scup5              \ the high byte in A (we don't need to shift the low
                         \ byte as we know it's 0)
+
+                        \ So now we have:
+                        \
+                        \   (A Y) = (X Y) shifted left until we shift a 1 out of
+                        \           bit 7
+                        \
+                        \ which is the result that we want
 
  RTS                    \ Return from the subroutine
 
-.L0F8D
+.scup6
 
                         \ If we get here, then (X Y) fits into fewer than 4 + 1
                         \ binary digits, i.e. it fits into 4 digits or fewer, so
-                        \ (X Y) = (%00000000 %0000yyyy)
+                        \ (X Y) = (0 Y) = (0 %0000yyyy)
                         \
-                        \ Also, (A Y) = (Y 0)
+                        \ Also, (A Y) = (Y 0), which effectively does the first
+                        \ 8 left-shifts for us, as we know none of those shifts
+                        \ will shift a 1 out of bit 7 of the high byte
 
  ASL A                  \ Left-shift (A Y) by one place (we don't need to shift
                         \ the low byte as we know it's 0)
 
-.L0F8E
+.scup7
 
- BIT R                  \ If bit 4 of A is clear, loop back to L0F8D to keep
- BEQ L0F8D              \ shifting (A Y) left until bit 4 of A is set (we check
-                        \ bit 4 because R = %00010000)
+ BIT R                  \ If bit 4 of A is clear, loop back to scup6 to keep
+ BEQ scup6              \ shifting (A Y) left until bit 4 of A is set (we check
+                        \ bit 4 because R = %00010000), so now we have something
+                        \ like this (depending on how many of %yyyy are set):
+                        \
+                        \   (A Y) = (%0001yyy0 %00000000)
 
  TAX                    \ Set A = A << 4
  LDA shift4Left,X       \
-                        \ which is the same as (A Y) = (A Y) << 4
+                        \ which moves the result into the top byte of (A Y) like
+                        \ this:
+                        \
+                        \   (A Y) = (%yyy00000 %00000000)
+                        \
+                        \ which is the result that we want
 
  RTS                    \ Return from the subroutine
 
-.L0F97
+.scup8
 
                         \ If we get here, then (X Y) = 0
 
