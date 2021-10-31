@@ -361,9 +361,35 @@ ORG &0400
 
  SKIP 216               \ Each point's status byte
                         \
-                        \   * Bits 0-5:
+                        \   * Bit 0:
                         \
-                        \     * ?? (set in L0D01)
+                        \     * 0 = we have not yet projected this point
+                        \
+                        \     * 1 = we have already projected this point
+                        \
+                        \   * Bit 2:
+                        \
+                        \     * 0 = yPoint is positive
+                        \
+                        \     * 1 = yPoint is negative
+                        \
+                        \   * Bit 3:
+                        \
+                        \     * 0 = xPoint is positive
+                        \
+                        \     * 1 = xPoint is negative
+                        \
+                        \   * Bit 4:
+                        \
+                        \     * 0 = |yPoint| * 2 < |zPoint|
+                        \
+                        \     * 1 = |yPoint| * 2 >= |zPoint|
+                        \
+                        \   * Bit 5:
+                        \
+                        \     * 0 = |xPoint| < |zPoint|
+                        \
+                        \     * 1 = |xPoint| >= |zPoint|
                         \
                         \   * Bit 7:
                         \
@@ -940,9 +966,10 @@ ORG &0900
                         \ we have added anything to the list during the main
                         \ loop
 
-.L0CC7
+.startStatus
 
- SKIP 1
+ SKIP 1                 \ Temporary storage, used to store the point status byte
+                        \ for the start point of a projected line
 
 .pointCount
 
@@ -1919,10 +1946,11 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L0D01 (Part 1 of )
+\       Name: ProjectPoint (Part 1 of 3)
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Project a point onto the screen (i.e. convert from 3D coordinates
+\             to screen coordinates)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1932,13 +1960,15 @@ ORG CODE%
 \
 \ Returns:
 \
-\   pointStatus         Set according to the following:
+\   pointStatus         The following bits are set as follows, so they can be
+\                       used in ProcessLinesToShow to determine the visibility
+\                       of the line containing this point:
 \
 \                         * Bit 0:
 \
-\                           * 0 = we have not called L0D01 for this point
+\                           * 0 = we have not projected this point before
 \
-\                           * 1 = we have already called L0D01 for this point
+\                           * 1 = we have already projected this point
 \
 \                         * Bit 2:
 \
@@ -1964,9 +1994,15 @@ ORG CODE%
 \
 \                           * 1 = |xPoint| >= |zPoint|
 \
+\   xPoint              The pixel x-coordinate of the point once projected onto
+\                       the screen
+\
+\   yPoint              The pixel y-coordinate of the point once projected onto
+\                       the screen
+\
 \ ******************************************************************************
 
-.L0D01
+.ProjectPoint
 
  LDX GG                 \ Set X to the point ID to process
 
@@ -1979,48 +2015,56 @@ ORG CODE%
  LDA pointStatus,X      \ Set Y = A = the status byte for the point to process
  TAY
 
- AND #1                 \ If bit 0 of the status byte is clear, jump to L0D14 to
- BEQ L0D14              \ skip the following instruction
+ AND #1                 \ If bit 0 of the status byte is clear, then we have not
+ BEQ proj1              \ yet projected this point onto the screen, so jump to
+                        \ proj1 to skip the following instruction and move on
+                        \ to the projection process
 
  RTS                    \ Bit 0 of the point's status byte is set, which means
-                        \ we have already processed this point, so return from
+                        \ we have already projected this point, so return from
                         \ the subroutine
 
-.L0D14
+.proj1
 
  TYA                    \ Set bit 0 of the point's status byte in pointStatus
- ORA #1                 \ to indicate that we have now called L0D01 for this
- STA pointStatus,X      \ point
+ ORA #1                 \ to indicate that we have now called ProjectPoint for
+ STA pointStatus,X      \ this point, i.e. the point has been projected (or soon
+                        \ will be, anyway)
 
-                        \ We now set (Q P) = |zPoint|
+                        \ The first step is to set the four bits in the point's
+                        \ status byte, which we will return from the subroutine
+                        \ to be used in ProcessLinesToShow for determining the
+                        \ visibility of the line containing this point
+
+                        \ We first set (Q P) = |zPoint|
                         \
                         \ bumping (Q P) up to 1 if zPoint = 0, so (Q P) has a
                         \ minimum value of 1
 
  LDA zPointHi,X         \ Set A = the high byte of the point's z-coordinate
 
- BMI L0D37              \ If the z-coordinate is negative, jump to L0D37 to
+ BMI proj4              \ If the z-coordinate is negative, jump to proj4 to
                         \ change its sign
 
  STA Q                  \ Set Q = the high byte of the point's z-coordinate
 
- BEQ L0D2B              \ If the high byte of the z-coordinate is 0, jump to
-                        \ L0D2B
+ BEQ proj2              \ If the high byte of the z-coordinate is 0, jump to
+                        \ proj2
 
  LDA zPointLo,X         \ Set P = the low byte of the point's z-coordinate, so
  STA P                  \ (Q P) now contains the point's z-coordinate, as
                         \ required
 
- JMP L0D46              \ Jump to L0D46 to move on to the point's x-coordinate
+ JMP proj5              \ Jump to proj5 to move on to the point's x-coordinate
 
-.L0D2B
+.proj2
 
                         \ If we get here then the high byte of the z-coordinate
                         \ is 0
 
  LDA zPointLo,X         \ Set A = the low byte of the point's z-coordinate
 
- BNE L0D32              \ If the low byte of the point's z-coordinate is
+ BNE proj3              \ If the low byte of the point's z-coordinate is
                         \ non-zero, skip the following instructions
 
                         \ If we get here then both the high and low bytes of the
@@ -2029,15 +2073,15 @@ ORG CODE%
  LDA #1                 \ Set A = 1 to use as the low byte of (Q P), so we will
                         \ end up with (Q P) = 1, as required
 
-.L0D32
+.proj3
 
  STA P                  \ Set P = the low byte of the point's z-coordinate, or
                         \ 1 if the low byte was zero, so (Q P) now contains
                         \ |zPoint|, with a minimum value of 1, as required
 
- JMP L0D46              \ Jump to L0D46 to move on to the point's x-coordinate
+ JMP proj5              \ Jump to proj5 to move on to the point's x-coordinate
 
-.L0D37
+.proj4
 
                         \ If we get here then the high byte of the z-coordinate
                         \ is negative, so now we negate it to make it positive
@@ -2051,13 +2095,13 @@ ORG CODE%
  SBC zPointHi,X         \ point's z-coordinate made positive, i.e. |zPoint|,
  STA Q                  \ as required
 
-.L0D46
+.proj5
 
                         \ We now set (QQ PP) = |xPoint|
 
  LDA xPointHi,X         \ Set A = the high byte of the point's x-coordinate
 
- BMI L0D55              \ If the x-coordinate is negative, jump to L0D55 to
+ BMI proj6              \ If the x-coordinate is negative, jump to proj6 to
                         \ change its sign
 
  STA QQ                 \ Set QQ = the high byte of the point's x-coordinate
@@ -2065,9 +2109,9 @@ ORG CODE%
  LDA xPointLo,X         \ Set PP = the low byte of the point's x-coordinate, so
  STA PP                 \ so (QQ PP) now contains |xPoint|, as required
 
- JMP L0D6A              \ Jump to L0D6A to move on to the point's y-coordinate
+ JMP proj7              \ Jump to proj7 to move on to the point's y-coordinate
 
-.L0D55
+.proj6
 
                         \ If we get here then the high byte of the x-coordinate
                         \ is negative, so now we negate it to make it positive
@@ -2085,13 +2129,13 @@ ORG CODE%
  ORA #%00001000         \ byte when we're done) to indicate that xPoint is
  STA N                  \ negative
 
-.L0D6A
+.proj7
 
                         \ We now set (SS RR) = |yPoint| * 2
 
  LDA yPointHi,X         \ Set A = the high byte of the point's y-coordinate
 
- BMI L0D7C              \ If the y-coordinate is negative, jump to L0D7C to
+ BMI proj8              \ If the y-coordinate is negative, jump to proj8 to
                         \ change its sign
 
  STA SS                 \ Set SS = the high byte of the point's y-coordinate
@@ -2103,9 +2147,9 @@ ORG CODE%
  ROL SS                 \             = |yPoint| * 2
  STA RR
 
- JMP L0D94              \ Jump to L0D94 to move on to the next stage
+ JMP proj9              \ Jump to proj9 to move on to the next stage
 
-.L0D7C
+.proj8
 
                         \ If we get here then the high byte of the y-coordinate
                         \ is negative, so now we negate it to make it positive
@@ -2127,24 +2171,24 @@ ORG CODE%
  ORA #%00000100         \ byte when we're done) to indicate that yPoint is
  STA N                  \ negative
 
-.L0D94
+.proj9
 
                         \ We now set bit 5 of the status byte in N by comparing
                         \ the |xPoint| and |zPoint| values we just calculated
 
- LDA QQ                 \ If QQ < Q, jump to L0DA8 to leave bit 5 clear
+ LDA QQ                 \ If QQ < Q, jump to proj11 to leave bit 5 clear
  CMP Q
- BCC L0DA8
+ BCC proj11
 
- BNE L0DA2              \ If QQ > Q, jump to L0DA2 to set bit 5
+ BNE proj10             \ If QQ > Q, jump to proj10 to set bit 5
 
                         \ If we get here then QQ = Q
 
- LDA PP                 \ If PP < P, jump to L0DA8 to leave bit 5 clear
+ LDA PP                 \ If PP < P, jump to proj11 to leave bit 5 clear
  CMP P
- BCC L0DA8
+ BCC proj11
 
-.L0DA2
+.proj10
 
                         \ If we get here then QQ = Q and PP >= P, which means
                         \ (QQ PP) >= (Q P), i.e. |xPoint| >= |zPoint|
@@ -2153,24 +2197,24 @@ ORG CODE%
  ORA N                  \ byte when we're done) to indicate that
  STA N                  \ |xPoint| >= |zPoint|
 
-.L0DA8
+.proj11
 
                         \ We now set bit 4 of the status byte in N by comparing
                         \ the |yPoint| and |zPoint| values we just calculated
 
- LDA SS                 \ If SS < Q, jump to L0DBC to leave bit 4 clear
+ LDA SS                 \ If SS < Q, jump to proj13 to leave bit 4 clear
  CMP Q
- BCC L0DBC
+ BCC proj13
 
- BNE L0DB6              \ If SS > Q, jump to L0DB6 to set bit 4
+ BNE proj12             \ If SS > Q, jump to proj12 to set bit 4
 
                         \ If we get here then SS = Q
 
- LDA RR                 \ If RR < P, jump to L0DBC to leave bit 4 clear
+ LDA RR                 \ If RR < P, jump to proj13 to leave bit 4 clear
  CMP P
- BCC L0DBC
+ BCC proj13
 
-.L0DB6
+.proj12
 
                         \ If we get here then SS = Q and RR >= P, which means
                         \ (SS RR) >= (Q P), i.e. |yPoint| * 2 >= |zPoint|
@@ -2181,14 +2225,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L0D01 (Part 2 of )
+\       Name: ProjectPoint (Part 2 of 3)
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Calculate the screen coordinates of the projected point
 \
 \ ******************************************************************************
 
-.L0DBC
+.proj13
 
                         \ By this point, we have the following:
                         \
@@ -2208,15 +2252,14 @@ ORG CODE%
                         \ 16 bits any more, and set WW to the minimum number of
                         \ bits in the original number
 
- TAX                    \ Set TT = the A-th entry from Lookup3900 (logarithm?)
- LDA Lookup3900,X
+ TAX                    \ Set (TT S) = the A-th entry from Lookup3900/Lookup4700
+ LDA Lookup3900,X       \ (is this a logarithm? or a division table?)
  STA TT
-
- LDA Lookup4700,X       \ Set S = bits 3-7 of the TT-th entry from Lookup4700
+ LDA Lookup4700,X
  AND #%11111000
  STA S
 
- STY K                  \ Set K = Y
+ STY K                  \ Set K = Y, the low byte of the result from ScaleUp
 
  LDA WW                 \ Set UU = WW
  STA UU
@@ -2224,105 +2267,173 @@ ORG CODE%
  LDY PP                 \ Set (X Y) = (QQ PP)
  LDX QQ                 \           = |xPoint|
 
- JSR L0E69              \ (Starts with JSR ScaleUp, does a calculation into
-                        \ (Q P) and WW)
+ JSR L0E69              \ ??? Starts with JSR ScaleUp, does a calculation into
+                        \ (Q P) and WW
 
  LDA Q                  \ Set (QQ PP) = (Q P)
  STA QQ
  LDA P
  STA PP
 
- LDA WW
+ LDA WW                 \ Set VV = WW
  STA VV
 
  LDY RR                 \ Set (X Y) = (SS RR)
  LDX SS                 \           = |yPoint| * 2
 
- JSR L0E69              \ (Starts with JSR ScaleUp, does a calculation into
-                        \ (Q P) and WW)
+ JSR L0E69              \ ??? Starts with JSR ScaleUp, does a calculation into
+                        \ (Q P) and WW
 
- JSR L0FA7
+ JSR L0FA7              \ ??? Converts UU, VV, (Q P) and (QQ PP) into screen
+                        \ coordinates in (SS QQ) and (RR Q)
 
- LDX GG
- LDA zPointHi,X
- BMI L0E02
+\ ******************************************************************************
+\
+\       Name: ProjectPoint (Part 3 of 3)
+\       Type: Subroutine
+\   Category: Maths
+\    Summary: Move the projected coordinates to the centre of the screen and
+\             update the point's status byte
+\
+\ ******************************************************************************
 
- LDA xPointHi,X
- BPL L0E19
+                        \ By this point we have the following projected
+                        \ coordinates for the point whose ID is in GG:
+                        \
+                        \   (SS QQ) = screen x-coordinate of 3D point projected
+                        \             onto the screen
+                        \
+                        \   (RR Q) = screen y-coordinate of 3D point projected
+                        \             onto the screen
 
-.L0DFF
+                        \ We now move the projected coordinate to the correct
+                        \ place on screen, as the projected coordinates have the
+                        \ origin straight ahead of us, i.e. in the centre of the
+                        \ screen, while the screen has the origin in the
+                        \ bottom-left corner
+                        \
+                        \ In other words, we add (80, 96) to the projected
+                        \ coordinates so that a projected coordinate of (0, 0),
+                        \ which is straight ahead of us, will appear in the
+                        \ centre of the canopy view, which is 160 x 192 pixels
+                        \ in size
+                        \
+                        \ We also set the correct sign for the projected
+                        \ coordinate
 
- JMP L0E07
+ LDX GG                 \ Set X to the point ID to process
 
-.L0E02
+ LDA zPointHi,X         \ If the point's z-coordinate is negative, jump to
+ BMI proj14             \ proj14
 
- LDA xPointHi,X
- BMI L0E19
+ LDA xPointHi,X         \ If the point's x-coordinate is positive, jump to
+ BPL proj16             \ proj16 as the coordinates have the same sign
 
-.L0E07
+ JMP proj15             \ Otherwise jump to proj15 as the coordinates have
+                        \ opposite signs
 
- LDA #&50
- SEC
- SBC QQ
+.proj14
+
+                        \ If we get here then the point's z-coordinate is
+                        \ negative
+
+ LDA xPointHi,X         \ If the point's x-coordinate is negative, jump to
+ BMI proj16             \ proj16 as the coordinates have the same sign
+
+.proj15
+
+                        \ If we get here then either the point's z-coordinate is
+                        \ positive and the point's x-coordinate is negative, or
+                        \ the point's z-coordinate is negative and the point's
+                        \ x-coordinate is positive - in other words, the point's
+                        \ x- and z-coordinates have opposite signs
+
+ LDA #80                \ Set (xPointHi xPointLo) = 80 - (SS QQ)
+ SEC                    \
+ SBC QQ                 \ starting with the low bytes
  STA xPointLo,X
- LDA #0
+
+ LDA #0                 \ And then the high bytes
  SBC SS
  STA xPointHi,X
- JMP L0E28
 
-.L0E19
+ JMP proj17             \ Jump to proj17 to move onto the y-coordinate
 
- LDA #&50
- CLC
- ADC QQ
+.proj16
+
+                        \ If we get here then either the point's z-coordinate is
+                        \ positive and the point's x-coordinate is positive, or
+                        \ the point's z-coordinate is negative and the point's
+                        \ x-coordinate is negative - in other words, the point's
+                        \ x- and z-coordinates have the same sign
+
+ LDA #80                \ Set (xPointHi xPointLo) = 80 + (SS QQ)
+ CLC                    \
+ ADC QQ                 \ starting with the low bytes
  STA xPointLo,X
- LDA #0
+
+ LDA #0                 \ And then the high bytes
  ADC SS
  STA xPointHi,X
 
-.L0E28
+.proj17
 
- LDX GG
- LDA zPointHi,X
- BMI L0E37
+                        \ We now move the y-coordinate in the projected result
+                        \ to the correct place on screen, by adding 96 to the
+                        \ result and setting the correct sign in the process
 
- LDA yPointHi,X
- BPL L0E4E
+ LDX GG                 \ Set X to the point ID to process
 
- JMP L0E3C
+ LDA zPointHi,X         \ If the point's z-coordinate is negative, jump to
+ BMI proj18             \ proj18
 
-.L0E37
+ LDA yPointHi,X         \ If the point's y-coordinate is positive, jump to
+ BPL proj20             \ proj20 as the coordinates have the same sign
 
- LDA yPointHi,X
- BMI L0E4E
+ JMP proj19             \ Otherwise jump to proj19 as the coordinates have
+                        \ opposite signs
 
-.L0E3C
+.proj18
 
- LDA #&60
- SEC
+                        \ If we get here then the point's z-coordinate is
+                        \ negative
 
-.L0E3F
+ LDA yPointHi,X         \ If the point's y-coordinate is negative, jump to
+ BMI proj20             \ proj20 as the coordinates have the same sign
 
- SBC Q
+.proj19
+
+                        \ If we get here then either the point's z-coordinate is
+                        \ positive and the point's y-coordinate is negative, or
+                        \ the point's z-coordinate is negative and the point's
+                        \ y-coordinate is positive - in other words, the point's
+                        \ y- and z-coordinates have opposite signs
+
+ LDA #96                \ Set (yPointHi yPointLo) = 96 - (RR Q)
+ SEC                    \
+ SBC Q                  \ starting with the low bytes
  STA yPointLo,X
- LDA #0
+
+ LDA #0                 \ And then the high bytes
  SBC RR
  STA yPointHi,X
- JMP L0E5D
 
-.L0E4E
+ JMP proj21             \ Jump to proj17 to move onto the point's status byte
 
- LDA #&60
- CLC
- ADC Q
+.proj20
+
+ LDA #96                \ Set (yPointHi yPointLo) = 96 + (RR Q)
+ CLC                    \
+ ADC Q                  \ starting with the low bytes
  STA yPointLo,X
- LDA #0
+
+ LDA #0                 \ And then the high bytes
  ADC RR
  STA yPointHi,X
 
-.L0E5D
+.proj21
 
- LDA pointStatus,X      \ Apply any set bits in N to the point's status byte
+ LDA pointStatus,X      \ Apply any set bits from N to the point's status byte
  ORA N
  STA pointStatus,X
 
@@ -2347,11 +2458,10 @@ ORG CODE%
 \   Z flag              Set according to the high byte in X (i.e. the routine is
 \                       called after setting register X)
 \
-\   R                   Contains %00010000 (which is set at the start of L0D01)
+\   R                   Contains %00010000 (which is set at the start of
+\                       ProjectPoint)
 \
-\   TT                  ??? A lookup from Lookup3900
-\
-\   S                   ??? A lookup from Lookup4700, bits 3-7
+\   (TT S)              ??? A lookup from Lookup3900/Lookup4700
 \
 \ Returns:
 \
@@ -2405,11 +2515,14 @@ ORG CODE%
                         \   Y = %ttttJJJJ
                         \   X = %SSSSJJJJ
                         \
-                        \ where the following are arguments to the routine:
+                        \ where the following are arguments that were passed to
+                        \ the routine:
                         \
-                        \   TT = %TTTTtttt
-                        \   S = %SSSSssss
-                        \   (J I) contains the argument (A Y) and J = %JJJJjjjj
+                        \   (TT S) = (%TTTTtttt %SSSSssss)
+                        \   (J I)  = (%JJJJjjjj %IIIIiiii) and contains the
+                        \            original argument (A Y)
+
+                        \ Does the following calculate (Q P) = (TT S) * (1 J I) ???
 
  LDA timesTable,X       \ Set A = %SSSS * %JJJJ
 
@@ -2423,8 +2536,8 @@ ORG CODE%
  ADC #1
  STA Q
 
-                        \ So (Q P) = %1JJJJjjjj * %TTTTtttt
-                        \          = (X Y) * TT ???
+                        \ So (Q P) = (%SSSS * %JJJJ) + (%tttt * %jjjj)
+                        \            + ((%TTTT * %JJJJ) + 1) << 8
 
  LDX U                  \ Set X = (%TTTT * %jjjj) + (%tttt * %JJJJ)
  LDA timesTable,X
@@ -2440,10 +2553,11 @@ ORG CODE%
 
 .L0EBB
 
- LDA shift4Left,X
- ADC P
- BCC L0EC3
+ LDA shift4Left,X       \ Set A = (X << 4)
 
+ ADC P                  \ Set (Y A) = (Y A) + P + J + S
+
+ BCC L0EC3
  INY
 
 .L0EC3
@@ -2455,8 +2569,10 @@ ORG CODE%
 
 .L0EC8
 
- ADC S
+ ADC S                  \ End here
+
  STA P
+
  TYA
  ADC shift4Right,X
  ADC Q
@@ -2539,20 +2655,23 @@ ORG CODE%
 
  TAY
  LDX Q
+
  JSR L1821
 
- STA G
- LDA P
- SEC
+ STA G                  \ Set (Q P) = (Q P) - A
+ LDA P                  \
+ SEC                    \ starting with the high bytes
  SBC G
  STA P
- BCS L0F47
 
- DEC Q
+ BCS L0F47              \ If the subtraction didn't underflow, skip the next
+                        \ instruction
+
+ DEC Q                  \ Decrement the high byte
 
 .L0F47
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -2579,7 +2698,8 @@ ORG CODE%
 \   Z flag              Set according to the high byte in X (i.e. the routine is
 \                       called after setting register X)
 \
-\   R                   Contains %00010000 (which is set at the start of L0D01)
+\   R                   Contains %00010000 (which is set at the start of
+\                       ProjectPoint)
 \
 \ Returns:
 \
@@ -2760,14 +2880,14 @@ ORG CODE%
 
  TSX                    \ We can only get here if we called this routine from
  INX                    \ the L0E69 routine, as the only other call of this
- INX                    \ routine is from L0D01, when we know we are calling it
- TXS                    \ with a value of at least 1 in (X Y)
+ INX                    \ routine is from ProjectPoint, when we know we are
+ TXS                    \ calling it with a value of at least 1 in (X Y)
                         \
                         \ These instructions remove two bytes from the top of
                         \ the stack so the RTS below returns an extra level up
                         \ the call chain, and as L0E69 itself must have been
-                        \ called from L0D01, this returns us to L0D01 with the
-                        \ following results
+                        \ called from ProjectPoint, this returns us to
+                        \ ProjectPoint with the following results
 
  LDA #0                 \ Set (Q P) = 0
  STA Q
@@ -2783,12 +2903,30 @@ ORG CODE%
 \
 \       Name: L0FA7
 \       Type: Subroutine
-\   Category: 3D geometry
+\   Category: Maths
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   UU                  Scale factor for z-coordinate from ScaleUp routine
+\
+\   VV                  Scale factor for x-coordinate from ScaleUp routine
+\
+\   WW                  Scale factor for y-coordinate from ScaleUp routine
+\
+\   (QQ PP)             Result from L0E69 routine for x-coordinate
+\
+\   (Q P)               Result from L0E69 routine for y-coordinate
+\
+\ Returns:
+\
+\   (SS QQ)             Screen x-coordinate of the 3D point projected onto the
+\                       screen
+\
+\   (RR Q)              Screen y-coordinate of the 3D point projected onto the
+\                       screen
 \
 \ ******************************************************************************
 
@@ -11851,8 +11989,8 @@ ORG CODE%
 \       Name: ProcessLinesToShow
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Process the linesToShow list, moving any lines that aren't visible
-\             into the linesToHide list
+\    Summary: Process the linesToShow list, projecting all the lines onto the
+\             screen and moving any that aren't visible to the linesToHide list
 \
 \ ******************************************************************************
 
@@ -11876,52 +12014,153 @@ ORG CODE%
  STY lineId
 
  LDX lineStartPointId,Y \ Set GG to the point ID of the line's start point, to
- STX GG                 \ pass to the L0D01 routine
+ STX GG                 \ pass to the ProjectPoint routine
 
  STX L                  \ Set L to the point ID of the line's start point
 
  LDX lineEndPointId,Y   \ Set M to the point ID of the line's end point
  STX M
 
- JSR L0D01              \ ??? Sets bits 0, 2, 3, 4, 5 of the point's status byte
+ JSR ProjectPoint       \ Project the line's end point onto the screen, putting
+                        \ the screen coordinates into (xPoint, yPoint) and
+                        \ setting the point's status byte accordingly
 
  LDA M                  \ Set GG to the point ID of the line's start point, to
- STA GG                 \ pass to the L0D01 routine
+ STA GG                 \ pass to the ProjectPoint routine
 
- JSR L0D01              \ ??? Sets bits 0, 2, 3, 4, 5 of the point's status byte
+ JSR ProjectPoint       \ Project the line's start point onto the screen, putting
+                        \ the screen coordinates into (xPoint, yPoint) and
+                        \ setting the point's status byte accordingly
 
- LDX L                  \ Set L0CC7 to the status byte of the line's start point
- LDA pointStatus,X
- STA L0CC7
+ LDX L                  \ Set startStatus to the status byte of the line's start
+ LDA pointStatus,X      \ point
+ STA startStatus
 
- LDX M                  \ Set A and N to the status byte of the line's end point
+ LDX M                  \ Set N to the status byte of the line's end point
  LDA pointStatus,X
  STA N
 
- AND L0CC7              \ Set A so that bits 4 and 5 are set if bits 4 and 5 are
- AND #%00110000         \ set in both the start and end point
+ AND startStatus        \ Set A as follows:
+ AND #%00110000         \
+                        \   * Bit 4 is set in A if bit 4 is set in both points,
+                        \     so both the start and end points (in 3D space)
+                        \     have |yPoint| * 2 >= |zPoint|
+                        \
+                        \   * Bit 5 is set in A if bit 5 is set in both points,
+                        \     so both the start and end points (in 3D space)
+                        \     have |xPoint| >= |zPoint|
+                        \
+                        \ so A is in the form %00xx0000
 
- BEQ plns2              \ If bits 4 and 5 are clear in the status byte for both
-                        \ points, jump to plns2 to skip the following
+ BEQ plns2              \ If both bits 4 and 5 are clear in the above, jump to
+                        \ plns2 to keep the line in the linesToShow list
 
- LSR A                  \ Shift bits 4 and 5 into bits 2 and 3 and store the
- LSR A                  \ result in T
- STA T
+ LSR A                  \ Shift bits 4 and 5 down into bits 2 and 3 and store
+ LSR A                  \ the result in T, so:
+ STA T                  \
+                        \   * Bit 2 is set in T if bit 4 is set in both points
+                        \   * Bit 3 is set in T if bit 5 is set in both points
+                        \
+                        \ and the rest of the bits will be 0, so T is in the
+                        \ form %0000xx00
 
  LDA N                  \ Set A =     end point status
- EOR L0CC7              \         EOR start point status   <- 0 if bits are same
- EOR #&FF               \         EOR %11111111            <- 1 if bits are same
- AND T                  \         AND T                    <- 1 if 4, 5 both set
+ EOR startStatus        \         EOR start point status
+ EOR #&FF               \         EOR %11111111
+ AND T                  \         AND T
                         \
-                        \ So bit 2 will be set if bit 2 is the same in both
-                        \ status bytes, and bit 4 is set in both status bytes
+                        \ Because T is in the form %0000xx00, we are only
+                        \ interested in the calculation for bits 2 and 3, as all
+                        \ other bits will be zeroed by the AND T. Just taking
+                        \ bit 2 we get the following (the numbers on the right
+                        \ show the calculation in progress):
                         \
-                        \ And bit 3 will be set if bit 3 is the same in both
-                        \ status bytes, and bit 5 is set in both status bytes
+                        \   A =     bit 2 of end point     
+                        \       EOR bit 2 of start point   <- 0 if bits are same
+                        \       EOR 1                      <- 1 if bits are same
+                        \       AND bit 2 of T             <- 1 if set
+                        \
+                        \ So bit 2 of A will be set only when both of the
+                        \ following are true:
+                        \
+                        \   * Bit 2 is the same in both points
+                        \   * Bit 2 of T is set
+                        \
+                        \ which expands to the following:
+                        \
+                        \   * Bit 2 is the same in both points
+                        \   * Bit 4 is set in both points
+                        \
+                        \ and means:
+                        \
+                        \   * yPoint in both points has the same sign
+                        \   * |yPoint| * 2 >= |zPoint| for both points
+                        \
+                        \ Similarly, bit 3 of A will be set only when both of the
+                        \ following are true:
+                        \
+                        \   * Bit 3 is the same in both points
+                        \   * Bit 5 is set in both points
+                        \
+                        \ which means:
+                        \
+                        \   * xPoint in both points has the same sign
+                        \   * |xPoint| >= |zPoint| for both points
 
- BNE plns3              \ If A is non-zero, then either bit 2 or bit 3 is set,
-                        \ so jump to plns3 to add this line to the linesToHide
-                        \ list
+ BNE plns3              \ If A is non-zero, then this means that at least one of
+                        \ the above is true for this line. Let's see what that
+                        \ means. If both of the following are true:
+                        \
+                        \   * yPoint in both points has the same sign
+                        \   * |yPoint| * 2 >= |zPoint| for both points
+                        \
+                        \ then:
+                        \
+                        \   * The first one means that either both ends of the
+                        \     line are above us, or both are below us, so the
+                        \     line isn't crossing our field of view from top to
+                        \     bottom
+                        \
+                        \   * The second one means that both points are above or
+                        \     both points are below the 2y = z line (or, more
+                        \     accurately, the 2y = z plane). In terms of 3D
+                        \     space, this means that for us to look at these
+                        \     points from our plane seat, we would need to raise
+                        \     or lower our gaze by more than 22.5 degrees
+                        \
+                        \ If both of these are true, then the line isn't
+                        \ crossing our field of view, and it's too far above or
+                        \ below us to be seen... or in other words, it isn't
+                        \ visible
+                        \
+                        \ The xPoint rules are similar. If both of these are
+                        \ true:
+                        \
+                        \   * xPoint in both points has the same sign
+                        \   * |xPoint| >= |zPoint| for both points
+                        \
+                        \ then:
+                        \
+                        \   * The first one means that either both ends of the
+                        \     line are to the left of us, or both are to the
+                        \     right of us, so the line isn't crossing our field
+                        \     of view from left to right
+                        \
+                        \   * The second one means that both points are to the
+                        \     left of or both points are to the right of the
+                        \     x = z line (or, more accurately, the x = z plane).
+                        \     In terms of 3D space, this means that for us to
+                        \     look at these points from our plane seat, we would
+                        \     need to look left or right by more than 45 degrees
+                        \
+                        \ If both of these are true, then the line isn't
+                        \ crossing our field of view, and it's too far to the
+                        \ left or right of us to be seen... or in other words,
+                        \ it isn't visible
+                        \
+                        \ So if A is non-zero, this means that the line is not
+                        \ visible so we jump to plns3 to add this line to the
+                        \ linesToHide list
 
 .plns2
 
@@ -17009,15 +17248,18 @@ NEXT
 \
 \ Is this a log table for multiplication?
 \
+\ This table contains the high byte, while bits 3 to 7 of Lookup4700 contain the
+\ low byte
+\
+\ FOR I%, 0, 255
+\
+\  EQUB HI(INT(65535 - (256x - x^2 + 0.0035*x^3 + 0.00001*x^4 - ...)))
+\
+\ NEXT
+\
 \ ******************************************************************************
 
 .Lookup3900
-
-\FOR I%, 0, 255
-
-\ EQUB INT(0.5 - 0.000003*I%*I%*I% + 0.0025*I%*I% - 0.945*I% + 255)
-
-\NEXT
 
  EQUB &FF, &FE, &FD, &FC, &FB, &FA, &F9, &F8
  EQUB &F7, &F6, &F5, &F4, &F3, &F2, &F1, &F0
@@ -19537,6 +19779,15 @@ NEXT
 \
 \ Bits 0 to 2 of Lookup4700,X contain int(log2(X))
 \ i.e. if Lookup4700,X = n, then X fits into n + 1 binary digits
+\
+\ Bits 3 to 7 contain the low byte of a lookup, with bits 0 to 2 zeroed, and the
+\ high byte coming from Lookup3900 (is this a logarithm table?)
+\
+\ FOR I%, 0, 255
+\
+\  EQUB LO(INT(65535 - (256x - x^2 + 0.0035*x^3 + 0.00001*x^4 - ...)))
+\
+\ NEXT
 \
 \ ******************************************************************************
 
