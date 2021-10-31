@@ -15294,7 +15294,7 @@ ORG CODE%
 \
 \       Name: L3129
 \       Type: Subroutine
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15342,7 +15342,7 @@ ORG CODE%
 \
 \       Name: L3152
 \       Type: Subroutine
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15395,7 +15395,7 @@ ORG CODE%
 \
 \       Name: L3181
 \       Type: Subroutine
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15442,7 +15442,7 @@ ORG CODE%
 \
 \       Name: L31AC
 \       Type: Subroutine
-\   Category: 
+\   Category: Dashboard
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -16909,7 +16909,7 @@ ORG CODE%
 \
 \       Name: L368C
 \       Type: Variable
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ******************************************************************************
@@ -16922,7 +16922,7 @@ ORG CODE%
 \
 \       Name: L368D
 \       Type: Variable
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ******************************************************************************
@@ -16935,7 +16935,7 @@ ORG CODE%
 \
 \       Name: L368E
 \       Type: Variable
-\   Category: 
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -16952,7 +16952,7 @@ ORG CODE%
 \
 \       Name: L368F
 \       Type: Variable
-\   Category: 
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -16971,7 +16971,7 @@ ORG CODE%
 \
 \       Name: L3690
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ******************************************************************************
@@ -16984,7 +16984,7 @@ ORG CODE%
 \
 \       Name: L3691
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ******************************************************************************
@@ -17138,12 +17138,12 @@ ORG CODE%
 \
 \       Name: Lookup36C0
 \       Type: Variable
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Bridge and building shapes for scoring?
 \
 \ ******************************************************************************
 
@@ -17157,12 +17157,12 @@ ORG CODE%
 \
 \       Name: Lookup36D5
 \       Type: Variable
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Bridge and building shapes for scoring?
 \
 \ ******************************************************************************
 
@@ -17176,12 +17176,12 @@ ORG CODE%
 \
 \       Name: Lookup36EA
 \       Type: Variable
-\   Category: 
+\   Category: Scoring
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Bridge and building shapes for scoring?
 \
 \ ******************************************************************************
 
@@ -18234,23 +18234,11 @@ NEXT
 
  RTS                    \ Return from the subroutine
 
-\ ******************************************************************************
-\
-\       Name: Lookup3F26
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.Lookup3F26
-
- EQUB &3D, &41
- EQUB &42, &43, &77, &78, &44, &45, &46, &50
+ EQUB &3D, &41          \ These bytes appear to be unused
+ EQUB &42, &43
+ EQUB &77, &78
+ EQUB &44, &45
+ EQUB &46, &50
 
 \ ******************************************************************************
 \
@@ -18828,18 +18816,7 @@ NEXT
  SBC zObjectHi,Y
  JMP skil4
 
-\ ******************************************************************************
-\
-\       Name: L425E
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ******************************************************************************
-
-.L425E
-
- EQUB &4D, &50
+ EQUB &4D, &50          \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
@@ -19007,28 +18984,13 @@ NEXT
 
  RTS
 
-\ ******************************************************************************
-\
-\       Name: Lookup42EF
-\       Type: Variable
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.Lookup42EF
-
- EQUB &20
+ EQUB &20               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
 \       Name: Lookup42F0
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -20729,8 +20691,8 @@ NEXT
 \
 \       Name: L4B9B
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Scoring
+\    Summary: Check whether we are under the bridge or flying in Acornsville
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21103,8 +21065,8 @@ NEXT
 \
 \       Name: L4CB0
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Theme
+\    Summary: Destroy aliens, causing turbulence
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21217,8 +21179,8 @@ NEXT
 \
 \       Name: L4D35
 \       Type: Subroutine
-\   Category: Theme
-\    Summary: 
+\   Category: Scoring
+\    Summary: Award points for destroying aliens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22223,7 +22185,7 @@ NEXT
 \
 \       Name: L4F80
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -22240,7 +22202,7 @@ NEXT
 \
 \       Name: L4F84
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -22257,7 +22219,7 @@ NEXT
 \
 \       Name: L4F85
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -22285,7 +22247,7 @@ NEXT
 \
 \       Name: L4F87
 \       Type: Variable
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -22302,8 +22264,11 @@ NEXT
                         \
                         \ Zeroed in ResetVariables
 
- EQUB &00, &00, &FF, &8D, &BE, &00, &05
- EQUB &7D, &FF, &50
+ EQUB &00, &00          \ These bytes appear to be unused
+ EQUB &FF, &8D
+ EQUB &BE, &00
+ EQUB &05, &7D
+ EQUB &FF, &50
 
 \ ******************************************************************************
 \
