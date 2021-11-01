@@ -1954,13 +1954,43 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine projects a point in 3D space onto the screen. If the point in 3D
+\ space is (xPoint, yPoint, zPoint), then the resulting projection is at pixel
+\ coordinate (x, y) on-screen, where:
+\
+\   x = 80 + 256 * (xPoint / zPoint)
+\   y = 96 + 256 * (2 * yPoint / zPoint)
+\
+\ The result is stored in (xPoint, yPoint), while zPoint is left alone so we can
+\ check its sign. The coordinates are all signed 16-bit values.
+\
+\ Also, various bits are set in the point's status byte. These describe the
+\ relationship between the x- and y-coordinates of the point, which we can use
+\ to quickly determine whether the line containing this point is on-screen. We
+\ also set a bit that records that we have projected this point, so we don't
+\ repeat the process during this iteration of the main loop.
+\
+\ The routine breaks down as follows:
+\
+\   * Part 1 sets the various bits in the point's status byte
+\
+\   * Part 2 calculates the divisions by zPoint
+\
+\   * Part 3 calculates the addition of (80, 96)
+\
 \ Arguments:
 \
 \   GG                  The point ID to process
 \
+\   xPoint+GG           The point's x-coordinate in 3D space
+\
+\   yPoint+GG           The point's y-coordinate in 3D space
+\
+\   zPoint+GG           The point's z-coordinate in 3D space
+\
 \ Returns:
 \
-\   pointStatus         The following bits are set as follows, so they can be
+\   pointStatus+GG      The following bits are set as follows, so they can be
 \                       used in ProcessLinesToShow to determine the visibility
 \                       of the line containing this point:
 \
@@ -1994,11 +2024,11 @@ ORG CODE%
 \
 \                           * 1 = |xPoint| >= |zPoint|
 \
-\   xPoint              The pixel x-coordinate of the point once projected onto
-\                       the screen
+\   xPoint+GG           The pixel x-coordinate of the point, projected onto the
+\                       screen
 \
-\   yPoint              The pixel y-coordinate of the point once projected onto
-\                       the screen
+\   yPoint+GG           The pixel y-coordinate of the point, projected onto the
+\                       screen
 \
 \ ******************************************************************************
 
