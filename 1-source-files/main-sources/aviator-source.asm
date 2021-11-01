@@ -17201,7 +17201,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Bridge and building shapes for scoring?
+\ Bridge and building shapes for scoring
 \
 \ ******************************************************************************
 
@@ -17220,7 +17220,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Bridge and building shapes for scoring?
+\ Bridge and building shapes for scoring
 \
 \ ******************************************************************************
 
@@ -17239,7 +17239,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Bridge and building shapes for scoring?
+\ Bridge and building shapes for scoring
 \
 \ ******************************************************************************
 
@@ -18979,23 +18979,32 @@ NEXT
 
 .L4288
 
- CMP #&05
+ CMP #5
  BCS skil2
- CPY #&02
+
+ CPY #2
  BEQ L42B7
- LDA #&0C
+
+ LDA #12
  JSR L4B9B
  BCS L42D5
- LDA #&0F
+
+ LDA #15
  JSR L4B9B
  BCS L42D5
- LDA #&09
+
+ LDA #9
  JSR L4B9B
  BCS L42D5
- LDA #&12
+
+ LDA #18
  JSR L4B9B
  BCC L42DF
- LDA #32
+
+                        \ If we get here then we are flying along main street
+
+ LDA #&20               \ Set A = &20 so we award 200 points for flying down
+                        \ main street upside down
 
  LDX row25_block13_1    \ If there is a line at the bottom of the artificial
  BNE L42EB              \ horizon indicator, then the plane is upside down, so
@@ -19003,26 +19012,35 @@ NEXT
 
 .L42B3
 
- LDA #&10
+ LDA #&10               \ Set A = &10 so we award 100 points for flying down
+                        \ main street the right way up
+
  BNE L42EB
 
 .L42B7
 
- LDA #&06
+ LDA #6
  JSR L4B9B
  BCC L42DF
- LDA #&03
+
+ LDA #3
  JSR L4B9B
  BCS L42DF
- LDA #&00
+
+ LDA #0
  JSR L4B9B
  BCC L42D5
 
+                        \ If we get here then we are flying under the bridge
+
  LDX row25_block13_1    \ If there is a line at the bottom of the artificial
  BNE L42B3              \ horizon indicator, then the plane is upside down, so
-                        \ jump to L42B3
+                        \ jump to L42B3 to award 100 points for flying under the
+                        \ bridge upside down
 
- LDA #&05
+ LDA #5                 \ Set A = 5 so we award 50 points for flying under the
+                        \ bridge the right way up
+
  BNE L42EB
 
 .L42D5
@@ -20766,7 +20784,10 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   A                   12, 15, 9, 18 = down main street
+\                       6, 3, 0 = under the bridge
 \
 \ ******************************************************************************
 
