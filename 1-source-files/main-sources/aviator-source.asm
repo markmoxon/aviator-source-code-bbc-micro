@@ -81,11 +81,11 @@ row24_block18_7 = &7697 \ Left block of joystick position display x-axis
 row24_block19_7 = &769F \ Left-middle block of joystick position display x-axis
 row24_block21_7 = &76AF \ Right block of joystick position display x-axis
 
-row23_block12_4 = &7524 \ Left block of artificial horizon
-row23_block13_2 = &752A \ Middle block of artificial horizon
-row23_block14_4 = &7534 \ Right block of artificial horizon
+row23_block12_4 = &7524 \ Left block of artificial horizon centre marker
+row23_block13_2 = &752A \ Middle block of artificial horizon centre marker
+row23_block14_4 = &7534 \ Right block of artificial horizon centre marker
+row25_block13_1 = &77A9 \ Bottom middle block of artificial horizon
 
-row25_block31_1 = &77A9 \ Middle of the left edge of the radar
 row25_block34_7 = &7857 \ Left spur of the radar's cross
 row25_block35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
 row25_block35_7 = &785F \ Centre and right spur of the radar's cross
@@ -1184,7 +1184,7 @@ ORG &0900
 
 .L0CEC
 
- SKIP 1
+ SKIP 1                 \ Low byte in (L0CFC L0CEC)
 
 .xPlaneLo
 
@@ -1304,7 +1304,8 @@ ORG &0900
 
 .L0CFC
 
- SKIP 1
+ SKIP 1                 \ High byte in (L0CFC L0CEC)
+
 
 .xPlaneHi
 
@@ -6143,7 +6144,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1862
+\       Name: SetMatrix
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: 
@@ -6152,11 +6153,13 @@ ORG CODE%
 \
 \ Arguments:
 \
+\   Y                   ???
+\
 \   L0CC4               ???
 \
 \ ******************************************************************************
 
-.L1862
+.SetMatrix
 
  LDA L0CFA,Y
  STA G
@@ -6256,7 +6259,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   
 \
 \ ******************************************************************************
 
@@ -6273,6 +6278,7 @@ ORG CODE%
  ROR I
  LDX I
  LDY W
+
  JSR L1821
 
  LDX H
@@ -6286,6 +6292,7 @@ ORG CODE%
  ADC Lookup4101,X
  PLP
  ADC #0
+
  RTS
 
 \ ******************************************************************************
@@ -7213,19 +7220,6 @@ ORG CODE%
  LDA L0170,X
  STA S
  JMP L1D23
-
-\ ******************************************************************************
-\
-\       Name: L1D03
-\       Type: Subroutine
-\   Category: 3D geometry
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
 
 .L1D03
 
@@ -10368,21 +10362,21 @@ ORG CODE%
 \       Name: ProcessKeyLogger (Part 4 of 4)
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: 
+\    Summary: Set up matrices, apply the flight model and update the dashboard
 \
 \ ******************************************************************************
 
 .pkey15
 
- LDY #2                 \ Loop through 2, 1 0
+ LDY #2                 \ Loop through Y = 2, 1, 0, to pass to SetMatrix
 
 .pkey16
 
- STY L0CC4
+ STY L0CC4              \ Set L0CC4 = Y, to pass to SetMatrix
 
- JSR L1862
+ JSR SetMatrix          \ Set up the matrix values in page 1
 
- LDY L0CC4
+ LDY L0CC4              \ Restore the value of Y that we stored above
 
  DEY                    \ Decrement Y
 
@@ -10393,7 +10387,7 @@ ORG CODE%
 
  STA L0CC4              \ Set L0CC4 = 0
 
- JSR SetMatrices
+ JSR SetMatrices        \ Set up the rotation matrices
 
  JSR ApplyFlightModel   \ Apply the flight model to our plane
 
@@ -11357,7 +11351,7 @@ ORG CODE%
  STA previousListEnd    \ previousListEnd so we can check it at the end of the
                         \ main loop
 
- JSR L2F1C              \ Theme-related
+ JSR UpdateThemeStatus  \ Update the status of the Theme, if enabled
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
@@ -11380,20 +11374,21 @@ ORG CODE%
  LDA #2                 \ Set gunSoundCounter = 2, so we make two firing sounds
  STA gunSoundCounter    \ below, one for each bullet
 
- LDY #33                \ We now copy the status bytes for the four bullet
-                        \ objects from objectStatus+30 to objectStatus+33 into
-                        \ bulletStatus, so set up a counter in Y that can also
-                        \ act as the offset
+ LDY #33                \ We now copy the status bytes for objects 30 to 33 (the
+                        \ four alien objects), copying the four bytes between
+                        \ objectStatus+30 and objectStatus+33 into the four
+                        \ bytes at alienStatus, so set up a counter in Y that
+                        \ can also act as the offset
 
 .main1
 
- LDA objectStatus,Y     \ Copy the Y-th byte of objectStatus to bulletStatus-30,
- STA bulletStatus-30,Y  \ to give this:
+ LDA objectStatus,Y     \ Copy the Y-th byte of objectStatus to alienStatus-30,
+ STA alienStatus-30,Y   \ to give this:
                         \
-                        \   objectStatus+30 -> bulletStatus
-                        \   objectStatus+31 -> bulletStatus+1
-                        \   objectStatus+32 -> bulletStatus+2
-                        \   objectStatus+33 -> bulletStatus+3
+                        \   objectStatus+30 -> alienStatus
+                        \   objectStatus+31 -> alienStatus+1
+                        \   objectStatus+32 -> alienStatus+2
+                        \   objectStatus+33 -> alienStatus+3
 
  DEY                    \ Decrement the loop counter
 
@@ -11512,46 +11507,51 @@ ORG CODE%
 \       Name: MainLoop (Part 5 of 15)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Update lines, check flying skills, increment main loop counter,
+\             move aliens
 \
 \ ******************************************************************************
 
 .main6
 
- JSR UpdateLinesToShow
+ JSR UpdateLinesToShow  \ Update the linesToShow list, moving any lines that
+                        \ aren't visible into the linesToHide list
 
- JSR L4CB0
+ JSR CheckAlienHit      \ Check to see if we have hit an alien with our bullets
 
- LDY #2
- JSR CheckFlyingSkills
+ LDY #2                 \ Check to see if we are flying under the suspension
+ JSR CheckFlyingSkills  \ bridge
 
- LDY #&22
- JSR CheckFlyingSkills
+ LDY #34                \ Check to see if we are flying down the main street of
+ JSR CheckFlyingSkills  \ Acornsville
 
- INC mainLoopCounter
+ INC mainLoopCounter    \ Increment the main loop counter
 
- LDA mainLoopCounter
- CLC
- ADC #4
- AND #7
+ LDA mainLoopCounter    \ If (loop counter + 4) mod 8 <> 0, jump to main7, so
+ CLC                    \ we only do the following once every 8 iterations of
+ ADC #4                 \ the main loop, when the loop counter is 4, 12, 20 and
+ AND #7                 \ so on
  BNE main7
 
- LDY #1
+ LDY #1                 \ Update the runway on the radar
  JSR UpdateRadarBlip
 
- LDX alienToMove
- BMI main7
+ LDX alienToMove        \ Set X to the number of the alien whose turn it is to
+                        \ move towards Acornsville in this iteration of the main
+                        \ loop, which we set in UpdateAliens
 
- LDY #33
- LDA alienState,X
- CMP #27
+ BMI main7              \ If X is negative, then there is no alien to move, so
+                        \ jump to main7 to skip the following
+
+ LDY #33                \ Set Y = 33 so the call to UpdateRadarBlip updates the
+                        \ alien on the radar
+
+ LDA alienState,X       \ If the moving alien's state is < 27, skip the
+ CMP #27                \ following instruction
  BCC main7
 
- JSR UpdateRadarBlip
+ JSR UpdateRadarBlip    \ The moving alien's state is >= 27, so update the alien
+                        \ on the radar
 
 \ ******************************************************************************
 \
@@ -11574,38 +11574,46 @@ ORG CODE%
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
  BEQ main11             \ the air, so jump to main11
 
- LDA #33
- STA objectId
+ LDA #33                \ We now loop through objects 33 down to 30, which are
+ STA objectId           \ all the aliens, so set a loop counter in objectId
 
 .main8
 
- LDY objectId
- LDA bulletStatus-30,Y
- BPL main9
+ LDY objectId           \ Set Y to the alien to check
 
- JSR L3053
+ LDA alienStatus-30,Y   \ We copied the status bytes for all four alien objects
+ BPL main9              \ into alienStatus in part 1, so this checks whether bit
+                        \ 7 of the alien's status byte is clear. If it is clear,
+                        \ then this object is not visible, so we skip the
+                        \ following three instructions and move on to the next
+                        \ alien
 
- LDA L368F
+ JSR MoveAliens         \ This alien is visible, so move it
+
+ LDA L368F              \ If L368F is non-zero, jump to main10
  BNE main10
 
 .main9
 
- DEC objectId
- LDA objectId
- CMP #30
+ DEC objectId           \ Decrement the loop counter to the next alien
+
+ LDA objectId           \ Loop back to process the next alien, until we have
+ CMP #30                \ done the last one (object 30)
  BCS main8
 
- BCC main11
+ BCC main11             \ Jump to main11 (thie BCC is effectively a JMP as we
+                        \ just passed through a BCS)
 
 .main10
 
- STA L368C
- LDA #0
- STA firingStatus
+ STA L368C              \ Store the value of L368F in L368C
+
+ LDA #0                 \ Set firingStatus = 0 to indicate that there are no
+ STA firingStatus       \ bullets are in the air
 
 .main11
 
- JSR L2F4E
+ JSR UpdateAliens       \ Update the aliens' statuses
 
 \ ******************************************************************************
 \
@@ -13800,7 +13808,7 @@ ORG CODE%
                         \
                         \ i.e. if bit 6 and 7 differ
 
- LDA #216               \ Set A = 216 to use as the point's z-coordinate
+ LDA #216               \ Set A = -40 to use as the point's z-coordinate
 
 .horv5
 
@@ -14130,7 +14138,7 @@ ORG CODE%
 
  LDY alienToMove        \ Set Y to the number of the alien whose turn it is to
                         \ move towards Acornsville in this iteration of the main
-                        \ loop, which we set in L2F4E
+                        \ loop, which we set in UpdateAliens
 
  BMI acrn1              \ If Y is negative, then there is no alien to move, so
                         \ jump to acrn1 to return from the subroutine
@@ -14783,17 +14791,17 @@ ORG CODE%
 
 .UpdateBullets
 
- LDY #&0F
+ LDY #15
  STY objectId
 
- LDA #&62
+ LDA #98
  STA GG
 
 .L2EEF
 
  TYA
  CLC
- ADC #&D8
+ ADC #216
  TAX
  JSR AddPointToObject
 
@@ -14804,29 +14812,29 @@ ORG CODE%
  BPL L2F0A
 
  LDY GG
- LDX #&3C
+ LDX #60
  JSR CheckLineDistance
 
  BEQ L2F0F
 
 .L2F0A
 
- LDA #0
- STA firingStatus
+ LDA #0                 \ Set firingStatus = 0 to indicate that there are no
+ STA firingStatus       \ bullets are in the air
 
 .L2F0F
 
  DEC GG
  DEC objectId
  LDY objectId
- CPY #&0C
+ CPY #12
  BCS L2EEF
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L2F1C
+\       Name: UpdateThemeStatus
 \       Type: Subroutine
 \   Category: Theme
 \    Summary: 
@@ -14837,16 +14845,16 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L2F1C
+.UpdateThemeStatus
 
  LDX themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
- BMI L2F4D              \ enabled, so jump to L2F4D to return from the
+ BMI upth3              \ enabled, so jump to upth3 to return from the
                         \ subroutine
 
- BEQ L2F4D              \ If themeStatus is zero, return from the subroutine
+ BEQ upth3              \ If themeStatus is zero, return from the subroutine
 
  LDA onGround           \ If onGround is non-zero, then we are on the ground, so
- BNE L2F4D              \ jump to L2F4D to return from the subroutine
+ BNE upth3              \ jump to upth3 to return from the subroutine
 
  STA alienState-1,X     \ X is 1 to 8, so this updates the X-th alien's state
 
@@ -14857,7 +14865,7 @@ ORG CODE%
  AND #15                \ Reduce the random number to the range 0 to 15
 
  CMP #14                \ If the random number is >= 14 (12.5% chance), jump to
- BCS L2F4D              \ L2F4D to return from the subroutine
+ BCS upth3              \ upth3 to return from the subroutine
 
  ORA #16                \ Increase the random number to the range 16 to 29
 
@@ -14866,32 +14874,32 @@ ORG CODE%
  LDX #8                 \ Set X to act as a loop counter, going from 8 down to
                         \ themeStatus
 
-.L2F3B
+.upth1
 
  DEX                    \ Decrement the loop counter
 
- CPX themeStatus        \ If X <> themeStatus, jump to L2F45
- BNE L2F45
+ CPX themeStatus        \ If X <> themeStatus, jump to upth2
+ BNE upth2
 
  STA L4208,X            \ X = themeStatus, so store the random number (in the
                         \ range 16 to 29) in the X-th byte of L4208
 
  RTS                    \ Return from the subroutine
 
-.L2F45
+.upth2
 
  CMP L4208,X            \ If the X-th byte of L4208 <> our random number, jump
- BNE L2F3B              \ back to L2F3B to move on to the next alien
+ BNE upth1              \ back to upth1 to move on to the next alien
 
  INC themeStatus        \ Increment the alien counter in themeStatus again
 
-.L2F4D
+.upth3
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L2F4E
+\       Name: UpdateAliens
 \       Type: Subroutine
 \   Category: Theme
 \    Summary: 
@@ -14902,78 +14910,78 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L2F4E
+.UpdateAliens
 
  LDA mainLoopCounter
  AND #127
- BNE L2F6A
+ BNE upal3
 
  LDX #7
 
-.L2F57
+.upal1
 
  LDA alienState,X
- BEQ L2F67
+ BEQ upal2
 
  CMP #22
- BEQ L2F67
+ BEQ upal2
 
  CMP #27
- BCS L2F67
+ BCS upal2
 
  INC alienState,X
 
-.L2F67
+.upal2
 
  DEX
- BPL L2F57
+ BPL upal1
 
-.L2F6A
+.upal3
 
  LDY #31                \ Loop through object IDs 31 and 32
 
-.L2F6C
+.upal4
 
  LDX alienCounter-30,Y  \ Points to alienCounter+1 and alienCounter+2
- BMI L2F82
+ BMI upal6
 
  LDA alienState,X
  CMP #24
- BEQ L2F7D
+ BEQ upal5
 
  LDA L4208,X
- BPL L2FB4
+ BPL upal11
 
-.L2F7D
+.upal5
 
  LDA #&FE
  STA alienCounter-30,Y
 
-.L2F82
+.upal6
 
  LDX #7
 
-.L2F84
+.upal7
 
  LDA L4208,X
- BMI L2FB1
+ BMI upal10
 
  LDA alienState,X
- BNE L2FB1
+ BNE upal10
 
  CPY #31
- BEQ L2F98
+ BEQ upal8
 
  CPX alienCounter+1
- JMP L2F9B
+ JMP upal9
 
-.L2F98
+.upal8
 
  CPX alienCounter+2
 
-.L2F9B
+.upal9
 
- BEQ L2FB1
+ BEQ upal10
 
  TXA
  STA alienCounter-30,Y
@@ -14984,40 +14992,40 @@ ORG CODE%
  LDX U
  LDA #1
  STA alienState,X
- BNE L2FB4
+ BNE upal11
 
-.L2FB1
+.upal10
 
  DEX
- BPL L2F84
+ BPL upal7
 
-.L2FB4
+.upal11
 
  INY
  CPY #33
- BNE L2F6C
+ BNE upal4
 
  LDX alienCounter-30,Y  \ Y = 33 at this point, so this points to alienToMove
- BMI L2FC6
+ BMI upal12
 
  LDA L4208,X
- BPL L2FE3
+ BPL upal15
 
  STA alienCounter-30,Y
 
-.L2FC6
+.upal12
 
  LDY #31                \ We now work our way through the aliens in objects 31,
                         \ 32 and 33, so set a counter in Y for the object ID
 
-.L2FC8
+.upal13
 
  LDX alienCounter-30,Y
- BMI L2FDE
+ BMI upal14
 
  LDA alienState,X
  CMP #22
- BNE L2FDE
+ BNE upal14
 
  STX alienToMove        \ Set this alien as the one to move towards Acornsville
                         \ in this iteration of the main loop by setting
@@ -15026,55 +15034,55 @@ ORG CODE%
  LDA #23                \ Set the alien's state to 23
  STA alienState,X
 
- BNE L2FE3              \ Jump to L2FE3 to exit the loop (this BNE is
+ BNE upal15              \ Jump to upal15 to exit the loop (this BNE is
                         \ effectively a JMP as A is never zero)
 
-.L2FDE
+.upal14
 
  INY
  CPY #33
- BNE L2FC8
+ BNE upal13
 
-.L2FE3
+.upal15
 
  LDA mainLoopCounter
  AND #127
- BNE L302B
+ BNE upal19
 
  LDY #31
 
-.L2FEC
+.upal16
 
  LDX alienCounter-30,Y
- BMI L3003
+ BMI upal17
 
  LDA alienState,X
  CMP #5
- BCC L3003
+ BCC upal17
 
  CMP #&14
- BCS L3003
+ BCS upal17
 
  AND #3
- BNE L3003
+ BNE upal17
 
  JSR L302C
 
-.L3003
+.upal17
 
  INY
  CPY #33
- BNE L2FEC
+ BNE upal16
 
  LDX #7
 
-.L300A
+.upal18
 
  LDA L4208,X
- BPL L302B
+ BPL upal19
 
  DEX
- BPL L300A
+ BPL upal18
 
  LDA #8
  STA themeStatus
@@ -15088,11 +15096,11 @@ ORG CODE%
  CLC
  ADC #4
  CMP #&13
- BCS L302B
+ BCS upal19
 
  STA L0CF8
 
-.L302B
+.upal19
 
  RTS
 
@@ -15147,9 +15155,9 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L3053
+\       Name: MoveAliens
 \       Type: Subroutine
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15158,7 +15166,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L3053
+.MoveAliens
 
  LDA #&7D
  STA QQ
@@ -15168,28 +15176,28 @@ ORG CODE%
  STA RR
  STA PP
  CPY #31
- BCS L306B
+ BCS mval1
 
  LDA #4
  LDX #3
- BNE L3088
+ BNE mval4
 
-.L306B
+.mval1
 
  LDA #0
  CPY #32
- BCS L3075
+ BCS mval2
 
  LDX #&B7
- BNE L3079
+ BNE mval3
 
-.L3075
+.mval2
 
- BNE L3093
+ BNE mval5
 
- LDX #&BC
+ LDX #188
 
-.L3079
+.mval3
 
  LDA zObjectPoint,X
  EOR #&70
@@ -15201,18 +15209,18 @@ ORG CODE%
  DEX
  DEX
  TXA
- BEQ L3093
+ BEQ mval5
 
-.L3088
+.mval4
 
  LSR QQ
  LSR RR
  LSR PP
  LSR Q
  DEX
- BNE L3088
+ BNE mval4
 
-.L3093
+.mval5
 
  STA L368D
  LDA #0
@@ -15223,14 +15231,14 @@ ORG CODE%
  LDX #&E4
  STX VV
 
-.L30A5
+.mval6
 
  LDX VV
  LDA #31
  STA WW
  LDY #0
 
-.L30AD
+.mval7
 
  STY Q
  JSR L3181
@@ -15243,7 +15251,7 @@ ORG CODE%
  STA xTempLo,Y
  INY
  CPY #3
- BNE L30AD
+ BNE mval7
 
  LDX #&A8
  LDY #0
@@ -15253,70 +15261,71 @@ ORG CODE%
  JSR L3152
 
  LDY VV
- LDX #&D8               \ X goes: 0, &28, &50, &78, &C8
 
-.L30D6
+ LDX #216               \ X goes: 0, 40, 80, 120, 200
+
+.mval8
 
  TYA
  CLC
- ADC #&28
+ ADC #40
  TAY
  TXA
  CLC
- ADC #&28
+ ADC #40
  TAX
  LDA xObjectLo,Y
  STA xObjectLo,X        \ Store in first byte of all the coord tables
  CPX #&C8
- BNE L30D6
+ BNE mval8
 
-.L30EA
+.mval9
 
- LDY #2                 \ Y goes: 2,   1,   0
- LDX #&50               \ X goes: &50, &28, 0
+ LDY #2                 \ Y goes:  2,  1, 0
+ LDX #80                \ X goes: 80, 40, 0
 
-.L30EE
+.mval10
 
  LDA xTempLo,Y
  CLC
  ADC xRadarHi,Y
  STA xRadarHi,Y
- BCC L3102
+ BCC mval11
 
  INC xObjectLo,X
- BNE L3102
+ BNE mval11
 
  INC xObjectHi,X
 
-.L3102
+.mval11
 
  TXA
  SEC
- SBC #&28
+ SBC #40
  TAX
  DEY
- BPL L30EE
+ BPL mval10
 
  LDX #0                 \ Move object 0 by the vector in point 0
  LDY #0
  JSR AddPointToObject
 
- LDY #&D8
+ LDY #216
  JSR L3152
 
  DEC WW
- BPL L30EA
+ BPL mval9
 
  LDA VV
  CLC
  ADC #2
  STA VV
- CMP #&E8
- BEQ L3128
+ CMP #232
+ BEQ mval12
 
- JMP L30A5
+ JMP mval6
 
-.L3128
+.mval12
 
  RTS
 
@@ -15351,7 +15360,7 @@ ORG CODE%
 
  TYA
  CLC
- ADC #&28
+ ADC #40
  TAY
  DEX
  BPL L3143
@@ -15389,7 +15398,7 @@ ORG CODE%
 
  TYA
  CLC
- ADC #&28
+ ADC #40
  TAY
  LDA xObjectLo,Y
  SEC
@@ -15441,7 +15450,7 @@ ORG CODE%
  STA R
  TXA
  CLC
- ADC #&28
+ ADC #40
  TAX
  LDA xObjectLo+1,X
  SEC
@@ -15470,35 +15479,54 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L31AC
+\       Name: ShowUpsideDownBar
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: 
+\    Summary: Show or hide the upside down bar in the artificial horizon
+\             indicator
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Shows the upside down bar in the artificial horizon if bit 7 and bit 6 of
+\ L0CFC are different
 \
 \ ******************************************************************************
 
-.L31AC
+.ShowUpsideDownBar
 
- LDA L0CFC
- BPL L31B3
+ LDA L0CFC              \ If bit 7 of L0CFC is clear, skip the following
+ BPL upsi1              \ instruction
 
- EOR #&C0
+ EOR #%11000000         \ Flip bits 6 and 7 of A, making bit 7 clear and bit 6
+                        \ flipped
 
-.L31B3
+.upsi1
 
- AND #&C0
- BEQ L31B9
+                        \ When we get here, we know bit 7 of A is clear
 
- LDA #&0E
+ AND #%11000000         \ Extract bits 6 and 7 of A
 
-.L31B9
+ BEQ upsi2              \ If bit 6 of A is clear (we already know bit 7 is
+                        \ clear), then the plane is the correct way up, so skip
+                        \ the following instruction
 
- STA row25_block31_1
- RTS
+                        \ We get here if one of the following is true:
+                        \
+                        \   * Bit 7 of L0CFC is clear and bit 6 is set
+                        \   * Bit 7 of L0CFC is set and bit 6 is clear
+                        \
+                        \ either of which means the plane is upside down
+
+ LDA #%00001110         \ Bit 6 is set, so set A to a three-pixel horizontal
+                        \ line to show in the indicator
+
+.upsi2
+
+ STA row25_block13_1    \ Set the line at the bottom of the artificial horizon
+                        \ indicator to the pixel pattern in A (0 if the plane is
+                        \ the right way up, %00001110 if it is upside down)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -16939,7 +16967,7 @@ ORG CODE%
 \
 \       Name: L368C
 \       Type: Variable
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ******************************************************************************
@@ -18719,18 +18747,19 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: bulletStatus
+\       Name: alienStatus
 \       Type: Variable
-\   Category: Bullets
-\    Summary: 
+\   Category: Theme
+\    Summary: Storage for the object status bytes for the four alien objects
 \
 \ ******************************************************************************
 
-.bulletStatus
+.alienStatus
 
- EQUB &78, &77          \ Populated when guns are fired in main loop part 1
+ EQUB &78, &77
  EQUB &76, &75
- EQUB &74, &72
+
+ EQUB &74, &72          \ These bytes appear to be unused
  EQUB &71, &70
 
 \ ******************************************************************************
@@ -18814,11 +18843,17 @@ NEXT
 \       Name: CheckFlyingSkills (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: 
+\    Summary: Check whether we are performing one of the tests of flying skill
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   Y                   The skill to check:
+\
+\                         * 2 = Flying under the suspension bridge
+\
+\                         * 34 = Flying down the main street of Acornsville
 \
 \ ******************************************************************************
 
@@ -18961,8 +18996,10 @@ NEXT
  JSR L4B9B
  BCC L42DF
  LDA #32
- LDX row25_block31_1
- BNE L42EB
+
+ LDX row25_block13_1    \ If there is a line at the bottom of the artificial
+ BNE L42EB              \ horizon indicator, then the plane is upside down, so
+                        \ jump to L42EB
 
 .L42B3
 
@@ -18980,8 +19017,11 @@ NEXT
  LDA #&00
  JSR L4B9B
  BCC L42D5
- LDX row25_block31_1
- BNE L42B3
+
+ LDX row25_block13_1    \ If there is a line at the bottom of the artificial
+ BNE L42B3              \ horizon indicator, then the plane is upside down, so
+                        \ jump to L42B3
+
  LDA #&05
  BNE L42EB
 
@@ -20435,9 +20475,9 @@ NEXT
 \
 \   FireGuns            X = &ED, Y = 96
 \   UpdateRadarBlip     X = &A8, Y = 0
-\   L3053               X = &A8, Y = 0
+\   MoveAliens          X = &A8, Y = 0
 \   ProcessRunway       X = &A8, Y = range
-\   L4CB0               X = &A8, Y = range
+\   CheckAlienHit       X = &A8, Y = range
 \   ApplyFlightModel    X = &89, Y = 255
 \                       X = &00, Y = 254
 \
@@ -20490,7 +20530,7 @@ NEXT
 \ Called as follows:
 \
 \   ProcessRunway       X = &A8, Y = 5
-\   L4CB0               X = &A8, Y = range
+\   CheckAlienHit       X = &A8, Y = range
 \   ApplyFlightModel    X = &03, Y = 255
 \                       X = &83, Y = 252
 \                       X = &86, Y = 254
@@ -21093,7 +21133,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4CB0
+\       Name: CheckAlienHit
 \       Type: Subroutine
 \   Category: Theme
 \    Summary: Destroy aliens, causing turbulence
@@ -21104,7 +21144,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L4CB0
+.CheckAlienHit
 
  LDA L368F
  BEQ L4D19
@@ -22962,7 +23002,8 @@ NEXT
 
  JSR CheckLanding
 
- JSR L31AC
+ JSR ShowUpsideDownBar  \ Show or hide the bar in the artificial horizon that
+                        \ shows whether the plane is upside down
 
  LDA fuelLevel
  BEQ L51D1
