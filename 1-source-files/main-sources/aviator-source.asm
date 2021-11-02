@@ -1084,9 +1084,11 @@ ORG &0900
                         \ pressingUFBS+4 = 1 while the fire key SHIFT is being
                         \ pressed, 0 otherwise
 
-.L0CD7
+.pointsToAward
 
- SKIP 1
+ SKIP 1                 \ Used to store the points scored from flying skills, so
+                        \ they can be added to the score once the task has been
+                        \ completed
 
 .scoreDisplayTimer
 
@@ -2553,7 +2555,8 @@ ORG CODE%
                         \   (J I)  = (%JJJJjjjj %IIIIiiii) and contains the
                         \            original argument (A Y)
 
-                        \ Does the following calculate (Q P) = (TT S) * (1 J I) ???
+                        \ Does the following calculate (Q P) = (TT S) * (1 J I)
+                        \ ???
 
  LDA timesTable,X       \ Set A = %SSSS * %JJJJ
 
@@ -12066,9 +12069,9 @@ ORG CODE%
  LDA M                  \ Set GG to the point ID of the line's start point, to
  STA GG                 \ pass to the ProjectPoint routine
 
- JSR ProjectPoint       \ Project the line's start point onto the screen, putting
-                        \ the screen coordinates into (xPoint, yPoint) and
-                        \ setting the point's status byte accordingly
+ JSR ProjectPoint       \ Project the line's start point onto the screen,
+                        \ putting the screen coordinates into (xPoint, yPoint)
+                        \ and setting the point's status byte accordingly
 
  LDX L                  \ Set startStatus to the status byte of the line's start
  LDA pointStatus,X      \ point
@@ -12134,8 +12137,8 @@ ORG CODE%
                         \   * yPoint in both points has the same sign
                         \   * |yPoint| * 2 >= |zPoint| for both points
                         \
-                        \ Similarly, bit 3 of A will be set only when both of the
-                        \ following are true:
+                        \ Similarly, bit 3 of A will be set only when both of
+                        \ the following are true:
                         \
                         \   * Bit 3 is the same in both points
                         \   * Bit 5 is set in both points
@@ -14149,7 +14152,7 @@ ORG CODE%
 
                         \ The alien is heading towards the town. This happens
                         \ in three stages: first, the alien takes off; then it
-                        \ flies towards the city; and finally it descends. When
+                        \ flies towards the town; and finally it descends. When
                         \ the alien's state is 27, it is working through the
                         \ first two stages, so that's what we do now
 
@@ -14232,7 +14235,7 @@ ORG CODE%
 
                         \ The alien is heading towards the town. This happens
                         \ in three stages: first, the alien takes off; then it
-                        \ flies towards the city; and finally it descends. When
+                        \ flies towards the town; and finally it descends. When
                         \ the alien's state is 28, it is on the final stage, so
                         \ that's what we do now
 
@@ -17194,60 +17197,65 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: Lookup36C0
+\       Name: skillZoneLo
 \       Type: Variable
 \   Category: Scoring
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ Bridge and building shapes for scoring
+\    Summary: Low byte of the skill zone coordinates for testing flying skills
 \
 \ ******************************************************************************
 
-.Lookup36C0
+.skillZoneLo
 
- EQUB &A8, &00, &56, &A8, &60, &56, &88, &00
- EQUB &56, &30, &00, &30, &D0, &00, &70, &10
- EQUB &00, &70, &E0, &00, &C0
+ EQUB &A8, &00, &56     \ Bridge skill zone 0 coordinate = (&4CA8, &0000, &8656)
+ EQUB &A8, &60, &56     \ Bridge skill zone 3 coordinate = (&4CA8, &0060, &8656)
+ EQUB &88, &00, &56     \ Bridge skill zone 6 coordinate = (&4C88, &0000, &8656)
+
+ EQUB &30, &00, &30     \ Town skill zone  9 coordinate = (&0430, &0000, &0330)
+ EQUB &D0, &00, &70     \ Town skill zone 12 coordinate = (&04D0, &0000, &0470)
+ EQUB &10, &00, &70     \ Town skill zone 15 coordinate = (&0610, &0000, &0470)
+ EQUB &E0, &00, &C0     \ Town skill zone 18 coordinate = (&04E0, &0000, &03C0)
 
 \ ******************************************************************************
 \
-\       Name: Lookup36D5
+\       Name: skillZoneHi
 \       Type: Variable
 \   Category: Scoring
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ Bridge and building shapes for scoring
+\    Summary: High byte of the skill zone coordinates for testing flying skills
 \
 \ ******************************************************************************
 
-.Lookup36D5
+.skillZoneHi
 
- EQUB &4C, &00, &86, &4C, &00, &86, &4C, &00
- EQUB &86, &04, &00, &03, &04, &00, &04, &06
- EQUB &00, &04, &04, &00, &03
+ EQUB &4C, &00, &86     \ Bridge skill zone 0 coordinate = (&4CA8, &0000, &8656)
+ EQUB &4C, &00, &86     \ Bridge skill zone 3 coordinate = (&4CA8, &0060, &8656)
+ EQUB &4C, &00, &86     \ Bridge skill zone 6 coordinate = (&4C88, &0000, &8656)
+
+ EQUB &04, &00, &03     \ Town skill zone  9 coordinate = (&0430, &0000, &0330)
+ EQUB &04, &00, &04     \ Town skill zone 12 coordinate = (&04D0, &0000, &0470)
+ EQUB &06, &00, &04     \ Town skill zone 15 coordinate = (&0610, &0000, &0470)
+ EQUB &04, &00, &03     \ Town skill zone 18 coordinate = (&04E0, &0000, &03C0)
 
 \ ******************************************************************************
 \
-\       Name: Lookup36EA
+\       Name: skillZoneSize
 \       Type: Variable
 \   Category: Scoring
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ Bridge and building shapes for scoring
+\    Summary: Sizes of the skill zones for testing flying skills
 \
 \ ******************************************************************************
 
-.Lookup36EA
+.skillZoneSize
 
- EQUB &A8, &10, &18, &A8, &16, &18, &B8, &2C
- EQUB &18, &A8, &44, &28, &28, &84, &48, &60
- EQUB &24, &38, &78, &20, &60, &20
+ EQUB &A8, &10, &18     \ Bridge skill zone 0 size = (&A8, &10, &18)
+ EQUB &A8, &16, &18     \ Bridge skill zone 3 size = (&A8, &16, &18)
+ EQUB &B8, &2C, &18     \ Bridge skill zone 6 size = (&B8, &2C, &18)
+
+ EQUB &A8, &44, &28     \ Town skill zone  9 size = (&A8, &44, &28)
+ EQUB &28, &84, &48     \ Town skill zone 12 size = (&28, &84, &48)
+ EQUB &60, &24, &38     \ Town skill zone 15 size = (&60, &24, &38)
+ EQUB &78, &20, &60     \ Town skill zone 18 size = (&78, &20, &60)
+
+ EQUB &20               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -18847,6 +18855,20 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine checks where we are, and awards the following points:
+\
+\   * 50 points for flying under the bridge the right way up
+\
+\   * 100 points for flying under the bridge upside down
+\
+\   * 100 points for flying down the main street of Acornsville the right way up
+\
+\   * 200 points for flying down the main street of Acornsville upside down
+\
+\ There are multiple skill zones defined for each object (the bridge and the
+\ main street). To earn the points, we need to fly into the correct skill zones
+\ while avoiding others, and then back out again without hitting the ground.
+\
 \ Arguments:
 \
 \   Y                   The skill to check:
@@ -18859,27 +18881,33 @@ NEXT
 
 .CheckFlyingSkills
 
- LDA xPlaneHi
- SEC
- SBC xObjectHi,Y
- BPL skil1
- EOR #&FF
+ LDA xPlaneHi           \ Set A = xPlaneHi - the x-coordinate of either the
+ SEC                    \ bridge or town, which is the high byte of the distance
+ SBC xObjectHi,Y        \ along the x-axis between the plane and the object that
+                        \ we are checking
+
+ BPL skil1              \ If A is negative, flip the bits, so A contains the
+ EOR #&FF               \ absolute value of the distance along the x-axis
 
 .skil1
 
- CMP #5
- BCC skil3
+ CMP #5                 \ If the high byte of the distance is less than 5, then
+ BCC skil3              \ we are close enough to the bridge or town to warrant
+                        \ further checks, so jump to skil3
 
 .skil2
 
- RTS
+ RTS                    \ Otherwise we are too far away from the bridge and town
+                        \ to score any points, so return from the subroutine
 
 .skil3
 
- LDA zPlaneHi
- SEC
- SBC zObjectHi,Y
- JMP skil4
+ LDA zPlaneHi           \ Set A = zPlaneHi - the z-coordinate of either the
+ SEC                    \ bridge or town, which is the high byte of the distance
+ SBC zObjectHi,Y        \ along the z-axis between the plane and the object that
+                        \ we are checking
+
+ JMP skil4              \ Jump down to part 2 of the routine
 
  EQUB &4D, &50          \ These bytes appear to be unused
 
@@ -18964,113 +18992,151 @@ NEXT
 \       Name: CheckFlyingSkills (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Perform finer checks to see if we are flying under the bridge or
+\             along the main street of the town
 \
 \ ******************************************************************************
 
 .skil4
 
- BPL L4288
- EOR #&FF
+ BPL skil5              \ If A is negative, flip the bits, so A contains the
+ EOR #&FF               \ absolute value of the distance along the z-axis
 
-.L4288
+.skil5
 
- CMP #5
- BCS skil2
+ CMP #5                 \ If the high byte of the distance is 5 or more, then
+ BCS skil2              \ we are too far away from the bridge or town to warrant
+                        \ further checks, so jump to skil2 to return from the
+                        \ subroutine
 
- CPY #2
- BEQ L42B7
+                        \ If we get here then we are within a distance of &0500
+                        \ from the place we need to check, in both the x-axis
+                        \ and z-axis, so now we need to check exactly where we
+                        \ are
 
- LDA #12
- JSR L4B9B
- BCS L42D5
+ CPY #2                 \ If Y = 2, then we are checking against the suspension
+ BEQ skil7              \ bridge, so jump to skil7
 
- LDA #15
- JSR L4B9B
- BCS L42D5
+                        \ If we get here then we are checking where we are
+                        \ compared to the town
 
- LDA #9
- JSR L4B9B
- BCS L42D5
+ LDA #12                \ If we are inside skill zone 12, jump to skil8 to crash
+ JSR CheckBridgeAndTown \ the plane
+ BCS skil8
 
- LDA #18
- JSR L4B9B
- BCC L42DF
+ LDA #15                \ If we are inside skill zone 15, jump to skil8 to crash
+ JSR CheckBridgeAndTown \ the plane
+ BCS skil8
 
-                        \ If we get here then we are flying along main street
+ LDA #9                 \ If we are inside skill zone 9, jump to skil8 to crash
+ JSR CheckBridgeAndTown \ the plane
+ BCS skil8
+
+ LDA #18                \ If we are outside skill zone 18, jump to slip9 to add
+ JSR CheckBridgeAndTown \ any awarded points to our score
+ BCC skil9
+
+                        \ If we get here then we are:
+                        \
+                        \   * Outside skill zone 12
+                        \   * Outside skill zone 15
+                        \   * Outside skill zone 9
+                        \   * Inside skill zone 18
+                        \
+                        \ This means we are flying along the main street of the
+                        \ town, so we have earned ourselves some points, to be
+                        \ awarded when we exit skill zone 18
 
  LDA #&20               \ Set A = &20 so we award 200 points for flying down
-                        \ main street upside down
+                        \ main street while upside down
 
  LDX row25_block13_1    \ If there is a line at the bottom of the artificial
- BNE L42EB              \ horizon indicator, then the plane is upside down, so
-                        \ jump to L42EB
+ BNE skil10             \ horizon indicator, then the plane is upside down, so
+                        \ jump to skil10 to bank these points in pointsToAward
+                        \ and return from the subroutine
 
-.L42B3
+.skil6
 
  LDA #&10               \ Set A = &10 so we award 100 points for flying down
                         \ main street the right way up
 
- BNE L42EB
+ BNE skil10             \ Jump to skil10 to bank these points in pointsToAward
+                        \ and return from the subroutine
 
-.L42B7
+.skil7
 
- LDA #6
- JSR L4B9B
- BCC L42DF
+                        \ If we get here then we are checking where we are
+                        \ compared to the suspension bridge
 
- LDA #3
- JSR L4B9B
- BCS L42DF
+ LDA #6                 \ If we are outside skill zone 6, jump to slip9 to add
+ JSR CheckBridgeAndTown \ any awarded points to our score
+ BCC skil9
 
- LDA #0
- JSR L4B9B
- BCC L42D5
+ LDA #3                 \ If we are inside skill zone 3, jump to slip9 to add
+ JSR CheckBridgeAndTown \ any awarded points to our score
+ BCS skil9
 
-                        \ If we get here then we are flying under the bridge
+ LDA #0                 \ If we are outside skill zone 0, jump to skil8 to crash
+ JSR CheckBridgeAndTown \ the plane
+ BCC skil8
+
+                        \ If we get here then we are:
+                        \
+                        \   * Inside skill zone 6
+                        \   * Outside skill zone 3
+                        \   * Inside skill zone 0
+                        \
+                        \ This means we are flying under the bridge, so we have
+                        \ earned ourselves some points, to be awarded when we
+                        \ exit skill zone 6 or enter skill zone 3
 
  LDX row25_block13_1    \ If there is a line at the bottom of the artificial
- BNE L42B3              \ horizon indicator, then the plane is upside down, so
-                        \ jump to L42B3 to award 100 points for flying under the
+ BNE skil6              \ horizon indicator, then the plane is upside down, so
+                        \ jump to skil6 to award 100 points for flying under the
                         \ bridge upside down
 
  LDA #5                 \ Set A = 5 so we award 50 points for flying under the
                         \ bridge the right way up
 
- BNE L42EB
+ BNE skil10             \ Jump to skil10 to bank these points in pointsToAward
+                        \ and return from the subroutine
 
-.L42D5
+.skil8
 
- TSX                    \ Add four bytes to the top of the stack
- TXA
- SEC
- SBC #&04
+ TSX                    \ Add four bytes to the top of the stack, so they can be
+ TXA                    \ stripped away in Crash routine, along with the two
+ SEC                    \ bytes currently on the stack
+ SBC #4
  TAX
  TXS
 
- JMP Crash
+ JMP Crash              \ Jump to the Crash routine as we have just crashed
 
-.L42DF
+.skil9
 
- LDA L0CD7
- BEQ L42EE
+ LDA pointsToAward      \ We get here when we are outside the skill zone, so
+ BEQ skil11             \ check whether we have any points to award, and if
+                        \ not, jump to skil11 to return from the subroutine
+
+                        \ If we get here then we have earned ourselves some
+                        \ points and have exited the skill zone, so it's time
+                        \ to award those points and give a celebratory beep
 
  LDX #0                 \ Add A * 10 points to the score and make a beep by
  JSR ScorePoints        \ calling ScorePoints with (X A) = (0 A) = A
 
- LDA #0
+ LDA #0                 \ Set A = 0 so we set pointsToAward to zero below, so
+                        \ we don't award any more points until they are earned
 
-.L42EB
+.skil10
 
- STA L0CD7
+ STA pointsToAward      \ Store any points we've earned in pointsToAward, so
+                        \ they get awarded when we leave the skill zone (or, if
+                        \ A = 0, this does nothing)
 
-.L42EE
+.skil11
 
- RTS
+ RTS                    \ Return from the subroutine
 
  EQUB &20               \ This byte appears to be unused
 
@@ -20777,59 +20843,135 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4B9B
+\       Name: CheckBridgeAndTown
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: Check whether we are under the bridge or flying in Acornsville
+\    Summary: Check whether we are safely flying under the bridge or down the
+\             main street in Acornsville
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine checks whether the plane is within a certain distance of a
+\ specific coordinate from the (skillZoneHi skillZoneLo) table. If it is within
+\ the correct distance, then it is within the skill zone.
+\
+\ The plane is said to be within a coordinate's skill zone if the following
+\ checks are all true. They start with larger checks and whittle it down to more
+\ fine-grained checks, as follows:
+\
+\   * The vector from the skill zone coordinate to the plane is in a positive
+\     direction along each axis, i.e. the plane is somewhere inside a cuboid
+\     that has the skill zone coordinate at its bottom-left corner, i.e. the
+\     point nearest to the origin in the cuboid is the skill zone coordinate
+\     (the origin is at ground level level in the bottom-left corner of the
+\     map).
+\
+\   * The length of the vector along each axis is < 1024, so the plane is close
+\     enough to the skill zone coordinate for the following check to be done,
+\     i.e. within the rectangular cuboid described above, it is within a cube,
+\     of size 1024, in the skill zone coordinate's corner, i.e. in the corner
+\     of the cuboid nearest the origin.
+\
+\   * The length of the vector along each axis divided by 4 is within the margin
+\     for this skill zone (as defined in the skillZoneSize table), i.e. the
+\     plane is within an even smaller rectangular cuboid, again in the skill
+\     zone coordinate's corner, with dimensions given in the skillZoneSize
+\     table.
+\
+\ In short, the plane is in the skill zone if it's inside a box, whose
+\ dimensions are given in the skillZoneSize table, and whose corner nearest the
+\ origin is at the skill zone coordinate given in the skillZone table - in other
+\ words, the cuboid at the skill zone coordinate, with the dimensions in
+\ skillZoneSize.
+\
+\ Or, even shorter, the plane is in a skill zone if this is true for all three
+\ axes:
+\
+\   skill zone    <=      plane      <   skill zone  +  skill zone
+\   coordinate         coordinate        coordinate        size
+\
 \ Arguments:
 \
-\   A                   12, 15, 9, 18 = down main street
-\                       6, 3, 0 = under the bridge
+\   A                   Determines which skill zone coordinate to check:
+\
+\                         * 0, 3, 6 = under the suspension bridge
+\
+\                         * 9, 12, 15, 18 = along main street in Acornsville
+\
+\ Returns:
+\
+\   C flag              The result:
+\
+\                         * 0 = We are currently flying outside this skill zone
+\
+\                         * 1 = We are currently flying inside this skill zone
 \
 \ ******************************************************************************
 
-.L4B9B
+.CheckBridgeAndTown
 
- STA Q
- LDY #2
+ STA Q                  \ Set Q to the skill zone to check
 
-.L4B9F
+ LDY #2                 \ We now work through the three axes (z, y, x), so set
+                        \ Y = 2 to act as an axis counter, going 2, 1, 0
 
- TYA
- CLC
- ADC Q
- TAX
- SEC
- LDA xPlaneLo,Y
- SBC Lookup36C0,X
+.brtn1
+
+ TYA                    \ Set X = Q + Y
+ CLC                    \
+ ADC Q                  \ so X is an index into the skill zone coordinate tables
+ TAX                    \ for skill zone Q and axis Y
+
+ SEC                    \ Set (A P) = plane coordinate - skillZone coordinate
+ LDA xPlaneLo,Y         \
+ SBC skillZoneLo,X      \ starting with the high bytes
  STA P
- LDA xPlaneHi,Y
- SBC Lookup36D5,X
- BMI L4BC9
 
- LSR A
- ROR P
- LSR A
- BNE L4BC9
+ LDA xPlaneHi,Y         \ And then the low bytes, so (A P) contains the vector
+ SBC skillZoneHi,X      \ from the skill zone coordinate to the plane, along
+                        \ axis Y
 
- ROR P
- LDA P
- CMP Lookup36EA,X
- BCS L4BC9
+ BMI brtn2              \ If (A P) is negative, jump to brtn2 to clear the C
+                        \ flag
 
- DEY
- BPL L4B9F
+ LSR A                  \ Set (A P) = (A P) / 4
+ ROR P                  \
+ LSR A                  \ If the high byte in A is non-zero, then the original A
+ BNE brtn2              \ must be less than %10000000000 (1024), so jump to
+ ROR P                  \ brtn2 to clear the C flag
 
- SEC
- RTS
+ LDA P                  \ If the low byte in P >= the margin for this skill zone
+ CMP skillZoneSize,X    \ in this axis, jump to brtn2 to clear the C flag
+ BCS brtn2
 
-.L4BC9
+ DEY                    \ Decrement the axis counter to point to the next axis
 
- CLC
- RTS
+ BPL brtn1              \ Loop back until we have checked all three axes
+
+                        \ If we get here, then:
+                        \
+                        \   * The vector from the skill zone coordinate to the
+                        \     plane is in a positive direction along each axis
+                        \
+                        \   * The length of the vector along each axis is < 1024
+                        \
+                        \   * The length of the vector along each axis divided
+                        \     by 4 is within the margin for this skill zone
+                        \
+                        \ which means we are currently flying within this safe
+                        \ zone
+
+ SEC                    \ Set the C flag to indicate we are currently flying
+                        \ within this skill zone
+
+ RTS                    \ Return from the subroutine
+
+.brtn2
+
+ CLC                    \ Clear the C flag to indicate we are currently flying
+                        \ outside this skill zone
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
