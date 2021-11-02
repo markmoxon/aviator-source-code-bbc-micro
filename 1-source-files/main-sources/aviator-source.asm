@@ -2690,7 +2690,7 @@ ORG CODE%
  TAY
  LDX Q
 
- JSR L1821
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  STA G                  \ Set (Q P) = (Q P) - A
  LDA P                  \
@@ -6098,52 +6098,128 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1821
+\       Name: Multiply8x8
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Calculate (A V) = X * Y
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine multiplies two unsigned 8-bit numbers. It uses the following
+\ algorithm:
+\
+\   %XXXXxxxx * %YYYYyyyy
+\
+\ = (%XXXX0000 + %0000xxxx) * (%YYYY0000 + %0000yyyy)
+\
+\ = (%XXXX0000 * %YYYY0000) + (%XXXX0000 * %0000yyyy) + (%0000xxxx * %YYYY0000)
+\                           + (%0000xxxx * %0000yyyy)
+\
+\ = (%YYYY * %XXXX) << 8    + (%XXXX * %yyyy << 4)    + (%xxxx * %YYYY << 4)
+\                           + (%xxxx * %yyyy)
+\
+\ = (%YYYY * %XXXX) << 8    + ((%XXXX * %yyyy) + (%xxxx * %YYYY)) << 4
+\                           + (%xxxx * %yyyy)
+\
+\ Arguments:
+\
+\   X                   An unsigned 8-bit value (0 to 255)
+\
+\   Y                   An unsigned 8-bit value (0 to 255)
+\
+\ Returns:
+\
+\   (A V)               X * Y
 \
 \ ******************************************************************************
 
-.L1821
+.Multiply8x8
 
- LDA lowNibble,X
- ORA highNibble,Y
- STA T
- AND #%11110000
- ORA shift4Right,X
- STA U
- AND #%00001111
- ORA shift4Left,Y
- TAY
- AND #%11110000
- ORA lowNibble,X
- TAX
- LDA timesTable,X
+                        \ We start with X = %XXXXxxxx and Y = %YYYYyyyy
+
+ LDA lowNibble,X        \ Set T = (X AND %00001111) OR (Y AND %11110000)
+ ORA highNibble,Y       \       = %0000xxxx OR %YYYY0000
+ STA T                  \       = %YYYYxxxx
+
+ AND #%11110000         \ Set U = (A AND %11110000) OR (X >> 4)
+ ORA shift4Right,X      \       = %YYYY0000 OR %0000XXXX
+ STA U                  \       = %YYYYXXXX
+
+ AND #%00001111         \ Set Y = (A AND %00001111) OR (Y << 4)
+ ORA shift4Left,Y       \       = %0000XXXX OR %yyyy0000
+ TAY                    \       = %yyyyXXXX
+
+ AND #%11110000         \ Set X = (A AND %11110000) OR (X AND %00001111)
+ ORA lowNibble,X        \       = %yyyy0000 OR %0000xxxx
+ TAX                    \       = %yyyyxxxx
+
+ LDA timesTable,X       \ Set V = %yyyy * %xxxx
  STA V
- LDX T
- LDA timesTable,X
- CLC
- ADC timesTable,Y
- ROR A
- ROR A
- ROR A
- ROR A
+
+ LDX T                  \ Set X = T = %YYYYxxxx
+
+ LDA timesTable,X       \ Set A = (%YYYY * %xxxx) + (%yyyy * XXXX)
+ CLC                    \
+ ADC timesTable,Y       \ Call this %AAAAaaaa with carry C
+
+ ROR A                  \ Set T = A rotated right by 4 places
+ ROR A                  \       = %aaaCAAAA
+ ROR A                  \
+ ROR A                  \ and set the C flag to bit 3 of A
  STA T
- ROR A
- AND #%11110000
- CLC
- ADC V
- STA V
- LDA T
- AND #%00011111
- LDX U
- ADC timesTable,X
- RTS
+
+ ROR A                  \ Set A = %aaaaCAAA
+
+ AND #%11110000         \ Set A = %aaaa0000
+
+ CLC                    \ Set V = V + A
+ ADC V                  \       = V + %aaaa0000
+ STA V                  \       = (%yyyy * %xxxx) + %aaaa0000
+
+ LDA T                  \ Set A = T AND %00011111
+ AND #%00011111         \       = %aaaCAAAA AND %00011111
+                        \       = %000CAAAA
+
+ LDX U                  \ Set A = A + %YYYY * %XXXX
+ ADC timesTable,X       \       = %000CAAAA + (%YYYY * %XXXX)
+
+                        \ So we now have:
+                        \
+                        \   (A V) = A << 8 + V
+                        \
+                        \         =   (%000CAAAA + (%YYYY * %XXXX)) << 8
+                        \           + (%yyyy * %xxxx) + %aaaa0000
+                        \
+                        \         =   %000CAAAA << 8
+                        \           + (%YYYY * %XXXX) << 8
+                        \           + (%yyyy * %xxxx)
+                        \           + %aaaa0000
+                        \
+                        \         =   (%YYYY * %XXXX) << 8
+                        \           + %000CAAAAaaaa0000
+                        \           + (%yyyy * %xxxx)
+                        \
+                        \ We also have the following:
+                        \
+                        \   %CAAAAaaaa = (%YYYY * %xxxx) + (%yyyy * XXXX)
+                        \
+                        \ and:
+                        \
+                        \   %000CAAAAaaaa0000 = %CAAAAaaaa << 4
+                        \
+                        \ so combining them all, we get:
+                        \
+                        \   (A V) =   (%YYYY * %XXXX) << 8
+                        \           + %CAAAAaaaa << 4
+                        \           + (%yyyy * %xxxx)
+                        \
+                        \         =   (%YYYY * %XXXX) << 8
+                        \             ((%YYYY * %xxxx) + (%yyyy * XXXX)) << 4
+                        \           + (%yyyy * %xxxx)
+                        \
+                        \ which is the result we want
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -6282,7 +6358,7 @@ ORG CODE%
  LDX I
  LDY W
 
- JSR L1821
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  LDX H
  ASL V
@@ -7291,7 +7367,8 @@ ORG CODE%
 
  LDX J
  LDY R
- JSR L1821
+
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  STA G
  LDA V
@@ -7309,7 +7386,8 @@ ORG CODE%
 
  LDX S
  LDY J
- JSR L1821
+
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  STA H
  LDA V
@@ -7324,7 +7402,7 @@ ORG CODE%
 
  LDX S
  LDY I
- JSR L1821
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  STA T
  LDA V
@@ -23809,14 +23887,16 @@ NEXT
 .L5484
 
  LDY R
- JSR L1821
+
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  STA G
  LDA V
  STA W
  LDY R
  LDX P
- JSR L1821
+
+ JSR Multiply8x8        \ Set (A V) = X * Y
 
  CLC
  ADC W
