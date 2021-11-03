@@ -11355,8 +11355,8 @@ ORG CODE%
  JSR DrawRadarBlip      \ Remove the current dot from the radar, but don't draw
                         \ a new one, as xPointLo is off-radar
 
- LDY #33
- JSR ResetObjectCoords
+ LDY #33                \ Reset object 33's coordinates (the flying alien) to
+ JSR ResetObjectCoords  \ (0, 0, 0)
 
  RTS                    \ Return from the subroutine
 
@@ -11682,7 +11682,7 @@ ORG CODE%
  CMP #30                \ done the last one (object 30)
  BCS main8
 
- BCC main11             \ Jump to main11 (thie BCC is effectively a JMP as we
+ BCC main11             \ Jump to main11 (this BCC is effectively a JMP as we
                         \ just passed through a BCS)
 
 .main10
@@ -20665,19 +20665,21 @@ NEXT
 
 .CopyWorkToPoint
 
- LDA &0C00,X
- STA xPointLo,Y
- LDA &0C01,X
+ LDA L0C00,X            \ Copy the X-th tuple from the L0C00 workspace to the
+ STA xPointLo,Y         \ Y-th point coordinate, starting with the low bytes
+ LDA turnLo,X
  STA yPointLo,Y
- LDA &0C02,X
+ LDA L0C02,X
  STA zPointLo,Y
- LDA &0C10,X
+
+ LDA L0C10,X            \ And then the high bytes
  STA xPointHi,Y
- LDA &0C11,X
+ LDA turnHi,X
  STA yPointHi,Y
- LDA &0C12,X
+ LDA L0C12,X
  STA zPointHi,Y
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -20687,7 +20689,6 @@ NEXT
 \    Summary: Copy a point from the point tables to the L0C00 workspace
 \
 \ ------------------------------------------------------------------------------
-\
 \
 \ Called as follows:
 \
@@ -20719,19 +20720,21 @@ NEXT
 
 .CopyPointToWork
 
- LDA xPointLo,Y
- STA &0C00,X
+ LDA xPointLo,Y         \ Copy the Y-th point coordinate to the X-th tuple from
+ STA L0C00,X            \ the L0C00 workspace, starting with the low bytes
  LDA yPointLo,Y
- STA &0C01,X
+ STA turnLo,X
  LDA zPointLo,Y
- STA &0C02,X
- LDA xPointHi,Y
- STA &0C10,X
+ STA L0C02,X
+
+ LDA xPointHi,Y         \ And then the high bytes
+ STA L0C10,X
  LDA yPointHi,Y
- STA &0C11,X
+ STA turnHi,X
  LDA zPointHi,Y
- STA &0C12,X
- RTS
+ STA L0C12,X
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
