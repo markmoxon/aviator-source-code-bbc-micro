@@ -19842,222 +19842,222 @@ NEXT
 
 .objectPoints
 
- EQUB 9 + 40            \ Point ID:   0 -> 9
- EQUB 1                 \ Point ID:   1 -> 1
- EQUB 1                 \ Point ID:   2 -> 1
- EQUB 1                 \ Point ID:   3 -> 1
- EQUB 1                 \ Point ID:   4 -> 1
- EQUB 1                 \ Point ID:   5 -> 1
- EQUB 1                 \ Point ID:   6 -> 1
- EQUB 1                 \ Point ID:   7 -> 1
- EQUB 1                 \ Point ID:   8 -> 1
- EQUB 1                 \ Point ID:   9 -> 1
- EQUB 1                 \ Point ID:  10 -> 1
- EQUB 1                 \ Point ID:  11 -> 1
- EQUB 1                 \ Point ID:  12 -> 1
- EQUB 1                 \ Point ID:  13 -> 1
- EQUB 1                 \ Point ID:  14 -> 1
- EQUB 1                 \ Point ID:  15 -> 1
- EQUB 1                 \ Point ID:  16 -> 1
- EQUB 1                 \ Point ID:  17 -> 1
- EQUB 1                 \ Point ID:  18 -> 1
- EQUB 1                 \ Point ID:  19 -> 1
- EQUB 1                 \ Point ID:  20 -> 1
- EQUB 34                \ Point ID:  21 -> 34
- EQUB 34                \ Point ID:  22 -> 34
- EQUB 24 + 40           \ Point ID:  23 -> 24 -> 34
- EQUB 34                \ Point ID:  24 -> 34
- EQUB 22 + 40           \ Point ID:  25 -> 22 -> 34
- EQUB 23 + 40           \ Point ID:  26 -> 23 -> 24 -> 34
- EQUB 24 + 40           \ Point ID:  27 -> 24 -> 34
- EQUB 34                \ Point ID:  28 -> 34
- EQUB 22 + 40           \ Point ID:  29 -> 22 -> 34
- EQUB 0                 \ Point ID:  30 -> 0
- EQUB 0                 \ Point ID:  31 -> 0
- EQUB 22 + 40           \ Point ID:  32 -> 22 -> 34
- EQUB 34                \ Point ID:  33 -> 34
- EQUB 29 + 40           \ Point ID:  34 -> 29 -> 22 -> 34
- EQUB 8                 \ Point ID:  35 -> 8
- EQUB 8                 \ Point ID:  36 -> 8
- EQUB 40 + 40           \ Point ID:  37 -> 40 -> 39 -> 34
- EQUB 37 + 40           \ Point ID:  38 -> 37 -> 40 -> 39 -> 34
- EQUB 34                \ Point ID:  39 -> 34
- EQUB 39 + 40           \ Point ID:  40 -> 39 -> 34
- EQUB 2                 \ Point ID:  41 -> 2
- EQUB 49 + 40           \ Point ID:  42 -> 49 -> 51 -> 2
- EQUB 50 + 40           \ Point ID:  43 -> 50 -> 52 -> 51 -> 2
- EQUB 48 + 40           \ Point ID:  44 -> 48 -> 52 -> 51 -> 2
- EQUB 2                 \ Point ID:  45 -> 2
- EQUB 51 + 40           \ Point ID:  46 -> 51 -> 2
- EQUB 52 + 40           \ Point ID:  47 -> 52 -> 51 -> 2
- EQUB 52 + 40           \ Point ID:  48 -> 52 -> 51 -> 2
- EQUB 51 + 40           \ Point ID:  49 -> 51 -> 2
- EQUB 52 + 40           \ Point ID:  50 -> 52 -> 51 -> 2
- EQUB 2                 \ Point ID:  51 -> 2
- EQUB 51 + 40           \ Point ID:  52 -> 51 -> 2
- EQUB 49 + 40           \ Point ID:  53 -> 49 -> 51 -> 2
- EQUB 50 + 40           \ Point ID:  54 -> 50 -> 52 -> 51 -> 2
- EQUB 51 + 40           \ Point ID:  55 -> 51 -> 2
- EQUB 52 + 40           \ Point ID:  56 -> 52 -> 51 -> 2
- EQUB 59 + 40           \ Point ID:  57 -> 59 -> 3
- EQUB 59 + 40           \ Point ID:  58 -> 59 -> 3
- EQUB 3                 \ Point ID:  59 -> 3
- EQUB 59 + 40           \ Point ID:  60 -> 59 -> 3
- EQUB 59 + 40           \ Point ID:  61 -> 59 -> 3
- EQUB 2                 \ Point ID:  62 -> 2
- EQUB 2                 \ Point ID:  63 -> 2
- EQUB 2                 \ Point ID:  64 -> 2
- EQUB 64 + 40           \ Point ID:  65 -> 64 -> 2
- EQUB 2                 \ Point ID:  66 -> 2
- EQUB 66 + 40           \ Point ID:  67 -> 66 -> 2
- EQUB 66 + 40           \ Point ID:  68 -> 66 -> 2
- EQUB 68 + 40           \ Point ID:  69 -> 68 -> 66 -> 2
- EQUB 4                 \ Point ID:  70 -> 4
- EQUB 4                 \ Point ID:  71 -> 4
- EQUB 73 + 40           \ Point ID:  72 -> 73 -> 4
- EQUB 4                 \ Point ID:  73 -> 4
- EQUB 75 + 40           \ Point ID:  74 -> 75 -> 4
- EQUB 4                 \ Point ID:  75 -> 4
- EQUB 77 + 40           \ Point ID:  76 -> 77 -> 118 -> 4
- EQUB 118 + 40          \ Point ID:  77 -> 118 -> 4
- EQUB 79 + 40           \ Point ID:  78 -> 79 -> 77 -> 118 -> 4
- EQUB 77 + 40           \ Point ID:  79 -> 77 -> 118 -> 4
- EQUB 7                 \ Point ID:  80 -> 7
- EQUB 80 + 40           \ Point ID:  81 -> 80 -> 7
- EQUB 7                 \ Point ID:  82 -> 7
- EQUB 7                 \ Point ID:  83 -> 7
- EQUB 7                 \ Point ID:  84 -> 7
- EQUB 80 + 40           \ Point ID:  85 -> 80 -> 7
- EQUB 39 + 40           \ Point ID:  86 -> 39 -> 34
- EQUB 86 + 40           \ Point ID:  87 -> 86 -> 39 -> 34
- EQUB 86 + 40           \ Point ID:  88 -> 86 -> 39 -> 34
- EQUB 6                 \ Point ID:  89 -> 6
- EQUB 89 + 40           \ Point ID:  90 -> 89 -> 6
- EQUB 6                 \ Point ID:  91 -> 6
- EQUB 6                 \ Point ID:  92 -> 6
- EQUB 6                 \ Point ID:  93 -> 6
- EQUB 89 + 40           \ Point ID:  94 -> 89 -> 6
- EQUB 12                \ Point ID:  95 -> 12
- EQUB 13                \ Point ID:  96 -> 13
- EQUB 14                \ Point ID:  97 -> 14
- EQUB 15                \ Point ID:  98 -> 15
- EQUB 87 + 40           \ Point ID:  99 -> 87 -> 86 -> 39 -> 34
- EQUB 5                 \ Point ID: 100 -> 5
- EQUB 5                 \ Point ID: 101 -> 5
- EQUB 103 + 40          \ Point ID: 102 -> 103 -> 5
- EQUB 5                 \ Point ID: 103 -> 5
- EQUB 5                 \ Point ID: 104 -> 5
- EQUB 104 + 40          \ Point ID: 105 -> 104 -> 5
- EQUB 5                 \ Point ID: 106 -> 5
- EQUB 106 + 40          \ Point ID: 107 -> 106 -> 5
- EQUB 9                 \ Point ID: 108 -> 9
- EQUB 106 + 40          \ Point ID: 109 -> 106 -> 5
- EQUB 109 + 40          \ Point ID: 110 -> 109 -> 106 -> 5
- EQUB 3                 \ Point ID: 111 -> 3
- EQUB 113 + 40          \ Point ID: 112 -> 113 -> 3
- EQUB 3                 \ Point ID: 113 -> 3
- EQUB 3                 \ Point ID: 114 -> 3
- EQUB 3                 \ Point ID: 115 -> 3
- EQUB 3                 \ Point ID: 116 -> 3
- EQUB 4                 \ Point ID: 117 -> 4
- EQUB 4                 \ Point ID: 118 -> 4
- EQUB 66 + 40           \ Point ID: 119 -> 66 -> 2
- EQUB 119 + 40          \ Point ID: 120 -> 119 -> 66 -> 2
- EQUB 19                \ Point ID: 121 -> 19
- EQUB 19                \ Point ID: 122 -> 19
- EQUB 19                \ Point ID: 123 -> 19
- EQUB 22                \ Point ID: 124 -> 22
- EQUB 20                \ Point ID: 125 -> 20
- EQUB 20                \ Point ID: 126 -> 20
- EQUB 20                \ Point ID: 127 -> 20
- EQUB 16                \ Point ID: 128 -> 16
- EQUB 16                \ Point ID: 129 -> 16
- EQUB 16                \ Point ID: 130 -> 16
- EQUB 16                \ Point ID: 131 -> 16
- EQUB 17                \ Point ID: 132 -> 17
- EQUB 17                \ Point ID: 133 -> 17
- EQUB 17                \ Point ID: 134 -> 17
- EQUB 17                \ Point ID: 135 -> 17
- EQUB 23                \ Point ID: 136 -> 23
- EQUB 23                \ Point ID: 137 -> 23
- EQUB 23                \ Point ID: 138 -> 23
- EQUB 23                \ Point ID: 139 -> 23
- EQUB 22                \ Point ID: 140 -> 22
- EQUB 22                \ Point ID: 141 -> 22
- EQUB 22                \ Point ID: 142 -> 22
- EQUB 22                \ Point ID: 143 -> 22
- EQUB 21                \ Point ID: 144 -> 21
- EQUB 21                \ Point ID: 145 -> 21
- EQUB 21                \ Point ID: 146 -> 21
- EQUB 21                \ Point ID: 147 -> 21
- EQUB 21                \ Point ID: 148 -> 21
- EQUB 29                \ Point ID: 149 -> 29
- EQUB 29                \ Point ID: 150 -> 29
- EQUB 29                \ Point ID: 151 -> 29
- EQUB 29                \ Point ID: 152 -> 29
- EQUB 24                \ Point ID: 153 -> 24
- EQUB 24                \ Point ID: 154 -> 24
- EQUB 24                \ Point ID: 155 -> 24
- EQUB 24                \ Point ID: 156 -> 24
- EQUB 160 + 40          \ Point ID: 157 -> 160 -> 18
- EQUB 159 + 40          \ Point ID: 158 -> 159 -> 18
- EQUB 18                \ Point ID: 159 -> 18
- EQUB 18                \ Point ID: 160 -> 18
- EQUB 27                \ Point ID: 161 -> 27
- EQUB 27                \ Point ID: 162 -> 27
- EQUB 27                \ Point ID: 163 -> 27
- EQUB 27                \ Point ID: 164 -> 27
- EQUB 28                \ Point ID: 165 -> 28
- EQUB 28                \ Point ID: 166 -> 28
- EQUB 28                \ Point ID: 167 -> 28
- EQUB 28                \ Point ID: 168 -> 28
- EQUB 25                \ Point ID: 169 -> 25
- EQUB 25                \ Point ID: 170 -> 25
- EQUB 25                \ Point ID: 171 -> 25
- EQUB 25                \ Point ID: 172 -> 25
- EQUB 26                \ Point ID: 173 -> 26
- EQUB 26                \ Point ID: 174 -> 26
- EQUB 26                \ Point ID: 175 -> 26
- EQUB 26                \ Point ID: 176 -> 26
- EQUB 19                \ Point ID: 177 -> 19
- EQUB 181 + 40          \ Point ID: 178 -> 181 -> 30
- EQUB 181 + 40          \ Point ID: 179 -> 181 -> 30
- EQUB 181 + 40          \ Point ID: 180 -> 181 -> 30
- EQUB 30                \ Point ID: 181 -> 30
- EQUB 31                \ Point ID: 182 -> 31
- EQUB 182 + 40          \ Point ID: 183 -> 182 -> 31
- EQUB 182 + 40          \ Point ID: 184 -> 182 -> 31
- EQUB 182 + 40          \ Point ID: 185 -> 182 -> 31
- EQUB 182 + 40          \ Point ID: 186 -> 182 -> 31
- EQUB 32                \ Point ID: 187 -> 32
- EQUB 187 + 40          \ Point ID: 188 -> 187 -> 32
- EQUB 187 + 40          \ Point ID: 189 -> 187 -> 32
- EQUB 187 + 40          \ Point ID: 190 -> 187 -> 32
- EQUB 187 + 40          \ Point ID: 191 -> 187 -> 32
- EQUB 33                \ Point ID: 192 -> 33
- EQUB 199 + 40          \ Point ID: 193 -> 199 -> 192 -> 33
- EQUB 197 + 40          \ Point ID: 194 -> 197 -> 192 -> 33
- EQUB 199 + 40          \ Point ID: 195 -> 199 -> 192 -> 33
- EQUB 199 + 40          \ Point ID: 196 -> 199 -> 192 -> 33
- EQUB 192 + 40          \ Point ID: 197 -> 192 -> 33
- EQUB 197 + 40          \ Point ID: 198 -> 197 -> 192 -> 33
- EQUB 192 + 40          \ Point ID: 199 -> 192 -> 33
- EQUB 199 + 40          \ Point ID: 200 -> 199 -> 192 -> 33
- EQUB 39 + 40           \ Point ID: 201 -> 39 -> 34
- EQUB 40 + 40           \ Point ID: 202 -> 40 -> 39 -> 34
- EQUB 205 + 40          \ Point ID: 203 -> 205 -> 40 -> 39 -> 34
- EQUB 203 + 40          \ Point ID: 204 -> 203 -> 205 -> 40 -> 39 -> 34
- EQUB 40 + 40           \ Point ID: 205 -> 40 -> 39 -> 34
- EQUB 205 + 40          \ Point ID: 206 -> 205 -> 40 -> 39 -> 34
- EQUB 205 + 40          \ Point ID: 207 -> 205 -> 40 -> 39 -> 34
- EQUB 206 + 40          \ Point ID: 208 -> 206 -> 205 -> 40 -> 39 -> 34
- EQUB 203 + 40          \ Point ID: 209 -> 203 -> 205 -> 40 -> 39 -> 34
- EQUB 204 + 40          \ Point ID: 210 -> 204 -> 203 -> 205 -> 40 -> 39 -> 34
- EQUB 8                 \ Point ID: 211 -> 8
- EQUB 8                 \ Point ID: 212 -> 8
- EQUB 9                 \ Point ID: 213 -> 9
- EQUB 108 + 40          \ Point ID: 214 -> 108 -> 9
- EQUB 9                 \ Point ID: 215 -> 9
+ EQUB 9 + 40            \ Object  1:   0 -> 9
+ EQUB 1                 \ Object  1:   1
+ EQUB 1                 \ Object  1:   2
+ EQUB 1                 \ Object  1:   3
+ EQUB 1                 \ Object  1:   4
+ EQUB 1                 \ Object  1:   5
+ EQUB 1                 \ Object  1:   6
+ EQUB 1                 \ Object  1:   7
+ EQUB 1                 \ Object  1:   8
+ EQUB 1                 \ Object  1:   9
+ EQUB 1                 \ Object  1:  10
+ EQUB 1                 \ Object  1:  11
+ EQUB 1                 \ Object  1:  12
+ EQUB 1                 \ Object  1:  13
+ EQUB 1                 \ Object  1:  14
+ EQUB 1                 \ Object  1:  15
+ EQUB 1                 \ Object  1:  16
+ EQUB 1                 \ Object  1:  17
+ EQUB 1                 \ Object  1:  18
+ EQUB 1                 \ Object  1:  19
+ EQUB 1                 \ Object  1:  20
+ EQUB 34                \ Object 34:  21
+ EQUB 34                \ Object 34:  22
+ EQUB 24 + 40           \ Object 34:  23 -> 24
+ EQUB 34                \ Object 34:  24
+ EQUB 22 + 40           \ Object 34:  25 -> 22
+ EQUB 23 + 40           \ Object 34:  26 -> 23 -> 24
+ EQUB 24 + 40           \ Object 34:  27 -> 24
+ EQUB 34                \ Object 34:  28
+ EQUB 22 + 40           \ Object 34:  29 -> 22
+ EQUB 0                 \ Object  0:  30
+ EQUB 0                 \ Object  0:  31
+ EQUB 22 + 40           \ Object 34:  32 -> 22
+ EQUB 34                \ Object 34:  33
+ EQUB 29 + 40           \ Object 34:  34 -> 29 -> 22
+ EQUB 8                 \ Object  8:  35
+ EQUB 8                 \ Object  8:  36
+ EQUB 40 + 40           \ Object 34:  37 -> 40 -> 39
+ EQUB 37 + 40           \ Object 34:  38 -> 37 -> 40 -> 39
+ EQUB 34                \ Object 34:  39
+ EQUB 39 + 40           \ Object 34:  40 -> 39
+ EQUB 2                 \ Object  2:  41
+ EQUB 49 + 40           \ Object  2:  42 -> 49 -> 51
+ EQUB 50 + 40           \ Object  2:  43 -> 50 -> 52 -> 51
+ EQUB 48 + 40           \ Object  2:  44 -> 48 -> 52 -> 51
+ EQUB 2                 \ Object  2:  45
+ EQUB 51 + 40           \ Object  2:  46 -> 51
+ EQUB 52 + 40           \ Object  2:  47 -> 52 -> 51
+ EQUB 52 + 40           \ Object  2:  48 -> 52 -> 51
+ EQUB 51 + 40           \ Object  2:  49 -> 51
+ EQUB 52 + 40           \ Object  2:  50 -> 52 -> 51
+ EQUB 2                 \ Object  2:  51
+ EQUB 51 + 40           \ Object  2:  52 -> 51
+ EQUB 49 + 40           \ Object  2:  53 -> 49 -> 51
+ EQUB 50 + 40           \ Object  2:  54 -> 50 -> 52 -> 51
+ EQUB 51 + 40           \ Object  2:  55 -> 51
+ EQUB 52 + 40           \ Object  2:  56 -> 52 -> 51
+ EQUB 59 + 40           \ Object  3:  57 -> 59
+ EQUB 59 + 40           \ Object  3:  58 -> 59
+ EQUB 3                 \ Object  3:  59
+ EQUB 59 + 40           \ Object  3:  60 -> 59
+ EQUB 59 + 40           \ Object  3:  61 -> 59
+ EQUB 2                 \ Object  2:  62
+ EQUB 2                 \ Object  2:  63
+ EQUB 2                 \ Object  2:  64
+ EQUB 64 + 40           \ Object  2:  65 -> 64
+ EQUB 2                 \ Object  2:  66
+ EQUB 66 + 40           \ Object  2:  67 -> 66
+ EQUB 66 + 40           \ Object  2:  68 -> 66
+ EQUB 68 + 40           \ Object  2:  69 -> 68 -> 66
+ EQUB 4                 \ Object  4:  70
+ EQUB 4                 \ Object  4:  71
+ EQUB 73 + 40           \ Object  4:  72 -> 73
+ EQUB 4                 \ Object  4:  73
+ EQUB 75 + 40           \ Object  4:  74 -> 75
+ EQUB 4                 \ Object  4:  75
+ EQUB 77 + 40           \ Object  4:  76 -> 77 -> 118
+ EQUB 118 + 40          \ Object  4:  77 -> 118
+ EQUB 79 + 40           \ Object  4:  78 -> 79 -> 77 -> 118
+ EQUB 77 + 40           \ Object  4:  79 -> 77 -> 118
+ EQUB 7                 \ Object  7:  80
+ EQUB 80 + 40           \ Object  7:  81 -> 80
+ EQUB 7                 \ Object  7:  82
+ EQUB 7                 \ Object  7:  83
+ EQUB 7                 \ Object  7:  84
+ EQUB 80 + 40           \ Object  7:  85 -> 80
+ EQUB 39 + 40           \ Object 34:  86 -> 39
+ EQUB 86 + 40           \ Object 34:  87 -> 86 -> 39
+ EQUB 86 + 40           \ Object 34:  88 -> 86 -> 39
+ EQUB 6                 \ Object  6:  89
+ EQUB 89 + 40           \ Object  6:  90 -> 89
+ EQUB 6                 \ Object  6:  91
+ EQUB 6                 \ Object  6:  92
+ EQUB 6                 \ Object  6:  93
+ EQUB 89 + 40           \ Object  6:  94 -> 89
+ EQUB 12                \ Object 12:  95
+ EQUB 13                \ Object 13:  96
+ EQUB 14                \ Object 14:  97
+ EQUB 15                \ Object 15:  98
+ EQUB 87 + 40           \ Object 34:  99 -> 87 -> 86 -> 39
+ EQUB 5                 \ Object  5: 100
+ EQUB 5                 \ Object  5: 101
+ EQUB 103 + 40          \ Object  5: 102 -> 103
+ EQUB 5                 \ Object  5: 103
+ EQUB 5                 \ Object  5: 104
+ EQUB 104 + 40          \ Object  5: 105 -> 104
+ EQUB 5                 \ Object  5: 106
+ EQUB 106 + 40          \ Object  5: 107 -> 106
+ EQUB 9                 \ Object  9: 108
+ EQUB 106 + 40          \ Object  5: 109 -> 106
+ EQUB 109 + 40          \ Object  5: 110 -> 109 -> 106
+ EQUB 3                 \ Object  3: 111
+ EQUB 113 + 40          \ Object  3: 112 -> 113
+ EQUB 3                 \ Object  3: 113
+ EQUB 3                 \ Object  3: 114
+ EQUB 3                 \ Object  3: 115
+ EQUB 3                 \ Object  3: 116
+ EQUB 4                 \ Object  4: 117
+ EQUB 4                 \ Object  4: 118
+ EQUB 66 + 40           \ Object  2: 119 -> 66
+ EQUB 119 + 40          \ Object  2: 120 -> 119 -> 66
+ EQUB 19                \ Object 19: 121
+ EQUB 19                \ Object 19: 122
+ EQUB 19                \ Object 19: 123
+ EQUB 22                \ Object 22: 124
+ EQUB 20                \ Object 20: 125
+ EQUB 20                \ Object 20: 126
+ EQUB 20                \ Object 20: 127
+ EQUB 16                \ Object 16: 128
+ EQUB 16                \ Object 16: 129
+ EQUB 16                \ Object 16: 130
+ EQUB 16                \ Object 16: 131
+ EQUB 17                \ Object 17: 132
+ EQUB 17                \ Object 17: 133
+ EQUB 17                \ Object 17: 134
+ EQUB 17                \ Object 17: 135
+ EQUB 23                \ Object 23: 136
+ EQUB 23                \ Object 23: 137
+ EQUB 23                \ Object 23: 138
+ EQUB 23                \ Object 23: 139
+ EQUB 22                \ Object 22: 140
+ EQUB 22                \ Object 22: 141
+ EQUB 22                \ Object 22: 142
+ EQUB 22                \ Object 22: 143
+ EQUB 21                \ Object 21: 144
+ EQUB 21                \ Object 21: 145
+ EQUB 21                \ Object 21: 146
+ EQUB 21                \ Object 21: 147
+ EQUB 21                \ Object 21: 148
+ EQUB 29                \ Object 29: 149
+ EQUB 29                \ Object 29: 150
+ EQUB 29                \ Object 29: 151
+ EQUB 29                \ Object 29: 152
+ EQUB 24                \ Object 24: 153
+ EQUB 24                \ Object 24: 154
+ EQUB 24                \ Object 24: 155
+ EQUB 24                \ Object 24: 156
+ EQUB 160 + 40          \ Object 18: 157 -> 160
+ EQUB 159 + 40          \ Object 18: 158 -> 159
+ EQUB 18                \ Object 18: 159
+ EQUB 18                \ Object 18: 160
+ EQUB 27                \ Object 27: 161
+ EQUB 27                \ Object 27: 162
+ EQUB 27                \ Object 27: 163
+ EQUB 27                \ Object 27: 164
+ EQUB 28                \ Object 28: 165
+ EQUB 28                \ Object 28: 166
+ EQUB 28                \ Object 28: 167
+ EQUB 28                \ Object 28: 168
+ EQUB 25                \ Object 25: 169
+ EQUB 25                \ Object 25: 170
+ EQUB 25                \ Object 25: 171
+ EQUB 25                \ Object 25: 172
+ EQUB 26                \ Object 26: 173
+ EQUB 26                \ Object 26: 174
+ EQUB 26                \ Object 26: 175
+ EQUB 26                \ Object 26: 176
+ EQUB 19                \ Object 19: 177
+ EQUB 181 + 40          \ Object 30: 178 -> 181
+ EQUB 181 + 40          \ Object 30: 179 -> 181
+ EQUB 181 + 40          \ Object 30: 180 -> 181
+ EQUB 30                \ Object 30: 181
+ EQUB 31                \ Object 31: 182
+ EQUB 182 + 40          \ Object 31: 183 -> 182
+ EQUB 182 + 40          \ Object 31: 184 -> 182
+ EQUB 182 + 40          \ Object 31: 185 -> 182
+ EQUB 182 + 40          \ Object 31: 186 -> 182
+ EQUB 32                \ Object 32: 187
+ EQUB 187 + 40          \ Object 32: 188 -> 187
+ EQUB 187 + 40          \ Object 32: 189 -> 187
+ EQUB 187 + 40          \ Object 32: 190 -> 187
+ EQUB 187 + 40          \ Object 32: 191 -> 187
+ EQUB 33                \ Object 33: 192
+ EQUB 199 + 40          \ Object 33: 193 -> 199 -> 192
+ EQUB 197 + 40          \ Object 33: 194 -> 197 -> 192
+ EQUB 199 + 40          \ Object 33: 195 -> 199 -> 192
+ EQUB 199 + 40          \ Object 33: 196 -> 199 -> 192
+ EQUB 192 + 40          \ Object 33: 197 -> 192
+ EQUB 197 + 40          \ Object 33: 198 -> 197 -> 192
+ EQUB 192 + 40          \ Object 33: 199 -> 192
+ EQUB 199 + 40          \ Object 33: 200 -> 199 -> 192
+ EQUB 39 + 40           \ Object 34: 201 -> 39
+ EQUB 40 + 40           \ Object 34: 202 -> 40 -> 39
+ EQUB 205 + 40          \ Object 34: 203 -> 205 -> 40 -> 39
+ EQUB 203 + 40          \ Object 34: 204 -> 203 -> 205 -> 40 -> 39
+ EQUB 40 + 40           \ Object 34: 205 -> 40 -> 39
+ EQUB 205 + 40          \ Object 34: 206 -> 205 -> 40 -> 39
+ EQUB 205 + 40          \ Object 34: 207 -> 205 -> 40 -> 39
+ EQUB 206 + 40          \ Object 34: 208 -> 206 -> 205 -> 40 -> 39
+ EQUB 203 + 40          \ Object 34: 209 -> 203 -> 205 -> 40 -> 39
+ EQUB 204 + 40          \ Object 34: 210 -> 204 -> 203 -> 205 -> 40 -> 39
+ EQUB 8                 \ Object  8: 211
+ EQUB 8                 \ Object  8: 212
+ EQUB 9                 \ Object  9: 213
+ EQUB 108 + 40          \ Object  9: 214 -> 108
+ EQUB 9                 \ Object  9: 215
 
 \ ******************************************************************************
 \
