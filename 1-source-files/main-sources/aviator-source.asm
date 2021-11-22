@@ -6024,31 +6024,56 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: Multiply16x16
+\       Name: Multiply16x16Mix
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Calculate (H G) = (I J) * (S R)
+\    Summary: Multiply two 16-bit numbers with different sign bits (one in bit 7
+\             of the high byte, the other in bit 0 of the low byte)
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine multiplies a 16-bit number by a 16-bit number.
-
+\ This routine multiplies two 16-bit numbers with different sign bits, where one
+\ argument (J I) has the sign in bit 7 of the high byte, and the other argument
+\ (S R) has the sign in bit 0 of the low byte. It calculates:
+\
+\   (H G) = (J I) * (S R) / 256
+\
+\ The result in (H G) has the sign in bit 7 of the high byte.
+\
+\ The fractional part of the result is in W, so this is the full result, though
+\ in practice W is ignored:
+\
+\   (H G W) = (J I) * (S R)
+\
 \ Arguments:
 \
-\   (S R)               A 16-bit number
+\   (J I)               A signed 16-bit number, with the sign in bit 7 of J
 \
-\   (I J)               A 16-bit number
+\   (S R)               A signed 16-bit number, with the sign in bit 0 of R
 \
-\   K                   ???
+\   K                   Optionally negate (J I):
+\
+\                         * 0 = calculate (J I) * (S R)
+\
+\                         * 128 = calculate -(J I) * (S R)
+\
+\                       In practice, this routine is always called with K = 0
+\
+\ Returns:
+\
+\   (H G)               The result of the multiplication, with the sign in bit 7
+\                       of H
+\
+\   K                   The sign of the result (in bit 7)
 \
 \ ******************************************************************************
 
-.Multiply16x16
+.Multiply16x16Mix
 
- LDA J
- BPL L17FA
+ LDA J                  \ If J is positive, jump to mmix1 as (J I) is already a
+ BPL mmix1              \ positive 16-bit number
 
- LDA #0
+ LDA #0                 \ Negate (J I) so (J I) is now a positive 16-bit number
  SEC
  SBC I
  STA I
@@ -6056,35 +6081,39 @@ ORG CODE%
  SBC J
  STA J
 
- LDA K
- EOR #&80
+ LDA K                  \ Flip bit 7 of K, so when K = 0 we negate the result
+ EOR #%10000000         \ below to give the result the correct sign
  STA K
 
-.L17FA
+.mmix1
 
- LDA R
+ LDA R                  \ If bit 0 of R is 0, jump to mmix2 as (S R) is positive
  AND #1
- BEQ L1806
+ BEQ mmix2
 
- LDA K
- EOR #&80
- STA K
+ LDA K                  \ Otherwise (S R) is negative, so flip bit 7 of K, so
+ EOR #%10000000         \ when K = 0 we negate the result below to give the
+ STA K                  \ result the correct sign
 
-.L1806
+.mmix2
 
- JSR L1D3A
+ JSR Multiply16x16      \ Calculate (H A) = (S R) * (J I) / 256
+                        \
+                        \ and set the C flag if we need to increment H
 
- STA G
- BCC L180F
+ STA G                  \ Set (H G) = (H A)
+                        \           = (S R) * (J I) / 256
 
+ BCC mmix3              \ Increment the top byte in H if required
  INC H
 
-.L180F
+.mmix3
 
- LDA K
- BPL L1820
+ LDA K                  \ If K is positive, jump to mmix4 to return from the
+ BPL mmix4              \ subroutine as the sign of the result is already
+                        \ correct
 
- SEC
+ SEC                    \ Negate (H G) so the result has the correct sign
  LDA #0
  SBC G
  STA G
@@ -6092,9 +6121,9 @@ ORG CODE%
  SBC H
  STA H
 
-.L1820
+.mmix4
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -6108,18 +6137,19 @@ ORG CODE%
 \ This routine multiplies two unsigned 8-bit numbers. It uses the following
 \ algorithm:
 \
-\   %XXXXxxxx * %YYYYyyyy
+\   %XXXXxxxx * %YYYYyyyy = (%XXXX0000 + %0000xxxx) * (%YYYY0000 + %0000yyyy)
 \
-\ = (%XXXX0000 + %0000xxxx) * (%YYYY0000 + %0000yyyy)
+\                         = (%XXXX0000 * %YYYY0000) + (%XXXX0000 * %0000yyyy)
+\                                                   + (%0000xxxx * %YYYY0000)
+\                                                   + (%0000xxxx * %0000yyyy)
 \
-\ = (%XXXX0000 * %YYYY0000) + (%XXXX0000 * %0000yyyy) + (%0000xxxx * %YYYY0000)
-\                           + (%0000xxxx * %0000yyyy)
+\                         = (%YYYY * %XXXX) << 8    + (%XXXX * %yyyy << 4)
+\                                                   + (%xxxx * %YYYY << 4)
+\                                                   + (%xxxx * %yyyy)
 \
-\ = (%YYYY * %XXXX) << 8    + (%XXXX * %yyyy << 4)    + (%xxxx * %YYYY << 4)
-\                           + (%xxxx * %yyyy)
-\
-\ = (%YYYY * %XXXX) << 8    + ((%XXXX * %yyyy) + (%xxxx * %YYYY)) << 4
-\                           + (%xxxx * %yyyy)
+\                         = (%YYYY * %XXXX) << 8    + ((%XXXX * %yyyy)
+\                                                   + (%xxxx * %YYYY)) << 4
+\                                                   + (%xxxx * %yyyy)
 \
 \ Arguments:
 \
@@ -6460,8 +6490,8 @@ ORG CODE%
                         \          = V * (S R) >> 4
                         \          = V * (S R) / 16
 
- BIT K                  \ If bit 7 of K is clear, jump to msvr2 to skip the
- BPL msvr2              \ following and apply the correct sign to the result
+ BIT K                  \ If bit 7 of K is clear, jump to msrv2 to skip the
+ BPL msrv2              \ following and apply the correct sign to the result
 
  LDX R                  \ Set X = R = %RRRRrrrr
 
@@ -6479,24 +6509,24 @@ ORG CODE%
                         \       = %vvvv * %RRRRrrrr
                         \       = V * R
 
- BCC msvr1              \ If the addition didn't overflow, i.e. V * R < 256,
-                        \ jump to msvr1 to skip the following
+ BCC msrv1              \ If the addition didn't overflow, i.e. V * R < 256,
+                        \ jump to msrv1 to skip the following
 
  INC W                  \ Set (G W) = (G W) + 1
- BNE msvr1              \
+ BNE msrv1              \
  INC G                  \ to round the result up, as the low bytes of the
                         \ multiplication produced a carry
 
-.msvr1
+.msrv1
 
  ASL A                  \ Set (G W A) = (G W A) * 2
  ROL W                  \
  ROL G                  \ so the result is doubled when bit 7 of K is set
 
-.msvr2
+.msrv2
 
  LDA V                  \ If V is positive, skip the following
- BPL msvr3
+ BPL msrv3
 
  LDA #0                 \ V is negative, so we now negate (G W) by subtracting
  SEC                    \ it from 0, first the low byte and then the high byte
@@ -6506,7 +6536,7 @@ ORG CODE%
  SBC G
  STA G
 
-.msvr3
+.msrv3
 
  RTS                    \ Return from the subroutine
 
@@ -6911,7 +6941,7 @@ ORG CODE%
 \
 \   Y                   The ID of the point to add to the xTemp vector
 \
-\ Results:
+\ Returns:
 \
 \   showLine            Set to hidden if the addition is beyond the bounds of
 \                       our universe
@@ -7137,7 +7167,7 @@ ORG CODE%
  STA R
  LDA L0174,X
  STA S
- JSR L1D77
+ JSR Multiply16x16Bit0
 
  LDY matrixNumber
  LDA matrix1Lo+3,Y
@@ -7159,7 +7189,7 @@ ORG CODE%
  STA R
  LDA L0171,X
  STA S
- JSR L1D77
+ JSR Multiply16x16Bit0
 
  LDY matrixNumber
  LDA matrix1Lo,Y
@@ -7188,7 +7218,7 @@ ORG CODE%
  STA R
  LDA L0174,X
  STA S
- JSR L1D77
+ JSR Multiply16x16Bit0
 
  LDY matrixNumber
  LDA matrix1Lo+2,Y
@@ -7204,7 +7234,7 @@ ORG CODE%
  LDA R
  EOR #1
  STA R
- JSR L1D77
+ JSR Multiply16x16Bit0
 
  LDY matrixNumber
  LDA matrix1Lo,Y
@@ -7226,7 +7256,7 @@ ORG CODE%
  STA I
  LDA L0171,X
  STA J
- JSR L1D77
+ JSR Multiply16x16Bit0
 
  LDY matrixNumber
  LDA matrix1Lo+2,Y
@@ -7341,7 +7371,7 @@ ORG CODE%
  CLC
  ADC matrixNumber
  STA N
- JSR L1D77
+ JSR Multiply16x16Bit0
 
  LDY N
  LDA G
@@ -7352,98 +7382,212 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1D3A
+\       Name: Multiply16x16
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Multiply two positive 16-bit numbers
 \
 \ ------------------------------------------------------------------------------
 \
-\ The code in this routine is modified by the L5295 routine.
+\ This routine multiplies two positive 16-bit numbers (i.e. bit 7 of the high
+\ byte is 0 in both arguments):
+\
+\   (H A) = (J I) * (S R) / 256
+\
+\ The fractional part of the result is in W, so this is the full result, though
+\ in practice W is ignored:
+\
+\   (H A W) = (J I) * (S R)
+\
+\ The fractional part is rounded up or down, to the nearest integer, by adding
+\ 128 at mult1. This part of the code is modified by the L5295 routine to toggle
+\ this rounding behaviour.
+\
+\ The multiplication is done using the following algorithm:
+\
+\  (J I) * (S R) = (J << 8 + I) * (S << 8 + R)
+\                = (J << 8 * S << 8) + (J << 8 * R)
+\                                    + (I * S << 8)
+\                                    + (I * R)
+\                = (J * S) << 16 + (J * R) << 8
+\                                + (I * S) << 8
+\                                + (I * R)
+\
+\ This returns a fractional result with the lowest byte containing the fraction.
+\ The routine doesn't care about the very lowest byte, so it actually calculates
+\ the following, effectively shifting the above to the right by 8 places and
+\ dropping the (I * R) part:
+\
+\  (J I) * (S R) = (J * S) << 8 + (J * R) + (I * S)
+\
+\ before adding 128 to round the result up or down.
+\
+\ Arguments:
+\
+\   (S R)               A positive 16-bit number
+\
+\   (J I)               A positive 16-bit number
+\
+\ Returns:
+\
+\   (H A)               The result of the multiplication
+\
+\   C flag              If set, H should be incremented by the caller to get the
+\                       correct result
 \
 \ ******************************************************************************
 
-.L1D3A
+.Multiply16x16
 
- LDX J
- LDY R
+ LDX J                  \ Set (A V) = X * Y
+ LDY R                  \           = J * R
+ JSR Multiply8x8
 
- JSR Multiply8x8        \ Set (A V) = X * Y
+ STA G                  \ Set (G A) = (A V)
+ LDA V                  \           = J * R
 
- STA G
- LDA V
- CLC
+ CLC                    \ Clear the C flag for the following addition
 
-.L1D46
+.mult1
 
- ADC #&80               \ Gets modified by the L5295 routine
- STA W
- BCC L1D4E
+ ADC #128               \ Set (G W) = (G A) + 128
+ STA W                  \
+                        \ starting with the low bytes
+                        \
+                        \ The ADC #128 instruction gets modified by the L5295
+                        \ routine as follows:
+                        \
+                        \   * ADC #0 disables the rounding
+                        \
+                        \   * ADC #128 enables the rounding
 
- INC G
+ BCC mult2              \ And then the high bytes, so we now have:
+ INC G                  \
+                        \   (G W) = (J * R) + 128
 
-.L1D4E
+.mult2
 
- LDX S
- LDY J
+ LDX S                  \ Set (A V) = X * Y
+ LDY J                  \           = S * J
+ JSR Multiply8x8
 
- JSR Multiply8x8        \ Set (A V) = X * Y
+ STA H                  \ Set (H A) = (A V)
+ LDA V                  \           = S * J
 
- STA H
- LDA V
- CLC
- ADC G
- STA G
- BCC L1D62
+                        \ We now do the following addition:
+                        \
+                        \   (H G W) = (H A) << 8 + (G W)
+                        \           = (H A 0) + (G W)
+                        \
+                        \ We don't need to do the lowest byte, as W + 0 is just
+                        \ W again, so we can just do the following:
+                        \
+                        \   (H G) = (H A) + G
+                        \
+                        \ and then keep W as the lowest significant byte of the
+                        \ result
 
- INC H
+ CLC                    \ Set (H G) = (H A) + G
+ ADC G                  \
+ STA G                  \ starting with the low bytes
 
-.L1D62
+ BCC mult3              \ And then the high bytes, so we now have:
+ INC H                  \
+                        \   (H G) = (H A) + G
+                        \
+                        \ which is the same as:
+                        \
+                        \   (H G W) = (H A) << 8 + (G W)
+                        \           = (S * J) << 8 + (J * R) + 128
 
- LDX S
- LDY I
- JSR Multiply8x8        \ Set (A V) = X * Y
+.mult3
 
- STA T
- LDA V
- CLC
- ADC W
- STA W
- LDA T
- ADC G
- RTS
+ LDX S                  \ Set (A V) = X * Y
+ LDY I                  \           = S * I
+ JSR Multiply8x8
+
+ STA T                  \ Set (T A) = (A V)
+ LDA V                  \           = S * I
+
+                        \ We now do the following addition:
+                        \
+                        \   (H A W) = (T A) + (H G W)
+                        \
+                        \ though we don't actually do the highest byte, but
+                        \ instead return the C flag depending on whether the
+                        \ addition of the middle bytes overflowed (in which case
+                        \ the highest byte in H needs incrementing, a task we
+                        \ leave to the caller)
+
+ CLC                    \ Set (A W) = (T A) + (G W)
+ ADC W                  \
+ STA W                  \ starting with the low bytes
+
+ LDA T                  \ And then the high bytes, so we now have:
+ ADC G                  \
+                        \   (H A W) = (T A) + (H G W)
+                        \           = (S * I) + (S * J) << 8 + (J * R) + 128
+                        \
+                        \ which is the result we need. The C flag is set if the
+                        \ last addition overflowed, in which case H needs to be
+                        \ incremented by the caller to get the final result
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L1D77
+\       Name: Multiply16x16Bit0
 \       Type: Subroutine
-\   Category: 3D geometry
-\    Summary: 
+\   Category: Maths
+\    Summary: Multiply two 16-bit numbers that have their signs in bit 0
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine multiplies two 16-bit numbers, both of which have their signs in
+\ bit 0 of the low byte. It calculates:
+\
+\   (H G) = (J I) * (S R) / 256
+\
+\ The result in (H G) has the sign in bit 0 of the low byte.
+\
+\ Arguments:
+\
+\   (J I)               A signed 16-bit number, with the sign in bit 0 of I
+\
+\   (S R)               A signed 16-bit number, with the sign in bit 0 of R
+\
+\ Returns:
+\
+\   (H G)               The result of the multiplication, with the sign in bit 0
+\                       of G
+\
+\   K                   The sign of the result (in bit 0)
 \
 \ ******************************************************************************
 
-.L1D77
+.Multiply16x16Bit0
 
- LDA R
- EOR I
- AND #1
+ LDA R                  \ Extract the sign of (J I) * (S R) from bit 0 of I and
+ EOR I                  \ bit 0 of R, and store the result in K
+ AND #%00000001
  STA K
- JSR L1D3A
 
- AND #&FE
- ORA K
- STA G
- BCC L1D8C
+ JSR Multiply16x16      \ Calculate (H A) = (S R) * (J I) / 256
+                        \
+                        \ and set the C flag if we need to increment H
 
+ AND #%11111110         \ Set bit 0 of A to the sign we stored in K above, so
+ ORA K                  \ (H A) has the correct sign of the multiplication
+
+ STA G                  \ Set (H G) = (H A)
+                        \           = (S R) * (J I) / 256
+
+ BCC mbit1              \ Increment the top byte in H if required
  INC H
 
-.L1D8C
+.mbit1
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7466,7 +7610,7 @@ ORG CODE%
 \                         * 18 = matrix 3
 \                         * 27 = matrix 4
 \
-\ Results:
+\ Returns:
 \
 \   xPointHi etc.       Set to the points's coordinates
 \
@@ -7602,15 +7746,15 @@ ORG CODE%
                         \ next so now (J I) is the 16-bit point coordinate that
                         \ we want to multiply
 
- LDA #0                 \ Set K = 0, to pass to Multiply16x16
- STA K
+ LDA #0                 \ Set K = 0, so Multiply16x16Mix doesn't negate the
+ STA K                  \ result
 
  STX Q                  \ Store the loop counter in X, so we can retrieve it
-                        \ after the call to Multiply16x16
+                        \ after the call to Multiply16x16Mix
 
- JSR Multiply16x16      \ Call Multiply16x16 to calculate:
+ JSR Multiply16x16Mix   \ Call Multiply16x16Mix to calculate:
                         \
-                        \   (H G) = (I J) * (S R) / 256
+                        \   (H G) = (J I) * (S R) / 256
 
  LDX Q                  \ Restore the value of X
 
@@ -7626,7 +7770,7 @@ ORG CODE%
  ADC xTempHi,Y          \ we are working with xTemp and m0, for example):
  STA xTempHi,Y          \
                         \   xTemp += (H G)
-                        \         += (I J) * (S R)
+                        \         += (J I) * (S R)
                         \         += xPoint * m0
                         \
                         \ which is the result we want for this element of the
@@ -12924,7 +13068,7 @@ ORG CODE%
 \   GG                  For bullets only (12, 13, 14 or 15), the point ID for
 \                       the bullet anchor point
 \                       
-\ Results:
+\ Returns:
 \
 \   objectStatus        The object's status byte: bits 6 and 7 affected
 \
@@ -23611,7 +23755,7 @@ NEXT
  LDX #5
 
  LDA #0
- STA L1D46+1
+ STA mult1+1
 
 .L5360
 
@@ -23631,10 +23775,13 @@ NEXT
 
  STA J
  STY I
- LDA #0
- STA K
+
+ LDA #0                 \ Set K = 0, so Multiply16x16Mix doesn't negate the
+ STA K                  \ result, and returns the sign of the result in K
+
  STX VV
- JSR Multiply16x16
+
+ JSR Multiply16x16Mix
 
  LDA K
  BPL L5395
@@ -23678,8 +23825,8 @@ NEXT
  DEX
  BPL L5360
 
- LDA #&80               \ Default
- STA L1D46+1
+ LDA #128               \ Default
+ STA mult1+1
 
  LDA L0C43
  STA L0C46
