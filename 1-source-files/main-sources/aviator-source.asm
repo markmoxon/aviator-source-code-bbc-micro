@@ -614,7 +614,7 @@ ORG &0900
 .axisKeyUsage
 
  SKIP 3                 \ The following locations are updated when keys are
-                        \ pressed in ProcessKeyLogger:
+                        \ pressed in UpdateFlightModel:
                         \
                         \   * axisKeyUsage   = elevator
                         \   * axisKeyUsage+1 = rudder
@@ -851,9 +851,19 @@ ORG &0900
 
  SKIP 2
 
-.xRadarLo
+.xTemp2Lo
 
- SKIP 8
+ SKIP 1
+
+.yTemp2Lo
+
+ SKIP 1
+
+.zTemp2Lo
+
+ SKIP 1
+
+ SKIP 5
 
 .keyLoggerHigh
 
@@ -871,17 +881,29 @@ ORG &0900
 
  SKIP 2
 
-.xRadarHi
-
- SKIP 2
-
-.L0CBA
+.xTemp2Hi
 
  SKIP 1
 
-.L0CBB
+.yTemp2Hi
 
- SKIP 3
+ SKIP 1
+
+.zTemp2Hi
+
+ SKIP 1
+
+.xTemp2Top
+
+ SKIP 1
+
+.yTemp2Top
+
+ SKIP 1
+
+.zTemp2Top
+
+ SKIP 1
 
 .gunSights
 
@@ -945,9 +967,13 @@ ORG &0900
                         \
                         \ Set to %00001111 for each new game
 
-.L0CC4
+.matrixAxis
 
- SKIP 1
+ SKIP 1                 \ The axis to be processed by the matrix routines
+                        \
+                        \   * 0 = x-axis
+                        \   * 1 = y-axis
+                        \   * 2 = z-axis
 
 .onGround
 
@@ -982,16 +1008,16 @@ ORG &0900
                         \ otherwise set to 1, to prevent holding down "T" from
                         \ constantly switching the engine on and off
 
-.showRunway
+.showRunwayDashes
 
- SKIP 1                 \ Stores whether the runway is visible, so we can apply
-                        \ the same status to every runway line:
+ SKIP 1                 \ Determines whether the dashes down the middle of the
+                        \ runway are close enough to be visible:
                         \
                         \   * Bit 7:
                         \
-                        \     * 0 = the runway is visible
+                        \     * 0 = the runway dashes are visible
                         \
-                        \     * 1 = the runway is not visible
+                        \     * 1 = the runway dashes are not visible
 
 .matrixNumber
 
@@ -1021,6 +1047,13 @@ ORG &0900
 .showLine
 
  SKIP 1                 \ Determines whether a line is visible:
+                        \
+                        \   * Bit 6:
+                        \
+                        \     * 0 = the line fits into Aviator's 3D world
+                        \
+                        \     * 1 = the line calculations overflowed, so the
+                        \           line does not fit into Aviator's 3D world
                         \
                         \   * Bit 7:
                         \
@@ -1103,9 +1136,29 @@ ORG &0900
                         \ firing our guns (which makes the sound of two shots)
 
 
-.L0CDA
+.xTemp3Lo
 
- SKIP 6
+ SKIP 1
+
+.yTemp3Lo
+
+ SKIP 1
+
+.zTemp3Lo
+
+ SKIP 1
+
+.xTemp3Hi
+
+ SKIP 1
+
+.yTemp3Hi
+
+ SKIP 1
+
+.zTemp3Hi
+
+ SKIP 1
 
 .xTempLo
 
@@ -2338,7 +2391,7 @@ ORG CODE%
                         \
                         \   (RR Q) = screen y-coordinate of 3D point projected
                         \             onto the screen
-
+                        \
                         \ We now move the projected coordinate to the correct
                         \ place on screen, as the projected coordinates have the
                         \ origin straight ahead of us, i.e. in the centre of the
@@ -6264,7 +6317,13 @@ ORG CODE%
 \
 \   Y                   ???
 \
-\   L0CC4               ???
+\   matrixAxis          The axis to be processed:
+\
+\                          * 0 = x-axis
+\
+\                          * 1 = y-axis
+\
+\                          * 2 = z-axis
 \
 \ ******************************************************************************
 
@@ -6294,7 +6353,7 @@ ORG CODE%
 
  STA S
  STY R
- LDY L0CC4
+ LDY matrixAxis
  BIT K
  BVS L18CD
 
@@ -6545,7 +6604,7 @@ ORG CODE%
 \       Name: SetObjPointCoords (Part 1 of 2)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Calculate the coordinates for a point within an object
+\    Summary: Calculate the coordinate for a point within an object
 \  Deep dive: Rotating and translating multi-point objects in 3D space
 \
 \ ------------------------------------------------------------------------------
@@ -6563,6 +6622,18 @@ ORG CODE%
 \
 \   objectAnchorPoint   Point ID of the anchor point to which we add the final
 \                       result to
+\
+\ Returns:
+\
+\   xPointHi etc.       Point GG is set to the point's coordinate in 3D space
+\
+\   showLine            If the calculation overflows, then the coordinate does
+\                       not fit within the boundaries of Aviator's 3D world, so
+\                       bit 6 is set to indicate that the line containing this
+\                       point should not be shown
+\
+\   xTempHi etc.        The rotated vector from the anchor point to the object
+\                       point
 \
 \ ******************************************************************************
 
@@ -6591,9 +6662,9 @@ ORG CODE%
                         \ left-shifting the result (see part 2 for the scaling
                         \ code)
 
- LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) vector, which is
+ LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) point, which is
                         \ stored in six bytes to give us three 16-bit coordinate
-                        \ values (from XTempLo to zTempHi), so set a counter in
+                        \ values (from xTempLo to zTempHi), so set a counter in
                         \ X to count the bytes
 
  LDA #0                 \ Set A = 0 to use as our zero
@@ -6601,7 +6672,7 @@ ORG CODE%
 .objp1
 
  STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
-                        \ between XTempLo and zTempHi
+                        \ between xTempLo and zTempHi
 
  DEX                    \ Decrement the loop counter
 
@@ -6943,8 +7014,10 @@ ORG CODE%
 \
 \ Returns:
 \
-\   showLine            Set to hidden if the addition is beyond the bounds of
-\                       our universe
+\   showLine            If the calculation overflows, then the coordinate does
+\                       not fit within the boundaries of Aviator's 3D world, so
+\                       bit 6 is set to indicate that the line containing this
+\                       point should not be shown
 \
 \ ******************************************************************************
 
@@ -7076,7 +7149,7 @@ ORG CODE%
 
 .SetMatrices
 
- LDX L0CC4
+ LDX matrixAxis
  LDA L0160,X
  EOR #1
  STA I
@@ -7114,7 +7187,7 @@ ORG CODE%
  LDY #5
  JSR L1D03
 
- LDX L0CC4
+ LDX matrixAxis
  LDY matrixNumber
  LDA L0162,X
  STA matrix3Lo,Y
@@ -7162,7 +7235,7 @@ ORG CODE%
  STA I
  LDA H
  STA J
- LDX L0CC4
+ LDX matrixAxis
  LDA L0164,X
  STA R
  LDA L0174,X
@@ -7184,7 +7257,7 @@ ORG CODE%
  STA I
  LDA matrix1Hi+5,Y
  STA J
- LDX L0CC4
+ LDX matrixAxis
  LDA L0161,X
  STA R
  LDA L0171,X
@@ -7203,7 +7276,7 @@ ORG CODE%
  STA matrix1Lo+5,Y
  LDA S
  STA matrix1Hi+5,Y
- LDX L0CC4
+ LDX matrixAxis
  LDA L0161,X
  STA R
  LDA L0171,X
@@ -7212,7 +7285,7 @@ ORG CODE%
  LDY #0
  JSR L1D13
 
- LDX L0CC4
+ LDX matrixAxis
  LDA L0164,X
  EOR #1
  STA R
@@ -7251,7 +7324,7 @@ ORG CODE%
  STA R
  LDA xTempHi
  STA S
- LDX L0CC4
+ LDX matrixAxis
  LDA L0161,X
  STA I
  LDA L0171,X
@@ -7269,7 +7342,7 @@ ORG CODE%
  STA matrix1Lo+2,Y
  LDA S
  STA matrix1Hi+2,Y
- LDX L0CC4
+ LDX matrixAxis
  LDA L0163,X
  STA matrix1Lo+7,Y
  LDA L0173,X
@@ -7319,7 +7392,7 @@ ORG CODE%
 
  TXA
  CLC
- ADC L0CC4
+ ADC matrixAxis
  TAX
  LDA L0160,X
  STA R
@@ -7334,7 +7407,7 @@ ORG CODE%
 
  TXA
  CLC
- ADC L0CC4
+ ADC matrixAxis
  TAX
  LDA L0160,X
  EOR #1
@@ -7358,7 +7431,7 @@ ORG CODE%
 
  TXA
  CLC
- ADC L0CC4
+ ADC matrixAxis
  TAX
  LDA L0160,X
  STA I
@@ -7638,7 +7711,7 @@ ORG CODE%
 
  LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) vector, which is
                         \ stored in six bytes to give us three 16-bit coordinate
-                        \ values (from XTempLo to zTempHi), so set a counter in
+                        \ values (from xTempLo to zTempHi), so set a counter in
                         \ X to count the bytes
 
  LDA #0                 \ Set A = 0 to use as our zero
@@ -7646,7 +7719,7 @@ ORG CODE%
 .pcrd1
 
  STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
-                        \ between XTempLo and zTempHi
+                        \ between xTempLo and zTempHi
 
  DEX                    \ Decrement the loop counter
 
@@ -10330,14 +10403,14 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessKeyLogger (Part 1 of 4)
+\       Name: UpdateFlightModel (Part 1 of 4)
 \       Type: Subroutine
-\   Category: Keyboard
+\   Category: Flight model
 \    Summary: Apply any axis control key presses to the current axis values
 \
 \ ******************************************************************************
 
-.ProcessKeyLogger
+.UpdateFlightModel
 
  LDX #2                 \ We start with the aileron, rudder and elevator key
                         \ pairs, whose values are stored in these key logger
@@ -10391,7 +10464,7 @@ ORG CODE%
 
                         \ If we get here, then this key pair's axisChangeRate
                         \ value has been reduced down to zero by repeated calls
-                        \ to ProcessKeyLogger with the key being held down, so
+                        \ to UpdateFlightModel with the key being held down, so
                         \ the relavant control is now fully engaged and we bump
                         \ up the rate of change by another 3 in the relevant
                         \ direction
@@ -10467,9 +10540,9 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessKeyLogger (Part 2 of 4)
+\       Name: UpdateFlightModel (Part 2 of 4)
 \       Type: Subroutine
-\   Category: Keyboard
+\   Category: Flight model
 \    Summary: Apply any throttle key presses to the current thrust value
 \
 \ ******************************************************************************
@@ -10531,9 +10604,9 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessKeyLogger (Part 3 of 4)
+\       Name: UpdateFlightModel (Part 3 of 4)
 \       Type: Subroutine
-\   Category: Keyboard
+\   Category: Flight model
 \    Summary: Process the undercarriage, brake, flaps and fire keys
 \
 \ ******************************************************************************
@@ -10584,33 +10657,36 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessKeyLogger (Part 4 of 4)
+\       Name: UpdateFlightModel (Part 4 of 4)
 \       Type: Subroutine
-\   Category: Keyboard
+\   Category: Flight model
 \    Summary: Set up matrices, apply the flight model and update the dashboard
 \
 \ ******************************************************************************
 
 .pkey15
 
- LDY #2                 \ Loop through Y = 2, 1, 0, to pass to SetMatrix
+ LDY #2                 \ We now set up the matrices, starting with the matrix
+                        \ in page 1, which we populate one axis at a time, so
+                        \ set a counter in Y to denote the current axis
 
 .pkey16
 
- STY L0CC4              \ Set L0CC4 = Y, to pass to SetMatrix
+ STY matrixAxis         \ Set matrixAxis to the current axis in Y, to pass to
+                        \ SetMatrix
 
  JSR SetMatrix          \ Set up the matrix values in page 1
 
- LDY L0CC4              \ Restore the value of Y that we stored above
+ LDY matrixAxis         \ Restore the axis counter that we stored above
 
- DEY                    \ Decrement Y
+ DEY                    \ Decrement the axis counter in Y
 
- BPL pkey16             \ Loop back until we have done 2, 1 0
+ BPL pkey16             \ Loop back until we have processed all three axes
 
- LDA #0                 \ Set matrixNumber = 0
+ LDA #0                 \ Set matrixNumber = 0 to pass to SetMatrices
  STA matrixNumber
 
- STA L0CC4              \ Set L0CC4 = 0
+ STA matrixAxis         \ Set matrixAxis = 0 to pass to SetMatrices
 
  JSR SetMatrices        \ Set up the rotation matrices
 
@@ -11543,7 +11619,8 @@ ORG CODE%
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
- JSR ProcessKeyLogger   \ Process any key presses in the key logger
+ JSR UpdateFlightModel  \ Process any key presses in the key logger and update
+                        \ the matrices and flight model
 
  JSR ResetLineLists     \ Reset the line lists at linesToShow and linesToHide,
                         \ which will populate them with the correct lines to
@@ -11585,13 +11662,14 @@ ORG CODE%
                         \ jump to main2 to skip firing bullets, as we can't fire
                         \ any more bullets until the current ones expire
 
- JSR ProcessKeyLogger   \ Process any key presses in the key logger
+ JSR UpdateFlightModel  \ Process any key presses in the key logger and update
+                        \ the matrices and flight model
 
- LDA firingStatus       \ If the call to ProcessKeyLogger has left firingStatus
+ LDA firingStatus       \ If the call to UpdateFlightModel has left firingStatus
  BEQ main3              \ set to zero, then the fire key is not being pressed,
                         \ so jump to main3 to skip firing bullets
 
-                        \ The call to ProcessKeyLogger had changed firingStatus
+                        \ The call to UpdateFlightModel had changed firingStatus
                         \ from zero to non-zero, which means the fire key is
                         \ being pressed, so we now need to add two bullets to
                         \ the scene
@@ -11647,7 +11725,8 @@ ORG CODE%
 
 .main2
 
- JSR ProcessKeyLogger   \ Process any key presses in the key logger
+ JSR UpdateFlightModel  \ Process any key presses in the key logger and update
+                        \ the matrices and flight model
 
 \ ******************************************************************************
 \
@@ -11668,9 +11747,8 @@ ORG CODE%
  LDX #19                \ We do this as two blocks of 20 bytes, so set a counter
                         \ in X to use in the loop below
 
- LDA #0                 \ Set showRunway = 0 to reset the visibility of the
- STA showRunway         \ runway to "visible", so we make the runway lines
-                        \ visible as the default
+ LDA #0                 \ Set showRunwayDashes = 0 to reset the dashes down the
+ STA showRunwayDashes   \ middle of the runway to be visible
 
  STA relatedPoints      \ Set relatedPoints = 0 to reset the relatedPoints list,
                         \ so we can build a new list of related object points
@@ -12653,7 +12731,7 @@ ORG CODE%
                         \ If we get here then lineId is 0, so this is the
                         \ horizon
 
- JSR ProcessHorizon     \ Process the horizon and set showLine accordingly
+ JSR ProcessHorizonLine \ Process the horizon and set showLine accordingly
 
  RTS                    \ Return from the subroutine
 
@@ -12662,7 +12740,7 @@ ORG CODE%
 \       Name: ProcessLine (Part 2 of 7)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Check whether the runway is visible
+\    Summary: Process runway lines
 \
 \ ******************************************************************************
 
@@ -12671,7 +12749,7 @@ ORG CODE%
                         \ If we get here then lineId is in the range 1 to 11,
                         \ so this is a runway line
 
- JSR ProcessRunway      \ Process the runway line and set showLine accordingly
+ JSR ProcessRunwayLine  \ Process the runway line and set showLine accordingly
 
  JMP plin19             \ Jump down to plin19 to check the line's z-coordinates
                         \ and return the final visibility result
@@ -12791,7 +12869,7 @@ ORG CODE%
 \       Name: ProcessLine (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: Check the visibility of the bullets
+\    Summary: Process bullet lines
 \
 \ ******************************************************************************
 
@@ -12855,9 +12933,9 @@ ORG CODE%
  BNE plin10             \ have already set this object's coordinates in this
                         \ iteration of the main loop, so skip the following
 
- JSR SetObjectCoords    \ Calculate the object's coordinates, setting bit 6 of
-                        \ the object's status byte and setting isObject to the
-                        \ object ID
+ JSR SetObjectCoords    \ Calculate the object's coordinates and visibilty,
+                        \ updating the object's status byte with the results
+                        \ and setting isObject to the object ID
 
 .plin10
 
@@ -12920,8 +12998,8 @@ ORG CODE%
  STA GG                 \ Store the point ID in GG so its coordinates get
                         \ calculated in the call to SetObjPointCoords
 
- LDA #0                 \ Set L0CC4 = 0
- STA L0CC4
+ LDA #0                 \ Set matrixAxis = 0
+ STA matrixAxis
 
  STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
                         \ object points in the call toSetObjPointCoords
@@ -12948,8 +13026,8 @@ ORG CODE%
 
  STA GG                 \ Store the point ID in GG
 
- LDA #0                 \ Set L0CC4 = 0
- STA L0CC4
+ LDA #0                 \ Set matrixAxis = 0
+ STA matrixAxis
 
  STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
                         \ object points in the call toSetObjPointCoords
@@ -13072,10 +13150,20 @@ ORG CODE%
 \
 \   objectStatus        The object's status byte: bits 6 and 7 affected
 \
+\   Flags               Set according to the object's updated status byte
+\
 \   isObject            The object ID, i.e. a non-zero value so callers of this
 \                       routine will know we just processed an object
 \
 \   xObjectHi etc.      Set to the object's coordinates, relative to the plane
+\
+\   xPointHi etc.       The object's anchor point:
+\
+\                         * For bullets, point GG is updated with the bullet's
+\                           anchor point
+\
+\                         * For other objects, point objectId+216 is updated
+\                           with the object's anchor point
 \
 \ ******************************************************************************
 
@@ -13965,7 +14053,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessHorizon
+\       Name: ProcessHorizonLine
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate coordinates for the horizon's start and end points
@@ -13980,7 +14068,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.ProcessHorizon
+.ProcessHorizonLine
 
  LDX M                  \ Set the end point to (0, 0, 0)
  JSR SetPointToOrigin
@@ -13998,15 +14086,15 @@ ORG CODE%
                         \ We now do the following loop twice, once for the
                         \ horizon's start point, and again for the end point
 
-.horv1
+.phor1
 
- BIT L0CFA              \ If bit 7 of (L0CFA L0CEA) is set, jump to horv3
- BMI horv3
+ BIT L0CFA              \ If bit 7 of (L0CFA L0CEA) is set, jump to phor3
+ BMI phor3
 
- BVS horv4              \ If bit 6 of (L0CFA L0CEA) is set (so bit 7 is clear
-                        \ and bit 6 is set), jump to horv4
+ BVS phor4              \ If bit 6 of (L0CFA L0CEA) is set (so bit 7 is clear
+                        \ and bit 6 is set), jump to phor4
 
-.horv2
+.phor2
 
                         \ We get here if in (L0CFA L0CEA):
                         \
@@ -14015,16 +14103,16 @@ ORG CODE%
                         \
                         \ i.e. if bit 6 and 7 match
 
- LDA #40                \ Set A = 40 and jump to horv5 to set this as the
- BNE horv5              \ point's z-coordinate (this BNE is effectively a JMP
+ LDA #40                \ Set A = 40 and jump to phor5 to set this as the
+ BNE phor5              \ point's z-coordinate (this BNE is effectively a JMP
                         \ as A is never zero)
 
-.horv3
+.phor3
 
- BVS horv2              \ If bit 6 of (L0CFA L0CEA) is set (so both bits 6 and 7
-                        \ are set), jump to horv2
+ BVS phor2              \ If bit 6 of (L0CFA L0CEA) is set (so both bits 6 and 7
+                        \ are set), jump to phor2
 
-.horv4
+.phor4
 
                         \ We get here if in (L0CFA L0CEA):
                         \
@@ -14035,7 +14123,7 @@ ORG CODE%
 
  LDA #216               \ Set A = -40 to use as the point's z-coordinate
 
-.horv5
+.phor5
 
  STA zPointHi,X         \ Set the z-coordinate of the horizon line's start (or
                         \ end) point to A
@@ -14051,17 +14139,17 @@ ORG CODE%
                         \ be the start or end point of the horizon
 
  CPX M                  \ If we just calculated the coordinates for the horizon
- BEQ horv6              \ line's end point, then we have now done both points,
-                        \ so jump to horv6 to return from the subroutine
+ BEQ phor6              \ line's end point, then we have now done both points,
+                        \ so jump to phor6 to return from the subroutine
 
  LDX M                  \ Set GG and X to the point ID for the horizon line's
  STX GG                 \ end point
 
- BNE horv1              \ Loop back to horv1 to calculate the coordinates for
+ BNE phor1              \ Loop back to phor1 to calculate the coordinates for
                         \ the end point (this BNE is effectively a JMP as X is
                         \ never zero)
 
-.horv6
+.phor6
 
  RTS                    \ Return from the subroutine
 
@@ -14106,31 +14194,31 @@ ORG CODE%
                         \ following, where the object is either the runway or
                         \ the alien:
                         \
-                        \   xRadar = xObject - xPlane
-                        \   yRadar = yObject - yPlane
-                        \   zRadar = zObject - zPlane
+                        \   xTemp2 = xObject - xPlane
+                        \   yTemp2 = yObject - yPlane
+                        \   zTemp2 = zObject - zPlane
                         \
-                        \ so xRadar contains the vector from the plane to the
-                        \ object, which is the same as the vector from the
-                        \ centre of the radar to the blip
+                        \ so (xTemp2 yTemp2 zTemp2) contains the vector from the
+                        \ plane to the object, which is the same as the vector
+                        \ from the centre of the radar to the blip
                         \
                         \ Note that we only bother with the top and high bytes
                         \ of the calculation (where top, high and low are the
                         \ bytes in a 24-bit number), as the radar isn't accurate
                         \ enough to show the low byte, so we can just ignore it
                         \
-                        \ The loop comments are for the xRadar iteration
+                        \ The loop comments are for the xTemp2 iteration
 .upbl1
 
- LDA xObjectHi,Y        \ Set (xRadarHi xRadarLo) to the following:
+ LDA xObjectHi,Y        \ Set (xTemp2Hi xTemp2Lo) to the following:
  SEC                    \
  SBC xPlaneHi,X         \   (0 xObjectHi) - (xPlaneTop xPlaneHi)
- STA xRadarLo,X         \
+ STA xTemp2Lo,X         \
                         \ starting with the top bytes
 
  LDA #0                 \ and then the high bytes (we don't bother with the low
  SBC xPlaneTop,X        \ bytes)
- STA xRadarHi,X
+ STA xTemp2Hi,X
 
  TYA                    \ Set Y = Y + 40
  CLC                    \
@@ -14146,15 +14234,15 @@ ORG CODE%
                         \ vector when rotated correctly, so we first set up
                         \ the coordinates, and then rotate them
 
- LDX #LO(xRadarLo)      \ Set X so the call to CopyWorkToPoint copies from
-                        \ (xRadar, yRadar, zRadar) to (xPoint, yPoint, zPoint)
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies from
+                        \ (xTemp2, yTemp2, zTemp2) to (xPoint, yPoint, zPoint)
 
  LDY #0                 \ Set Y to point ID 0, so the call to SetPointCoords
                         \ copies the coordinates to (xPoint, yPoint, zPoint)
 
  STY GG                 \ Set GG = 0
 
- JSR CopyWorkToPoint    \ Copy the coordinates from (xRadar, yRadar, zRadar)
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
                         \ to (xPoint, yPoint, zPoint)
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
@@ -15032,9 +15120,12 @@ ORG CODE%
 
  LDA #0
  STA showLine
- JSR SetObjectCoords
 
- BPL L2F0A
+ JSR SetObjectCoords    \ Calculate the object's coordinates and visibilty,
+                        \ updating the object's status byte with the results
+
+ BPL L2F0A              \ If bit 7 of the object's updated status byte is clear,
+                        \ then the object is not visible, so jump to L2F0A
 
  LDY GG
  LDX #60
@@ -15469,9 +15560,9 @@ ORG CODE%
  JSR L3181
 
  LDY Q
- STA xRadarHi,Y
+ STA xTemp2Hi,Y
  LDA V
- STA xRadarLo,Y
+ STA xTemp2Lo,Y
  LDA R
  STA xTempLo,Y
  INY
@@ -15513,8 +15604,8 @@ ORG CODE%
 
  LDA xTempLo,Y
  CLC
- ADC xRadarHi,Y
- STA xRadarHi,Y
+ ADC xTemp2Hi,Y
+ STA xTemp2Hi,Y
  BCC mval11
 
  INC xObjectLo,X
@@ -15755,151 +15846,302 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessRunway
+\       Name: ProcessRunwayLine (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Calculate coordinates and visibility for a runway line
 \
 \ ------------------------------------------------------------------------------
 \
-\ Only called for line IDs 1 to 11.
+\ Arguments:
+\
+\   lineId              The line ID to process (1 to 11):
+\
+\                         * 1 to 4 are the runway outline
+\
+\                         * 5 to 11 are the dashes down the middle of the runway
+\
+\ Returns:
+\
+\   showLine            Whether this line is visible:
+\
+\                         * 0 = line is visible
+\
+\                         * Non-zero = line is not visible
 \
 \ ******************************************************************************
 
-.ProcessRunway
+.ProcessRunwayLine
 
- LDA objectStatus+1
- BEQ L31D4
+ LDA objectStatus+1     \ Fetch the status byte for object 1, the runway object
 
- BMI L31C7
+ BEQ prun3              \ If object 1's status byte is zero, then we have not
+                        \ yet calculated the runway object's coordinates and
+                        \ visibility, so jump to prun3 to do this
 
- JMP L3246
+ BMI prun1              \ If bit 7 of object 1's status byte is set, then we
+                        \ have already decided that the runway object is
+                        \ visible, so jump to prun1 to set the line's visibility
+                        \ accordingly
 
-.L31C7
+ JMP prun9              \ If we get here then we have already decided that the
+                        \ runway object is hidden, so jump to prun9 to set the
+                        \ line's visibility as hidden
 
- LDA lineId
- CMP #5
- BCC L31D3
+.prun1
 
- LDA showRunway
- STA showLine
+ LDA lineId             \ If lineId < 5, then the line ID is in the range 1 to
+ CMP #5                 \ 4, so it's part of the runway outline, so jump to
+ BCC prun2              \ prun2 to return from the subroutine as we always show
+                        \ the outline when the runway is visible
 
-.L31D3
+ LDA showRunwayDashes   \ The line we are checking is one of the dashes down the
+ STA showLine           \ middle of the runway, so set the line's visibility to
+                        \ the value of showRunwayDashes, which contains the
+                        \ visibility of the runway dashes
 
- RTS
+.prun2
 
-.L31D4
+ RTS                    \ Return from the subroutine
 
- LDA #0
- STA matrixNumber
+\ ******************************************************************************
+\
+\       Name: ProcessRunwayLine (Part 2 of 4)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Calculate coordinates and visibility for the runway outline
+\
+\ ******************************************************************************
 
- LDA #1
+.prun3
+
+ LDA #0                 \ Set the matrix number so the calls to SetPointCoords
+ STA matrixNumber       \ and SetObjPointCoords below use matrix 1 in the
+                        \ calculation
+
+ LDA #1                 \ Set objectId = 1 to denote the runway object
  STA objectId
 
- JSR SetObjectCoords
+ JSR SetObjectCoords    \ Calculate the runway object's coordinates and
+                        \ visibility, updating the object's status byte with the
+                        \ results and setting point 217 to the object's anchor
+                        \ point
 
- BPL L3246
+ BPL prun9              \ If bit 7 of the runway object's updated status byte is
+                        \ clear, then the runway object is not visible, so jump
+                        \ to prun9 to set the line's visibility accordingly
 
- LDA #0
- LDX #5
+                        \ The runway object is visible, so now we work out the
+                        \ coordinates of the runway outline, which is a
+                        \ rectangle whose corners are points 1 to 4
 
-.L31E7
+ LDA #0                 \ We start by zeroing the (xTemp yTemp zTemp) vector,
+                        \ which is stored in six bytes to give us three 16-bit
+                        \ coordinate values (from xTempLo to zTempHi), so first
+                        \ we set A = 0 to use as our zero
 
- STA xTempLo,X
- DEX
- BPL L31E7
+ LDX #5                 \ Set a counter in X to count the six bytes
 
- LDY #&D9
- STY objectAnchorPoint
- LDX #1
+.prun4
+
+ STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
+                        \ between xTempLo and zTempHi
+
+ DEX                    \ Decrement the loop counter
+
+ BPL prun4              \ Loop back until we have zeroed all six bytes
+
+                        \ We now calculate the coordinates for points 1 to 4,
+                        \ starting with point 1
+
+ LDY #217               \ Set Y so the call to AddTempToPoint adds point 217 to
+                        \ the xTemp vector
+
+ STY objectAnchorPoint  \ The anchor point of the runway is point 217, so set
+                        \ objectAnchorPoint to this point for the call to
+                        \ SetObjPointCoords
+
+ LDX #1                 \ Set X so the call to AddTempToPoint stores the result
+                        \ in point ID 1
+
+ JSR AddTempToPoint     \ Add point 217 to the (xTemp yTemp zTemp) point and
+                        \ store the result in (xPoint, yPoint, zPoint) for
+                        \ point 1
+                        \
+                        \ This simply sets point ID 1 to the object's anchor
+                        \ point, as we just zeroed (xTemp yTemp zTemp), so point
+                        \ 1 of the runway outline is now calculated
+
+ LDA #2                 \ Calculate the coordinates for object point 2 with
+ STA GG                 \ anchor point 217, so point 2 is now calculated
+ JSR SetObjPointCoords  \
+                        \ This also sets (xTemp yTemp zTemp) to the vector from
+                        \ the anchor point to point 2, which we now copy into
+                        \ xTemp2 by copying the following values:
+                        \
+                        \   xTempLo, yTempLo, zTempLo
+                        \   xTempHi, yTempHi, zTempHi
+                        \
+                        \ into the following locations:
+                        \
+                        \   xTemp2Hi,  yTemp2Hi,  zTemp2Hi
+                        \   xTemp2Top, yTemp2Top, zTemp2Top
+                        \
+                        \ so (xTemp2Top xTempHi) etc. contain the vector from
+                        \ the anchor point to the point 2
+
+ LDX #5                 \ Set a counter for six bytes
+
+.prun5
+
+ LDA xTempLo,X          \ Copy the X-th byte of xTempLo to the X-th byte of
+ STA xTemp2Hi,X         \ xTemp2Hi
+
+ DEX                    \ Decrement the loop counter
+
+ BPL prun5              \ Loop back until we have copied all six bytes
+
+                        \ By now we have coordinates for points 1 and 2, plus
+                        \ the vector from the anchor point to point 2 (which
+                        \ is the same as the vector from point 1 to point 2,
+                        \ as point 1 is the runway's anchor point)
+
+ LDA #4                 \ Calculate the coordinates for object point 4 with
+ STA GG                 \ anchor point 217, so point 4 is now calculated
+ JSR SetObjPointCoords  \
+                        \ This also sets (xTemp yTemp zTemp) to the vector
+                        \ from the anchor point (point 1) to point 4
+
+                        \ By now we have coordinates for points 1, 2 and 4, and
+                        \ we could just call SetObjPointCoords for point 3, but
+                        \ we can save a bit of time as the runway outline is a
+                        \ rectangle, so we already have all the data we need to
+                        \ calculate the coordinates for point 3
+                        \
+                        \ The runway outline looks like this:
+                        \
+                        \      1          4
+                        \       +--------+
+                        \       |        |
+                        \       |        |
+                        \       |        |
+                        \       |        |
+                        \       |        |
+                        \       +--------+
+                        \      2          3
+                        \
+                        \ We know the vector from point 1 to point 4 - it's in
+                        \ the (xTemp yTemp zTemp) vector - and we know the
+                        \ coordinates of point 2, so we can calculate the
+                        \ coordinates of point 3 by simply adding the vector to
+                        \ the coordinates of point 2, which is what we do next
+
+ LDY #2                 \ Set point 3's coordinates to point 2's coordinates +
+ LDX #3                 \ (xTemp yTemp zTemp), so point 3 is now calculated
  JSR AddTempToPoint
 
- LDA #2
- STA GG
- JSR SetObjPointCoords
+ LDA showLine           \ If showLine is zero, then all four coordinates fit
+ BEQ prun6              \ within the boundaries of the world, so jump to prun6
+                        \ to keep going
 
- LDX #5
+ LDA #%01000000         \ At least one of the calculations above overflowed, so
+ STA objectStatus+1     \ at leat one coordinate is outside the boundaries of
+                        \ the world, so set bit 6 of the status byte for the
+                        \ runway object to indicate that we have now calculated
+                        \ the runway object's coordinates and visibility, and
+                        \ clear bit 7 to indicate that the runway is not visible
 
-.L3200
+ RTS                    \ Return from the subroutine
 
- LDA xTempLo,X
- STA xRadarHi,X
- DEX
- BPL L3200
-
- LDA #4
- STA GG
- JSR SetObjPointCoords
-
- LDY #2
- LDX #3
- JSR AddTempToPoint
-
- LDA showLine
- BEQ L3222
-
- LDA #&40
- STA objectStatus+1
- RTS
-
-.L3222
+.prun6
 
  LDX #4                 \ Set the status byte for points 1 to 4 to indicate
  JSR SetPointVisibility \ that their coordinates and visibility have been
                         \ calculated
 
- LDY #1
- LDX #&0A
+\ ******************************************************************************
+\
+\       Name: ProcessRunwayLine (Part 3 of 4)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Calculate visibility for the runway dashes
+\
+\ ******************************************************************************
 
-.L322B
+ LDY #1                 \ Set Y = 1 so we check point ID 1 in the call to
+                        \ CheckLineDistance (point ID 1 is the anchor point of
+                        \ the runway)
 
- JSR CheckLineDistance
+ LDX #10                \ Set X = 10 so we check the distance against that for
+                        \ line ID 10, which is one of the dashes in the middle
+                        \ of the runway
 
- STA showLine
- BNE L323B
+.prun7
 
- CPY #3
- BEQ L3250
+ JSR CheckLineDistance  \ Check whether point Y on line X is within the visible
+ STA showLine           \ distance for the line and store the result in showLine
 
- LDY #3
- BNE L322B
+ BNE prun8              \ If the point is too far away to be visible, jump to
+                        \ prun8 as the dashes are too far away to be seen
 
-.L323B
+ CPY #3                 \ If Y = 3, jump to prun12 as we have checked both point
+ BEQ prun12             \ 1 and 3 and both are close enough to be visible
 
- LDA #%10000000
- STA showRunway
+ LDY #3                 \ Otherwise set Y = 3 and jump back prun7 to check point
+ BNE prun7              \ 3 as well (point 3 is the corner of the runway outline
+                        \ opposite the anchor point)
 
- LDA lineId
- CMP #5
- BCC L324A
+.prun8
 
-.L3246
+ LDA #%10000000         \ Set showRunwayDashes to indicate that the dashes down
+ STA showRunwayDashes   \ the middle of the runway are not visible
 
- LDA #&80
- BNE L324C
+ LDA lineId             \ If lineId < 5, then the line ID is in the range 1 to
+ CMP #5                 \ 4, so it's part of the runway outline, so jump to
+ BCC prun10             \ prun10 to return the result that the line is visible,
+                        \ as we always show the outline when the runway is
+                        \ visible, even when the runway dashes are hidden
 
-.L324A
+.prun9
 
- LDA #0
+ LDA #%10000000         \ Set A to indicate the line is not visible, and jump to
+ BNE prun11             \ prun11 to return this as the value of showLine (this
+                        \ BNE is effectively a JMP as A is never zero)
 
-.L324C
+.prun10
 
- STA showLine
- RTS
+ LDA #0                 \ Set A to indicate the line is visible, so we can
+                        \ return this as the value of showLine
 
-.L3250
+.prun11
+
+ STA showLine           \ Set the line's visibility to the value in A, to return
+                        \ as our result
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: ProcessRunwayLine (Part 4 of 4)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: 
+\
+\ ******************************************************************************
+
+.prun12
 
  LDX #2
 
-.L3252
+.prun13
 
  CLC
  LDA xTempHi,X
- BPL L3259
+ BPL prun14
 
  SEC
 
-.L3259
+.prun14
 
  ROR A
  STA xTempHi,X
@@ -15907,10 +16149,10 @@ ORG CODE%
  ROR A
  STA xTempLo,X
  DEX
- BPL L3252
+ BPL prun13
 
  LDY #2
- LDX #&15
+ LDX #21
  JSR AddTempToPoint
 
  LDY #1
@@ -15919,85 +16161,85 @@ ORG CODE%
 
  LDX #5
 
-.L3277
+.prun15
 
  LDA xTempLo,X
- STA L0CDA,X
+ STA xTemp3Lo,X
  DEX
- BPL L3277
+ BPL prun15
 
  LDX #5
  LDA #0
 
-.L3284
+.prun16
 
  STA T,X
  DEX
- BPL L3284
+ BPL prun16
 
  LDX #2
 
-.L328B
+.prun17
 
  LDA #0
  STA R
- LDA L0CBB,X
- BPL L3296
+ LDA xTemp2Top,X
+ BPL prun18
 
  DEC R
 
-.L3296
+.prun18
 
  LSR R
  ROR A
  STA xTempHi,X
- LDA xRadarHi,X
+ LDA xTemp2Hi,X
  ROR A
  ROR T,X
  LDY #2
 
-.L32A4
+.prun19
 
  LSR R
  ROR xTempHi,X
  ROR A
  ROR T,X
  DEY
- BPL L32A4
+ BPL prun19
 
  STA xTempLo,X
  DEX
- BPL L328B
+ BPL prun17
 
  LDX #&A8
  LDY #5
  JSR CopyPointToWork
 
-.L32BC
+.prun20
 
  LDX #2
 
-.L32BE
+.prun21
 
  CLC
  LDA W,X
  ADC T,X
  STA W,X
- LDA xRadarLo,X
+ LDA xTemp2Lo,X
  ADC xTempLo,X
- STA xRadarLo,X
- LDA xRadarHi,X
+ STA xTemp2Lo,X
+ LDA xTemp2Hi,X
  ADC xTempHi,X
- STA xRadarHi,X
+ STA xTemp2Hi,X
  DEX
- BPL L32BE
+ BPL prun21
 
  LDX #&A8
  INY
  JSR CopyWorkToPoint
 
  CPY #&13
- BNE L32BC
+ BNE prun20
 
  LDX #19                \ Set the status byte for points 1 to 19 to indicate
  JSR SetPointVisibility \ that their coordinates and visibility have been
@@ -16005,53 +16247,53 @@ ORG CODE%
 
  LDX #5
 
-.L32EB
+.prun22
 
- LDA L0CDA,X
+ LDA xTemp3Lo,X
  STA xTempLo,X
  DEX
- BPL L32EB
+ BPL prun22
 
  LDA zPointHi+6
  STA P
  LDY #6
 
-.L32FB
+.prun23
 
  LDA zPointHi,Y
  EOR P
- BMI L3309
+ BMI prun24
 
  INY
  CPY #&14
- BCC L32FB
+ BCC prun23
 
- BCS L333A
+ BCS prun28
 
-.L3309
+.prun24
 
  LDA P
- BPL L3316
+ BPL prun25
 
  DEY
  LDA #1
  STA Q
  LDX #4
- BNE L331C
+ BNE prun26
 
-.L3316
+.prun25
 
  LDA #2
  STA Q
  LDX #3
 
-.L331C
+.prun26
 
  JSR AddTempToPoint
 
  LDX #2
 
-.L3321
+.prun27
 
  LDA #0
  SEC
@@ -16061,14 +16303,14 @@ ORG CODE%
  SBC xTempHi,X
  STA xTempHi,X
  DEX
- BPL L3321
+ BPL prun27
 
  LDX Q
  JSR AddTempToPoint
 
-.L333A
+.prun28
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -18924,14 +19166,14 @@ NEXT
 \       Name: numberOfLines
 \       Type: Variable
 \   Category: 3D geometry
-\    Summary: The total number of lines in the universe
+\    Summary: The total number of lines in Aviator's 3D world
 \
 \ ******************************************************************************
 
 .numberOfLines
 
- EQUB 193               \ The total number of lines in the universe + 1, so
-                        \ there are 192 lines
+ EQUB 193               \ The total number of lines in the world + 1, so there
+                        \ are 192 lines in total
 
 \ ******************************************************************************
 \
@@ -20782,7 +21024,7 @@ NEXT
 \   FireGuns            X = &ED, Y = 96
 \   UpdateRadarBlip     X = &A8, Y = 0
 \   MoveAliens          X = &A8, Y = 0
-\   ProcessRunway       X = &A8, Y = range
+\   ProcessRunwayLine   X = &A8, Y = range
 \   CheckAlienHit       X = &A8, Y = range
 \   ApplyFlightModel    X = &89, Y = 255
 \                       X = &00, Y = 254
@@ -20794,11 +21036,11 @@ NEXT
 \                         * &00 = L0C00, turnLo, L0C02
 \                                 L0C10, turnHi, L0C12
 \
-\                         * &89 = L0C89, verticalSpeedLo, L0C8A
-\                                 L0C99, verticalSpeedHi, L0C9A
+\                         * &89 = L0C89, verticalSpeedLo, L0C8B
+\                                 L0C99, verticalSpeedHi, L0C9B
 \
-\                         * &A8 = xRadarLo, L0CA9, L0CAA
-\                                 xRadarHi, L0CB9, L0CBA
+\                         * &A8 = xTemp2Lo, yTemp2Lo, zTemp2Lo
+\                                 xTemp2Hi, yTemp2Hi, zTemp2Hi
 \
 \                         * &ED = xPlaneLo, yPlaneLo, zPlaneLo
 \                                 xPlaneHi, yPlaneHi, zPlaneHi
@@ -20836,7 +21078,7 @@ NEXT
 \
 \ Called as follows:
 \
-\   ProcessRunway       X = &A8, Y = 5
+\   ProcessRunwayLine   X = &A8, Y = 5
 \   CheckAlienHit       X = &A8, Y = range
 \   ApplyFlightModel    X = &03, Y = 255
 \                       X = &83, Y = 252
@@ -20857,8 +21099,8 @@ NEXT
 \                         * &86 = L0C86, L0C87, L0C88
 \                                 L0C96, L0C97, L0C98
 \
-\                         * &A8 = xRadarLo, L0CA9, L0CAA
-\                                 xRadarHi, L0CB9, L0CBA
+\                         * &A8 = xTemp2Lo, yTemp2Lo, zTemp2Lo
+\                                 xTemp2Hi, yTemp2Hi, zTemp2Hi
 \
 \ ******************************************************************************
 
@@ -21055,7 +21297,7 @@ NEXT
 
  LDA #%01000000         \ The addition overflowed for this axis, so set bit 6 of
  STA showLine           \ showLine so the line containing this point is marked
-                        \ as being hidden
+                        \ as not being visible
 
 .addv3
 
@@ -21587,11 +21829,11 @@ NEXT
 
 .L4CF4
 
- ADC xRadarLo,Y
- STA xRadarLo,Y
+ ADC xTemp2Lo,Y
+ STA xTemp2Lo,Y
  LDA R
- ADC xRadarHi,Y
- STA xRadarHi,Y
+ ADC xTemp2Hi,Y
+ STA xTemp2Hi,Y
  DEY
  BPL L4CE0
 
@@ -21606,7 +21848,7 @@ NEXT
  DEC L368F
  BNE L4D19
 
- JSR L4D35
+ JSR ScoreHitPoints
 
 .L4D19
 
@@ -21614,7 +21856,7 @@ NEXT
  CMP #26
  BNE L4D34
 
- LDA L0CBA
+ LDA zTemp2Hi
  LDX L368E
  CPX #33
  BNE L4D31
@@ -21635,7 +21877,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4D35
+\       Name: ScoreHitPoints
 \       Type: Subroutine
 \   Category: Scoring
 \    Summary: Award points for destroying aliens
@@ -21646,7 +21888,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L4D35
+.ScoreHitPoints
 
  LDA #&FF
  LDY L368E
@@ -22507,7 +22749,7 @@ NEXT
 \ If an axis control key is held down (e.g. dive, yaw left, roll right and so
 \ on), then it will change that axis value by 1 in the relevant direction (by
 \ updating elevatorPosition, rudderPosition or aileronPosition). If the key is
-\ held down, then after six calls to ProcessKeyLogger without the key being
+\ held down, then after six calls to UpdateFlightModel without the key being
 \ released, the relevant control is fully engaged, and the rate of change
 \ increases to 4 in the relevant direction.
 \
