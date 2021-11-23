@@ -7683,9 +7683,11 @@ ORG CODE%
 \                         * 18 = matrix 3
 \                         * 27 = matrix 4
 \
+\   xPointHi etc.       The point's coordinates before rotation
+\
 \ Returns:
 \
-\   xPointHi etc.       Set to the points's coordinates
+\   xPointHi etc.       The point's coordinates after rotation
 \
 \ ******************************************************************************
 
@@ -11010,9 +11012,14 @@ ORG CODE%
 
  JSR SetPointCoords     \ Calculate the coordinates for point 95
 
- LDX #&ED
- LDY #&60
- JSR CopyWorkToPoint
+ LDX #LO(xPlaneLo)      \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xTemp2, yTemp2, zTemp2)
+
+ LDY #96                \ Set Y so the call to CopyPointToWork copies the
+                        \ coordinates to point 96
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
+                        \ to point 96
 
  LDY #12
  LDX #96
@@ -14234,22 +14241,21 @@ ORG CODE%
                         \ vector when rotated correctly, so we first set up
                         \ the coordinates, and then rotate them
 
- LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies from
-                        \ (xTemp2, yTemp2, zTemp2) to (xPoint, yPoint, zPoint)
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xTemp2, yTemp2, zTemp2)
 
- LDY #0                 \ Set Y to point ID 0, so the call to SetPointCoords
-                        \ copies the coordinates to (xPoint, yPoint, zPoint)
+ LDY #0                 \ Set Y so the call to CopyWorkToPoint copies the
+                        \ coordinates to point 0
 
  STY GG                 \ Set GG = 0
 
  JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
-                        \ to (xPoint, yPoint, zPoint)
+                        \ to point 0
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 1 in the calculation
 
- JSR SetPointCoords     \ Calculate the coordinates for point 0, so they are
-                        \ rotated and stored in (xPoint, yPoint, zPoint)
+ JSR SetPointCoords     \ Calculate the coordinates for point 0
 
                         \ We now take the rotated x- and z-coordinates and
                         \ scale them down so they work as screen coordinates
@@ -15569,9 +15575,14 @@ ORG CODE%
  CPY #3
  BNE mval7
 
- LDX #&A8
- LDY #0
- JSR CopyWorkToPoint
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xTemp2, yTemp2, zTemp2)
+
+ LDY #0                 \ Set Y so the call to CopyWorkToPoint copies the
+                        \ coordinates to point 0
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
+                        \ to point 0
 
  LDY VV
  JSR L3152
@@ -15846,7 +15857,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessRunwayLine (Part 1 of 4)
+\       Name: ProcessRunwayLine (Part 1 of 5)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate coordinates and visibility for a runway line
@@ -15906,7 +15917,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessRunwayLine (Part 2 of 4)
+\       Name: ProcessRunwayLine (Part 2 of 5)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate coordinates and visibility for the runway outline
@@ -16020,15 +16031,15 @@ ORG CODE%
                         \
                         \ The runway outline looks like this:
                         \
-                        \      1          4
-                        \       +--------+
-                        \       |        |
-                        \       |        |
-                        \       |        |
-                        \       |        |
-                        \       |        |
-                        \       +--------+
-                        \      2          3
+                        \      2         3
+                        \       +-------+
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       +-------+
+                        \      1         4
                         \
                         \ We know the vector from point 1 to point 4 - it's in
                         \ the (xTemp yTemp zTemp) vector - and we know the
@@ -16061,7 +16072,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessRunwayLine (Part 3 of 4)
+\       Name: ProcessRunwayLine (Part 3 of 5)
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate visibility for the runway dashes
@@ -16081,11 +16092,13 @@ ORG CODE%
  JSR CheckLineDistance  \ Check whether point Y on line X is within the visible
  STA showLine           \ distance for the line and store the result in showLine
 
- BNE prun8              \ If the point is too far away to be visible, jump to
-                        \ prun8 as the dashes are too far away to be seen
+ BNE prun8              \ If the point is too far away to be visible, then all
+                        \ the dashes are too far away to be seen, so jump to
+                        \ prun8 to return the relevant result
 
- CPY #3                 \ If Y = 3, jump to prun12 as we have checked both point
- BEQ prun12             \ 1 and 3 and both are close enough to be visible
+ CPY #3                 \ If Y = 3, then we have checked both point 1 and 3 and
+ BEQ prun12             \ both are close enough to be visible, so jump to prun12
+                        \ to finish off the processing
 
  LDY #3                 \ Otherwise set Y = 3 and jump back prun7 to check point
  BNE prun7              \ 3 as well (point 3 is the corner of the runway outline
@@ -16122,191 +16135,470 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProcessRunwayLine (Part 4 of 4)
+\       Name: ProcessRunwayLine (Part 4 of 5)
 \       Type: Subroutine
 \   Category: Visibility
-\    Summary: 
+\    Summary: Construct the dashes down the middle of the runway
 \
 \ ******************************************************************************
 
 .prun12
 
- LDX #2
+                        \ By the time we get here, (xTemp yTemp zTemp) contains
+                        \ the vector from the anchor point (point 1) to point 4,
+                        \ which is the vector from one side of the runway to the
+                        \ other
+                        \
+                        \ We now want to halve the (xTemp yTemp zTemp) vector,
+                        \ to give the vector from one side of the runway to the
+                        \ line of dashes down the middle
+                        \
+                        \ As a reminder, the runway outline looks like this:
+                        \
+                        \      2         3
+                        \       +-------+
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       +-------+
+                        \      1         4
+                        \
+                        \ so we now calculate (xTemp yTemp zTemp) to be the
+                        \ vector from the left edge of the runway to the dashes
+                        \ in the middle
+
+ LDX #2                 \ Set a counter in X to work through the three axes of
+                        \ the (xTemp yTemp zTemp) vector (the comments below
+                        \ cover the iteration for the x-axis)
 
 .prun13
 
- CLC
- LDA xTempHi,X
+ CLC                    \ Clear the C flag, to use when (xTempHi xTempLo) is
+                        \ positive
+
+ LDA xTempHi,X          \ If xTempHi is positive, skip the following instruction
  BPL prun14
 
- SEC
+ SEC                    \ Set the C flag, to use when (xTempHi xTempLo) is
+                        \ negative
 
 .prun14
 
- ROR A
- STA xTempHi,X
- LDA xTempLo,X
+ ROR A                  \ Shift (xTempHi xTempLo) to the right by one place,
+ STA xTempHi,X          \ inserting the C flag into the top bit of xTempHi,
+ LDA xTempLo,X          \ which ensures that we retain the same sign
  ROR A
  STA xTempLo,X
- DEX
- BPL prun13
 
- LDY #2
- LDX #21
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL prun13             \ Loop back until we have halved xTemp, yTemp and zTemp
+
+                        \ (xTemp yTemp zTemp) now contains the vector from one
+                        \ side of the runway to the line of dashes down the
+                        \ middle
+
+ LDY #2                 \ Set point 21's coordinates to point 2's coordinates +
+ LDX #21                \ (xTemp yTemp zTemp)
  JSR AddTempToPoint
 
- LDY #1
- LDX #5
+ LDY #1                 \ Set point 5's coordinates to point 1's coordinates +
+ LDX #5                 \ (xTemp yTemp zTemp)
  JSR AddTempToPoint
 
- LDX #5
+                        \ So we've now calculated points 5 and 21 as follows:
+                        \
+                        \      2    21   3
+                        \       +-------+
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       +-------+
+                        \      1    5    4
+                        \
+                        \ Next, we make a backup of the (xTemp yTemp zTemp)
+                        \ vector into (xTemp3 yTemp3 zTemp3)
+
+ LDX #5                 \ Set a counter for six bytes
 
 .prun15
 
- LDA xTempLo,X
- STA xTemp3Lo,X
- DEX
- BPL prun15
+ LDA xTempLo,X          \ Copy the X-th byte of xTempLo to the X-th byte of
+ STA xTemp3Lo,X         \ xTemp3Lo
 
- LDX #5
- LDA #0
+ DEX                    \ Decrement the loop counter
+
+ BPL prun15             \ Loop back until we have copied all six bytes
+
+                        \ So (xTemp3 yTemp3 zTemp3) now contains the vector from
+                        \ one side of the runway to the line of dashes down the
+                        \ middle
+
+                        \ We now zero variables T, U, V, W, G and H
+
+ LDX #5                 \ Set a counter for six bytes
+
+ LDA #0                 \ Set A = 0 so we can zero the variables
 
 .prun16
 
- STA T,X
- DEX
- BPL prun16
+ STA T,X                \ Zero the X-th byte from T
 
- LDX #2
+ DEX                    \ Decrement the loop counter
+
+ BPL prun16             \ Loop back until we have zeroed all six bytes
+
+                        \ In part 2 above, we set (xTemp2Top xTempHi) etc. to
+                        \ the vector from the anchor point (i.e. point 1) to
+                        \ point 2
+
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
+
+                        \ For each axis in turn, we 
 
 .prun17
 
- LDA #0
+ LDA #0                 \ Set R = 0
  STA R
- LDA xTemp2Top,X
- BPL prun18
 
- DEC R
+ LDA xTemp2Top,X        \ Set A = xTemp2Top
+
+ BPL prun18             \ If xTemp2Top is positive, skip the following
+                        \ instruction
+
+ DEC R                  \ Decrement R to %11111111
+
+                        \ So by this point, R contains the correct bits to
+                        \ rotate into bit 7 of A to retain the sign of A
 
 .prun18
 
- LSR R
+                        \ Set (xTempHi A T) = (xTemp2Top xTemp2Hi 0) / 2
+                        \
+                        \ keeping the sign intact by feeding in bits from R
+
+ LSR R                  \ We start with the top byte
  ROR A
  STA xTempHi,X
- LDA xTemp2Hi,X
+
+ LDA xTemp2Hi,X         \ Then the high byte
  ROR A
- ROR T,X
- LDY #2
+
+ ROR T,X                \ And then the low byte
+
+ LDY #2                 \ We now shift right by three places, so set a counter
+                        \ in Y
 
 .prun19
 
- LSR R
- ROR xTempHi,X
- ROR A
+ LSR R                  \ Set (xTempHi A T) = (xTempHi A T) / 2
+ ROR xTempHi,X          \
+ ROR A                  \ keeping the sign intact by feeding in bits from R
  ROR T,X
- DEY
- BPL prun19
 
- STA xTempLo,X
- DEX
- BPL prun17
+ DEY                    \ Decrement the loop counter
 
- LDX #&A8
- LDY #5
- JSR CopyPointToWork
+ BPL prun19             \ Loop back until we have shifted right by three places
 
+                        \ In all, the above does the following:
+                        \
+                        \   (xTempHi A T) = (xTemp2Top xTemp2Hi 0) / 16
+                        \
+                        \ while retaining the sign
+
+ STA xTempLo,X          \ Set (xTempHi xTempLo T) = (xTempHi A T)
+                        \                         = (xTemp2Top xTemp2Hi 0) / 16
+
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL prun17             \ Loop back until we have processed all three axes
+
+                        \ So we have now calculated the vector from point 1 to
+                        \ point 2, divided by 16, with the result stored in the
+                        \ xTemp vector and the variables T, U and V used for
+                        \ the lowest bytes, like this:
+                        \
+                        \   x-coordinate = (xTempHi xTempLo T)
+                        \   y-coordinate = (yTempHi yTempLo U)
+                        \   z-coordinate = (zTempHi zTempLo V)
+                        \
+                        \ In other words, the xTemp/T/U/V vector contains 1/16
+                        \ of the full vector between points 5 and 21
+
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (xTemp2, yTemp2, zTemp2)
+
+ LDY #5                 \ Set Y so the call to CopyPointToWork copies the
+                        \ coordinates from point 5
+
+ JSR CopyPointToWork    \ Copy the coordinates from point 5 to
+                        \ (xTemp2, yTemp2, zTemp2)
+
+                        \ So (xTemp2, yTemp2, zTemp2) now contains the
+                        \ coordinates of point 5
+
+                        \ We now calculate the start and end points for the
+                        \ dashes in the middle of the runway by starting at
+                        \ point 5, and moving up the middle line in steps of
+                        \ 1/16 of the distance between points 5 and 21
 .prun20
 
- LDX #2
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
 
 .prun21
 
- CLC
- LDA W,X
- ADC T,X
+ CLC                    \ Set (xTemp2Hi xTemp2Lo W) += (xTempHi xTempLo T)
+ LDA W,X                \
+ ADC T,X                \ starting with the lowest bytes
  STA W,X
- LDA xTemp2Lo,X
+
+ LDA xTemp2Lo,X         \ Then the middle bytes
  ADC xTempLo,X
  STA xTemp2Lo,X
- LDA xTemp2Hi,X
+
+ LDA xTemp2Hi,X         \ And then the highest bytes
  ADC xTempHi,X
  STA xTemp2Hi,X
- DEX
- BPL prun21
 
- LDX #&A8
- INY
- JSR CopyWorkToPoint
+ DEX                    \ Decrement the loop counter to move to the next axis
 
- CPY #&13
- BNE prun20
+ BPL prun21             \ Loop back until we have added all three axes
+
+                        \ On the first iteration through this code, the full
+                        \ (xTemp2Hi xTemp2Lo W) vector contains a point 1/16
+                        \ of the way from point 5 to point 21
+
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xTemp2, yTemp2, zTemp2)
+
+ INY                    \ Increment Y so the call to CopyPointToWork copies the
+                        \ coordinates from the next point along the dash line
+                        \ (which will be point 6 on the first iteration through
+                        \ this code, then point 7, and so on)
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
+                        \ to point Y, the next point along the dash line
+
+ CPY #19                \ Loop back to prun20 to move another 1/16 along the
+ BNE prun20             \ dash line, until we have done point 19, meaning we
+                        \ have set the coordinates for points 6 through 19
+                        \ (i.e. we have added 14 points, two for each of the
+                        \ seven dashes in the middle of the runway)
 
  LDX #19                \ Set the status byte for points 1 to 19 to indicate
  JSR SetPointVisibility \ that their coordinates and visibility have been
                         \ calculated
 
- LDX #5
+\ ******************************************************************************
+\
+\       Name: ProcessRunwayLine (Part 5 of 5)
+\       Type: Subroutine
+\   Category: Visibility
+\    Summary: Clip any portion of the runway outline that's behind us
+\
+\ ******************************************************************************
+
+                        \ The final step is to check whether the runway appears
+                        \ both in front of us and behind us (which will happen
+                        \ when we are sitting on the runway, for example, or
+                        \ during the final approach when trying to land)
+                        \
+                        \ If it is, then we want to clip the part of the runway
+                        \ outline that's behind us, as close to the screen as
+                        \ possible (though we still want the runway to go behind
+                        \ us a bit, so clipping to the nearest coordinate behind
+                        \ the screen is the best approach)
+                        \
+                        \ We start by restoring the vector that we stored in
+                        \ (xTemp3 yTemp3 zTemp3) back to (xTemp yTemp zTemp),
+                        \ which is the vector from one side of the runway to the
+                        \ line of dashes down the middle
+
+ LDX #5                 \ Set a counter for six bytes
 
 .prun22
 
- LDA xTemp3Lo,X
- STA xTempLo,X
- DEX
- BPL prun22
+ LDA xTemp3Lo,X         \ Copy the X-th byte of xTemp3Lo to the X-th byte of
+ STA xTempLo,X          \ xTempLo
 
- LDA zPointHi+6
- STA P
- LDY #6
+ DEX                    \ Decrement the loop counter
+
+ BPL prun22             \ Loop back until we have copied all six bytes
+
+                        \ So (xTemp yTemp zTemp) is once again the vector from
+                        \ one side of the runway to the line of dashes down the
+                        \ middle
+
+                        \ We now work our way along the dash line, checking the
+                        \ coordinates of the points we just added to see if the
+                        \ sign of the z-coordinate changes between any of the
+                        \ points (which will indicate that the runway is both in
+                        \ front of us and behind us)
+
+ LDA zPointHi+6         \ Set P to the high byte of the z-coordinate for point 6
+ STA P                  \ (which contains the sign of the coordinate)
+
+ LDY #6                 \ We now loop through the points we just calculated for
+                        \ the dashes, so we set a counter in Y to loop from 6 to
+                        \ 19
 
 .prun23
 
- LDA zPointHi,Y
+ LDA zPointHi,Y         \ Set A = z-coordinate for point Y EOR P
  EOR P
- BMI prun24
 
- INY
- CPY #&14
- BCC prun23
+ BMI prun24             \ If A has a set bit 7, then the z-coordinate for point
+                        \ Y has a different sign to the z-coordinate for point
+                        \ 6, so jump to prun24 as the runway is both behind us
+                        \ and in front of us
 
- BCS prun28
+ INY                    \ Increment Y to point to the next point in the dash
+                        \ line
+
+ CPY #20                \ Loop back until we have worked our way through all the
+ BCC prun23             \ points that we just calculated
+
+ BCS prun28             \ If we get here then all the points have the same sign
+                        \ z-coordinate as point 6, so jump to prun28 to return
+                        \ from the subroutine (this BCS is effectively a JMP as
+                        \ we just passed through the BCC above)
 
 .prun24
 
- LDA P
+                        \ If we get here, then point Y has a different sign in
+                        \ its z-coordinate to point 6, so the runway is both
+                        \ behind us and in front of us
+                        \
+                        \ We now want to find out which part is in front of us
+                        \ and which is behind
+                        \
+                        \ We do this by working out which part of the dash line
+                        \ is in front of us and which is behind, using the
+                        \ following:
+                        \
+                        \      2    21   3
+                        \       +-------+
+                        \       |   :   |   <- Dashes end at point 19
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |
+                        \       |   :   |   <- Dashes start at point 6
+                        \       +-------+
+                        \      1    5    4
+                        \
+                        \ If the start of the dash line is behind us (i.e. the
+                        \ point 6 end), then that means we need to clip points 1
+                        \ and 4 as close as possible to the screen, while if the
+                        \ end of the dash line is behind us (i.e. the point 19
+                        \ end), then we need to clip points 2 and 3 as close as
+                        \ possible to the screen
+
+ LDA P                  \ If point 6 has a positive z-coordinate, jump to prun25
  BPL prun25
 
- DEY
- LDA #1
- STA Q
- LDX #4
- BNE prun26
+                        \ If we get here then point 6 has a negative
+                        \ z-coordinate, so point Y must have a positive
+                        \ z-coordinate, and the point before Y must have a
+                        \ negative z-coordinate
+                        \
+                        \ In other words, the dashes start behind us, and pass
+                        \ in front of us at point Y, which is in front of us, so
+                        \ the point before Y is the last point behind us
+                        \
+                        \ To clip the runway, we therefore need to move points 1
+                        \ and 4
+
+ DEY                    \ Decrement Y to point to the last point in the sequence
+                        \ we added that has a negative z-coordinate
+
+ LDA #1                 \ Set Q so the second call to AddTempToPoint moves point
+ STA Q                  \ 1
+
+ LDX #4                 \ Set X so the first call to AddTempToPoint moves point
+                        \ 4
+
+ BNE prun26             \ Jump to prun26 to call AddTempToPoint (this BNE is
+                        \ effectively a JMP as X is never zero)
 
 .prun25
 
- LDA #2
- STA Q
- LDX #3
+                        \ If we get here then point 6 has a positive z-coordinate
+                        \ so point Y must have a negative z-coordinate, and the
+                        \ point before Y must have a positive z-coordinate
+                        \
+                        \ In other words, the dashes start in front of us, and
+                        \ go behind us at point Y, which is the first point
+                        \ behind us
+                        \
+                        \ To clip the runway, we therefore need to move points 2
+                        \ and 3
+
+ LDA #2                 \ Set Q so the second call to AddTempToPoint moves point
+ STA Q                  \ 2
+
+ LDX #3                 \ Set X so the first call to AddTempToPoint moves point
+                        \ 3
 
 .prun26
 
- JSR AddTempToPoint
+                        \ By the time we get here, Y is the point with the
+                        \ negative z-coordinate that's nearest to the screen
+                        \ (i.e. nearest to a z-coordinate of 0)
+                        \
+                        \ We now work out the new corner coordinates for the
+                        \ end of the runway that's behind us, by taking point Y
+                        \ and:
+                        \
+                        \   * Adding (xTemp yTemp zTemp) to point Y to get one
+                        \     corner (i.e. corner 3 or 4)
+                        \
+                        \   * Subtracting (xTemp yTemp zTemp) from point Y to
+                        \     get the other corner (i.e. corner 1 or 2)
+                        \
+                        \ We start with the addition
 
- LDX #2
+ JSR AddTempToPoint     \ Add point Y to the (xTemp yTemp zTemp) vector and
+                        \ store the result in (xPoint, yPoint, zPoint) for
+                        \ point X
+
+                        \ We now negate the (xTemp yTemp zTemp) vector so we can
+                        \ do the subtraction
+
+ LDX #2                 \ Set a counter in X to work through the three axes of
+                        \ the (xTemp yTemp zTemp) vector (the comments below
+                        \ cover the iteration for the x-axis)
 
 .prun27
 
- LDA #0
+ LDA #0                 \ Negate (xTempHi xTempLo), starting with the low bytes
  SEC
  SBC xTempLo,X
  STA xTempLo,X
- LDA #0
+
+ LDA #0                 \ And then the high bytes
  SBC xTempHi,X
  STA xTempHi,X
- DEX
- BPL prun27
 
- LDX Q
- JSR AddTempToPoint
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL prun27             \ Loop back until we have negated xTemp, yTemp and zTemp
+
+                        \ The xTemp yTemp zTemp) vector is now negated, so we
+                        \ can add it with AddTempToPoint to do the subtraction
+                        \ we want
+
+ LDX Q                  \ Set X so the call to AddTempToPoint stores the result
+                        \ in point Q
+
+ JSR AddTempToPoint     \ Add point Y to the (xTemp yTemp zTemp) vector and
+                        \ store the result in (xPoint, yPoint, zPoint) for
+                        \ point Q
 
 .prun28
 
@@ -21019,31 +21311,21 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called as follows:
-\
-\   FireGuns            X = &ED, Y = 96
-\   UpdateRadarBlip     X = &A8, Y = 0
-\   MoveAliens          X = &A8, Y = 0
-\   ProcessRunwayLine   X = &A8, Y = range
-\   CheckAlienHit       X = &A8, Y = range
-\   ApplyFlightModel    X = &89, Y = 255
-\                       X = &00, Y = 254
-\
 \ Arguments:
 \
-\   X                   The workspace point to copy (x, y, z):
+\   X                   The low byte of the workspace point to copy (x, y, z):
 \
-\                         * &00 = L0C00, turnLo, L0C02
-\                                 L0C10, turnHi, L0C12
+\                         * LO(L0C00) = L0C00, turnLo, L0C02
+\                                       L0C10, turnHi, L0C12
 \
-\                         * &89 = L0C89, verticalSpeedLo, L0C8B
-\                                 L0C99, verticalSpeedHi, L0C9B
+\                         * LO(L0C89) = L0C89, verticalSpeedLo, L0C8B
+\                                       L0C99, verticalSpeedHi, L0C9B
 \
-\                         * &A8 = xTemp2Lo, yTemp2Lo, zTemp2Lo
-\                                 xTemp2Hi, yTemp2Hi, zTemp2Hi
+\                         * LO(xTemp2Lo) = xTemp2Lo, yTemp2Lo, zTemp2Lo
+\                                          xTemp2Hi, yTemp2Hi, zTemp2Hi
 \
-\                         * &ED = xPlaneLo, yPlaneLo, zPlaneLo
-\                                 xPlaneHi, yPlaneHi, zPlaneHi
+\                         * LO(xPlaneLo) = xPlaneLo, yPlaneLo, zPlaneLo
+\                                          xPlaneHi, yPlaneHi, zPlaneHi
 \
 \   Y                   The ID of the point to update in the point tables
 \
@@ -21076,31 +21358,23 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ Called as follows:
-\
-\   ProcessRunwayLine   X = &A8, Y = 5
-\   CheckAlienHit       X = &A8, Y = range
-\   ApplyFlightModel    X = &03, Y = 255
-\                       X = &83, Y = 252
-\                       X = &86, Y = 254
-\
 \ Arguments:
 \
 \   Y                   The ID of the point to copy from the point tables
 \
-\   X                   The workspace point to update (x, y, z):
+\   X                   The low byte of the workspace point to update (x, y, z):
 \
-\                         * &03 = L0C03, L0C04, airspeedLo
-\                                 L0C13, L0C14, airspeedHi
+\                         * LO(L0C03) = L0C03, L0C04, airspeedLo
+\                                       L0C13, L0C14, airspeedHi
 \
-\                         * &83 = L0C83, L0C84, L0C85
-\                                 L0C93, L0C94, L0C95
+\                         * LO(L0C83) = L0C83, L0C84, L0C85
+\                                       L0C93, L0C94, L0C95
 \
-\                         * &86 = L0C86, L0C87, L0C88
-\                                 L0C96, L0C97, L0C98
+\                         * LO(L0C86) = L0C86, L0C87, L0C88
+\                                       L0C96, L0C97, L0C98
 \
-\                         * &A8 = xTemp2Lo, yTemp2Lo, zTemp2Lo
-\                                 xTemp2Hi, yTemp2Hi, zTemp2Hi
+\                         * LO(xTemp2Lo) = xTemp2Lo, yTemp2Lo, zTemp2Lo
+\                                          xTemp2Hi, yTemp2Hi, zTemp2Hi
 \
 \ ******************************************************************************
 
@@ -21806,8 +22080,11 @@ NEXT
 
 .L4CD7
 
- LDX #&A8
- JSR CopyPointToWork
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (xTemp2, yTemp2, zTemp2)
+
+ JSR CopyPointToWork    \ Copy the coordinates from point Y to
+                        \ (xTemp2, yTemp2, zTemp2)
 
  STY T
  LDY #2
@@ -21837,9 +22114,14 @@ NEXT
  DEY
  BPL L4CE0
 
- LDY T
- LDX #&A8
- JSR CopyWorkToPoint
+ LDY T                  \ Set Y so the call to CopyWorkToPoint copies the
+                        \ coordinates to point T
+
+ LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xTemp2, yTemp2, zTemp2)
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
+                        \ to point T
 
  DEY
  CPY U
@@ -23384,21 +23666,31 @@ NEXT
 
  JSR SetPointCoords     \ Calculate the coordinates for point 253
 
- LDX #&89
+ LDX #LO(L0C89)         \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (L0C89, verticalSpeed, L0C8B)
 
- LDY #255               \ Set GG to point ID 255, to pass to the call to 
- STY GG                 \ SetPointCoords
+ LDY #255               \ Set Y so the call to CopyWorkToPoint copies the
+                        \ coordinates to point 255
 
- JSR CopyWorkToPoint
+ STY GG                 \ Set GG to point ID 255, to pass to the call to 
+                        \ SetPointCoords
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (L0C89, verticalSpeed,
+                        \ L0C8B) to point 255
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 1 in the calculation
 
  JSR SetPointCoords     \ Calculate the coordinates for point 255
 
- LDX #3
- LDY #&FF
- JSR CopyPointToWork
+ LDX #LO(L0C03)         \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (L0C03, L0C04, airspeed)
+
+ LDY #255               \ Set Y so the call to CopyPointToWork copies the
+                        \ coordinates from point 255
+
+ JSR CopyPointToWork    \ Copy the coordinates from point 255 to
+                        \ (L0C03, L0C04, airspeed)
 
  JSR L5295
 
@@ -23601,29 +23893,45 @@ NEXT
  SEC
  SBC #&10
  STA yPointHi+252
- LDX #&83
- LDY #&FC
- JSR CopyPointToWork
+
+ LDX #LO(L0C83)         \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (L0C83, L0C84, L0C85)
+
+ LDY #252               \ Set Y so the call to CopyPointToWork copies the
+                        \ coordinates from point 252
+
+ JSR CopyPointToWork    \ Copy the coordinates from point 252 to
+                        \ (L0C83, L0C84, L0C85)
 
  JSR L51F9
 
  JSR L51D7
 
- LDX #0
+ LDX #LO(L0C00)         \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (L0C00, turnLo, L0C02)
 
- LDY #254               \ Set GG to point ID 254, to pass to the call to 
- STY GG                 \ SetPointCoords
+ LDY #254               \ Set Y so the call to CopyWorkToPoint copies the
+                        \ coordinates to point 254
 
- JSR CopyWorkToPoint
+ STY GG                 \ Set GG to point ID 254, to pass to the call to 
+                        \ SetPointCoords
+
+ JSR CopyWorkToPoint    \ Copy the coordinates from (L0C00, turnLo, L0C02)
+                        \ to point 254
 
  LDA #18                \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 3 in the calculation
 
  JSR SetPointCoords     \ Calculate the coordinates for point 254
 
- LDX #&86
- LDY #&FE
- JSR CopyPointToWork
+ LDX #LO(L0C86)         \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (L0C86, L0C87, L0C88)
+
+ LDY #254               \ Set Y so the call to CopyPointToWork copies the
+                        \ coordinates from point 254
+
+ JSR CopyPointToWork    \ Copy the coordinates from point 254 to
+                        \ (L0C86, L0C87, L0C88)
 
  JSR L522D
 
