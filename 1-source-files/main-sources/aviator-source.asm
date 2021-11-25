@@ -1194,7 +1194,9 @@ ORG &0900
  SKIP 1                 \ Theme status
                         \
                         \   * Positive (bit 7 = 0) = the Theme is enabled and
-                        \     the value is ???
+                        \     the value is the number of aliens we still have
+                        \     to add to the current wave (this starts at 8 and
+                        \     decreases down to 0 as each new alien is added)
                         \
                         \   * Negative (bit 7 = 1) = the Theme is not enabled
                         \
@@ -1277,8 +1279,6 @@ ORG &0900
                         \   * Non-zero = guns fired, bullets in the air
                         \
                         \ This is called FRFLAG in the original source code
-                        \
-                        \ Can't fire guns if this or L368F are non-zero
 
 .ucStatus
 
@@ -1324,9 +1324,13 @@ ORG &0900
                         \ If we make a crash landing with the undercarriage up,
                         \ the propellor breaks and we can't turn the engine on
 
-.L0CF8
+.alienSpeed
 
- SKIP 1                 \ Set to 10 in ResetVariables
+ SKIP 1                 \ The speed at which the aliens move, which starts at 10
+                        \ for the first wave, then 14 for the second, 18 for the
+                        \ third, and 22 for all subsequent waves
+                        \
+                        \ Set to 10 in ResetVariables
 
 .reached512ft
 
@@ -2443,7 +2447,7 @@ ORG CODE%
  SBC SS
  STA xPointHi,X
 
- JMP proj17             \ Jump to proj17 to move onto the y-coordinate
+ JMP proj17             \ Jump to proj17 to move on to the y-coordinate
 
 .proj16
 
@@ -2504,7 +2508,7 @@ ORG CODE%
  SBC RR
  STA yPointHi,X
 
- JMP proj21             \ Jump to proj17 to move onto the point's status byte
+ JMP proj21             \ Jump to proj17 to move on to the point's status byte
 
 .proj20
 
@@ -6761,7 +6765,7 @@ ORG CODE%
  STA V                  \ in the case of zObjectPoint (the other points always
                         \ fit into bits 0 to 3)
 
- BEQ objp5              \ If V = 0, jump to objp5 to move onto the next loop,
+ BEQ objp5              \ If V = 0, jump to objp5 to move on to the next loop,
                         \ as we already know the result of V * (S R) will be
                         \ zero
 
@@ -6965,7 +6969,7 @@ ORG CODE%
  LDA R
  STA xTempHi,X
 
- JMP objp9              \ Jump back to objp9 to move onto the next axis (i.e.
+ JMP objp9              \ Jump back to objp9 to move on to the next axis (i.e.
                         \ yTemp or zTemp)
 
 .objp12
@@ -10963,9 +10967,11 @@ ORG CODE%
 
 .FireGuns
 
- LDA firingStatus       \ If either firingStatus or L368F are non-zero, return
- ORA L368F              \ from the subroutine (as FireGuns-1 contains an RTS)
- BNE FireGuns-1
+ LDA firingStatus       \ If either firingStatus or hitTimer are non-zero, then
+ ORA hitTimer           \ there are either bullets still in the air, or we only
+ BNE FireGuns-1         \ just hit an alien. In either case we can't fire the
+                        \ guns, so return from the subroutine (as FireGuns-1
+                        \ contains an RTS)
 
  LDX #228               \ Set the point with ID 228 to (0, 0, 0)
  JSR SetPointToOrigin
@@ -11409,11 +11415,11 @@ ORG CODE%
  TXA                    \ Set X = 0 to use as a counter for zeroing 256 bytes in
                         \ the rset1 loop
 
- STA alienCounter       \ Set alienCounter = 0
+ STA alienSlot          \ Set alienSlot = 0
 
  STA L4F87              \ Set L4F87 = 0
 
- STA L368F              \ Set L368F = 0
+ STA hitTimer           \ Set hitTimer = 0
 
  STA randomNumbers      \ Set randomNumbers = 0 to reset the pointer for the
                         \ list of random numbers
@@ -11433,6 +11439,9 @@ ORG CODE%
 
  BNE rset1              \ Loop back until we have zeroed the whole page
 
+                        \ We now zero all the workspace variables from L0C00 to
+                        \ yPlaneHi
+
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
                         \ in the rset2 loop
 
@@ -11442,22 +11451,19 @@ ORG CODE%
 
 .rset2
 
-                        \ This loop zeroes &0C00 to &0CFE, which resets all of
-                        \ the variables in the &0C00 workspace
-
- STA &0C00-1,X          \ Zero the X-1-th byte of page &C
+ STA L0C00-1,X          \ Zero the X-1-th byte of page &C
 
  DEX                    \ Decrement the byte counter
 
- BNE rset2              \ Loop back until we have zeroed &0C00 to &0CFE
+ BNE rset2              \ Loop back until we have zeroed from L0C00 to yPlaneHi
+
+                        \ We now zero the 8 bytes at alienState to reset the
+                        \ state of the aliens
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
                         \ the rset3 loop
 
 .rset3
-
-                        \ This loop zeroes 8 bytes at alienState to reset the
-                        \ state of the aliens
 
  STA alienState,X       \ Zero the X-th byte of alienState
 
@@ -11478,10 +11484,10 @@ ORG CODE%
  LDA #&E5               \ Set xPlaneLo = &E5, so (xPlaneHi xPlaneLo) = &C6E5
  STA xPlaneLo
 
- LDA #10                \ Set yPlaneLo = 10, so (yPlaneHi yPlaneLo) = 10
+ LDA #&0A               \ Set yPlaneLo = &0A, so (yPlaneHi yPlaneLo) = &000A
  STA yPlaneLo
 
- STA L0CF8              \ Set L0CF8 = 10
+ STA alienSpeed         \ Set alienSpeed = 10
 
  LDA #242               \ Set L4F85 = 242
  STA L4F85
@@ -11501,10 +11507,12 @@ ORG CODE%
  LDA #47                \ Set lineBuffer2Count = 47
  STA lineBuffer2Count
 
- LDA #255               \ Set themeStatus = 255
+ LDA #255               \ Set themeStatus = 255 (Theme disabled)
  STA themeStatus
 
  STA lineBuffer1Count   \ Set lineBuffer1Count = 255
+
+                        \ We now zero the 8 bytes at alienObjectId
 
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
                         \ the rset4 loop
@@ -11513,22 +11521,22 @@ ORG CODE%
 
 .rset4
 
-                        \ This loop zeroes 8 bytes at L4208
-
- STA L4208,X            \ Zero the X-th byte of L4208
+ STA alienObjectId,X    \ Zero the X-th byte of alienObjectId
 
  DEX                    \ Decrement the byte counter
 
- BPL rset4              \ Loop back until we have zeroed L4208 to L4208+7
+ BPL rset4              \ Loop back until we have zeroed all 8 alienObjectId
+                        \ bytes
+
+                        \ We now zero alienSlot+1 to alienSlot+3 (we already
+                        \ zeroed alienSlot above)
 
  LDX #2                 \ Set X = 2 to use as a counter for zeroing 3 bytes in
                         \ the rset5 loop
 
 .rset5
 
-                        \ This loop zeroes alienCounter+1 to alienCounter+3
-
- STA alienCounter+1,X   \ Zero the X-th byte of alienCounter+1
+ STA alienSlot+1,X      \ Zero the X-th byte of alienSlot+1
 
  DEX                    \ Decrement the byte counter
 
@@ -11660,7 +11668,8 @@ ORG CODE%
  STA previousListEnd    \ previousListEnd so we can check it at the end of the
                         \ main loop
 
- JSR UpdateThemeStatus  \ Update the status of the Theme, if enabled
+ JSR SpawnAlien         \ If the Theme is enabled and the current wave does not
+                        \ yet have eight aliens in it, spawn a new alien
 
  JSR UpdateKeyLogger    \ Scan for key presses and update the key logger
 
@@ -11800,7 +11809,7 @@ ORG CODE%
 \       Name: MainLoop (Part 4 of 15)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Call the Theme main loop
+\    Summary: Check whether aliens have invaded Acornsville
 \
 \ ******************************************************************************
 
@@ -11818,7 +11827,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Update lines, check flying skills, increment main loop counter,
-\             move aliens
+\             update the radar
 \
 \ ******************************************************************************
 
@@ -11860,55 +11869,62 @@ ORG CODE%
  CMP #27                \ following instruction
  BCC main7
 
- JSR UpdateRadarBlip    \ The moving alien's state is >= 27, so update the alien
-                        \ on the radar
+ JSR UpdateRadarBlip    \ The moving alien's state is >= 27, which means it is
+                        \ either flying to Acornsville or is in the final
+                        \ descent stage, so update the alien on the radar
 
 \ ******************************************************************************
 \
 \       Name: MainLoop (Part 6 of 15)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Move the aliens
 \
 \ ******************************************************************************
 
 .main7
 
  LDA themeStatus        \ If themeStatus is non-zero then either the Theme is
- BNE main12             \ not enabled, or ??? so jump to main12
+ BNE main12             \ not enabled, or it is enabled but we haven't yet added
+                        \ all eight aliens to the current wave, so jump to
+                        \ main12 as we only move aliens when the whole wave has
+                        \ arrived
 
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
- BEQ main11             \ the air, so jump to main11
+ BEQ main11             \ the air, so jump to main11, as when bullets are flying
+                        \ around, the aliens stop moving
 
  LDA #33                \ We now loop through objects 33 down to 30, which are
- STA objectId           \ all the aliens, so set a loop counter in objectId
+ STA objectId           \ all the alien objects, so set a loop counter in objectId
 
 .main8
 
- LDY objectId           \ Set Y to the alien to check
+ LDY objectId           \ Set Y to the object ID of the alien to check
 
- LDA alienStatus-30,Y   \ We copied the status bytes for all four alien objects
- BPL main9              \ into alienStatus in part 1, so this checks whether bit
-                        \ 7 of the alien's status byte is clear. If it is clear,
-                        \ then this object is not visible, so we skip the
-                        \ following three instructions and move on to the next
-                        \ alien
+ LDA alienStatus-30,Y   \ We copied the object status bytes for all four alien
+ BPL main9              \ objects into alienStatus in part 1, so this checks
+                        \ whether bit 7 of the alien's object status byte is
+                        \ clear
+                        \
+                        \ If it is clear, then this object is not visible, so
+                        \ we skip the following three instructions and move on
+                        \ to the next alien
 
  JSR MoveAliens         \ This alien is visible, so move it
 
- LDA L368F              \ If L368F is non-zero, jump to main10
- BNE main10
+ LDA hitTimer           \ If hitTimer is non-zero, then we only just hit an
+ BNE main10             \ alien, so jump to main10 to stop the rest of the
+                        \ aliens from moving (so when we hit an alien, only
+                        \ one of them moves at a time, for a certain period
+                        \ after the hit - so hitting an alien slows them all
+                        \ down for a while)
 
 .main9
 
  DEC objectId           \ Decrement the loop counter to the next alien
 
  LDA objectId           \ Loop back to process the next alien, until we have
- CMP #30                \ done the last one (object 30)
+ CMP #30                \ done all of them (from object 33 down to object 30)
  BCS main8
 
  BCC main11             \ Jump to main11 (this BCC is effectively a JMP as we
@@ -11916,7 +11932,8 @@ ORG CODE%
 
 .main10
 
- STA L368C              \ Store the value of L368F in L368C
+ STA previousHitTimer   \ Store the value of hitTimer in previousHitTimer, so
+                        \ we can access it later
 
  LDA #0                 \ Set firingStatus = 0 to indicate that there are no
  STA firingStatus       \ bullets are in the air
@@ -11983,8 +12000,8 @@ ORG CODE%
                         \ we are stationary and on the runway with the brakes
                         \ on)
 
- LDA #8                 \ Set themeStatus = 8 to enable the Theme
- STA themeStatus
+ LDA #8                 \ Set themeStatus = 8 to enable the Theme and initiate
+ STA themeStatus        \ a new wave of aliens
 
  JSR IndicatorT         \ Update the Theme indicator
 
@@ -12522,7 +12539,7 @@ ORG CODE%
  LDA lineId             \ creating
  STA linesToShow,X
 
- JMP plns4              \ Jump to plns4 to move onto the next line
+ JMP plns4              \ Jump to plns4 to move on to the next line
 
 .plns3
 
@@ -13321,29 +13338,34 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 6 of 11)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Pre-process feeding aliens (object group 30)
+\    Summary: Pre-process dormant aliens (object group 30)
 \
 \ ******************************************************************************
 
                         \ If we get here then the object ID is 30
 
  LDA themeStatus        \ If themeStatus is non-zero then either the Theme is
- BNE objc8              \ not enabled, or ??? so jump to objc8 to return from
-                        \ the subroutine
+ BNE objc8              \ not enabled, or it is enabled but we haven't yet added
+                        \ all eight aliens to the current wave, so jump to
+                        \ objc8 to return from the subroutine
 
  LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
- STA TC                 \ we work through all 8 items in this group
+ STA TC                 \ we work through all eight aliens in this group
+
+                        \ As we loop through the following, alienSlot gets
+                        \ incremented so we work our way through all the aliens
+                        \ in the slot
 
 .objc4
 
- LDX alienCounter       \ Fetch the current value of alienCounter, which
-                        \ contains the number of the alien to process, 0 to 7
+ LDX alienSlot          \ Fetch the contents of the slot for alien 30, so X now
+                        \ contains the number of the alien in that slot (0 to 7)
 
  LDA alienState,X       \ If the alien's state is non-zero, jump to objc11 via
- BNE objc7              \ objc7 to move onto the next alien in the group
+ BNE objc7              \ objc7 to move on to the next alien in the group, as
+                        \ the alien is feeding
 
- LDA L4208,X            \ Set A = the alien's L4208 entry, which gives the
-                        \ object ID for alien number alienCounter
+ LDA alienObjectId,X    \ Set A to the object ID for the alien
 
  BPL objc5              \ If A is positive, jump to objc5... which has no
                         \ effect, as that's the next instruction anyway
@@ -13357,14 +13379,16 @@ ORG CODE%
  LDA zObjectHi,X        \ Copy the alien's z-coordinate to the current object's
  STA zObjectHi,Y        \ x-coordinate
 
- JMP objc9              \ Jump to objc9 to process this object
+ JMP objc9              \ Jump to objc9 to process this object, after which we
+                        \ return to the above from part 10 to process the next
+                        \ alien (with alienSlot incremented)
 
 \ ******************************************************************************
 \
 \       Name: SetObjectCoords (Part 7 of 11)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Pre-process flying aliens (objects 31, 32 and 33)
+\    Summary: Pre-process feeding and flying aliens (objects 31, 32 and 33)
 \
 \ ******************************************************************************
 
@@ -13372,24 +13396,24 @@ ORG CODE%
 
                         \ If we get here then the object ID is 31, 32 or 33
 
- LDX alienCounter-30,Y  \ If the alien's alienCounter is negative, jump to
- BMI objc7              \ objc11 via objc7 to move onto the next alien in the
-                        \ group
+ LDX alienSlot-30,Y     \ If the slot for alien Y contains a negative number,
+ BMI objc7              \ then the slot is empty, so jump to objc11 via objc7
+                        \ to return from the subroutine
 
  LDA alienState,X       \ If the alien's state is >= 27, then it is heading for
  CMP #27                \ Acornsville, so jump to objc9 to process this object
  BCS objc9
 
- LDA L4208,X            \ Set A = the alien's L4208 entry, which gives the
-                        \ object ID for alien number alienCounter
+ LDA alienObjectId,X    \ Set A to the object ID for this alien
 
  BPL objc5              \ If A is positive, jump to objc5 to set the object
                         \ coordinates and process this object
 
 .objc7
 
- JMP objc11             \ Jump to objc11 to move onto the next alien in the
-                        \ group
+ JMP objc11             \ Jump to objc11 to move on to the next alien in the
+                        \ group (for object 30) or return from the subroutine
+                        \ (for objects 31 to 33)
 
 .objc8
 
@@ -13592,8 +13616,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 10 of 11)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Process the next item for object ID 30, which is a group of 8
-\             items
+\    Summary: Process the next dormant alien (object group 30)
 \
 \ ******************************************************************************
 
@@ -13602,11 +13625,11 @@ ORG CODE%
  CPY #30                \ If the object ID <> 30, jump to objc12 to return from
  BNE objc12             \ the subroutine
 
- LDA alienCounter       \ Increment alienCounter to iterate through values
- CLC                    \ 0 to 7 and round again
+ LDA alienSlot          \ Increment alienSlot to iterate through values 0 to 7
+ CLC                    \ and round again
  ADC #1
  AND #7
- STA alienCounter
+ STA alienSlot
 
  DEC TC                 \ Decrement the loop counter
 
@@ -14511,10 +14534,10 @@ ORG CODE%
  BEQ acrn5              \ then we have already reached the right longitude for
                         \ Acornsville, so jump to acrn5
 
- LDA xObjectLo+33,X     \ Subtract L0CF8 from the alien's x-coordinate, starting
- SEC                    \ with the low bytes, so the alien moves towards
- SBC L0CF8              \ Acornsville along the x-axis
- STA xObjectLo+33,X
+ LDA xObjectLo+33,X     \ Subtract alienSpeed from the alien's x-coordinate,
+ SEC                    \ starting with the low bytes, so the alien moves
+ SBC alienSpeed         \ towards Acornsville along the x-axis at the correct
+ STA xObjectLo+33,X     \ speed (which increases with later waves)
 
  BCS acrn4              \ If the subtraction of the low bytes underflowed,
  DEC xObjectHi+33,X     \ decrement the high byte
@@ -14555,8 +14578,9 @@ ORG CODE%
                         \ the alien's state is 28, it is on the final stage, so
                         \ that's what we do now
 
- LDA L368F              \ If L368F is non-zero, jump to acrn1 to return from
- BNE acrn1              \ the subroutine
+ LDA hitTimer           \ If hitTimer is non-zero, jump to acrn1 to return from
+ BNE acrn1              \ the subroutine, so the alien doesn't move if we
+                        \ recently hit one of its comrades
 
  LDA yObjectLo+33       \ Subtract 10 from the alien's yObject coordinate, so
  SEC                    \ that it descends towards the town, starting with the
@@ -15156,29 +15180,55 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateThemeStatus
+\       Name: SpawnAlien
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary:  If the Theme is enabled and the current wave does not yet have
+\              eight aliens in it, spawn a new alien
 \
 \ ------------------------------------------------------------------------------
+\
+\ This routine tries to add a new alien to the current wave. It sets the alien's
+\ state to 0, and chooses a random object ID from the range 16 to 29 for the
+\ alien. If this object ID is already in use by an alien that we've already
+\ spawned for this wave, then it aborts the spawning, otherwise it allocates the
+\ object ID to the new alien's alienObjectId entry and our new alien is spawned.
+\
+\ This means that aliens only ever spawn in the fixed locations for objects 16
+\ to 29, which can be seen in the xObjectLo table.
 \
 \ This is called SUTR in the original source code.
 \
 \ ******************************************************************************
 
-.UpdateThemeStatus
+.SpawnAlien
 
  LDX themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
  BMI upth3              \ enabled, so jump to upth3 to return from the
                         \ subroutine
 
- BEQ upth3              \ If themeStatus is zero, return from the subroutine
+ BEQ upth3              \ If themeStatus is zero, then we have already spawned
+                        \ all eight aliens in this wave, so return from the
+                        \ subroutine
 
  LDA onGround           \ If onGround is non-zero, then we are on the ground, so
  BNE upth3              \ jump to upth3 to return from the subroutine
 
- STA alienState-1,X     \ X is 1 to 8, so this updates the X-th alien's state
+                        \ If we get here, themeStatus is in the range 1 to 8 and
+                        \ we are not on the ground, so the Theme has started but
+                        \ we haven't yet spawned all eight aliens in the current
+                        \ wave, so we need to spawn another alien (specifically
+                        \ the alien whose ID is in themeStatus)
+
+ STA alienState-1,X     \ We know A is 0, as we just passed through a BNE above,
+                        \ so this zeroes the state of the alien whose number is
+                        \ in themeStatus, so it starts its feeding routine from
+                        \ scratch
+
+                        \ We now need to allocate an object ID to this alien,
+                        \ from the range 16 to 29, making sure we don't reuse
+                        \ any objects that are currently in use by other aliens
+                        \ in the wave
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
@@ -15189,31 +15239,46 @@ ORG CODE%
  CMP #14                \ If the random number is >= 14 (12.5% chance), jump to
  BCS upth3              \ upth3 to return from the subroutine
 
- ORA #16                \ Increase the random number to the range 16 to 29
+ ORA #16                \ Increase the random number to the range 16 to 29, to
+                        \ give us a potential object ID
 
- DEC themeStatus        \ Decrement the alien counter in themeStatus
+ DEC themeStatus        \ We are spawning a new alien, so decrement the counter
+                        \ in themeStatus so it reflects the number of aliens
+                        \ that still have to spawn to complete this wave
 
- LDX #8                 \ Set X to act as a loop counter, going from 8 down to
-                        \ themeStatus
+ LDX #8                 \ We now need to confirm that this object ID isn't being
+                        \ used by any other aliens that we've already spawned in
+                        \ this wave, so set X to act as a loop counter, going
+                        \ from 8 down to themeStatus (so this works through the
+                        \ IDs of the aliens that we have already spawned in this
+                        \ wave, as we start spawning at ID 8 and work our way
+                        \ down to 1)
 
 .upth1
 
  DEX                    \ Decrement the loop counter
 
- CPX themeStatus        \ If X <> themeStatus, jump to upth2
- BNE upth2
+ CPX themeStatus        \ If X <> themeStatus, jump to upth2 to check this
+ BNE upth2              \ alien's object ID
 
- STA L4208,X            \ X = themeStatus, so store the random number (in the
-                        \ range 16 to 29) in the X-th byte of L4208
+ STA alienObjectId,X    \ Otherwise we have run through all the other aliens in
+                        \ this wave and none of them are using this object ID,
+                        \ so set this as the object ID for this alien
 
  RTS                    \ Return from the subroutine
 
 .upth2
 
- CMP L4208,X            \ If the X-th byte of L4208 <> our random number, jump
- BNE upth1              \ back to upth1 to move on to the next alien
+ CMP alienObjectId,X    \ If the object ID for the X-th alien does not match our
+ BNE upth1              \ random number, then jump back to upth1 to move on to
+                        \ the next alien
 
- INC themeStatus        \ Increment the alien counter in themeStatus again
+ INC themeStatus        \ Otherwise we've found an alien that is already using
+                        \ the object ID we generated above, so we give up on
+                        \ spawning this alien, incrementing the alien counter
+                        \ in themeStatus so that it's back to the original value
+                        \ (so we can have another go at spawning an alien on the
+                        \ next call to SpawnAlien)
 
 .upth3
 
@@ -15221,132 +15286,216 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateAliens
+\       Name: UpdateAliens (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Update the aliens so they progress through their feeding or attack
+\             cycles
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ We start by incrementing the state of any non-dormant aliens, so they slowly
+\ move through their feeding or take-off cycles.
 \
 \ ******************************************************************************
 
 .UpdateAliens
 
- LDA mainLoopCounter
- AND #127
- BNE upal3
+ LDA mainLoopCounter    \ If the mainLoopCounter is a multiple of 128, jump to
+ AND #127               \ upal3 to move on to part 2 (so we only do this part
+ BNE upal3              \ on 2 out of every 256 iterations round the main loop)
 
- LDX #7
+ LDX #7                 \ We now progress the state of each alien, from alien 7
+                        \ down to alien 0, so set a loop counter in X
 
 .upal1
 
- LDA alienState,X
- BEQ upal2
+ LDA alienState,X       \ If the state of alien X is zero, jump to upal2
+ BEQ upal2              \ to move on to the next alien
 
- CMP #22
- BEQ upal2
+ CMP #22                \ If the state of alien X is 22, jump to upal2
+ BEQ upal2              \ to move on to the next alien
 
- CMP #27
- BCS upal2
+ CMP #27                \ If the state of alien X is 27 or higher, jump
+ BCS upal2              \ to upal2 to move on to the next alien
 
- INC alienState,X
+ INC alienState,X       \ If we get here then the state of alien X is not 0, 22
+                        \ or >= 27, i.e. it's 1-21 or 23-26, so increment the
+                        \ state to progress through the feeding and take-off
+                        \ stages
 
 .upal2
 
- DEX
- BPL upal1
+ DEX                    \ Decrement the alien number
+
+ BPL upal1              \ Loop back until we have progressed all eight aliens
+                        \ to the next state
+
+\ ******************************************************************************
+\
+\       Name: UpdateAliens (Part 2 of 4)
+\       Type: Subroutine
+\   Category: Theme
+\    Summary: Manage alien slots 31 and 32, and if there's a vacancy, wake up a
+\             dormant alien, move it into the slot and start its feeding cycle
+\
+\ ------------------------------------------------------------------------------
+\
+\ Look at alien slots 31 and 32, and for each one:
+\
+\   * If the alien in the slot is in state 24, remove it from the slot
+\
+\   * Otherwise check to see if the alien in the slot has been destroyed, and if
+\     so, empty the slot
+\
+\   * If the slot is not empty, search the aliens for one is dormant (i.e. in
+\     state 0), isn't already in the other slot, and hasn't been destroyed, and
+\     put that into the slot, bumping its state up to 1 and setting the size of
+\     the alien to the correct size for the first feeding stage
+\
+\ ******************************************************************************
 
 .upal3
 
- LDY #31                \ Loop through object IDs 31 and 32
+ LDY #31                \ We run the following outer loop twice, once for alien
+                        \ slot 31 and again for alien slot 32, so set a counter
+                        \ in Y to iterate through 31 and 32
 
 .upal4
 
- LDX alienCounter-30,Y  \ Points to alienCounter+1 and alienCounter+2
- BMI upal6
+ LDX alienSlot-30,Y     \ If alien slot Y contains a negative number, then the
+ BMI upal6              \ slot is already empty, so jump to upal6
 
- LDA alienState,X
- CMP #24
+ LDA alienState,X       \ If the state of the alien in slot Y is 24, then skip
+ CMP #24                \ the following two instructions
  BEQ upal5
 
- LDA L4208,X
- BPL upal11
+ LDA alienObjectId,X    \ If the object ID of the alien in slot Y is positive,
+ BPL upal11             \ jump to upal11 to move on to the next alien
 
 .upal5
 
- LDA #&FE
- STA alienCounter-30,Y
+                        \ If we get here then alien slot Y contains an alien
+                        \ (with ID 0 to 7), and either the alien's state is 24,
+                        \ or the alien's object ID is negative (which means it
+                        \ has been destroyed)
+
+ LDA #254               \ Clear out slot Y by setting it to a negative number
+ STA alienSlot-30,Y
 
 .upal6
 
- LDX #7
+                        \ We now run through aliens 7 to 0, until we find one
+                        \ with a positive object ID and a state of 0, and which
+                        \ is not already in the other slot. When we find it,
+                        \ we insert it into the slot, bump its state up to 1
+                        \ and stop looking
+
+ LDX #7                 \ Set a loop counter in X to contain the alien's number
 
 .upal7
 
- LDA L4208,X
- BMI upal10
+ LDA alienObjectId,X    \ If the alien's object ID is negative, jump to upal10
+ BMI upal10             \ to move on to the next alien, as this alien has been
+                        \ destroyed
 
- LDA alienState,X
- BNE upal10
+ LDA alienState,X       \ If the alien's state is non-zero, jump to upal10 to
+ BNE upal10             \ move on to the next alien
 
- CPY #31
- BEQ upal8
+ CPY #31                \ If we are processing alien slot 31 in the outer loop,
+ BEQ upal8              \ skip the following two instructions
 
- CPX alienCounter+1
- JMP upal9
+ CPX alienSlot+1        \ Compare the alien number with the contents of alien
+ JMP upal9              \ slot 31 and skip the following instruction
 
 .upal8
 
- CPX alienCounter+2
+ CPX alienSlot+2        \ Compare the alien number with the contents of alien
+                        \ slot 32
 
 .upal9
 
- BEQ upal10
+ BEQ upal10             \ If the current alien number matches the contents of
+                        \ slot Y, jump to upal10 to move on to the next alien
 
- TXA
- STA alienCounter-30,Y
- STX U
- LDA #&80
- JSR L302C
+ TXA                    \ Insert this alien number into alien slot Y
+ STA alienSlot-30,Y
 
- LDX U
- LDA #1
+ STX U                  \ Store the alien number in U
+
+ LDA #%10000000         \ Set bit 7 of A so the call to ResizeFeedingAlien sets
+                        \ the size of the alien to feeding stage 1
+
+ JSR ResizeFeedingAlien \ Resize the alien to feeding stage 1
+
+ LDX U                  \ Retrieve the alien number from U
+
+ LDA #1                 \ Set the alien's state to 1
  STA alienState,X
- BNE upal11
+
+ BNE upal11             \ Jump to upal11 to terminate the inner loop (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .upal10
 
- DEX
- BPL upal7
+ DEX                    \ Decrement the inner loop alien counter
+
+ BPL upal7              \ Loop back until we have worked our way through aliens
+                        \ 0 to 7
 
 .upal11
 
- INY
- CPY #33
- BNE upal4
+ INY                    \ Increment the alien counter
 
- LDX alienCounter-30,Y  \ Y = 33 at this point, so this points to alienToMove
- BMI upal12
+ CPY #33                \ Loop back until we have processed both alien slots 31
+ BNE upal4              \ and 32
 
- LDA L4208,X
- BPL upal15
+\ ******************************************************************************
+\
+\       Name: UpdateAliens (Part 3 of 4)
+\       Type: Subroutine
+\   Category: Theme
+\    Summary: If alien slot 33 is free and there's an alien waiting to take off,
+\             promote it into slot 33
+\
+\ ------------------------------------------------------------------------------
+\
+\ Look at alien slot 33, and:
+\
+\   * If the alien in slot 33 has been destroyed, clear the slot
+\
+\   * If slot 33 is clear, then check slots 31 and 32 to see if either of then
+\     contains an alien in state 22 (i.e. an alien that has finished feeding and
+\     is ready to take off), and if so, move that alien into slot 33
+\
+\ ******************************************************************************
 
- STA alienCounter-30,Y
+                        \ At this point Y = 33, so we now process alien slot 33
+
+ LDX alienSlot-30,Y     \ If alien slot 33 contains a negative number, then the
+ BMI upal12             \ slot is already empty, so jump to upal12 to move on to
+                        \ skip the following
+
+ LDA alienObjectId,X    \ If the object ID of the alien in slot 33 is positive,
+ BPL upal15             \ then we already have an alien moving towards the town,
+                        \ so jump to upal15 to skip the 
+
+ STA alienSlot-30,Y     \ Clear out slot 33 by setting it to a negative number
+                        \ (we know A is negative because we just passed through
+                        \ a BPL instruction)
 
 .upal12
 
- LDY #31                \ We now work our way through the aliens in objects 31,
-                        \ 32 and 33, so set a counter in Y for the object ID
+ LDY #31                \ We now work our way through alien slots 31 and 32,
+                        \ so set a counter in Y for the slot number
 
 .upal13
 
- LDX alienCounter-30,Y
- BMI upal14
+ LDX alienSlot-30,Y     \ If alien slot Y contains a negative number, then the
+ BMI upal14             \ slot is empty, so jump to upal14 to skip the following
 
- LDA alienState,X
- CMP #22
+ LDA alienState,X       \ If the alien's state is not 22, jump to upal14 to skip
+ CMP #22                \ the following
  BNE upal14
 
  STX alienToMove        \ Set this alien as the one to move towards Acornsville
@@ -15356,124 +15505,227 @@ ORG CODE%
  LDA #23                \ Set the alien's state to 23
  STA alienState,X
 
- BNE upal15              \ Jump to upal15 to exit the loop (this BNE is
+ BNE upal15             \ Jump to upal15 to exit the loop (this BNE is
                         \ effectively a JMP as A is never zero)
 
 .upal14
 
- INY
- CPY #33
+ INY                    \ Increment the counter to point to the next alien slot
+
+ CPY #33                \ Loop back until we have done alien slots 31 and 32
  BNE upal13
+
+\ ******************************************************************************
+\
+\       Name: UpdateAliens (Part 4 of 5)
+\       Type: Subroutine
+\   Category: Theme
+\    Summary: When an alien reaches the next feeding stage, double its size
+\
+\ ******************************************************************************
 
 .upal15
 
- LDA mainLoopCounter
- AND #127
- BNE upal19
+ LDA mainLoopCounter    \ If the mainLoopCounter is a multiple of 128, jump to
+ AND #127               \ upal19 to skip the following (so we only do this part
+ BNE upal19             \ on 2 out of every 256 iterations round the main loop,
+                        \ just like part 1)
 
- LDY #31
+ LDY #31                \ We now work our way through alien slots 31 and 32,
+                        \ so set a counter in Y for the slot number
 
 .upal16
 
- LDX alienCounter-30,Y
- BMI upal17
+ LDX alienSlot-30,Y     \ If alien slot Y contains a negative number, then the
+ BMI upal17             \ slot is empty, so jump to upal17 to move on to the
+                        \ next slot
 
- LDA alienState,X
- CMP #5
- BCC upal17
+ LDA alienState,X       \ If the alien's state is < 5, jump to upal17 to move on
+ CMP #5                 \ to the next slot, as the alien is still in feeding
+ BCC upal17             \ stage 1 and doesn't need resizing
 
- CMP #&14
- BCS upal17
+ CMP #20                \ If the alien's state is >= 20, jump to upal17 to move
+ BCS upal17             \ on to the next slot, as the alien has already reached
+                        \ feeding stage 4 and can't get any bigger
 
- AND #3
- BNE upal17
+ AND #%00000011         \ Check whether the feeding state is in the form
+ BNE upal17             \ %xxxxxx00, and if not, jump to upal17 to move on to
+                        \ the next slot
 
- JSR L302C
+                        \ If we get here, then the alien's state is between 6
+                        \ and 19, and matches %xxxxxx00, so it's one of these:
+                        \
+                        \   * 8  = %00001000
+                        \   * 12 = %00001100
+                        \   * 16 = %00010000
+                        \
+                        \ These are the points in the feeding stage when the
+                        \ size of the alien doubles
+
+ JSR ResizeFeedingAlien \ Double the size of the feeding alien to move it onto
+                        \ the next feeding stage
 
 .upal17
 
- INY
- CPY #33
+ INY                    \ Increment the counter to point to the next alien slot
+
+ CPY #33                \ Loop back until we have done alien slots 31 and 32
  BNE upal16
 
- LDX #7
+\ ******************************************************************************
+\
+\       Name: UpdateAliens (Part 5 of 5)
+\       Type: Subroutine
+\   Category: Theme
+\    Summary: Check whether the whole wave has been destroyed, and award points
+\             accordingly
+\
+\ ******************************************************************************
+
+ LDX #7                 \ We now work through all the aliens, from alien 7 down
+                        \ to alien 0, to check whether they have all been
+                        \ destroyed (i.e. whether they all have a negative
+                        \ object ID), so set a loop counter in X
 
 .upal18
 
- LDA L4208,X
- BPL upal19
+ LDA alienObjectId,X    \ If the X-th alien object ID is positive, then that
+ BPL upal19             \ alien is still at large, so jump to upal19 to return
+                        \ from the subroutine, as we haven't destroyed all eight
+                        \ aliens in this wave
 
- DEX
- BPL upal18
+ DEX                    \ Decrement the loop counter to point to the next alien
 
- LDA #8
- STA themeStatus
+ BPL upal18             \ Loop back until we have checked all eight aliens
+
+                        \ If we get here then all eight aliens have negative
+                        \ object IDs, so they have all been destroyed
+
+ LDA #8                 \ Set themeStatus = 8 to initiate a brand new wave of
+ STA themeStatus        \ aliens
 
  LDX #&00               \ Add 500 points to the score and make a beep by calling
  LDA #&50               \ ScorePoints with (X A) = &0050
  JSR ScorePoints        \
                         \ This is the score for completing a wave in the Theme
 
- LDA L0CF8
+ LDA alienSpeed         \ Set A = alienSpeed + 4
  CLC
  ADC #4
- CMP #&13
- BCS upal19
 
- STA L0CF8
+ CMP #19                \ If A >= 19, skip the following instruction, so
+ BCS upal19             \ alienSpeed has a maximum value of 22 (as alienSpeed
+                        \ starts with a value of 10, and increases by 4 with
+                        \ each wave until it is >= 19, which happens when it
+                        \ reaches 22)
+
+ STA alienSpeed         \ Update alienSpeed with the faster speed so the next
+                        \ wave has faster-moving aliens
 
 .upal19
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L302C
+\       Name: ResizeFeedingAlien
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Change the size of an alien so it grows bigger as it feeds
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine grows the alien in slot 31 or 32 by update the z-coordinates for
+\ the relevant object points for the triangular "back end" of the alien, by
+\ adding 16 to them. Because object points are stored with the scale factor in
+\ bits 4 to 7, each addition of 16 scales the coordinate up by 2, which doubles
+\ the size of the alien.
+\
+\ If bit 7 of A is set, then this resets the size to feeding stage 1, which has
+\ a scale factor of 32 (i.e. 2^2).
+\
+\ Arguments:
+\
+\   A                   Determines how the alien is resized:
+\
+\                         * If bit 7 is clear, double the size of the alien
+\
+\                         * If bit 7 is set, reset the alien to stage 1
+\
+\   Y                   The number of the alien slot to process (31 or 32),
+\                       which determines which object points have their
+\                       z-coordinates updated in the zObjectPoint table:
+\
+\                         * 184 to 186 for alien slot 31
+\
+\                         * 189 to 191 for alien slot 32
+\
+\ Returns:
+\
+\   zObjectPoint        Updated z-coordinates for the relevant object points,
+\                       scaled as required
+\
+\   Y                   Y is unchanged
 \
 \ ******************************************************************************
 
-.L302C
+.ResizeFeedingAlien
 
- STA K
- STY T
- LDX #3
- LDA #&BA
- CPY #31
+ STA K                  \ Store the A argument in K so we can retrieve it below
+
+ STY T                  \ Store Y in T so we can ensure it is unchanged by the
+                        \ routine
+
+ LDX #3                 \ We do the following loop three times, to update three
+                        \ object ID z-coordinates, so set a loop counter in X
+
+ LDA #186               \ Set A to the object point ID to update for slot 31, so
+                        \ we update points 184 to 186 in the loop
+
+ CPY #31                \ If the alien slot is 31, skip the following instruction
  BEQ L303A
 
- LDA #&BF
+ LDA #191               \ Set A to the object point ID to update for slot 32, so
+                        \ we update points 189 to 191 in the loop
 
 .L303A
 
- TAY
+ TAY                    \ Copy the object point ID we just set in A into Y, so
+                        \ we can use it as an index
 
 .L303B
 
- LDA zObjectPoint,Y
- CLC
- ADC #&10
- BIT K
- BPL L3049
+ LDA zObjectPoint,Y     \ Set A to the z-coordinate of the object point
 
- AND #&0F
- ORA #&20
+ CLC                    \ Add 16 to the z-coordinate, which doubles the scale
+ ADC #16                \ factor in bits 4 to 7
+
+ BIT K                  \ If bit 7 of K is clear, skip the following two
+ BPL L3049              \ instructions, as we are done
+
+ AND #15                \ Otherwise bit 7 of S is set, so we need to reset the
+ ORA #32                \ scale to feeding stage 1, which we can do like this:
+                        \
+                        \   z = 32 + (z + 16) MOD 16
+                        \
+                        \ This gives us a result iwith 32 in bits 4 to 7 (i.e. a
+                        \ scale factor of 2^2) while retaining the value in bits
+                        \ 0 to 3
 
 .L3049
 
- STA zObjectPoint,Y
- DEY
- DEX
- BPL L303B
+ STA zObjectPoint,Y     \ Store the updated z-coordinate
 
- LDY T
- RTS
+ DEY                    \ Decrement the object point ID
+
+ DEX                    \ Decrement the loop counter
+
+ BPL L303B              \ Loop back until we have updated three slots
+
+ LDY T                  \ Restore Y from T, so it doesn't get changed by the
+                        \ routine
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -15522,7 +15774,7 @@ ORG CODE%
 .mval3
 
  LDA zObjectPoint,X
- EOR #&70
+ EOR #%01110000
  LSR A
  LSR A
  LSR A
@@ -15544,10 +15796,13 @@ ORG CODE%
 
 .mval5
 
- STA L368D
+ STA feedingStage
+
  LDA #0
- STA L368F
+ STA hitTimer
+
  LDY objectId
+
  JSR L3129
 
  LDX #&E4
@@ -15743,7 +15998,7 @@ ORG CODE%
  BPL L3154
 
  LDA objectId
- STA L368E
+ STA hitObjectId
 
  TSX                    \ Remove two bytes from the top of the stack
  INX
@@ -15751,7 +16006,7 @@ ORG CODE%
  TXS
 
  LDA #27
- STA L368F
+ STA hitTimer
 
 .L3180
 
@@ -17460,7 +17715,7 @@ ORG CODE%
 \       Name: zObjectPoint
 \       Type: Variable
 \   Category: 3D geometry
-\    Summary: Scaled y-coordinates of the points that make up objects, relative
+\    Summary: Scaled z-coordinates of the points that make up objects, relative
 \             to the object's anchor point
 \
 \ ------------------------------------------------------------------------------
@@ -17724,33 +17979,33 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L368C
+\       Name: previousHitTimer
 \       Type: Variable
 \   Category: Theme
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L368C
+.previousHitTimer
 
  EQUB &48
 
 \ ******************************************************************************
 \
-\       Name: L368D
+\       Name: feedingStage
 \       Type: Variable
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L368D
+.feedingStage
 
  EQUB &49
 
 \ ******************************************************************************
 \
-\       Name: L368E
+\       Name: hitObjectId
 \       Type: Variable
 \   Category: Bullets
 \    Summary: 
@@ -17761,28 +18016,29 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L368E
+.hitObjectId
 
  EQUB &3D
 
 \ ******************************************************************************
 \
-\       Name: L368F
+\       Name: hitTimer
 \       Type: Variable
 \   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
+\ The hit timer starts at 27 when we make a hit. While it is non-zero, any
+\ attacking aliens stop moving towards the town.
+\
 \ This is called EPLO in the original source.
 \
 \ ******************************************************************************
 
-.L368F
+.hitTimer
 
  EQUB &26               \ Zeroed in ResetVariables
-                        \
-                        \ Can't fire guns if this or firingStatus are non-zero
 
 \ ******************************************************************************
 \
@@ -19410,18 +19666,41 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: alienCounter
+\       Name: alienSlot
 \       Type: Variable
 \   Category: Theme
-\    Summary: 
+\    Summary: Slots for up to three aliens that are ready to start moving
+\             towards the town
+\
+\ ------------------------------------------------------------------------------
+\
+\ Each slot contains the following:
+\
+\   * If the slot contains a negative number, then the slot is empty
+\
+\   * Otherwise the slot contains the number of the alien in that slot (0 to 7)
+\
+\ Each slot is associated with one of the alien objects: the first slot is for
+\ object ID 30, the second for object ID 31, and the third for object ID 32.
+\
+\ We refer to these as slots 30, 31 and 32. Note that each alien in a slot has
+\ its own object associated with it (via the alienObjectId table) that is used
+\ for displaying the alien, but when an alien finishes feeding and starts to
+\ get ready for flying, it is also associated with the special alien objects
+\ 30 to 33.
+\
+\ Slot 30 contains dormant aliens, slots 31 and 32 contain feeding aliens and
+\ those that are waiting for slot 33 to free up, and slot 33 (at alienToMove)
+\ contains the alien that's moving towards the town (only one alien can attack
+\ at any one time).
 \
 \ ******************************************************************************
 
-.alienCounter
+.alienSlot
 
- EQUB &6C               \ Counter for alien 30 ???
- EQUB &6B               \ Counter for alien 31 ???
- EQUB &6A               \ Counter for alien 32 ???
+ EQUB &6C               \ The alien number associated with object ID 30
+ EQUB &6B               \ The alien number associated with object ID 31
+ EQUB &6A               \ The alien number associated with object ID 32
                         \
                         \ Zeroed in ResetVariables
 
@@ -19433,11 +19712,24 @@ NEXT
 \    Summary: The number of the alien to move towards Acornsville in this
 \             iteration of the main loop
 \
+\ ------------------------------------------------------------------------------
+\
+\ This slot contains the following:
+\
+\   * If the slot contains a negative number, then the slot is empty
+\
+\   * Otherwise the slot contains the number of the alien in that slot (0 to 7)
+\
+\ This slot is reserved for the alien that is moving towards the town, which is
+\ the only alien shown on the radar.
+\
 \ ******************************************************************************
 
 .alienToMove
 
- EQUB &69               \ Zeroed in ResetVariables, counter for alien 33?
+ EQUB &69               \ The alien number associated with object ID 33
+                        \
+                        \ Zeroed in ResetVariables
 
 \ ******************************************************************************
 \
@@ -19469,18 +19761,23 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L4208
+\       Name: alienObjectId
 \       Type: Variable
 \   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
 \
+\ Contains the object ID for each of the eight aliens. A negative entry denotes
+\ that the alien has been destroyed, a positive entry denotes that the alien is
+\ still around, with the entry containing the object ID we're using for that
+\ alien.
+\
 \ This is called FLDPTR in the original source code.
 \
 \ ******************************************************************************
 
-.L4208
+.alienObjectId
 
  EQUB &65, &64          \ Zeroed in ResetVariables
  EQUB &62, &61
@@ -19492,13 +19789,50 @@ NEXT
 \       Name: alienState
 \       Type: Variable
 \   Category: Theme
-\    Summary: The aliens' state bytes
+\    Summary: The state of each of the eight aliens
 \
 \ ------------------------------------------------------------------------------
 \
-\ 23 = ???
-\ 27 = flying to Acornsville
-\ 28 = descending towards Acornsville
+\ All eight aliens start in the dormant state (state 0). They effectively live
+\ in alien slot 30, which uses an object group to manage all the alien objects.
+\
+\ Dormant aliens are promoted to state 1 in the UpdateAliens routine. One alien
+\ will be promoted and will start feeding once there is a vacancy in one of the
+\ alien slots 31 and 32. A vacancy is produced when an alien is promoted into
+\ alien slot 33 (preparing to take off), or when a feeding alien is destroyed.
+\
+\ Once an alien is in state 1, the state gets incremented in the UpdateAliens
+\ routine on 2 of every 256 main loop iterations, until it reaches 22.
+\
+\ An alien is only promoted into state 22 if slot 33 becomes vacant, at which
+\ point it is bumped up to state 23 (preparing to take off).
+\
+\ Once an alien is in state 23, the state gets incremented in the UpdateAliens
+\ routine on 2 of every 256 main loop iterations, until it reaches 27, at which
+\ point it will take off and head for the town (see the AlienInAcornsville
+\ routine), before eventually descending to the town at state 28.
+\
+\    0      Dormant
+\
+\    1-7    Feeding stage 1
+\
+\    8-11   Feeding stage 2
+\
+\    12-15  Feeding stage 3
+\
+\    16-21  Feeding stage 4
+\
+\    22     The alien has finished feeding and is ready to move to the next
+\           stage (preparing to take off). As there can be only one alien
+\           flying towards the town at any one time, we have to wait for the
+\           attack slot (slot 33) to become vacant, at which point an alien in
+\           this state will be put into slot 33, and its state bumped up to 23
+\
+\    23-26  Preparing to take off
+\
+\    27     Flying towards Acornsville
+\
+\    28     Descending towards Acornsville for the final attack
 \
 \ ******************************************************************************
 
@@ -19950,41 +20284,41 @@ NEXT
 \
 \ This is called XALO in the original source code.
 \
-\ Object ID  0 has coordinate (  8227, 17731, 11856 )
-\ Object ID  1 has coordinate ( 50790,     0, 17500 )
-\ Object ID  2 has coordinate ( 19224,     0, 34406 )
-\ Object ID  3 has coordinate ( 17885,     0, 25395 )
-\ Object ID  4 has coordinate ( 21299,     0, 49152 )
-\ Object ID  5 has coordinate ( 36591,     0, 49425 )
-\ Object ID  6 has coordinate (     0,     0,     0 )
-\ Object ID  7 has coordinate (     0,     0,     0 )
-\ Object ID  8 has coordinate (     0,     0,     0 )
-\ Object ID  9 has coordinate (     0,     0,     0 )
+\ Object ID  0 has coordinate (  8227, 17731, 11856 ) - Dynamic, horizon
+\ Object ID  1 has coordinate ( 50790,     0, 17500 ) - Runway
+\ Object ID  2 has coordinate ( 19224,     0, 34406 ) - Suspension bridge
+\ Object ID  3 has coordinate ( 17885,     0, 25395 ) - Lake/river
+\ Object ID  4 has coordinate ( 21299,     0, 49152 ) - Lake/river
+\ Object ID  5 has coordinate ( 36591,     0, 49425 ) - Lake/river
+\ Object ID  6 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
+\ Object ID  7 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
+\ Object ID  8 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
+\ Object ID  9 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
 \ Object ID 10 has coordinate ( 19791,  3367, 23086 )
 \ Object ID 11 has coordinate ( 20568,  1824, 21107 )
-\ Object ID 12 has coordinate (     0,     0,     0 )
-\ Object ID 13 has coordinate (     0,     0,     0 )
-\ Object ID 14 has coordinate (     0,     0,     0 )
-\ Object ID 15 has coordinate (     0,     0,     0 )
-\ Object ID 16 has coordinate ( 36590,     0, 60070 )
-\ Object ID 17 has coordinate ( 60074,     0, 54610 )
-\ Object ID 18 has coordinate (  2184,     0, 25941 )
-\ Object ID 19 has coordinate (  9557,     0, 59801 )
-\ Object ID 20 has coordinate ( 22391,     0, 58709 )
-\ Object ID 21 has coordinate (  4915,     0, 43964 )
-\ Object ID 22 has coordinate ( 34679,     0, 38230 )
-\ Object ID 23 has coordinate ( 58163,     0, 39321 )
-\ Object ID 24 has coordinate ( 34406,     0, 19960 )
-\ Object ID 25 has coordinate ( 55432,     0,  1911 )
-\ Object ID 26 has coordinate ( 60894,     0, 16657 )
-\ Object ID 27 has coordinate ( 18022,     0, 11469 )
-\ Object ID 28 has coordinate ( 34406,     0,  1365 )
-\ Object ID 29 has coordinate ( 46421,     0, 29764 )
-\ Object ID 30 has coordinate (     0,     0,     0 )
-\ Object ID 31 has coordinate (     0,     0,     0 )
-\ Object ID 32 has coordinate (     0,     0,     0 )
-\ Object ID 33 has coordinate (     0,     0,     0 )
-\ Object ID 34 has coordinate (  1088,     0,   832 )
+\ Object ID 12 has coordinate (     0,     0,     0 ) - Dynamic, bullets
+\ Object ID 13 has coordinate (     0,     0,     0 ) - Dynamic, bullets
+\ Object ID 14 has coordinate (     0,     0,     0 ) - Dynamic, bullets
+\ Object ID 15 has coordinate (     0,     0,     0 ) - Dynamic, bullets
+\ Object ID 16 has coordinate ( 36590,     0, 60070 ) - Alien spawning site
+\ Object ID 17 has coordinate ( 60074,     0, 54610 ) - Alien spawning site
+\ Object ID 18 has coordinate (  2184,     0, 25941 ) - Alien spawning site
+\ Object ID 19 has coordinate (  9557,     0, 59801 ) - Alien spawning site
+\ Object ID 20 has coordinate ( 22391,     0, 58709 ) - Alien spawning site
+\ Object ID 21 has coordinate (  4915,     0, 43964 ) - Alien spawning site
+\ Object ID 22 has coordinate ( 34679,     0, 38230 ) - Alien spawning site
+\ Object ID 23 has coordinate ( 58163,     0, 39321 ) - Alien spawning site
+\ Object ID 24 has coordinate ( 34406,     0, 19960 ) - Alien spawning site
+\ Object ID 25 has coordinate ( 55432,     0,  1911 ) - Alien spawning site
+\ Object ID 26 has coordinate ( 60894,     0, 16657 ) - Alien spawning site
+\ Object ID 27 has coordinate ( 18022,     0, 11469 ) - Alien spawning site
+\ Object ID 28 has coordinate ( 34406,     0,  1365 ) - Alien spawning site
+\ Object ID 29 has coordinate ( 46421,     0, 29764 ) - Alien spawning site
+\ Object ID 30 has coordinate (     0,     0,     0 ) - Dynamic, dormant alien
+\ Object ID 31 has coordinate (     0,     0,     0 ) - Dynamic, feeding alien
+\ Object ID 32 has coordinate (     0,     0,     0 ) - Dynamic, feeding alien
+\ Object ID 33 has coordinate (     0,     0,     0 ) - Dynamic, attacking alien
+\ Object ID 34 has coordinate (  1088,     0,   832 ) - Acornsville
 \ Object ID 35 has coordinate ( 16675, 14371, 16672 )
 \ Object ID 36 has coordinate (  8243,  3380, 14880 )
 \ Object ID 37 has coordinate ( 21297,  1850, 19488 )
@@ -22044,41 +22378,57 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   Y                   
 \
 \ ******************************************************************************
 
 .CheckAlienHit
 
- LDA L368F
- BEQ L4D19
+ LDA hitTimer           \ If hitTimer is zero, jump to ahit8 via ahit6 to return
+ BEQ ahit6              \ from the subroutine
 
- LDA #2                 \ Make sound #2, the sound of gunfire hitting its target
- JSR MakeSound          \ ???
+ LDA #2                 \ Make sound #2, the sound of an alien being destroyed
+ JSR MakeSound
 
- LDX L368E
+ LDX hitObjectId        \ Set X to the object ID of the object we hit
+
  LDY zObjectPoint+202,X
+
  LDA zObjectPoint+197,X
  STA U
- LDX #2
- CPX L368D
- BCS L4CCF
 
- LDX L368D
+ LDX #2                 \ Set X = 2 to act as a shift counter in the following
+                        \ loop
 
-.L4CCF
+ CPX feedingStage       \ If X >= feedingStage, i.e. feedingStage <= 2, then
+ BCS ahit1              \ skip the following instruction
 
- LDA #&FF
+ LDX feedingStage       \ Set X to the feeding stage, so X now contains the
+                        \ feeding stage, capped to a maximum value of 2
 
-.L4CD1
+.ahit1
 
- LSR A
- DEX
- BPL L4CD1
+ LDA #%11111111         \ We now take %11111111 and shift it right by X + 1
+                        \ places
 
- STA P
+.ahit2
 
-.L4CD7
+ LSR A                  \ Shift X right by one place
+
+ DEX                    \ Decrement the shift counter
+
+ BPL ahit2              \ Loop back until we have shifted right by X + 1 places
+
+ STA P                  \ Store the result in P, so we get the following:
+                        \
+                        \   * P = %01111111 if feedingStage = 0
+                        \   * P = %00111111 if feedingStage = 1
+                        \   * P = %00011111 if feedingStage = 2
+                        \   * P = %00011111 if feedingStage = 3
+
+.ahit3
 
  LDX #LO(xTemp2Lo)      \ Set X so the call to CopyPointToWork copies the
                         \ coordinates to (xTemp2, yTemp2, zTemp2)
@@ -22087,9 +22437,10 @@ NEXT
                         \ (xTemp2, yTemp2, zTemp2)
 
  STY T
+
  LDY #2
 
-.L4CE0
+.ahit4
 
  LDA #0
  STA R
@@ -22099,12 +22450,12 @@ NEXT
  LDA randomNumbers+1,X
  LSR A
  AND P
- BCC L4CF4
+ BCC ahit5
 
  DEC R
  EOR #&FF
 
-.L4CF4
+.ahit5
 
  ADC xTemp2Lo,Y
  STA xTemp2Lo,Y
@@ -22112,7 +22463,7 @@ NEXT
  ADC xTemp2Hi,Y
  STA xTemp2Hi,Y
  DEY
- BPL L4CE0
+ BPL ahit4
 
  LDY T                  \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point T
@@ -22125,35 +22476,38 @@ NEXT
 
  DEY
  CPY U
- BCS L4CD7
+ BCS ahit3
 
- DEC L368F
- BNE L4D19
+ DEC hitTimer
+ BNE ahit6
 
  JSR ScoreHitPoints
 
-.L4D19
+.ahit6
 
- LDA L368F
- CMP #26
- BNE L4D34
+ LDA hitTimer           \ If hitTimer <> 26, jump to ahit8 to return from the
+ CMP #26                \ subroutine
+ BNE ahit8
+
+                        \ If we get here then hitTimer = 26
 
  LDA zTemp2Hi
- LDX L368E
+
+ LDX hitObjectId
  CPX #33
- BNE L4D31
+ BNE ahit7
 
  SEC
  SBC #8
- BPL L4D31
+ BPL ahit7
 
  LDA #0
 
-.L4D31
+.ahit7
 
- STA L368C
+ STA previousHitTimer
 
-.L4D34
+.ahit8
 
  RTS
 
@@ -22162,59 +22516,74 @@ NEXT
 \       Name: ScoreHitPoints
 \       Type: Subroutine
 \   Category: Scoring
-\    Summary: Award points for destroying aliens
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Award points for destroying an alien, and remove the alien from
+\             its slot and the radar, if required
 \
 \ ******************************************************************************
 
 .ScoreHitPoints
 
- LDA #&FF
- LDY L368E
- CPY #30
- BNE L4D44
+ LDA #255               \ Set A to a negative number so we can clear out the
+                        \ alien slot below
 
- LDX alienCounter
- JMP L4D4A
+ LDY hitObjectId        \ Set Y to the ID of the object we just hit with our
+                        \ bullets
 
-.L4D44
+ CPY #30                \ If Y is not 30, then jump to hitp1 to clear out the
+ BNE hitp1              \ slot
 
- LDX alienCounter-30,Y
- STA alienCounter-30,Y
+ LDX alienSlot          \ Set X to the number of the alien in slot 30
 
-.L4D4A
+ JMP hitp2              \ Jump to hitp2 to skip the following
 
- STA L4208,X
- CPY #33
- BNE L4D58
+.hitp1
 
- JSR ResetRadar
+                        \ If we get here then we just hit an alien in slot 31
+                        \ to 33
 
- LDA #3                 \ Set A = 3 and jump down to L4D68 to award 30 points
- BNE L4D68
+ LDX alienSlot-30,Y     \ Set X to the number of the alien in slot Y
 
-.L4D58
+ STA alienSlot-30,Y     \ Store A (which is negative) in slot Y to empty the
+                        \ slot
 
- LDX L368D
- CPY #31
- BCS L4D65
+.hitp2
 
- LDA dormantAlienScore  \ Fetch the score for killing a dormant alien (400
- JMP L4D68              \ points) and jump down to L4D68 to increase the score
+ STA alienObjectId,X    \ Reset the object ID associated with the alien that
+                        \ we just hit (i.e. the one in the range 16 to 29)
 
-.L4D65
+ CPY #33                \ If Y is not 33, then jump to hitp3 as only alien 33
+ BNE hitp3              \ appears on the radar
 
- LDA alienScore,X
+ JSR ResetRadar         \ Remove the alien from the radar
 
-.L4D68
+ LDA #3                 \ Set A = 3 and jump down to hitp5 to award 30 points
+ BNE hitp5              \ for destroying the flying alien (this BNE is
+                        \ effectively a JMP as A is never zero)
+
+.hitp3
+
+ LDX feedingStage       \ Set X to feedingStage, the feeding stage of the alien
+                        \ we just hit (if it isn't dormant or flying)
+
+ CPY #31                \ If Y >= 31, i.e. this is not alien 30, then jump to
+ BCS hitp4              \ hitp4 to award a score based on the alien's feeding
+                        \ stage
+
+ LDA dormantAlienScore  \ This is alien 30, which is always dormant, so fetch
+ JMP hitp5              \ the score for killing a dormant alien (400 points)
+                        \ and jump down to hitp5 to increase the score
+
+.hitp4
+
+ LDA alienScore,X       \ Fetch the score for killing an alien in the feeding
+                        \ state in A (0 = fattest alien, 3 = slimmest alien)
+
+.hitp5
 
  LDX #0                 \ Add A * 10 points to the score by calling UpdateScore
  JSR UpdateScore        \ with (X A) = (0 A) = A
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -22645,7 +23014,7 @@ NEXT
 
  BPL ToggleJoystick     \ If bit 7 of the new value of gunSights is clear, then
                         \ the sights are no longer being shown, so jump down to
-                        \ ToggleJoystick to move onto the next routine
+                        \ ToggleJoystick to move on to the next routine
 
                         \ If we get here, then bit 7 of gunSights is set, so we
                         \ need to draw the sights
@@ -22836,7 +23205,7 @@ NEXT
  EQUB &03, &00          \ Second parameter (soundData+10) gets changed in the
  EQUB &FF, &00          \ ProcessVolumeKeys routine to alter the volume
 
- EQUB &13, &00          \ Sound #2: Gunfire hitting ??? (SOUND &13, 2, 220, 2)
+ EQUB &13, &00          \ Sound #2: Alien destroyed (SOUND &13, 2, 220, 2)
  EQUB &02, &00          \
  EQUB &DC, &00          \ Uses sound envelope 2
  EQUB &02, &00
@@ -23698,7 +24067,7 @@ NEXT
 
  JSR L5408
 
- LDA L368F
+ LDA hitTimer
  BEQ L5081
 
  LDX #&6A
@@ -23710,7 +24079,8 @@ NEXT
  TAY
  LDA randomNumbers+1,Y
  STA P
- LDA L368C
+
+ LDA previousHitTimer
  CMP #&10
  BCS L5081
 
