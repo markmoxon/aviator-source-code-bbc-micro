@@ -24484,49 +24484,94 @@ NEXT
  JSR ShowUpsideDownBar  \ Show or hide the bar in the artificial horizon that
                         \ shows whether the plane is upside down
 
- LDA fuelLevel
- BEQ L51D1
+ LDA fuelLevel          \ If the fuel tank is empty, jump to L51D1 to turn the
+ BEQ L51D1              \ engine off, as we just ran out of fuel
 
- LDA engineStatus
- BEQ L51D6
+ LDA engineStatus       \ If the engine is off, jump to L51D6 to return from
+ BEQ L51D6              \ the subroutine
 
- LDA thrustHi
+                        \ Otherwise the engine is on and we are not yet out of
+                        \ fuel, so we need to calculate the correct consumption
+                        \ rate and deplete the fuel supplies
+
+ LDA thrustHi           \ Set (R A) = (thrustHi thrustLo)
  STA R
  LDA thrustLo
- LDX #3
+
+ LDX #3                 \ We now shift (R A) right by four places, so set a
+                        \ shift counter in X
 
 .L51AD
 
- LSR R
+ LSR R                  \ Set (R A) = (R A) / 2
  ROR A
- DEX
- BPL L51AD
 
- CLC
- ADC L3690
- STA L3690
- BCC L51D6
+ DEX                    \ Decrement the shift counter
 
- LDA #4
- CLC
- ADC L3691
- STA L3691
- BCC L51D6
+ BPL L51AD              \ Loop back until we have shifted (R A) four times
 
- LDA fuelLevel
- BEQ L51D1
+                        \ By now we have:
+                        \
+                        \   (R A) = (thrustHi thrustLo) / 16
+                        \
+                        \ and because the maximum value of (thrustHi thrustLo)
+                        \ is 1280, we know R is 0, so:
+                        \
+                        \   A = (thrustHi thrustLo) / 16
+                        \
+                        \ We use this value of A as the amount of fuel used in
+                        \ this iteration of the main loop, so the higher the
+                        \ thrust, the more fuel is used
+                        \
+                        \ That said, we don't just take this off the fuel level
+                        \ in fuelLevel - instead, we keep track of the fuel
+                        \ used in two bytes, fuelUsedLo and fuelUsedHi
+                        \
+                        \ We add the fuel used in A to fuelUsedLo, and when
+                        \ we've used 256 units and fuelLevelLo wraps around
+                        \ from 255 to 0, we then add 4 to fuelUsedHi, and when
+                        \ we've filled up fuelUsedHi and it wraps from 255 to 0,
+                        \ that's when we take one unit of fuel off the main
+                        \ fuel level in fuelLevel
+                        \
+                        \ In summary, to use up one unit of fuelLevel, we have
+                        \ to use up 256 * 64 = 16384 units from the above
+                        \ calculation
 
- DEC fuelLevel
- BNE L51D6
+ CLC                    \ Set fuelUsedLo = fuelUsedLo + A
+ ADC fuelUsedLo
+ STA fuelUsedLo
+
+ BCC L51D6              \ If the addition didn't overflow, jump to L51D6
+                        \ to return from the subroutine
+
+ LDA #4                 \ The addition overflowed, so set:
+ CLC                    \
+ ADC fuelUsedHi         \   fuelUsedHi = fuelUsedHi + 4
+ STA fuelUsedHi
+
+ BCC L51D6              \ If the addition didn't overflow, jump to L51D6
+                        \ to return from the subroutine
+
+                        \ The addition overflowed, so it's time to reduce our
+                        \ fuel level
+
+ LDA fuelLevel          \ If the fuel tank is already empty, jump to L51D1 to
+ BEQ L51D1              \ turn the engine off, as we just ran out of fuel
+
+ DEC fuelLevel          \ Otherwise decrement the fuel level by 1
+
+ BNE L51D6              \ If the fuel tank is still not empty, jump to L51D6 to
+                        \ return from the subroutine
 
 .L51D1
 
- LDA #0                 \ Turn the engine off
+ LDA #0                 \ The fuel tank is emptry, so turn the engine off
  JSR SetEngine
 
 .L51D6
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
