@@ -11836,13 +11836,14 @@ ORG CODE%
  JSR UpdateLinesToShow  \ Update the linesToShow list, moving any lines that
                         \ aren't visible into the linesToHide list
 
- JSR CheckAlienHit      \ Check to see if we have hit an alien with our bullets
+ JSR ExplodeAlien       \ If an alien has been hit, process its explosion, with
+                        \ all the turbulence that entails
 
  LDY #2                 \ Check to see if we are flying under the suspension
- JSR CheckFlyingSkills  \ bridge
+ JSR CheckFlyingSkills  \ bridge and award points if we are
 
  LDY #34                \ Check to see if we are flying down the main street of
- JSR CheckFlyingSkills  \ Acornsville
+ JSR CheckFlyingSkills  \ Acornsville and award points if we are
 
  INC mainLoopCounter    \ Increment the main loop counter
 
@@ -11910,7 +11911,8 @@ ORG CODE%
                         \ we skip the following three instructions and move on
                         \ to the next alien
 
- JSR MoveAliens         \ This alien is visible, so move it
+ JSR CheckIfAlienIsHit  \ This alien is visible, so check to see whether it has
+                        \ been hit, and if so, initiate the explosion
 
  LDA hitTimer           \ If hitTimer is non-zero, then we only just hit an
  BNE main10             \ alien, so jump to main10 to stop the rest of the
@@ -15424,9 +15426,9 @@ ORG CODE%
  STX U                  \ Store the alien number in U
 
  LDA #%10000000         \ Set bit 7 of A so the call to ResizeFeedingAlien sets
-                        \ the size of the alien to feeding stage 1
+                        \ the size of the alien to the first feeding stage
 
- JSR ResizeFeedingAlien \ Resize the alien to feeding stage 1
+ JSR ResizeFeedingAlien \ Resize the alien to the first feeding stage
 
  LDX U                  \ Retrieve the alien number from U
 
@@ -15546,7 +15548,7 @@ ORG CODE%
 
  CMP #20                \ If the alien's state is >= 20, jump to upal17 to move
  BCS upal17             \ on to the next slot, as the alien has already reached
-                        \ feeding stage 4 and can't get any bigger
+                        \ the last feeding stage and can't get any bigger
 
  AND #%00000011         \ Check whether the feeding state is in the form
  BNE upal17             \ %xxxxxx00, and if not, jump to upal17 to move on to
@@ -15635,14 +15637,13 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine grows the alien in slot 31 or 32 by update the z-coordinates for
-\ the relevant object points for the triangular "back end" of the alien, by
-\ adding 16 to them. Because object points are stored with the scale factor in
-\ bits 4 to 7, each addition of 16 scales the coordinate up by 2, which doubles
-\ the size of the alien.
+\ This routine grows the alien in slot 31 or 32 by scaling the z-coordinates for
+\ the alien's four object points. Because object points are stored with the
+\ scale factor in bits 4 to 7, we can double the length of the alien by adding 16
+\ to each z-coordinate (as the alien object's "nose" points along the z-axis).
 \
-\ If bit 7 of A is set, then this resets the size to feeding stage 1, which has
-\ a scale factor of 32 (i.e. 2^2).
+\ If bit 7 of A is set, then this routine resets the size to the smallest feeding
+\ stage, which has a scale factor of 32 (i.e. 2^2).
 \
 \ Arguments:
 \
@@ -15656,9 +15657,9 @@ ORG CODE%
 \                       which determines which object points have their
 \                       z-coordinates updated in the zObjectPoint table:
 \
-\                         * 184 to 186 for alien slot 31
+\                         * 183 to 186 for alien slot 31
 \
-\                         * 189 to 191 for alien slot 32
+\                         * 188 to 191 for alien slot 32
 \
 \ Returns:
 \
@@ -15676,17 +15677,18 @@ ORG CODE%
  STY T                  \ Store Y in T so we can ensure it is unchanged by the
                         \ routine
 
- LDX #3                 \ We do the following loop three times, to update three
-                        \ object ID z-coordinates, so set a loop counter in X
+ LDX #3                 \ We do the following loop four times, to update the
+                        \ alien's four object ID z-coordinates, so set a loop
+                        \ counter in X
 
  LDA #186               \ Set A to the object point ID to update for slot 31, so
-                        \ we update points 184 to 186 in the loop
+                        \ we update points 183 to 186 in the loop
 
  CPY #31                \ If the alien slot is 31, skip the following instruction
  BEQ L303A
 
  LDA #191               \ Set A to the object point ID to update for slot 32, so
-                        \ we update points 189 to 191 in the loop
+                        \ we update points 188 to 191 in the loop
 
 .L303A
 
@@ -15704,7 +15706,8 @@ ORG CODE%
  BPL L3049              \ instructions, as we are done
 
  AND #15                \ Otherwise bit 7 of S is set, so we need to reset the
- ORA #32                \ scale to feeding stage 1, which we can do like this:
+ ORA #32                \ scale to the first feeding stage, which we can do like
+                        \ this:
                         \
                         \   z = 32 + (z + 16) MOD 16
                         \
@@ -15729,95 +15732,213 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: MoveAliens
+\       Name: CheckIfAlienIsHit (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Extract the alien's feeding stage
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   Y                   The object ID of the alien to move (30 to 33)
+\
+\   objectId            The object ID of the alien to move (30 to 33)
 \
 \ ******************************************************************************
 
-.MoveAliens
+.CheckIfAlienIsHit
 
- LDA #&7D
+ LDA #%01111101         \ Set QQ = %01111101
  STA QQ
- LDA #&40
+
+ LDA #%01000000         \ Set Q = %01000000
  STA Q
- LDA #&A0
+
+ LDA #%10100000         \ Set RR = %10100000
  STA RR
- STA PP
- CPY #31
+
+ STA PP                 \ Set PP = %10100000
+
+ CPY #31                \ If Y >= 31, jump to mval1
  BCS mval1
 
- LDA #4
- LDX #3
- BNE mval4
+                        \ If we get here then Y = 30, so this is a dormant alien
+
+ LDA #4                 \ Set A = 4, to set as the feeding stage in mval5 (stage
+                        \ 4 is the dormant phase)
+
+ LDX #3                 \ Set X = 3, so mval4 shifts right by 3 places
+
+ BNE mval4              \ Jump to mval4 (this BNE is effectively a JMP as X is
+                        \ never zero)
 
 .mval1
 
- LDA #0
- CPY #32
+ LDA #0                 \ Set A = 0, so if this is the flying alien (Y = 33), we
+                        \ set the feeding stage to 0 in mval5 (stage 0 is for
+                        \ fully fed aliens, and only fully fed aliens can fly)
+
+ CPY #32                \ If Y >= 32, jump to mval2
  BCS mval2
 
- LDX #&B7
- BNE mval3
+                        \ If we get here then Y = 31, so this is a feeding alien
+
+ LDX #183               \ Set X = 183, to use as the object point ID
+
+ BNE mval3              \ Jump to mval3 (this BNE is effectively a JMP as X is
+                        \ never zero)
 
 .mval2
 
- BNE mval5
+ BNE mval5              \ If Y <> 32, then Y = 33 and this is the flying alien,
+                        \ so jump to mval5 to store the feeding stage and move
+                        \ on to the next part
 
- LDX #188
+                        \ If we get here then Y = 32, so this is a feeding alien
+
+ LDX #188               \ Set X = 188, to use as the object point ID
 
 .mval3
 
- LDA zObjectPoint,X
- EOR #%01110000
+                        \ If we get here then Y = 31 or 32 and X is the ID of
+                        \ the first object point for this alien, so now we
+                        \ extract the alien's current feeding stage from the
+                        \ scale of the object point' z-coordinate, which gets
+                        \ updated in ResizeFeedingAlien as the alien grows
+                        \
+                        \ Note that the feeding stage goes from 4 (dormant) down
+                        \ to 0 (fully fed) as the alien feeds and grows bigger,
+                        \ so we need to invert the scale of the the z-coordinate
+                        \ to get the correct value for the feeding stage
+
+ LDA zObjectPoint,X     \ Set A to the object point's z-coordinate
+
+ EOR #%01110000         \ The z-coordinate contains scale information in bits 4
+                        \ to 7, with the smallest feeding alien having a scale
+                        \ factor of 2^2, and the largest having a scale factor
+                        \ of 2^5 (there are four different sizes of feeding
+                        \ alien)
+                        \
+                        \ This means that even at the largest scale, bit 7 of
+                        \ the scale will still be zero, so to invert the scale
+                        \ we only need to flip bits 4 to 6, as then:
+                        \
+                        \   * If scale is %0010 (2^2), result is %0101 (5)
+                        \   * If scale is %0011 (2^3), result is %0100 (4)
+                        \   * If scale is %0100 (2^4), result is %0011 (3)
+                        \   * If scale is %0101 (2^5), result is %0010 (2)
+                        \
+                        \ so this EOR inverts the alien's scale factor to the
+                        \ range 2 to 5, if we only consider the top nibble
+
+ LSR A                  \ We now shift the top nibble down, so A contains the
+ LSR A                  \ inverted scale factor (i.e. A is in the range 2 to 5)
  LSR A
  LSR A
- LSR A
- LSR A
- TAX
- DEX
- DEX
- TXA
- BEQ mval5
+
+ TAX                    \ Finally, we subtract 2 from the inverted scale factor,
+ DEX                    \ so A is now in the range 0 to 3 and reflects the four
+ DEX                    \ feeding stages:
+                        \
+                        \   * 0 = large feeding alien (fully fed)
+                        \   * 1 = medium feeding alien
+                        \   * 2 = small feeding alien
+                        \   * 3 = smallest feeding alien
+
+ TXA                    \ Copy the feeding stage into X
+
+ BEQ mval5              \ If X = 0, the alien is at its largest size, so jump to
+                        \ mval5 to store the feeding stage and move on to the
+                        \ next part
+
+                        \ Otherwise we scale QQ, RR, PP and QQ right by the
+                        \ number of places given in X
 
 .mval4
 
- LSR QQ
+                        \ This loop shifts the following to the right by X
+                        \ places, where X > 0
+
+ LSR QQ                 \ Shift QQ, RR, PP and QQ right by one place
  LSR RR
  LSR PP
  LSR Q
- DEX
- BNE mval4
+
+ DEX                    \ Decrement the shift counter in X
+
+ BNE mval4              \ Loop back until we have shifted right by X places
+
+                        \ By the time we get here, the variables are set as
+                        \ follows:
+                        \
+                        \   * Fully fed (stage 0)or flying alien:
+                        \
+                        \       QQ = %01111101
+                        \       Q  = %01000000
+                        \       RR = %10100000
+                        \       PP = %10100000
+                        \
+                        \   * Medium feeding alien (stage 1):
+                        \
+                        \       QQ = %00111110
+                        \       Q  = %00100000
+                        \       RR = %01010000
+                        \       PP = %01010000
+                        \
+                        \   * Small feeding alien (stage 2):
+                        \
+                        \       QQ = %00011111
+                        \       Q  = %00010000
+                        \       RR = %00101000
+                        \       PP = %00101000
+                        \
+                        \   * Smallest feeding alien (stage 3) or dormant alien:
+                        \
+                        \       QQ = %00001111
+                        \       Q  = %00001000
+                        \       RR = %00010100
+                        \       PP = %00010100
 
 .mval5
 
- STA feedingStage
+ STA feedingStage       \ Store the alien's feeding stage in feedingStage
 
- LDA #0
+\ ******************************************************************************
+\
+\       Name: CheckIfAlienIsHit (Part 2 of 2)
+\       Type: Subroutine
+\   Category: Theme
+\    Summary: Check to see whether the alien has been hit, and if so, initiate
+\             the explosion
+\
+\ ******************************************************************************
+
+ LDA #0                 \ Set hitTimer = 0
  STA hitTimer
 
- LDY objectId
+ LDY objectId           \ Set Y to the object ID of the alien
 
  JSR L3129
 
- LDX #&E4
- STX VV
+ LDX #228               \ Set VV = 228 to iterate through the following in the
+ STX VV                 \ outer loop below (i.e. from mval6 to the end):
+                        \
+                        \   228, 230
 
 .mval6
 
  LDX VV
- LDA #31
+
+ LDA #31                \ Set WW = 31
  STA WW
- LDY #0
+
+ LDY #0                 \ Loop 0, 1, 2
 
 .mval7
 
  STY Q
+
  JSR L3181
 
  LDY Q
@@ -15840,25 +15961,33 @@ ORG CODE%
                         \ to point 0
 
  LDY VV
+
  JSR L3152
 
  LDY VV
 
- LDX #216               \ X goes: 0, 40, 80, 120, 200
+ LDX #216               \ In the following loop X iterates through the following
+                        \ values (as 40 gets added to it before it is used, and
+                        \ 216 + 40 = 256 = 0):
+                        \
+                        \   0, 40, 80, 120, 200
 
 .mval8
 
- TYA
+ TYA                    \ Set Y = Y + 40
  CLC
  ADC #40
  TAY
- TXA
+
+ TXA                    \ Set X = X + 40
  CLC
  ADC #40
  TAX
+
  LDA xObjectLo,Y
  STA xObjectLo,X        \ Store in first byte of all the coord tables
- CPX #&C8
+
+ CPX #200               \ Loop back until X has iterated through all five values
  BNE mval8
 
 .mval9
@@ -15898,18 +16027,19 @@ ORG CODE%
  DEC WW
  BPL mval9
 
- LDA VV
+ LDA VV                 \ Set VV = VV + 2
  CLC
  ADC #2
  STA VV
- CMP #232
- BEQ mval12
 
- JMP mval6
+ CMP #232               \ If VV = 232, jump to mval12 to return from the
+ BEQ mval12             \ subroutine
+
+ JMP mval6              \ Otherwise VV is not yet 232, so loop back to mval6
 
 .mval12
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -15922,42 +16052,77 @@ ORG CODE%
 \
 \ This is called STIP in the original source code.
 \
+\ Arguments:
+\
+\   Y                   The object ID of the alien (30 to 33)
+\
+\   Q                   The low byte of the amount to add
+\
+\ Returns:
+\
+\   (I+2 W+2)           (xObjectHi xObjectLo) + (5 Q) for object ID 30 to 33
+\
+\   (I+1 W+1)           (xObjectHi xObjectLo)         for object ID 70 to 73
+\
+\   (I W)               (xObjectHi xObjectLo) + (5 Q) for object ID 110 to 113
+\
 \ ******************************************************************************
 
 .L3129
 
- LDX #2
+ LDX #2                 \ Set a counter in X to iterate through 2, 1, 0, which
+                        \ has the following effect:
+                        \
+                        \ When X = 2:
+                        \
+                        \   * (I+2 W+2) = (xObjectHi xObjectLo) + (5 Q)
+                        \     for object ID 30 to 33
+                        \
+                        \ When X = 1:
+                        \
+                        \   * (I+1 W+1) = (xObjectHi xObjectLo)
+                        \     for object ID 70 to 73
+                        \
+                        \ When X = 0:
+                        \
+                        \   * (I W) = (xObjectHi xObjectLo) + (5 Q)
+                        \     for object ID 110 to 113
 
 .L312B
 
- LDA xObjectLo,Y
- CLC
- ADC Q
+ LDA xObjectLo,Y        \ Set (I W) = (xObjectHi xObjectLo) + (5 Q)
+ CLC                    \
+ ADC Q                  \ starting with the low bytes
  STA W,X
- LDA xObjectHi,Y
+
+ LDA xObjectHi,Y        \ And then the high bytes
  ADC #5
  STA I,X
 
 .L313A
 
- TYA
+ TYA                    \ Set Y = Y + 40
  CLC
  ADC #40
  TAY
- DEX
- BPL L3143
 
- RTS
+ DEX                    \ Decrement the loop counter
+
+ BPL L3143              \ If we haven't yet done all three calculations, jump
+                        \ to L3143
+
+ RTS                    \ Return from the subroutine
 
 .L3143
 
- BEQ L312B
+ BEQ L312B              \ If X = 0, jump up to L312B to add (5 Q)
 
- LDA xObjectLo,Y
- STA W,X
+ LDA xObjectLo,Y        \ If we get here then X = 1, so do the calculation
+ STA W,X                \ without adding (5 Q)
  LDA xObjectHi,Y
  STA I,X
- JMP L313A
+
+ JMP L313A              \ Jump back to L313A to move on to X = 0
 
 \ ******************************************************************************
 \
@@ -17981,7 +18146,7 @@ ORG CODE%
 \
 \       Name: previousHitTimer
 \       Type: Variable
-\   Category: Theme
+\   Category: Bullets
 \    Summary: 
 \
 \ ******************************************************************************
@@ -17995,13 +18160,19 @@ ORG CODE%
 \       Name: feedingStage
 \       Type: Variable
 \   Category: Theme
-\    Summary: 
+\    Summary: The feeding stage of the alien we are currently processing
 \
 \ ******************************************************************************
 
 .feedingStage
 
- EQUB &49
+ EQUB &49               \ The alien's feeding stage
+                        \
+                        \   * 0 = large feeding alien (full up) or flying
+                        \   * 1 = medium feeding alien
+                        \   * 2 = small feeding alien
+                        \   * 3 = smallest feeding alien
+                        \   * 4 = dormant (not feeding)
 
 \ ******************************************************************************
 \
@@ -18024,7 +18195,7 @@ ORG CODE%
 \
 \       Name: hitTimer
 \       Type: Variable
-\   Category: Theme
+\   Category: Bullets
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -18042,27 +18213,27 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L3690
+\       Name: fuelUsedLo
 \       Type: Variable
 \   Category: Flight model
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L3690
+.fuelUsedLo
 
  EQUB &34
 
 \ ******************************************************************************
 \
-\       Name: L3691
+\       Name: fuelUsedHi
 \       Type: Variable
 \   Category: Flight model
 \    Summary: 
 \
 \ ******************************************************************************
 
-.L3691
+.fuelUsedHi
 
  EQUB &34
 
@@ -22371,10 +22542,10 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: CheckAlienHit
+\       Name: ExplodeAlien
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: Destroy aliens, causing turbulence
+\    Summary: Explode an alien, causing turbulence
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22384,13 +22555,14 @@ NEXT
 \
 \ ******************************************************************************
 
-.CheckAlienHit
+.ExplodeAlien
 
- LDA hitTimer           \ If hitTimer is zero, jump to ahit8 via ahit6 to return
- BEQ ahit6              \ from the subroutine
+ LDA hitTimer           \ If hitTimer is zero then there is no explosing alien,
+ BEQ ahit6              \ so jump to ahit8 via ahit6 to return from the
+                        \ subroutine
 
- LDA #2                 \ Make sound #2, the sound of an alien being destroyed
- JSR MakeSound
+ LDA #2                 \ Otherwise we do have an exploding alien, so make sound
+ JSR MakeSound          \ #2, the sound of an alien being destroyed
 
  LDX hitObjectId        \ Set X to the object ID of the object we hit
 
@@ -22425,8 +22597,7 @@ NEXT
                         \
                         \   * P = %01111111 if feedingStage = 0
                         \   * P = %00111111 if feedingStage = 1
-                        \   * P = %00011111 if feedingStage = 2
-                        \   * P = %00011111 if feedingStage = 3
+                        \   * P = %00011111 if feedingStage >= 2
 
 .ahit3
 
