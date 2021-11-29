@@ -292,6 +292,11 @@ ORG &0100
                         \ coordinates. The information is stored when a line is
                         \ drawn by the DrawClippedLine routine, and is read by
                         \ the EraseCanopyLines routine when the line is erased
+                        \
+                        \ We can buffer up to 96 lines, with 48 in each of the
+                        \ two line buffers, so the maximum number of lines on
+                        \ screen at any one time is 48 lines out of the 193
+                        \ lines defined in the world
 
 ORG &0160
 
@@ -436,6 +441,8 @@ ORG &0400
                         \ Point IDs get added in part 3 of ProcessLine when
                         \ those points are part of an object - only points
                         \ that we haven't already processed are added
+                        \
+                        \ The maximum size of the list is 49
                         \
                         \ Zeroed in ResetVariables
 
@@ -712,18 +719,18 @@ ORG &0900
 
 .xPlaneTop
 
- SKIP 1                 \ The top byte of the plane's location, so the byte
-                        \ above the high byte in xPlaneHi
+ SKIP 1                 \ The top byte of the plane's location, which is the
+                        \ byte above the high byte in xPlaneHi
 
 .yPlaneTop
 
- SKIP 1                 \ The top byte of the plane's location, so the byte
-                        \ above the high byte in yPlaneHi
+ SKIP 1                 \ The top byte of the plane's location, which is the
+                        \ byte above the high byte in yPlaneHi
 
 .zPlaneTop
 
- SKIP 1                 \ The top byte of the plane's location, so the byte
-                        \ above the high byte in zPlaneHi
+ SKIP 1                 \ The top byte of the plane's location, which is the
+                        \ byte above the high byte in zPlaneHi
 
 .L0C70
 
@@ -1083,7 +1090,12 @@ ORG &0900
                         \
                         \   * 47 = buffer 1 is full and contains 48 lines
                         \
-                        \ Set to -1 in ResetVariables
+                        \ We can buffer up to 96 lines, with 48 in each of the
+                        \ two line buffers, so the maximum number of lines on
+                        \ screen at any one time is 48 lines out of the 193
+                        \ lines defined in the world
+                        \
+                        \ Set to -1 in ResetVariables (buffer 1 empty)
 
 .lineBuffer2Count
 
@@ -1096,26 +1108,31 @@ ORG &0900
                         \
                         \   * 95 = buffer 2 is full, contains 48 lines
                         \
-                        \ Set to 47 in ResetVariables
+                        \ We can buffer up to 96 lines, with 48 in each of the
+                        \ two line buffers, so the maximum number of lines on
+                        \ screen at any one time is 48 lines out of the 193
+                        \ lines defined in the world
+                        \
+                        \ Set to 47 in ResetVariables (buffer 2 empty)
 
 .pressingUFBS
 
  SKIP 5                 \ Determines whether any of the following keys are
                         \ being pressed:
                         \
-                        \ pressingUFBS = 1 while the undercarriage key "U" is 
-                        \ being pressed, 0 otherwise
-
-                        \ pressingUFBS+1 = 1 while the flaps button "F" is being
-                        \ pressed, 0 otherwise
-
-                        \ pressingUFBS+2 is not used
-
-                        \ pressingUFBS+3 = 1 while the brake key "B" is being
-                        \ pressed, 0 otherwise
-
-                        \ pressingUFBS+4 = 1 while the fire key SHIFT is being
-                        \ pressed, 0 otherwise
+                        \   * pressingUFBS = 1 while the undercarriage key "U"
+                        \     is being pressed, 0 otherwise
+                        \
+                        \   * pressingUFBS+1 = 1 while the flaps key "F" is
+                        \     being pressed, 0 otherwise
+                        \
+                        \   * pressingUFBS+2 is not used
+                        \
+                        \   * pressingUFBS+3 = 1 while the brake key "B" is
+                        \     being pressed, 0 otherwise
+                        \
+                        \   * pressingUFBS+4 = 1 while the fire key SHIFT is
+                        \     being pressed, 0 otherwise
 
 .pointsToAward
 
@@ -7693,6 +7710,8 @@ ORG CODE%
 \
 \   xPointHi etc.       The point's coordinates after rotation
 \
+\   xTempHi etc.        The point's coordinates after rotation
+\
 \ ******************************************************************************
 
 .SetPointCoords
@@ -10954,10 +10973,126 @@ ORG CODE%
 \
 \       Name: FireGuns
 \       Type: Subroutine
-\   Category: Bullets
-\    Summary: 
+\   Category: Theme
+\    Summary: Create the bullet objects and send them on their way
 \
 \ ------------------------------------------------------------------------------
+\
+\ The FireGuns routine calculates the bullet locations as soon as we fire the
+\ gun, adding in the bullet trail. As an overhead view, this is what the routine
+\ spawns:
+\
+\    13   ^             ^   15
+\         |             |
+\         |      ^      |
+\         |             |
+\         |             |
+\         |             |
+\         |             |
+\         |             |
+\    12   |             |   14
+\
+\ The plane is the ^ in the middle, and each trail consists of two points. The
+\ bullets are at objects 13 and 15, a little in front and to each side of the
+\ plane, while the trails go back a long way behind the plane, back to objects
+\ 12 and 14. You can't tell from the above diagram, but the trails are also
+\ angled up as the bullets race away from the place, so objects 12 and 14 have
+\ y-coordinates of -4 compared to the plane.
+\
+\ The FireGuns routine calculates the locations of objects 12 to 15, and the
+\ line-drawing routines then take care of drawing the bullet lines, the left one
+\ from object 12 to 13, and the right one from object 14 to 15.
+\
+\ We also calculate the velocity vector for the bullets, which is used to move
+\ the bullets in the UpdateBullets routine. We store this vector in points 228
+\ to 231 (one vector for each bullet object, though the value is the same for
+\ all four). We give the bullets a forward velocity of airspeedHi + 200, so
+\ they travel faster than the plane, but in the same direction.
+\
+\ Here's how the bullet's positions and velocity are calculated in FireGuns.
+\
+\ 1. Calculate the bullet's velocity vector and store in points 228-231
+\
+\    * Set point ID 228 to the vector (0, 0, airspeedHi + 200)
+\
+\    * Calculate the 3D coordinates for the vector in point 228, using matrix 2
+\
+\    * Copy the result into points 229, 230 and 231
+\
+\ 2. Set point 95 to (-10, -4, -236), which is the vector from the plane back to
+\    object 12
+\
+\    * Set point ID 95 to (&FFF6, &FFFC, &FF14) = (-10, -4, -236)
+\
+\    * Calculate the 3D coordinates for point ID 95, using matrix 2
+\
+\ 3. Set objects 12-15 to the location of the plane
+\
+\    * Copy the coordinates from (xPlane, yPlane, zPlane) to point 96
+\
+\    * Set object coordinates for objects 12-15 to point 96
+\
+\ For the next steps, the following diagram might be useful. This is what we
+\ would like to achieve (at the moment objects 12 to 15 are all located at
+\ the plane's coordinates).
+\
+\                   (xTemp yTemp zTemp)
+\                           |
+\                           v
+\           13/96   +-------------+   15/98
+\                   |
+\                   |      ^  plane
+\                   |     /      
+\   (0, 0, 256) --> |    /
+\                   |   /  <-- (-10, -4, -236)
+\                   |  /
+\                   | /
+\           12/95   +-------------+   14/97
+\                          ^
+\                          |
+\                     (20, 0, 0)
+\
+\ 4. Calculate the location of object 12 and set it as the anchor point
+\
+\    * Move object 12 by the vector in point 95, i.e. the (-10, -4, -236)
+\      vector, so object 12 is now at the correct position
+\
+\    * Store the result as the anchor point, so the coordinate calculations in
+\      the next part will return relative vectors from the plane's location to
+\      each point
+\
+\ 5. Calculate the vectors from the plane to the other three objects
+\
+\    * We now calculate the vectors from the plane to objects 13, 14 and 15,
+\      storing those vectors in points 96, 97 and 98
+\
+\    * We can calculate the vectors for objects 13 and 14 (points 96 and 97) by
+\      calling SetObjPointCoords to return as relative vectors from the plane's
+\      location. This works as we are telling SetObjPointCoords to take the
+\      anchor point vector (which we set above to be the vector from the plane
+\      to object 12 at point 95) and add on the vector of the object point
+\      (which is the interior vector of the point within the object), which
+\      gives us the vector from the plane to the object point
+\
+\      For reference, the object points are at (0, 0, 256) for point 95 (which
+\      we will use for object 13) and (20, 0, 0) for point 96 (which we will use
+\      for object 14)
+\
+\      Calling SetObjPointCoords the second time also sets (xTemp yTemp zTemp)
+\      to the vector from point 95 to point 97 (i.e. from object 12 to object
+\      14)
+\
+\    * We can save doing the same calculation for point 98, as the vector from
+\      object 12 to 14 is the same as the vector from object 13 to 15, so we can
+\      calculate point 98 by simply adding (xTemp yTemp zTemp) to point 96
+\
+\ 6. Move objects 12 to 13 by the calculated vectors
+\
+\    * Move object 13 by the vector in point 96
+\
+\    * Move object 14 by the vector in point 97
+\
+\    * Move object 15 by the vector in point 98
 \
 \ Other entry points:
 \
@@ -10973,19 +11108,24 @@ ORG CODE%
                         \ guns, so return from the subroutine (as FireGuns-1
                         \ contains an RTS)
 
- LDX #228               \ Set the point with ID 228 to (0, 0, 0)
- JSR SetPointToOrigin
+ LDX #228               \ Set the point with ID 228 to (0, 0, airspeedHi + 200)
+ JSR SetPointToOrigin   \
+                        \ starting with the zeroes
 
- LDA airspeedHi
+ LDA airspeedHi         \ And then setting the low byte of the z-coordinate
  CLC
- ADC #&C8
+ ADC #200
  STA zPointLo+228
 
- LDA #&FF               \ Set the point with ID 95 to (-1, -1, -1)
- LDX #95
- JSR SetPoint
+ LDA #&FF               \ Set the point with ID 95 to (&FFF6, &FFFC, &FF14)
+ LDX #95                \                           = (-10, -4, -236)
+ JSR SetPoint           \
+                        \ which is the vector from the plane back to object 12
+                        \ at the trailing end of the left bullet's trail
+                        \
+                        \ We start with the high bytes
 
- LDA #&14
+ LDA #&14               \ And then set the low bytes
  STA zPointLo+95
  LDA #&F6
  STA xPointLo+95
@@ -10999,19 +11139,26 @@ ORG CODE%
  STA matrixNumber       \ uses matrix 2 in the calculation
 
  STA firingStatus       \ Set firingStatus = 9, which is a non-zero value, to
-                        \ indicate that there are bullets are in the air
+                        \ indicate that there are bullets are in the air (the
+                        \ value 9 isn't significant beyond the fact that it is
+                        \ non-zero)
 
- JSR SetPointCoords     \ Calculate the coordinates for point 228
+ JSR SetPointCoords     \ Calculate the coordinates for point 228, which also
+                        \ returns the coordinates in (xTemp, yTemp, zTemp)
 
- LDX #&E5
+ LDX #229               \ We now copy the coordinates from (xTemp, yTemp, zTemp)
+                        \ to points 229, 230 and 231, so we set a counter in X
+                        \ for the point IDs
 
 .fire1
 
- JSR CopyTempToPoint
+ JSR CopyTempToPoint    \ Copy from (xTemp, yTemp, zTemp) into the coordinates
+                        \ for point X
 
- INX
- CPX #&E8
- BNE fire1
+ INX                    \ Increment the point ID
+
+ CPX #232               \ Loop back until we have copied (xTemp, yTemp, zTemp)
+ BNE fire1              \ into points 229, 230 and 231
 
  LDA #95                \ Set GG to point ID 95, to pass to the call to 
  STA GG                 \ SetPointCoords
@@ -11019,58 +11166,91 @@ ORG CODE%
  JSR SetPointCoords     \ Calculate the coordinates for point 95
 
  LDX #LO(xPlaneLo)      \ Set X so the call to CopyWorkToPoint copies the
-                        \ coordinates from (xTemp2, yTemp2, zTemp2)
+                        \ coordinates from (xPlane, yPlane, zPlane)
 
  LDY #96                \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates to point 96
 
- JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xPlane, yPlane, zPlane)
                         \ to point 96
 
- LDY #12
- LDX #96
+ LDY #12                \ We now set the object coordinates for objects 12 to 15
+                        \ to the coordinates in point 96, so set Y as the object
+                        \ ID, starting with 12
+
+ LDX #96                \ And set X as the point ID to add in the call to
+                        \ AddPointToObject
 
 .fire2
 
- JSR ResetObjectCoords  \ Move object 12-15 to the origin
+ JSR ResetObjectCoords  \ Set the object coordinates for object Y to (0, 0, 0)
 
- JSR AddPointToObject   \ Move object 12-15 by the vector in point 96, so this
-                        \ sets the location of the object to that of point 96
+ JSR AddPointToObject   \ Add the vector in point 96 to the object coordinates,
+                        \ so this sets the location of the object to that of
+                        \ point 96, i.e. the coordinates of the plane
 
- INY
- CPY #16
- BNE fire2
+ INY                    \ Increment the object ID
 
- LDY #12                \ Move object 12 by the vector in point 95
- LDX #95
+ CPY #16                \ Loop back until we have set objects 12 to 15 to the
+ BNE fire2              \ coordinates in point 96, so they are all now at the
+                        \ plane's coordinates
+
+ LDY #12                \ Add the vector in point 95 to the object coordinates
+ LDX #95                \ for object 12
  JSR AddPointToObject
 
- STX objectAnchorPoint
- LDA #&60
- STA GG
+ STX objectAnchorPoint  \ Store the vector in point 95 as the object anchor
+                        \ point, so the following calculations use this as the
+                        \ anchor point
+                        \
+                        \ This means that the following coordinate calculations
+                        \ will return the vector from the plane's location to
+                        \ each point, as we are telling SetObjPointCoords to
+                        \ take the anchor point vector (from the plane to point
+                        \ 95) and add on the vector of the object point (which
+                        \ is the interior vector of the point within the object)
+
+ LDA #96                \ Calculate the coordinates for object point 96 with
+ STA GG                 \ anchor point 95
  JSR SetObjPointCoords
 
- LDA #&61
- STA GG
- JSR SetObjPointCoords
+ LDA #97                \ Calculate the coordinates for object point 97 with
+ STA GG                 \ anchor point 95, which also sets (xTemp yTemp zTemp)
+ JSR SetObjPointCoords  \ to the rotated vector from the anchor point (point 95)
+                        \ to point 97
 
- LDX #&62
- LDY #&60
- JSR AddTempToPoint
+ LDX #98                \ Set point 98's coordinates to point 96's coordinates +
+ LDY #96                \ (xTemp yTemp zTemp), the latter containing the vector
+ JSR AddTempToPoint     \ from point 95 to point 97
 
- LDY #15
- LDX #98
+                        \ Finally, we add the following vectors to the object
+                        \ points for objects 13 to 15:
+                        \
+                        \   * Move object 13 by the vector in point 96
+                        \
+                        \   * Move object 14 by the vector in point 97
+                        \
+                        \   * Move object 15 by the vector in point 98
+
+ LDY #15                \ Set Y as the object ID that gets moved in the call to
+                        \ AddPointToObject
+
+ LDX #98                \ Set X as the point ID to add to the object coordinates
+                        \ in the call to AddPointToObject
 
 .fire3
 
- JSR AddPointToObject   \ Move object 13-15 by the vector in point 96-98
+ JSR AddPointToObject   \ Add the vector in point X to the object coordinates
+                        \ for point Y
 
- DEX
- DEY
- CPY #12
- BNE fire3
+ DEX                    \ Decrement the point ID
 
- RTS
+ DEY                    \ Decrement the object ID
+
+ CPY #12                \ Loop back until we have added points 96 to 98 to
+ BNE fire3              \ objects 13 to 15
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11572,7 +11752,7 @@ ORG CODE%
 \       Name: ResetRadar
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Update the radar display
+\    Summary: Reset the radar display
 \
 \ ******************************************************************************
 
@@ -13304,11 +13484,13 @@ ORG CODE%
                         \
                         \ (or 1, 9, 17, 25 etc., depending on the current group)
 
- LDA xGroupHi,X         \ Set the object's x-coordinate to the X-th entry in
- STA xObjectHi,Y        \ xGroupHi
+ LDA xGroupObjectHi,X   \ Set the object's x-coordinate to the X-th entry in
+ STA xObjectHi,Y        \ xGroupObjectHi, which contains the high byte of the
+                        \ group object's x-coordinate
 
- LDA zGroupHi,X         \ Set the object's z-coordinate to the X-th entry in
- STA zObjectHi,Y        \ zGroupHi
+ LDA zGroupObjectHi,X   \ Set the object's z-coordinate to the X-th entry in
+ STA zObjectHi,Y        \ zGroupObjectHi, which contains the high byte of the
+                        \ group object's z-coordinate
 
  JMP objc9              \ Jump to objc9 to process this object
 
@@ -13811,7 +13993,7 @@ ORG CODE%
 
  INC lineId             \ Increment lineId to move on to the next line
 
- LDA lineId             \ Loop back until we have processed all the lines
+ LDA lineId             \ Loop back until we have processed all 193 lines
  CMP numberOfLines
  BCC rell1
 
@@ -14239,6 +14421,9 @@ ORG CODE%
                         \ bytes in a 24-bit number), as the radar isn't accurate
                         \ enough to show the low byte, so we can just ignore it
                         \
+                        \ As the object coordinates don't have a top byte, we
+                        \ use 0 rather than the non-existent xObjectTop
+                        \
                         \ The loop comments are for the xTemp2 iteration
 .upbl1
 
@@ -14287,7 +14472,22 @@ ORG CODE%
                         \ within the range of the radar display (we can ignore
                         \ the y-coordinate, as the radar is a top-down display
                         \ that ignores altitude)
-                        
+                        \
+                        \ Specifically, we do this by dividing the z-coordinate
+                        \ by 8, and the x-coordinate by 16, and then using the
+                        \ low bytes of the result as the radar coordinates
+                        \ (along the sign bit from the high byte of the result)
+                        \
+                        \ For the z-coordinate, his reduces the value from the
+                        \ range -256 to +256 down to -32 to +32, which maps onto
+                        \ the four character rows above and below the centre of
+                        \ the radar (each of which contains eight pixels, so the
+                        \ vertical range of the radar is -32 to +32 pixels, as
+                        \ 8 * 4 = 32)
+                        \
+                        \ For the x-coordinate, we halve it again as mode 5
+                        \ pixels are twice as wide as they are high
+
  LDA xPointHi           \ Set R = xPointHi so we can shift xPoint below without
  STA R                  \ affecting the value of xPointHi
 
@@ -15125,7 +15325,7 @@ ORG CODE%
 \
 \       Name: UpdateBullets
 \       Type: Subroutine
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -15657,9 +15857,9 @@ ORG CODE%
 \                       which determines which object points have their
 \                       z-coordinates updated in the zObjectPoint table:
 \
-\                         * 183 to 186 for alien slot 31
+\                         * Resize object points 183 to 186 for alien slot 31
 \
-\                         * 188 to 191 for alien slot 32
+\                         * Resize object points 188 to 191 for alien slot 32
 \
 \ Returns:
 \
@@ -15685,17 +15885,17 @@ ORG CODE%
                         \ we update points 183 to 186 in the loop
 
  CPY #31                \ If the alien slot is 31, skip the following instruction
- BEQ L303A
+ BEQ size1
 
  LDA #191               \ Set A to the object point ID to update for slot 32, so
                         \ we update points 188 to 191 in the loop
 
-.L303A
+.size1
 
  TAY                    \ Copy the object point ID we just set in A into Y, so
                         \ we can use it as an index
 
-.L303B
+.size2
 
  LDA zObjectPoint,Y     \ Set A to the z-coordinate of the object point
 
@@ -15703,7 +15903,7 @@ ORG CODE%
  ADC #16                \ factor in bits 4 to 7
 
  BIT K                  \ If bit 7 of K is clear, skip the following two
- BPL L3049              \ instructions, as we are done
+ BPL size3              \ instructions, as we are done
 
  AND #15                \ Otherwise bit 7 of S is set, so we need to reset the
  ORA #32                \ scale to the first feeding stage, which we can do like
@@ -15715,7 +15915,7 @@ ORG CODE%
                         \ scale factor of 2^2) while retaining the value in bits
                         \ 0 to 3
 
-.L3049
+.size3
 
  STA zObjectPoint,Y     \ Store the updated z-coordinate
 
@@ -15723,7 +15923,7 @@ ORG CODE%
 
  DEX                    \ Decrement the loop counter
 
- BPL L303B              \ Loop back until we have updated three slots
+ BPL size2              \ Loop back until we have updated three slots
 
  LDY T                  \ Restore Y from T, so it doesn't get changed by the
                         \ routine
@@ -15971,6 +16171,10 @@ ORG CODE%
                         \ 216 + 40 = 256 = 0):
                         \
                         \   0, 40, 80, 120, 200
+                        \
+                        \ which steps through xObjectLo, yObjectLo, xObjectLo,
+                        \ xObjectHi, yObjectHi, zObjectHi because they are all
+                        \ spaced out by 40 bytes
 
 .mval8
 
@@ -16045,7 +16249,7 @@ ORG CODE%
 \
 \       Name: L3129
 \       Type: Subroutine
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -16128,7 +16332,7 @@ ORG CODE%
 \
 \       Name: L3152
 \       Type: Subroutine
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -16181,7 +16385,7 @@ ORG CODE%
 \
 \       Name: L3181
 \       Type: Subroutine
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -17163,7 +17367,7 @@ ORG CODE%
 \
 \       Name: FillUpFuelTank
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Flight model
 \    Summary: Fill up the fuel tank by 1/65th of a full tank every four
 \             iterations of the main loop
 \
@@ -17360,7 +17564,7 @@ ORG CODE%
 \
 \       Name: RetractFlapsIfFast
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Flight model
 \    Summary: Retract the flaps if we are going faster than 150 mph
 \
 \ ------------------------------------------------------------------------------
@@ -18146,7 +18350,7 @@ ORG CODE%
 \
 \       Name: previousHitTimer
 \       Type: Variable
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ******************************************************************************
@@ -18178,7 +18382,7 @@ ORG CODE%
 \
 \       Name: hitObjectId
 \       Type: Variable
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -18195,7 +18399,7 @@ ORG CODE%
 \
 \       Name: hitTimer
 \       Type: Variable
-\   Category: Bullets
+\   Category: Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -18241,7 +18445,7 @@ ORG CODE%
 \
 \       Name: fuelLevel
 \       Type: Variable
-\   Category: Flight
+\   Category: Flight model
 \    Summary: The current fuel level
 \
 \ ******************************************************************************
@@ -18254,11 +18458,39 @@ ORG CODE%
                         \
                         \   * 65 = full
 
- EQUB &B2, &B7          \ These bytes appear to be unused
- EQUB &BC, &C1
- EQUB &0F, &B4
- EQUB &BA, &BF
- EQUB &C8
+\ ******************************************************************************
+\
+\       Name: explodeTo
+\       Type: Variable
+\   Category: Theme
+\    Summary: The end point for exploding each of the four alien slots
+\
+\ ******************************************************************************
+
+.explodeTo
+
+ EQUB 178               \ End point ID for alien slot 30 (points 180 to 178)
+ EQUB 183               \ End point ID for alien slot 31 (points 186 to 183)
+ EQUB 188               \ End point ID for alien slot 32 (points 191 to 188)
+ EQUB 193               \ End point ID for alien slot 33 (points 200 to 193)
+
+ EQUB 15                \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: explodeFrom
+\       Type: Variable
+\   Category: Theme
+\    Summary: The starting point for exploding each of the four alien slots
+\
+\ ******************************************************************************
+
+.explodeFrom
+
+ EQUB 180               \ Start point ID for alien slot 30 (points 180 to 178)
+ EQUB 186               \ Start point ID for alien slot 31 (points 186 to 183)
+ EQUB 191               \ Start point ID for alien slot 32 (points 191 to 188)
+ EQUB 200               \ Start point ID for alien slot 33 (points 200 to 193)
 
 \ ******************************************************************************
 \
@@ -18328,7 +18560,7 @@ ORG CODE%
 \
 \       Name: SetEngine
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Flight model
 \    Summary: Set the engine status
 \
 \ ------------------------------------------------------------------------------
@@ -18596,211 +18828,212 @@ NEXT
 
 .maxLineDistance
 
- EQUB 16                \ Line ID:   0
- EQUB 125               \ Line ID:   1
- EQUB 125               \ Line ID:   2
- EQUB 125               \ Line ID:   3
- EQUB 125               \ Line ID:   4
- EQUB 16                \ Line ID:   5
- EQUB 16                \ Line ID:   6
- EQUB 16                \ Line ID:   7
- EQUB 16                \ Line ID:   8
- EQUB 16                \ Line ID:   9
- EQUB 40                \ Line ID:  10
- EQUB 16                \ Line ID:  11
- EQUB 80                \ Line ID:  12
- EQUB 80                \ Line ID:  13
- EQUB 50                \ Line ID:  14
- EQUB 50                \ Line ID:  15
- EQUB 50                \ Line ID:  16
- EQUB 40                \ Line ID:  17
- EQUB 40                \ Line ID:  18
- EQUB 40                \ Line ID:  19
- EQUB 80                \ Line ID:  20
- EQUB 80                \ Line ID:  21
- EQUB 40                \ Line ID:  22
- EQUB 40                \ Line ID:  23
- EQUB 80                \ Line ID:  24
- EQUB 80                \ Line ID:  25
- EQUB 80                \ Line ID:  26
- EQUB 80                \ Line ID:  27
- EQUB 80                \ Line ID:  28
- EQUB 80                \ Line ID:  29
- EQUB 80                \ Line ID:  30
- EQUB 80                \ Line ID:  31
- EQUB 80                \ Line ID:  32
- EQUB 80                \ Line ID:  33
- EQUB 80                \ Line ID:  34
- EQUB 80                \ Line ID:  35
- EQUB 80                \ Line ID:  36
- EQUB 80                \ Line ID:  37
- EQUB 80                \ Line ID:  38
- EQUB 60                \ Line ID:  39
- EQUB 70                \ Line ID:  40
- EQUB 60                \ Line ID:  41
- EQUB 70                \ Line ID:  42
- EQUB 60                \ Line ID:  43
- EQUB 70                \ Line ID:  44
- EQUB 60                \ Line ID:  45
- EQUB 70                \ Line ID:  46
- EQUB 63                \ Line ID:  47
- EQUB 63                \ Line ID:  48
- EQUB 63                \ Line ID:  49
- EQUB 63                \ Line ID:  50
- EQUB 60                \ Line ID:  51
- EQUB 70                \ Line ID:  52
- EQUB 60                \ Line ID:  53
- EQUB 70                \ Line ID:  54
- EQUB 60                \ Line ID:  55
- EQUB 63                \ Line ID:  56
- EQUB 63                \ Line ID:  57
- EQUB 63                \ Line ID:  58
- EQUB 63                \ Line ID:  59
- EQUB 30                \ Line ID:  60
- EQUB 30                \ Line ID:  61
- EQUB 70                \ Line ID:  62
- EQUB 60                \ Line ID:  63
- EQUB 70                \ Line ID:  64
- EQUB 60                \ Line ID:  65
- EQUB 70                \ Line ID:  66
- EQUB 60                \ Line ID:  67
- EQUB 70                \ Line ID:  68
- EQUB 60                \ Line ID:  69
- EQUB 70                \ Line ID:  70
- EQUB 60                \ Line ID:  71
- EQUB 70                \ Line ID:  72
- EQUB 60                \ Line ID:  73
- EQUB 70                \ Line ID:  74
- EQUB 60                \ Line ID:  75
- EQUB 120               \ Line ID:  76
- EQUB 70                \ Line ID:  77
- EQUB 125               \ Line ID:  78
- EQUB 125               \ Line ID:  79
- EQUB 125               \ Line ID:  80
- EQUB 125               \ Line ID:  81
- EQUB 125               \ Line ID:  82
- EQUB 125               \ Line ID:  83
- EQUB 125               \ Line ID:  84
- EQUB 125               \ Line ID:  85
- EQUB 125               \ Line ID:  86
- EQUB 125               \ Line ID:  87
- EQUB 125               \ Line ID:  88
- EQUB 125               \ Line ID:  89
- EQUB 125               \ Line ID:  90
- EQUB 125               \ Line ID:  91
- EQUB 125               \ Line ID:  92
- EQUB 125               \ Line ID:  93
- EQUB 125               \ Line ID:  94
- EQUB 125               \ Line ID:  95
- EQUB 125               \ Line ID:  96
- EQUB 125               \ Line ID:  97
- EQUB 125               \ Line ID:  98
- EQUB 125               \ Line ID:  99
- EQUB 125               \ Line ID: 100
- EQUB 125               \ Line ID: 101
- EQUB 125               \ Line ID: 102
- EQUB 125               \ Line ID: 103
- EQUB 125               \ Line ID: 104
- EQUB 125               \ Line ID: 105
- EQUB 125               \ Line ID: 106
- EQUB 125               \ Line ID: 107
- EQUB 125               \ Line ID: 108
- EQUB 125               \ Line ID: 109
- EQUB 125               \ Line ID: 110
- EQUB 125               \ Line ID: 111
- EQUB 125               \ Line ID: 112
- EQUB 125               \ Line ID: 113
- EQUB 125               \ Line ID: 114
- EQUB 125               \ Line ID: 115
- EQUB 125               \ Line ID: 116
- EQUB 125               \ Line ID: 117
- EQUB 125               \ Line ID: 118
- EQUB 125               \ Line ID: 119
- EQUB 125               \ Line ID: 120
- EQUB 125               \ Line ID: 121
- EQUB 125               \ Line ID: 122
- EQUB 120               \ Line ID: 123
- EQUB 125               \ Line ID: 124
- EQUB 125               \ Line ID: 125
- EQUB 125               \ Line ID: 126
- EQUB 125               \ Line ID: 127
- EQUB 125               \ Line ID: 128
- EQUB 125               \ Line ID: 129
- EQUB 125               \ Line ID: 130
- EQUB 125               \ Line ID: 131
- EQUB 125               \ Line ID: 132
- EQUB 125               \ Line ID: 133
- EQUB 125               \ Line ID: 134
- EQUB 25                \ Line ID: 135
- EQUB 25                \ Line ID: 136
- EQUB 25                \ Line ID: 137
- EQUB 100               \ Line ID: 138
- EQUB 100               \ Line ID: 139
- EQUB 100               \ Line ID: 140
- EQUB 100               \ Line ID: 141
- EQUB 100               \ Line ID: 142
- EQUB 100               \ Line ID: 143
- EQUB 100               \ Line ID: 144
- EQUB 100               \ Line ID: 145
- EQUB 100               \ Line ID: 146
- EQUB 100               \ Line ID: 147
- EQUB 100               \ Line ID: 148
- EQUB 100               \ Line ID: 149
- EQUB 120               \ Line ID: 150
- EQUB 100               \ Line ID: 151
- EQUB 100               \ Line ID: 152
- EQUB 100               \ Line ID: 153
- EQUB 100               \ Line ID: 154
- EQUB 100               \ Line ID: 155
- EQUB 100               \ Line ID: 156
- EQUB 100               \ Line ID: 157
- EQUB 100               \ Line ID: 158
- EQUB 100               \ Line ID: 159
- EQUB 100               \ Line ID: 160
- EQUB 120               \ Line ID: 161
- EQUB 120               \ Line ID: 162
- EQUB 120               \ Line ID: 163
- EQUB 120               \ Line ID: 164
- EQUB 120               \ Line ID: 165
- EQUB 120               \ Line ID: 166
- EQUB 120               \ Line ID: 167
- EQUB 120               \ Line ID: 168
- EQUB 60                \ Line ID: 169
- EQUB 60                \ Line ID: 170
- EQUB 60                \ Line ID: 171
- EQUB 60                \ Line ID: 172
- EQUB 60                \ Line ID: 173
- EQUB 60                \ Line ID: 174
- EQUB 60                \ Line ID: 175
- EQUB 60                \ Line ID: 176
- EQUB 60                \ Line ID: 177
- EQUB 60                \ Line ID: 178
- EQUB 60                \ Line ID: 179
- EQUB 60                \ Line ID: 180
- EQUB 60                \ Line ID: 181
- EQUB 60                \ Line ID: 182
- EQUB 60                \ Line ID: 183
- EQUB 60                \ Line ID: 184
- EQUB 60                \ Line ID: 185
- EQUB 120               \ Line ID: 186
- EQUB 120               \ Line ID: 187
- EQUB 120               \ Line ID: 188
- EQUB 120               \ Line ID: 189
- EQUB 120               \ Line ID: 190
- EQUB 120               \ Line ID: 191
+ EQUB 16                \ Line ID   0
+ EQUB 125               \ Line ID   1
+ EQUB 125               \ Line ID   2
+ EQUB 125               \ Line ID   3
+ EQUB 125               \ Line ID   4
+ EQUB 16                \ Line ID   5
+ EQUB 16                \ Line ID   6
+ EQUB 16                \ Line ID   7
+ EQUB 16                \ Line ID   8
+ EQUB 16                \ Line ID   9
+ EQUB 40                \ Line ID  10
+ EQUB 16                \ Line ID  11
+ EQUB 80                \ Line ID  12
+ EQUB 80                \ Line ID  13
+ EQUB 50                \ Line ID  14
+ EQUB 50                \ Line ID  15
+ EQUB 50                \ Line ID  16
+ EQUB 40                \ Line ID  17
+ EQUB 40                \ Line ID  18
+ EQUB 40                \ Line ID  19
+ EQUB 80                \ Line ID  20
+ EQUB 80                \ Line ID  21
+ EQUB 40                \ Line ID  22
+ EQUB 40                \ Line ID  23
+ EQUB 80                \ Line ID  24
+ EQUB 80                \ Line ID  25
+ EQUB 80                \ Line ID  26
+ EQUB 80                \ Line ID  27
+ EQUB 80                \ Line ID  28
+ EQUB 80                \ Line ID  29
+ EQUB 80                \ Line ID  30
+ EQUB 80                \ Line ID  31
+ EQUB 80                \ Line ID  32
+ EQUB 80                \ Line ID  33
+ EQUB 80                \ Line ID  34
+ EQUB 80                \ Line ID  35
+ EQUB 80                \ Line ID  36
+ EQUB 80                \ Line ID  37
+ EQUB 80                \ Line ID  38
+ EQUB 60                \ Line ID  39
+ EQUB 70                \ Line ID  40
+ EQUB 60                \ Line ID  41
+ EQUB 70                \ Line ID  42
+ EQUB 60                \ Line ID  43
+ EQUB 70                \ Line ID  44
+ EQUB 60                \ Line ID  45
+ EQUB 70                \ Line ID  46
+ EQUB 63                \ Line ID  47
+ EQUB 63                \ Line ID  48
+ EQUB 63                \ Line ID  49
+ EQUB 63                \ Line ID  50
+ EQUB 60                \ Line ID  51
+ EQUB 70                \ Line ID  52
+ EQUB 60                \ Line ID  53
+ EQUB 70                \ Line ID  54
+ EQUB 60                \ Line ID  55
+ EQUB 63                \ Line ID  56
+ EQUB 63                \ Line ID  57
+ EQUB 63                \ Line ID  58
+ EQUB 63                \ Line ID  59
+ EQUB 30                \ Line ID  60
+ EQUB 30                \ Line ID  61
+ EQUB 70                \ Line ID  62
+ EQUB 60                \ Line ID  63
+ EQUB 70                \ Line ID  64
+ EQUB 60                \ Line ID  65
+ EQUB 70                \ Line ID  66
+ EQUB 60                \ Line ID  67
+ EQUB 70                \ Line ID  68
+ EQUB 60                \ Line ID  69
+ EQUB 70                \ Line ID  70
+ EQUB 60                \ Line ID  71
+ EQUB 70                \ Line ID  72
+ EQUB 60                \ Line ID  73
+ EQUB 70                \ Line ID  74
+ EQUB 60                \ Line ID  75
+ EQUB 120               \ Line ID  76
+ EQUB 70                \ Line ID  77
+ EQUB 125               \ Line ID  78
+ EQUB 125               \ Line ID  79
+ EQUB 125               \ Line ID  80
+ EQUB 125               \ Line ID  81
+ EQUB 125               \ Line ID  82
+ EQUB 125               \ Line ID  83
+ EQUB 125               \ Line ID  84
+ EQUB 125               \ Line ID  85
+ EQUB 125               \ Line ID  86
+ EQUB 125               \ Line ID  87
+ EQUB 125               \ Line ID  88
+ EQUB 125               \ Line ID  89
+ EQUB 125               \ Line ID  90
+ EQUB 125               \ Line ID  91
+ EQUB 125               \ Line ID  92
+ EQUB 125               \ Line ID  93
+ EQUB 125               \ Line ID  94
+ EQUB 125               \ Line ID  95
+ EQUB 125               \ Line ID  96
+ EQUB 125               \ Line ID  97
+ EQUB 125               \ Line ID  98
+ EQUB 125               \ Line ID  99
+ EQUB 125               \ Line ID 100
+ EQUB 125               \ Line ID 101
+ EQUB 125               \ Line ID 102
+ EQUB 125               \ Line ID 103
+ EQUB 125               \ Line ID 104
+ EQUB 125               \ Line ID 105
+ EQUB 125               \ Line ID 106
+ EQUB 125               \ Line ID 107
+ EQUB 125               \ Line ID 108
+ EQUB 125               \ Line ID 109
+ EQUB 125               \ Line ID 110
+ EQUB 125               \ Line ID 111
+ EQUB 125               \ Line ID 112
+ EQUB 125               \ Line ID 113
+ EQUB 125               \ Line ID 114
+ EQUB 125               \ Line ID 115
+ EQUB 125               \ Line ID 116
+ EQUB 125               \ Line ID 117
+ EQUB 125               \ Line ID 118
+ EQUB 125               \ Line ID 119
+ EQUB 125               \ Line ID 120
+ EQUB 125               \ Line ID 121
+ EQUB 125               \ Line ID 122
+ EQUB 120               \ Line ID 123
+ EQUB 125               \ Line ID 124
+ EQUB 125               \ Line ID 125
+ EQUB 125               \ Line ID 126
+ EQUB 125               \ Line ID 127
+ EQUB 125               \ Line ID 128
+ EQUB 125               \ Line ID 129
+ EQUB 125               \ Line ID 130
+ EQUB 125               \ Line ID 131
+ EQUB 125               \ Line ID 132
+ EQUB 125               \ Line ID 133
+ EQUB 125               \ Line ID 134
+ EQUB 25                \ Line ID 135
+ EQUB 25                \ Line ID 136
+ EQUB 25                \ Line ID 137
+ EQUB 100               \ Line ID 138
+ EQUB 100               \ Line ID 139
+ EQUB 100               \ Line ID 140
+ EQUB 100               \ Line ID 141
+ EQUB 100               \ Line ID 142
+ EQUB 100               \ Line ID 143
+ EQUB 100               \ Line ID 144
+ EQUB 100               \ Line ID 145
+ EQUB 100               \ Line ID 146
+ EQUB 100               \ Line ID 147
+ EQUB 100               \ Line ID 148
+ EQUB 100               \ Line ID 149
+ EQUB 120               \ Line ID 150
+ EQUB 100               \ Line ID 151
+ EQUB 100               \ Line ID 152
+ EQUB 100               \ Line ID 153
+ EQUB 100               \ Line ID 154
+ EQUB 100               \ Line ID 155
+ EQUB 100               \ Line ID 156
+ EQUB 100               \ Line ID 157
+ EQUB 100               \ Line ID 158
+ EQUB 100               \ Line ID 159
+ EQUB 100               \ Line ID 160
+ EQUB 120               \ Line ID 161
+ EQUB 120               \ Line ID 162
+ EQUB 120               \ Line ID 163
+ EQUB 120               \ Line ID 164
+ EQUB 120               \ Line ID 165
+ EQUB 120               \ Line ID 166
+ EQUB 120               \ Line ID 167
+ EQUB 120               \ Line ID 168
+ EQUB 60                \ Line ID 169
+ EQUB 60                \ Line ID 170
+ EQUB 60                \ Line ID 171
+ EQUB 60                \ Line ID 172
+ EQUB 60                \ Line ID 173
+ EQUB 60                \ Line ID 174
+ EQUB 60                \ Line ID 175
+ EQUB 60                \ Line ID 176
+ EQUB 60                \ Line ID 177
+ EQUB 60                \ Line ID 178
+ EQUB 60                \ Line ID 179
+ EQUB 60                \ Line ID 180
+ EQUB 60                \ Line ID 181
+ EQUB 60                \ Line ID 182
+ EQUB 60                \ Line ID 183
+ EQUB 60                \ Line ID 184
+ EQUB 60                \ Line ID 185
+ EQUB 120               \ Line ID 186
+ EQUB 120               \ Line ID 187
+ EQUB 120               \ Line ID 188
+ EQUB 120               \ Line ID 189
+ EQUB 120               \ Line ID 190
+ EQUB 120               \ Line ID 191
+ EQUB 120               \ Line ID 192
 
- EQUB &78, &3F          \ These bytes appear to be unused
- EQUB &0D, &03
- EQUB &B1, &10
- EQUB &2E, &64
- EQUB &6C, &70
- EQUB &32, &20
- EQUB &53, &54
- EQUB &41, &26
- EQUB &37, &36
- EQUB &0D, &03
- EQUB &B2, &19
- EQUB &2E, &64
+ EQUB &3F, &0D          \ These bytes appear to be unused
+ EQUB &03, &B1
+ EQUB &10, &2E
+ EQUB &64, &6C
+ EQUB &70, &32
+ EQUB &20, &53
+ EQUB &54, &41
+ EQUB &26, &37
+ EQUB &36, &0D
+ EQUB &03, &B2
+ EQUB &19, &2E
+ EQUB &64
 
 \ ******************************************************************************
 \
@@ -18826,46 +19059,46 @@ NEXT
 
 .maxObjDistance
 
- EQUB 108               \ Object ID:  0
- EQUB 125               \ Object ID:  1
- EQUB 125               \ Object ID:  2
- EQUB 125               \ Object ID:  3
- EQUB 125               \ Object ID:  4
- EQUB 125               \ Object ID:  5
- EQUB  40               \ Object ID:  6
- EQUB  40               \ Object ID:  7
- EQUB 110               \ Object ID:  8
- EQUB 110               \ Object ID:  9
- EQUB  58               \ Object ID: 10
- EQUB  66               \ Object ID: 11
- EQUB  30               \ Object ID: 12
- EQUB  30               \ Object ID: 13
- EQUB  30               \ Object ID: 14
- EQUB  30               \ Object ID: 15
- EQUB 125               \ Object ID: 16
- EQUB 125               \ Object ID: 17
- EQUB 125               \ Object ID: 18
- EQUB 125               \ Object ID: 19
- EQUB 125               \ Object ID: 20
- EQUB 125               \ Object ID: 21
- EQUB 125               \ Object ID: 22
- EQUB 125               \ Object ID: 23
- EQUB 125               \ Object ID: 24
- EQUB 125               \ Object ID: 25
- EQUB 125               \ Object ID: 26
- EQUB 125               \ Object ID: 27
- EQUB 125               \ Object ID: 28
- EQUB 125               \ Object ID: 29
- EQUB  25               \ Object ID: 30
- EQUB  90               \ Object ID: 31
- EQUB  90               \ Object ID: 32
- EQUB  90               \ Object ID: 33
- EQUB 125               \ Object ID: 34
- EQUB  58               \ Object ID: 35
- EQUB  66               \ Object ID: 36
- EQUB  78               \ Object ID: 37
- EQUB  69               \ Object ID: 38
- EQUB  32               \ Object ID: 39
+ EQUB 108               \ Object ID  0
+ EQUB 125               \ Object ID  1
+ EQUB 125               \ Object ID  2
+ EQUB 125               \ Object ID  3
+ EQUB 125               \ Object ID  4
+ EQUB 125               \ Object ID  5
+ EQUB  40               \ Object ID  6
+ EQUB  40               \ Object ID  7
+ EQUB 110               \ Object ID  8
+ EQUB 110               \ Object ID  9
+ EQUB  58               \ Object ID 10
+ EQUB  66               \ Object ID 11
+ EQUB  30               \ Object ID 12
+ EQUB  30               \ Object ID 13
+ EQUB  30               \ Object ID 14
+ EQUB  30               \ Object ID 15
+ EQUB 125               \ Object ID 16
+ EQUB 125               \ Object ID 17
+ EQUB 125               \ Object ID 18
+ EQUB 125               \ Object ID 19
+ EQUB 125               \ Object ID 20
+ EQUB 125               \ Object ID 21
+ EQUB 125               \ Object ID 22
+ EQUB 125               \ Object ID 23
+ EQUB 125               \ Object ID 24
+ EQUB 125               \ Object ID 25
+ EQUB 125               \ Object ID 26
+ EQUB 125               \ Object ID 27
+ EQUB 125               \ Object ID 28
+ EQUB 125               \ Object ID 29
+ EQUB  25               \ Object ID 30
+ EQUB  90               \ Object ID 31
+ EQUB  90               \ Object ID 32
+ EQUB  90               \ Object ID 33
+ EQUB 125               \ Object ID 34
+ EQUB  58               \ Object ID 35
+ EQUB  66               \ Object ID 36
+ EQUB  78               \ Object ID 37
+ EQUB  69               \ Object ID 38
+ EQUB  32               \ Object ID 39
 
 \ ******************************************************************************
 \
@@ -18884,6 +19117,10 @@ NEXT
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
+\
+\ We can buffer up to 96 lines, with 48 in each of the two line buffers, so the
+\ maximum number of lines on screen at any one time is 48 lines out of the 193
+\ lines defined in the world.
 \
 \ ******************************************************************************
 
@@ -18920,6 +19157,10 @@ NEXT
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
 \
+\ We can buffer up to 96 lines, with 48 in each of the two line buffers, so the
+\ maximum number of lines on screen at any one time is 48 lines out of the 193
+\ lines defined in the world.
+\
 \ ******************************************************************************
 
 .lineBufferW
@@ -18954,6 +19195,10 @@ NEXT
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
+\
+\ We can buffer up to 96 lines, with 48 in each of the two line buffers, so the
+\ maximum number of lines on screen at any one time is 48 lines out of the 193
+\ lines defined in the world.
 \
 \ ******************************************************************************
 
@@ -18990,6 +19235,10 @@ NEXT
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
 \
+\ We can buffer up to 96 lines, with 48 in each of the two line buffers, so the
+\ maximum number of lines on screen at any one time is 48 lines out of the 193
+\ lines defined in the world.
+\
 \ ******************************************************************************
 
 .lineBufferG
@@ -19024,6 +19273,10 @@ NEXT
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
+\
+\ We can buffer up to 96 lines, with 48 in each of the two line buffers, so the
+\ maximum number of lines on screen at any one time is 48 lines out of the 193
+\ lines defined in the world.
 \
 \ ******************************************************************************
 
@@ -19277,11 +19530,12 @@ NEXT
  EQUB 211               \ Line ID 189 goes from point  35 to point 211
  EQUB 211               \ Line ID 190 goes from point 212 to point 211
  EQUB 211               \ Line ID 191 goes from point  36 to point 211
+ EQUB 215               \ Line ID 192 goes from point 214 to point 215
 
- EQUB &D7, &D7          \ These bytes appear to be unused
- EQUB &74, &72
- EQUB &75, &32
- EQUB &3A, &43
+ EQUB &D7, &74          \ These bytes appear to be unused
+ EQUB &72, &75
+ EQUB &32, &3A
+ EQUB &43
 
 \ ******************************************************************************
 \
@@ -19335,14 +19589,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: xGroupHi
+\       Name: xGroupObjectHi
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for objects in a group (6 to 9)
 \
 \ ******************************************************************************
 
-.xGroupHi
+.xGroupObjectHi
 
  EQUB &C8               \ Object 6: group 0 has coordinate (&C800, &0000, &5200)
  EQUB &2A               \ Object 6: group 1 has coordinate (&2A00, &0000, &D200)
@@ -19382,14 +19636,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: zGroupHi
+\       Name: zGroupObjectHi
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for objects in a group (6 to 9)
 \
 \ ******************************************************************************
 
-.zGroupHi
+.zGroupObjectHi
 
  EQUB &52               \ Object 6: group 0 has coordinate (&C800, &0000, &5200)
  EQUB &D2               \ Object 6: group 1 has coordinate (&2A00, &0000, &D200)
@@ -19699,12 +19953,13 @@ NEXT
  EQUB 35                \ Line ID 189 goes from point  35 to point 211
  EQUB 212               \ Line ID 190 goes from point 212 to point 211
  EQUB 36                \ Line ID 191 goes from point  36 to point 211
+ EQUB 214               \ Line ID 192 goes from point 214 to point 215
 
- EQUB &D6, &6C          \ These bytes appear to be unused
- EQUB &03, &0A
+ EQUB &6C, &03          \ These bytes appear to be unused
+ EQUB &0A, &20
  EQUB &20, &20
- EQUB &20, &20
- EQUB &00, &00
+ EQUB &20, &00
+ EQUB &00
 
 \ ******************************************************************************
 \
@@ -19927,8 +20182,7 @@ NEXT
 
 .numberOfLines
 
- EQUB 193               \ The total number of lines in the world + 1, so there
-                        \ are 192 lines in total
+ EQUB 193               \ The total number of lines in the world
 
 \ ******************************************************************************
 \
@@ -21688,6 +21942,10 @@ NEXT
 \ DrawClippedLine routine, and is read by the EraseCanopyLines routine when the
 \ line is erased.
 \
+\ We can buffer up to 96 lines, with 48 in each of the two line buffers, so the
+\ maximum number of lines on screen at any one time is 48 lines out of the 193
+\ lines defined in the world.
+\
 \ ******************************************************************************
 
 .lineBufferV
@@ -22442,7 +22700,7 @@ NEXT
 \
 \       Name: Crash
 \       Type: Subroutine
-\   Category: Flight
+\   Category: Flight model
 \    Summary: Make a crashing sound, flash the canopy and start a new game
 \
 \ ******************************************************************************
@@ -22566,10 +22824,11 @@ NEXT
 
  LDX hitObjectId        \ Set X to the object ID of the object we hit
 
- LDY zObjectPoint+202,X
+ LDY explodeFrom-30,X   \ Set Y to the starting point ID for exploding this
+                        \ alien slot
 
- LDA zObjectPoint+197,X
- STA U
+ LDA explodeTo-30,X     \ Set U to the end point ID for exploding this alien
+ STA U                  \ slot
 
  LDX #2                 \ Set X = 2 to act as a shift counter in the following
                         \ loop
@@ -22599,6 +22858,10 @@ NEXT
                         \   * P = %00111111 if feedingStage = 1
                         \   * P = %00011111 if feedingStage >= 2
 
+                        \ In the following loop, Y iterates through the point
+                        \ IDs, starting at the value we fetched from explodeFrom
+                        \ and ending at the value we fetched from explodeTo
+
 .ahit3
 
  LDX #LO(xTemp2Lo)      \ Set X so the call to CopyPointToWork copies the
@@ -22607,7 +22870,8 @@ NEXT
  JSR CopyPointToWork    \ Copy the coordinates from point Y to
                         \ (xTemp2, yTemp2, zTemp2)
 
- STY T
+ STY T                  \ Store the loop counter in T so we can retrieve it
+                        \ later
 
  LDY #2
 
@@ -22636,8 +22900,8 @@ NEXT
  DEY
  BPL ahit4
 
- LDY T                  \ Set Y so the call to CopyWorkToPoint copies the
-                        \ coordinates to point T
+ LDY T                  \ Restore the loop counter that we stored in T, so Y now
+                        \ contains the point ID once again
 
  LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies the
                         \ coordinates from (xTemp2, yTemp2, zTemp2)
@@ -23562,7 +23826,7 @@ NEXT
 \
 \       Name: axisChangeRate
 \       Type: Variable
-\   Category: Flight
+\   Category: Flight model
 \    Summary: Stores the amount by which the three axes of movement change when
 \             the aileron, elevator or rudder are moved
 \
