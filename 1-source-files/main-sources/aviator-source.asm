@@ -856,21 +856,24 @@ ORG &0900
                         \ U or B (undercarriage, brakes)    =   4 or  7
                         \ F or SHIFT (flaps, fire)          =   5 or  8
 
- SKIP 2
+ SKIP 2                 \ These bytes appear to be unused
 
 .xTemp2Lo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 24-bit temporary variable in
+                        \ (xTemp2Top xTemp2Hi xTemp2Lo)
 
 .yTemp2Lo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 24-bit temporary variable in
+                        \ (yTemp2Top yTemp2Hi yTemp2Lo)
 
 .zTemp2Lo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 24-bit temporary variable in
+                        \ (zTemp2Top zTemp2Hi zTemp2Lo)
 
- SKIP 5
+ SKIP 5                 \ These bytes appear to be unused
 
 .keyLoggerHigh
 
@@ -890,27 +893,33 @@ ORG &0900
 
 .xTemp2Hi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 24-bit temporary variable in
+                        \ (xTemp2Top xTemp2Hi xTemp2Lo)
 
 .yTemp2Hi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 24-bit temporary variable in
+                        \ (yTemp2Top yTemp2Hi yTemp2Lo)
 
 .zTemp2Hi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 24-bit temporary variable in
+                        \ (zTemp2Top zTemp2Hi zTemp2Lo)
 
 .xTemp2Top
 
- SKIP 1
+ SKIP 1                 \ The top byte of the 24-bit temporary variable in
+                        \ (xTemp2Top xTemp2Hi xTemp2Lo)
 
 .yTemp2Top
 
- SKIP 1
+ SKIP 1                 \ The top byte of the 24-bit temporary variable in
+                        \ (yTemp2Top yTemp2Hi yTemp2Lo)
 
 .zTemp2Top
 
- SKIP 1
+ SKIP 1                 \ The top byte of the 24-bit temporary variable in
+                        \ (zTemp2Top zTemp2Hi zTemp2Lo)
 
 .gunSights
 
@@ -1155,51 +1164,63 @@ ORG &0900
 
 .xTemp3Lo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (xTemp3Hi xTemp3Lo)
 
 .yTemp3Lo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (yTemp3Hi yTemp3Lo)
 
 .zTemp3Lo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (zTemp3Hi zTemp3Lo)
 
 .xTemp3Hi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (xTemp3Hi xTemp3Lo)
 
 .yTemp3Hi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (yTemp3Hi yTemp3Lo)
 
 .zTemp3Hi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (zTemp3Hi zTemp3Lo)
 
 .xTempLo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (xTempHi xTempLo)
 
 .yTempLo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (yTempHi yTempLo)
 
 .zTempLo
 
- SKIP 1
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (zTempHi zTempLo)
 
 .xTempHi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (xTempHi xTempLo)
 
 .yTempHi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (yTempHi yTempLo)
 
 .zTempHi
 
- SKIP 1
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (zTempHi zTempLo)
 
 .TC
 
@@ -12017,7 +12038,7 @@ ORG CODE%
                         \ aren't visible into the linesToHide list
 
  JSR ExplodeAlien       \ If an alien has been hit, process its explosion, with
-                        \ all the turbulence that entails
+                        \ all the convulsions that entails
 
  LDY #2                 \ Check to see if we are flying under the suspension
  JSR CheckFlyingSkills  \ bridge and award points if we are
@@ -12047,7 +12068,7 @@ ORG CODE%
                         \ alien on the radar
 
  LDA alienState,X       \ If the moving alien's state is < 27, skip the
- CMP #27                \ following instruction
+ CMP #27                \ following instruction as the alien is not flying
  BCC main7
 
  JSR UpdateRadarBlip    \ The moving alien's state is >= 27, which means it is
@@ -12059,7 +12080,7 @@ ORG CODE%
 \       Name: MainLoop (Part 6 of 15)
 \       Type: Subroutine
 \   Category: Main loop
-\    Summary: Move the aliens
+\    Summary: Check whether any aliens have been hit
 \
 \ ******************************************************************************
 
@@ -12072,11 +12093,12 @@ ORG CODE%
                         \ arrived
 
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
- BEQ main11             \ the air, so jump to main11, as when bullets are flying
-                        \ around, the aliens stop moving
+ BEQ main11             \ the air, so jump to main11, as we only need to check
+                        \ whether an alien is hit when there are bullets around
 
  LDA #33                \ We now loop through objects 33 down to 30, which are
- STA objectId           \ all the alien objects, so set a loop counter in objectId
+ STA objectId           \ all the alien objects, so we can check whether any of
+                        \ them have been hit, so set a loop counter in objectId
 
 .main8
 
@@ -12089,23 +12111,20 @@ ORG CODE%
                         \
                         \ If it is clear, then this object is not visible, so
                         \ we skip the following three instructions and move on
-                        \ to the next alien
+                        \ to the next alien, as we can't hit an alien that we
+                        \ can't see
 
  JSR CheckIfAlienIsHit  \ This alien is visible, so check to see whether it has
                         \ been hit, and if so, initiate the explosion
 
- LDA hitTimer           \ If hitTimer is non-zero, then we only just hit an
- BNE main10             \ alien, so jump to main10 to stop the rest of the
-                        \ aliens from moving (so when we hit an alien, only
-                        \ one of them moves at a time, for a certain period
-                        \ after the hit - so hitting an alien slows them all
-                        \ down for a while)
+ LDA hitTimer           \ If hitTimer is non-zero, then we just hit an alien, so
+ BNE main10             \ jump to main10 to skip checking the rest of the aliens
 
 .main9
 
  DEC objectId           \ Decrement the loop counter to the next alien
 
- LDA objectId           \ Loop back to process the next alien, until we have
+ LDA objectId           \ Loop back to check the next alien, until we have
  CMP #30                \ done all of them (from object 33 down to object 30)
  BCS main8
 
@@ -12114,11 +12133,14 @@ ORG CODE%
 
 .main10
 
- STA previousHitTimer   \ Store the value of hitTimer in previousHitTimer, so
-                        \ we can access it later
+ STA distanceFromHit    \ Store the value of hitTimer (which will be 27 as we
+                        \ just hit an alien) in distanceFromHit, so we are far
+                        \ enough away to avoid any turbulence, for now (as
+                        \ turbulence only kicks in when distanceFromHit < 16)
 
  LDA #0                 \ Set firingStatus = 0 to indicate that there are no
- STA firingStatus       \ bullets are in the air
+ STA firingStatus       \ longer any bullets are in the air, as they are now
+                        \ embedded in an unfortunate alien
 
 .main11
 
@@ -13393,7 +13415,7 @@ ORG CODE%
 
                         \ We now check for some specific objects:
                         \
-                        \   * Object groups, e.g. trees (6, 7, 8 or 9)
+                        \   * Object groups, i.e. trees (6, 7), hills (8, 9)
                         \   * Bullets (12, 13, 14 or 15)
                         \   * Feeding aliens (object group 30)
                         \   * Flying aliens (31, 32 or 33)
@@ -13417,7 +13439,11 @@ ORG CODE%
 \ ******************************************************************************
 
                         \ If we get here then the object ID is 12, 13, 14 or 15,
-                        \ so this is a bullet
+                        \ so this is a bullet object
+                        \
+                        \ There are two bullet trails, with objects 13 and 15 at
+                        \ the head of the trail (i.e. the bullets), and objects
+                        \ 12 and 14 at the back of the bullet trail
 
  LDA #0                 \ Set K = 0, so the CheckObjDistance routine always
  STA K                  \ returns 0, which means the bullet trails never get
@@ -13429,11 +13455,14 @@ ORG CODE%
 
  TYA                    \ If bit 0 of the object ID is set, i.e. the object ID
  AND #1                 \ is 13 or 15, jump to objc3 to check the next range
- BNE objc3              \ and then process the bullet
+ BNE objc3              \ and then process the bullet (so objects 13 and 15 can
+                        \ be below ground while 12 and 14 are above ground, in
+                        \ which case the bullets are still in play)
 
- JMP objc10             \ The object ID is 12 or 14 and the bullet is below
-                        \ ground level, so jump to objc10 to tidy up and return
-                        \ from the subroutine
+ JMP objc10             \ The object ID is 12 or 14 (the back end of the bullet
+                        \ trail) and the object is below ground level, so jump
+                        \ to objc10 to tidy up and return from the subroutine,
+                        \ as the bullets have hit the ground
 
 \ ******************************************************************************
 \
@@ -15326,7 +15355,7 @@ ORG CODE%
 \       Name: UpdateBullets
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Move the bullets through the air
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15336,49 +15365,69 @@ ORG CODE%
 
 .UpdateBullets
 
- LDY #15
- STY objectId
+ LDY #15                \ The bullets are made up of objects 12 to 15, so set a
+ STY objectId           \ counter in objectId to count through all four
 
- LDA #98
- STA GG
+ LDA #98                \ Objects 12 to 15 are made up of points 95 to 98, so
+ STA GG                 \ set a counter in GG to count through all four
 
-.L2EEF
+.ubul1
 
- TYA
- CLC
- ADC #216
- TAX
- JSR AddPointToObject
+ TYA                    \ Set X = Y + 216
+ CLC                    \
+ ADC #216               \ so X will be 228 to 231 for objects 12 to 15, which is
+ TAX                    \ the ID of each bullet object's velocity vector, as set
+                        \ up in the FireGuns routine
 
- LDA #0
- STA showLine
+ JSR AddPointToObject   \ Add the vector in point X to the object coordinates
+                        \ for object Y (in other words, add the velocity vector
+                        \ to object Y's coordinates, which moves the bullet in
+                        \ space by the correct amount)
+
+ LDA #0                 \ Set showLine = 0 as a starting point for the line's
+ STA showLine           \ visibility (so we start out by assuming the line is
+                        \ visible, and change this in the following call to
+                        \ SetObjectCoords if we find that it isn't)
 
  JSR SetObjectCoords    \ Calculate the object's coordinates and visibilty,
                         \ updating the object's status byte with the results
 
- BPL L2F0A              \ If bit 7 of the object's updated status byte is clear,
-                        \ then the object is not visible, so jump to L2F0A
+ BPL ubul2              \ If bit 7 of the object's updated status byte is clear,
+                        \ then the bullets have hit the ground, so jump to ubul2
+                        \ to remove the bullets
 
- LDY GG
- LDX #60
- JSR CheckLineDistance
+ LDY GG                 \ Set Y to the point ID that we're checking
 
- BEQ L2F0F
+ LDX #60                \ Set X to line ID 60 for the call to CheckLineDistance
 
-.L2F0A
+ JSR CheckLineDistance  \ Check whether point GG on line 60 is within the
+                        \ visible distance for the line
+
+ BEQ ubul3              \ If the result is 0, then the point is visible, so
+                        \ jump to ubul3 to move onto the next bullet point
+
+.ubul2
+
+                        \ If we get here then this bullet point has either hit
+                        \ the ground, or it is too far away to be seen any more,
+                        \ so it's time to remove the bullets
 
  LDA #0                 \ Set firingStatus = 0 to indicate that there are no
  STA firingStatus       \ bullets are in the air
 
-.L2F0F
+.ubul3
 
- DEC GG
- DEC objectId
- LDY objectId
- CPY #12
- BCS L2EEF
+ DEC GG                 \ Decrement the point counter to move on to the next
+                        \ point from 98 down to 95
 
- RTS
+ DEC objectId           \ Decrement the object counter to move on to the next
+                        \ object from 15 down to 12
+
+ LDY objectId           \ Loop back until we have processed all four objects
+ CPY #12                \ and points
+ BCS ubul1
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -16075,28 +16124,28 @@ ORG CODE%
                         \   * Fully fed (stage 0)or flying alien:
                         \
                         \       QQ = %01111101
-                        \       Q  = %01000000
+                        \       Q  = %01000000, so (5 Q) = &540
                         \       RR = %10100000
                         \       PP = %10100000
                         \
                         \   * Medium feeding alien (stage 1):
                         \
                         \       QQ = %00111110
-                        \       Q  = %00100000
+                        \       Q  = %00100000, so (5 Q) = &520
                         \       RR = %01010000
                         \       PP = %01010000
                         \
                         \   * Small feeding alien (stage 2):
                         \
                         \       QQ = %00011111
-                        \       Q  = %00010000
+                        \       Q  = %00010000, so (5 Q) = &510
                         \       RR = %00101000
                         \       PP = %00101000
                         \
                         \   * Smallest feeding alien (stage 3) or dormant alien:
                         \
                         \       QQ = %00001111
-                        \       Q  = %00001000
+                        \       Q  = %00001000, so (5 Q) = &508
                         \       RR = %00010100
                         \       PP = %00010100
 
@@ -16119,7 +16168,11 @@ ORG CODE%
 
  LDY objectId           \ Set Y to the object ID of the alien
 
- JSR L3129
+ JSR L3129              \ Set the following:
+                        \
+                        \   (I+2 W+2) = xObject + (5 Q)
+                        \   (I+1 W+1) = yObject
+                        \   (I W)     = zObject + (5 Q)
 
  LDX #228               \ Set VV = 228 to iterate through the following in the
  STX VV                 \ outer loop below (i.e. from mval6 to the end):
@@ -16128,16 +16181,16 @@ ORG CODE%
 
 .mval6
 
- LDX VV
+ LDX VV                 \ Set X = 228, 230
 
  LDA #31                \ Set WW = 31
  STA WW
 
- LDY #0                 \ Loop 0, 1, 2
+ LDY #0                 \ Set Y = 0, 1, 2
 
 .mval7
 
- STY Q
+ STY Q                  \ Set Q = Y
 
  JSR L3181
 
@@ -16145,9 +16198,12 @@ ORG CODE%
  STA xTemp2Hi,Y
  LDA V
  STA xTemp2Lo,Y
+
  LDA R
  STA xTempLo,Y
+
  INY
+
  CPY #3
  BNE mval7
 
@@ -16264,11 +16320,11 @@ ORG CODE%
 \
 \ Returns:
 \
-\   (I+2 W+2)           (xObjectHi xObjectLo) + (5 Q) for object ID 30 to 33
+\   (I+2 W+2)           (xObjectHi xObjectLo) + (5 Q)
 \
-\   (I+1 W+1)           (xObjectHi xObjectLo)         for object ID 70 to 73
+\   (I+1 W+1)           (yObjectHi yObjectLo)
 \
-\   (I W)               (xObjectHi xObjectLo) + (5 Q) for object ID 110 to 113
+\   (I W)               (zObjectHi zObjectLo) + (5 Q)
 \
 \ ******************************************************************************
 
@@ -16280,17 +16336,14 @@ ORG CODE%
                         \ When X = 2:
                         \
                         \   * (I+2 W+2) = (xObjectHi xObjectLo) + (5 Q)
-                        \     for object ID 30 to 33
                         \
                         \ When X = 1:
                         \
-                        \   * (I+1 W+1) = (xObjectHi xObjectLo)
-                        \     for object ID 70 to 73
+                        \   * (I+1 W+1) = (yObjectHi yObjectLo)
                         \
                         \ When X = 0:
                         \
-                        \   * (I W) = (xObjectHi xObjectLo) + (5 Q)
-                        \     for object ID 110 to 113
+                        \   * (I W) = (zObjectHi zObjectLo) + (5 Q)
 
 .L312B
 
@@ -16306,9 +16359,9 @@ ORG CODE%
 .L313A
 
  TYA                    \ Set Y = Y + 40
- CLC
- ADC #40
- TAY
+ CLC                    \
+ ADC #40                \ so that xObjectLo,Y and xObjectHi,Y above move on to
+ TAY                    \ yObject and then zObject
 
  DEX                    \ Decrement the loop counter
 
@@ -16392,13 +16445,19 @@ ORG CODE%
 \
 \ This is called ADIF in the original source code.
 \
+\ Arguments:
+\
+\   Y                   0, 1, 2
+\
 \ ******************************************************************************
 
 .L3181
 
- LDA #0
+ LDA #0                 \ Set P = 0
  STA P
- STA R
+
+ STA R                  \ Set R = 0
+
  TXA
  CLC
  ADC #40
@@ -18348,14 +18407,15 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: previousHitTimer
+\       Name: distanceFromHit
 \       Type: Variable
 \   Category: Theme
-\    Summary: 
+\    Summary: The distance from the alien we just hit, so we can work out
+\             whether we get hit by turbulence
 \
 \ ******************************************************************************
 
-.previousHitTimer
+.distanceFromHit
 
  EQUB &48
 
@@ -18383,7 +18443,7 @@ ORG CODE%
 \       Name: hitObjectId
 \       Type: Variable
 \   Category: Theme
-\    Summary: 
+\    Summary: The object ID of the alien we just hit (30 to 33)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18400,12 +18460,12 @@ ORG CODE%
 \       Name: hitTimer
 \       Type: Variable
 \   Category: Theme
-\    Summary: 
+\    Summary: The time since we hit an alien, so we can time its explosion
 \
 \ ------------------------------------------------------------------------------
 \
-\ The hit timer starts at 27 when we make a hit. While it is non-zero, any
-\ attacking aliens stop moving towards the town.
+\ The hit timer starts at 27 when we make a hit. While it is non-zero, the gun
+\ can't be fired and any attacking aliens stop moving until the timer runs down.
 \
 \ This is called EPLO in the original source.
 \
@@ -18420,7 +18480,7 @@ ORG CODE%
 \       Name: fuelUsedLo
 \       Type: Variable
 \   Category: Flight model
-\    Summary: 
+\    Summary: The low byte of the current batch of fuel used
 \
 \ ******************************************************************************
 
@@ -18433,7 +18493,7 @@ ORG CODE%
 \       Name: fuelUsedHi
 \       Type: Variable
 \   Category: Flight model
-\    Summary: 
+\    Summary: The high byte of the current batch of fuel used
 \
 \ ******************************************************************************
 
@@ -18463,16 +18523,16 @@ ORG CODE%
 \       Name: explodeTo
 \       Type: Variable
 \   Category: Theme
-\    Summary: The end point for exploding each of the four alien slots
+\    Summary: The end point ID for exploding each of the four alien slots
 \
 \ ******************************************************************************
 
 .explodeTo
 
- EQUB 178               \ End point ID for alien slot 30 (points 180 to 178)
- EQUB 183               \ End point ID for alien slot 31 (points 186 to 183)
- EQUB 188               \ End point ID for alien slot 32 (points 191 to 188)
- EQUB 193               \ End point ID for alien slot 33 (points 200 to 193)
+ EQUB 178               \ Alien slot 30 moves points 180 to 178 when it explodes
+ EQUB 183               \ Alien slot 31 moves points 186 to 183 when it explodes
+ EQUB 188               \ Alien slot 32 moves points 191 to 188 when it explodes
+ EQUB 193               \ Alien slot 33 moves points 200 to 193 when it explodes
 
  EQUB 15                \ This byte appears to be unused
 
@@ -18481,16 +18541,16 @@ ORG CODE%
 \       Name: explodeFrom
 \       Type: Variable
 \   Category: Theme
-\    Summary: The starting point for exploding each of the four alien slots
+\    Summary: The starting point ID for exploding each of the four alien slots
 \
 \ ******************************************************************************
 
 .explodeFrom
 
- EQUB 180               \ Start point ID for alien slot 30 (points 180 to 178)
- EQUB 186               \ Start point ID for alien slot 31 (points 186 to 183)
- EQUB 191               \ Start point ID for alien slot 32 (points 191 to 188)
- EQUB 200               \ Start point ID for alien slot 33 (points 200 to 193)
+ EQUB 180               \ Alien slot 30 moves points 180 to 178 when it explodes
+ EQUB 186               \ Alien slot 31 moves points 186 to 183 when it explodes
+ EQUB 191               \ Alien slot 32 moves points 191 to 188 when it explodes
+ EQUB 200               \ Alien slot 33 moves points 200 to 193 when it explodes
 
 \ ******************************************************************************
 \
@@ -22803,31 +22863,31 @@ NEXT
 \       Name: ExplodeAlien
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: Explode an alien, causing turbulence
+\    Summary: Explode an alien, making the alien split apart
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   Y                   
+\   hitObjectId         The object ID of the exploding alien (30 to 33)
 \
 \ ******************************************************************************
 
 .ExplodeAlien
 
- LDA hitTimer           \ If hitTimer is zero then there is no explosing alien,
+ LDA hitTimer           \ If hitTimer is zero then there is no exploding alien,
  BEQ ahit6              \ so jump to ahit8 via ahit6 to return from the
                         \ subroutine
 
  LDA #2                 \ Otherwise we do have an exploding alien, so make sound
  JSR MakeSound          \ #2, the sound of an alien being destroyed
 
- LDX hitObjectId        \ Set X to the object ID of the object we hit
+ LDX hitObjectId        \ Set X to the object ID of the object we hit (30 to 33)
 
- LDY explodeFrom-30,X   \ Set Y to the starting point ID for exploding this
-                        \ alien slot
+ LDY explodeFrom-30,X   \ Set Y to the "from" point ID for exploding this alien
+                        \ slot
 
- LDA explodeTo-30,X     \ Set U to the end point ID for exploding this alien
+ LDA explodeTo-30,X     \ Set U to the "to" point ID for exploding this alien
  STA U                  \ slot
 
  LDX #2                 \ Set X = 2 to act as a shift counter in the following
@@ -22858,9 +22918,14 @@ NEXT
                         \   * P = %00111111 if feedingStage = 1
                         \   * P = %00011111 if feedingStage >= 2
 
-                        \ In the following loop, Y iterates through the point
-                        \ IDs, starting at the value we fetched from explodeFrom
-                        \ and ending at the value we fetched from explodeTo
+                        \ In the following outer loop, Y iterates through the
+                        \ pointIDs, starting at the "from" ID we fetched from
+                        \ above and ending at the "to" value
+                        \
+                        \ For each point, it adds or subtracts a random number
+                        \ to the point coordinate, with the random number being
+                        \ scaled along with P (so fatter aliens have their
+                        \ points moved further)
 
 .ahit3
 
@@ -22868,37 +22933,73 @@ NEXT
                         \ coordinates to (xTemp2, yTemp2, zTemp2)
 
  JSR CopyPointToWork    \ Copy the coordinates from point Y to
-                        \ (xTemp2, yTemp2, zTemp2)
+                        \ (xTemp2, yTemp2, zTemp2), so it contains the
+                        \ coordinates of the next point to process in Y
 
  STY T                  \ Store the loop counter in T so we can retrieve it
                         \ later
 
- LDY #2
+                        \ We now add (or subtract) a random number to each
+                        \ of the three axes in the (xTemp2, yTemp2, zTemp2)
+                        \ coordinate, using a different random number for
+                        \ each axis, setting the sign of the random number
+                        \ according to bit 0 (which is random), shifting the
+                        \ number right and AND'ing with P to give us a random
+                        \ number in the following range:
+                        \
+                        \   * -128 to +127 if feedingStage = 0
+                        \   *  -64 to  +63 if feedingStage = 1
+                        \   *  -32 to  +31 if feedingStage >= 2
+
+ LDY #2                 \ Set an index in Y for the inner loop, to work through
+                        \ the three axes of (xTemp2, yTemp2, zTemp2), from
+                        \ zTemp2 to xTemp2
+                        \
+                        \ The comments below are for the x-coordinate
 
 .ahit4
 
- LDA #0
+ LDA #0                 \ Set R = 0 to act as the top byte for (R A)
  STA R
- JSR NextRandomNumber
 
- TAX
+ JSR NextRandomNumber   \ Set A to point to the next item in the randomNumbers
+                        \ list
+
+ TAX                    \ Set A to the random number from the randomNumbers list
  LDA randomNumbers+1,X
- LSR A
- AND P
- BCC ahit5
 
- DEC R
- EOR #&FF
+ LSR A                  \ Shift A to the right, moving bit 0 into the C flag
+
+ AND P                  \ Set A = A AND P
+
+ BCC ahit5              \ If bit 0 of A before the shift was clear, skip the
+                        \ following two instructions, as we are going to leave
+                        \ (R A) as a positive number
+
+ DEC R                  \ Otherwise we want (R A) to be negative, so decrement R
+                        \ to &FF to act as the top byte in a negative (R A)
+
+ EOR #&FF               \ Flip all the bits in A to negate it, so in all we have
+                        \ (R A) = ~(A AND P)
 
 .ahit5
 
- ADC xTemp2Lo,Y
- STA xTemp2Lo,Y
- LDA R
+ ADC xTemp2Lo,Y         \ Set (xTemp2Hi xTemp2Lo) = (xTemp2Hi xTemp2Lo) + (R A)
+ STA xTemp2Lo,Y         \
+                        \ starting with the low bytes
+
+ LDA R                  \ And then the high bytes
  ADC xTemp2Hi,Y
  STA xTemp2Hi,Y
- DEY
- BPL ahit4
+
+ DEY                    \ Derement the loop counter to move on to the next axis
+
+ BPL ahit4              \ Loop back until we have done all three axes
+
+                        \ We have now added random numbers to all three axes in
+                        \ (xTemp2, yTemp2, zTemp2), scaled to the alien's size,
+                        \ so now to copy the result back to the original point
+                        \ coordinates
 
  LDY T                  \ Restore the loop counter that we stored in T, so Y now
                         \ contains the point ID once again
@@ -22909,14 +23010,20 @@ NEXT
  JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
                         \ to point T
 
- DEY
- CPY U
+ DEY                    \ Decrement the outer loop counter to move on to the
+                        \ next point in the "from" to "to" range
+
+ CPY U                  \ Loop back until we have done the "to" point
  BCS ahit3
 
- DEC hitTimer
- BNE ahit6
+ DEC hitTimer           \ Decrement the hit timer, to move the current explosion
+                        \ process along by 1
 
- JSR ScoreHitPoints
+ BNE ahit6              \ If the timer is still non-zero, then the explosion
+                        \ hasn't finished, so skip the following instruction
+
+ JSR ScoreHitPoints     \ The alien has finished exploding, so award points for
+                        \ its destruction
 
 .ahit6
 
@@ -22924,27 +23031,33 @@ NEXT
  CMP #26                \ subroutine
  BNE ahit8
 
-                        \ If we get here then hitTimer = 26
+                        \ If we get here then hitTimer = 26, so it was 27 before
+                        \ the decrement above, which is right at the the start
+                        \ of the explosion
 
- LDA zTemp2Hi
+ LDA zTemp2Hi           \ Set A to the high byte of the alien's new z-coordinate
 
- LDX hitObjectId
- CPX #33
+ LDX hitObjectId        \ If we didn't hit the flying alien, jump to ahit7 to
+ CPX #33                \ set distanceFromHit to the z-coordinate
  BNE ahit7
 
- SEC
- SBC #8
- BPL ahit7
-
- LDA #0
+ SEC                    \ We hit the flying alien, so set A = A - 8 to store in
+ SBC #8                 \ distanceFromHit, which increases the chance of
+                        \ turbulence (as turbulence only kicks in when
+                        \ distanceFromHit < 16)
+ 
+ BPL ahit7              \ If the subtraction reduced A to below zero, set A = 0
+ LDA #0                 \ to store in distanceFromHit
 
 .ahit7
 
- STA previousHitTimer
+ STA distanceFromHit    \ Store the z-coordinate (or the z-coordinate - 8) in
+                        \ distanceFromHit, so turbulence will be applied if we
+                        \ are too close to the alien
 
 .ahit8
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -24509,17 +24622,18 @@ NEXT
 
 .L5062
 
- JSR NextRandomNumber
+ JSR NextRandomNumber   \ Set A to point to the next item in the randomNumbers
+                        \ list
 
  TAY
  LDA randomNumbers+1,Y
  STA P
 
- LDA previousHitTimer
- CMP #&10
+ LDA distanceFromHit    \ If distanceFromHit >= 16, jump to L5081 to skip the
+ CMP #16                \ following
  BCS L5081
 
- EOR #&0F
+ EOR #&0F               \ Apply turbulence?
  ASL A
  LSR P
  LDY #1
