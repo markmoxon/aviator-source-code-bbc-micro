@@ -11005,7 +11005,7 @@ ORG CODE%
 \
 \       Name: FireGuns
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Create the bullet objects and send them on their way
 \  Deep dive: Adding bullets to the world
 \
@@ -14597,7 +14597,7 @@ ORG CODE%
 \
 \       Name: AlienInAcornsville
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Move an alien towards Acornsville and check whether it has reached
 \             it yet (and if so, end the game)
 \
@@ -15250,7 +15250,7 @@ ORG CODE%
 \
 \       Name: UpdateBullets
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Move the bullets through the air
 \
 \ ------------------------------------------------------------------------------
@@ -15329,7 +15329,7 @@ ORG CODE%
 \
 \       Name: SpawnAlien
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary:  If the Theme is enabled and the current wave does not yet have
 \              eight aliens in it, spawn a new alien
 \
@@ -15435,7 +15435,7 @@ ORG CODE%
 \
 \       Name: UpdateAliens (Part 1 of 4)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Update the aliens so they progress through their feeding or attack
 \             cycles
 \
@@ -15482,7 +15482,7 @@ ORG CODE%
 \
 \       Name: UpdateAliens (Part 2 of 4)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Manage alien slots 31 and 32, and if there's a vacancy, wake up a
 \             dormant alien, move it into the slot and start its feeding cycle
 \
@@ -15601,7 +15601,7 @@ ORG CODE%
 \
 \       Name: UpdateAliens (Part 3 of 4)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: If alien slot 33 is free and there's an alien waiting to take off,
 \             promote it into slot 33
 \
@@ -15666,7 +15666,7 @@ ORG CODE%
 \
 \       Name: UpdateAliens (Part 4 of 5)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: When an alien reaches the next feeding stage, double its size
 \
 \ ******************************************************************************
@@ -15723,7 +15723,7 @@ ORG CODE%
 \
 \       Name: UpdateAliens (Part 5 of 5)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Check whether the whole wave has been destroyed, and award points
 \             accordingly
 \
@@ -15777,7 +15777,7 @@ ORG CODE%
 \
 \       Name: ResizeFeedingAlien
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Change the size of an alien so it grows bigger as it feeds
 \
 \ ------------------------------------------------------------------------------
@@ -15879,7 +15879,7 @@ ORG CODE%
 \
 \       Name: CheckIfAlienIsHit (Part 1 of 2)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Extract the alien's feeding stage, ready for the hit calculations
 \             in part 2
 \  Deep dive: Detecting alien hits
@@ -16061,7 +16061,7 @@ ORG CODE%
 \
 \       Name: CheckIfAlienIsHit (Part 2 of 2)
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Check to see whether the alien has been hit, and if so, initiate
 \             the explosion
 \  Deep dive: Detecting alien hits
@@ -16107,7 +16107,7 @@ ORG CODE%
 
  STY Q                  \ Store the axis counter in Q so we can retrieve it below
 
- JSR BulletTrailVector  \ Set (A V R) to 1/32 of the vector for the specified
+ JSR GetTrailVectorStep \ Set (A V R) to 1/32 of the vector for the specified
                         \ bullet trail
 
  LDY Q                  \ Restore the axis counter into Y
@@ -16272,7 +16272,7 @@ ORG CODE%
 \
 \       Name: GetAlienWeakSpot
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Calculate the coordinates of an alien's weak spot
 \  Deep dive: Detecting alien hits
 \
@@ -16365,7 +16365,7 @@ ORG CODE%
 \
 \       Name: CheckAlienWeakSpot
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Check whether an object is close enough to an alien's weak spot to
 \             be hitting it
 \  Deep dive: Detecting alien hits
@@ -16466,9 +16466,9 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: BulletTrailVector
+\       Name: GetTrailVectorStep
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Calculate 1/32 of the vector for a bullet trail
 \  Deep dive: Detecting alien hits
 \
@@ -16498,7 +16498,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.BulletTrailVector
+.GetTrailVectorStep
 
  LDA #0                 \ Set P = 0, to feed bits into the top bit of (A V R) in
  STA P                  \ the final stage below
@@ -18486,7 +18486,7 @@ ORG CODE%
 \
 \       Name: distanceFromHit
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The distance from the alien we just hit, so we can work out
 \             whether we get hit by turbulence
 \
@@ -18500,7 +18500,7 @@ ORG CODE%
 \
 \       Name: feedingStage
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The feeding stage of the alien we are currently processing
 \
 \ ******************************************************************************
@@ -18519,7 +18519,7 @@ ORG CODE%
 \
 \       Name: hitObjectId
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The object ID of the alien we just hit (30 to 33)
 \
 \ ------------------------------------------------------------------------------
@@ -18536,7 +18536,7 @@ ORG CODE%
 \
 \       Name: hitTimer
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The time since we hit an alien, so we can time its explosion
 \
 \ ------------------------------------------------------------------------------
@@ -18599,7 +18599,7 @@ ORG CODE%
 \
 \       Name: explodeTo
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The end point ID for exploding each of the four alien slots
 \
 \ ******************************************************************************
@@ -18617,7 +18617,7 @@ ORG CODE%
 \
 \       Name: explodeFrom
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The starting point ID for exploding each of the four alien slots
 \
 \ ******************************************************************************
@@ -20102,7 +20102,7 @@ NEXT
 \
 \       Name: alienScore
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The scores for killing aliens in the various feeding stages
 \
 \ ******************************************************************************
@@ -20120,7 +20120,7 @@ NEXT
 \
 \       Name: dormantAlienScore
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The score for killing a dormant alien
 \
 \ ******************************************************************************
@@ -20231,7 +20231,7 @@ NEXT
 \
 \       Name: alienSlot
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Slots for up to three aliens that are ready to start moving
 \             towards the town
 \
@@ -20271,7 +20271,7 @@ NEXT
 \
 \       Name: alienToMove
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The number of the alien to move towards Acornsville in this
 \             iteration of the main loop
 \
@@ -20325,7 +20325,7 @@ NEXT
 \
 \       Name: alienObjectId
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -20350,7 +20350,7 @@ NEXT
 \
 \       Name: alienState
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The state of each of the eight aliens
 \
 \ ------------------------------------------------------------------------------
@@ -20409,7 +20409,7 @@ NEXT
 \
 \       Name: alienStatus
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Storage for the object status bytes for the four alien objects
 \
 \ ******************************************************************************
@@ -22939,7 +22939,7 @@ NEXT
 \
 \       Name: ExplodeAlien
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Explode an alien, making the alien split apart
 \
 \ ------------------------------------------------------------------------------
@@ -23867,7 +23867,7 @@ NEXT
 \
 \       Name: PrintTooLate
 \       Type: Subroutine
-\   Category: Theme
+\   Category: The Theme
 \    Summary: Print the "TOO LATE!" message at column 6, row 7 on-screen
 \
 \ ******************************************************************************
@@ -23894,7 +23894,7 @@ NEXT
 \
 \       Name: tooLateText
 \       Type: Variable
-\   Category: Theme
+\   Category: The Theme
 \    Summary: The "TOO LATE!" message shown when the aliens land in Acornsville
 \
 \ ------------------------------------------------------------------------------
