@@ -44,6 +44,13 @@ CODE% = &0B00           \ The address of the main game code once the code has
                         \ This address points to the start of the executable
                         \ code after all these moves, which is at &0B00
 
+nextAxis = 40           \ The xObject, yObject and zObject tables each contain
+                        \ 40 bytes, and they are positioned one after the other
+                        \ in memory, so if we access, say, the x-coordinate for
+                        \ object Y at xObjectHi+Y, then adding #nextAxis to Y
+                        \ will point xObjectHi+Y to the y-coordinate, and adding
+                        \ it again will point it to the z-coordinate
+
                         \ The following configuration variables represent screen
                         \ addresses, with names in the following format:
                         \
@@ -6647,7 +6654,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinate for a point within an object
-\  Deep dive: Rotating and translating multi-point objects in 3D space
+\  Deep dive: Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6884,6 +6891,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Apply the correct scale factor to the matrix multiplication
+\  Deep dive: Rotating and translating points in 3D space
 \
 \ ******************************************************************************
 
@@ -7710,7 +7718,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinates for a point
-\  Deep dive: Rotating points in 3D space
+\  Deep dive: Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7972,7 +7980,6 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update a single indicator on the dashboard
-\  Deep dive: Hard-coded division in the dashboard routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8030,6 +8037,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Calculations for the compass (indicator 0)
+\  Deep dive: Hard-coded division in the dashboard routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8160,6 +8168,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Calculations for the altimeter's small "hour" hand (indicator 2)
+\  Deep dive: Hard-coded division in the dashboard routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8375,6 +8384,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Calculations for the vertical speed indicator (indicator 4)
+\  Deep dive: Hard-coded division in the dashboard routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8537,6 +8547,7 @@ ORG CODE%
 \   Category: Dashboard
 \    Summary: Calculations for the turn indicator (indicator 5), the bottom part
 \             of the slip-and-turn indicator
+\  Deep dive: Hard-coded division in the dashboard routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13372,7 +13383,7 @@ ORG CODE%
 \   objectId            The ID of the object to process (1 to 39)
 \
 \   GG                  For bullets only (12, 13, 14 or 15), the point ID for
-\                       the bullet anchor point
+\                       the bullet's anchor point
 \                       
 \ Returns:
 \
@@ -14466,9 +14477,9 @@ ORG CODE%
  SBC xPlaneTop,X        \ bytes)
  STA xTemp2Hi,X
 
- TYA                    \ Set Y = Y + 40
- CLC                    \
- ADC #40                \ so Y points to xObject, then yObject, and then zObject
+ TYA                    \ Point Y to the next axis (xObject, yObject, zObject)
+ CLC
+ ADC #nextAxis
  TAY
 
  INX                    \ Increment X to move on to the next axis
@@ -15984,71 +15995,79 @@ ORG CODE%
 \       Name: CheckIfAlienIsHit (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: Extract the alien's feeding stage
+\    Summary: Extract the alien's feeding stage, ready for the hit calculations
+\             in part 2
+\  Deep dive: Detecting alien hits
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   Y                   The object ID of the alien to move (30 to 33)
+\   Y                   The object ID of the alien to check (30 to 33)
 \
-\   objectId            The object ID of the alien to move (30 to 33)
+\   objectId            The object ID of the alien to check (30 to 33)
 \
 \ ******************************************************************************
 
 .CheckIfAlienIsHit
 
- LDA #%01111101         \ Set QQ = %01111101
- STA QQ
+ LDA #%01111101         \ Set QQ = %01111101, to hold the y-axis dimension of
+ STA QQ                 \ the alien's weak spot (let's call this y-size), which
+                        \ we will scale down to match the alien's current size
 
- LDA #%01000000         \ Set Q = %01000000
- STA Q
+ LDA #%01000000         \ Set Q = %01000000, to hold the low byte of the offset
+ STA Q                  \ of the alien's weak spot from the alien's anchor point
+                        \ (the high byte is always 5), which we will scale down
+                        \ to match the alien's current size
 
- LDA #%10100000         \ Set RR = %10100000
- STA RR
+ LDA #%10100000         \ Set RR = %10100000, to hold the x-axis dimension of
+ STA RR                 \ the alien's weak spot (let's call this x-size), which
+                        \ we will scale down to match the alien's current size
 
- STA PP                 \ Set PP = %10100000
+ STA PP                 \ Set PP = %10100000, to hold the z-axis dimension of
+                        \ the alien's weak spot (let's call this z-size), which
+                        \ we will scale down to match the alien's current size
 
- CPY #31                \ If Y >= 31, jump to mval1
- BCS mval1
+ CPY #31                \ If Y >= 31, jump to ahit1
+ BCS ahit1
 
                         \ If we get here then Y = 30, so this is a dormant alien
 
- LDA #4                 \ Set A = 4, to set as the feeding stage in mval5 (stage
+ LDA #4                 \ Set A = 4, to set as the feeding stage in ahit5 (stage
                         \ 4 is the dormant phase)
 
- LDX #3                 \ Set X = 3, so mval4 shifts right by 3 places
+ LDX #3                 \ Set X = 3, so ahit4 shifts right by 3 places
 
- BNE mval4              \ Jump to mval4 (this BNE is effectively a JMP as X is
+ BNE ahit4              \ Jump to ahit4 (this BNE is effectively a JMP as X is
                         \ never zero)
 
-.mval1
+.ahit1
 
  LDA #0                 \ Set A = 0, so if this is the flying alien (Y = 33), we
-                        \ set the feeding stage to 0 in mval5 (stage 0 is for
+                        \ set the feeding stage to 0 in ahit5 (stage 0 is for
                         \ fully fed aliens, and only fully fed aliens can fly)
 
- CPY #32                \ If Y >= 32, jump to mval2
- BCS mval2
+ CPY #32                \ If Y >= 32, jump to ahit2
+ BCS ahit2
 
                         \ If we get here then Y = 31, so this is a feeding alien
 
  LDX #183               \ Set X = 183, to use as the object point ID
 
- BNE mval3              \ Jump to mval3 (this BNE is effectively a JMP as X is
+ BNE ahit3              \ Jump to ahit3 (this BNE is effectively a JMP as X is
                         \ never zero)
 
-.mval2
+.ahit2
 
- BNE mval5              \ If Y <> 32, then Y = 33 and this is the flying alien,
-                        \ so jump to mval5 to store the feeding stage and move
+ BNE ahit5              \ If Y <> 32, then Y = 33 and this is the flying alien,
+                        \ so jump to ahit5 to store the feeding stage and move
                         \ on to the next part
 
                         \ If we get here then Y = 32, so this is a feeding alien
 
  LDX #188               \ Set X = 188, to use as the object point ID
 
-.mval3
+.ahit3
 
                         \ If we get here then Y = 31 or 32 and X is the ID of
                         \ the first object point for this alien, so now we
@@ -16097,14 +16116,14 @@ ORG CODE%
 
  TXA                    \ Copy the feeding stage into X
 
- BEQ mval5              \ If X = 0, the alien is at its largest size, so jump to
-                        \ mval5 to store the feeding stage and move on to the
+ BEQ ahit5              \ If X = 0, the alien is at its largest size, so jump to
+                        \ ahit5 to store the feeding stage and move on to the
                         \ next part
 
                         \ Otherwise we scale QQ, RR, PP and QQ right by the
                         \ number of places given in X
 
-.mval4
+.ahit4
 
                         \ This loop shifts the following to the right by X
                         \ places, where X > 0
@@ -16116,40 +16135,40 @@ ORG CODE%
 
  DEX                    \ Decrement the shift counter in X
 
- BNE mval4              \ Loop back until we have shifted right by X places
+ BNE ahit4              \ Loop back until we have shifted right by X places
 
                         \ By the time we get here, the variables are set as
                         \ follows:
                         \
-                        \   * Fully fed (stage 0)or flying alien:
+                        \   * Fully fed (stage 0) or flying alien:
                         \
-                        \       QQ = %01111101
-                        \       Q  = %01000000, so (5 Q) = &540
-                        \       RR = %10100000
-                        \       PP = %10100000
+                        \       Q  = %01000000, so (5 Q) = &540 = 1360
+                        \       RR = %10100000, so x-size = 160
+                        \       QQ = %01111101, so y-size = 125
+                        \       PP = %10100000, so z-size = 160
                         \
                         \   * Medium feeding alien (stage 1):
                         \
-                        \       QQ = %00111110
-                        \       Q  = %00100000, so (5 Q) = &520
-                        \       RR = %01010000
-                        \       PP = %01010000
+                        \       Q  = %00100000, so (5 Q) = &520 = 1312
+                        \       RR = %01010000, so x-size = 80
+                        \       QQ = %00111110, so y-size = 62
+                        \       PP = %01010000, so z-size = 80
                         \
                         \   * Small feeding alien (stage 2):
                         \
-                        \       QQ = %00011111
-                        \       Q  = %00010000, so (5 Q) = &510
-                        \       RR = %00101000
-                        \       PP = %00101000
+                        \       Q  = %00010000, so (5 Q) = &510 = 1296
+                        \       RR = %00101000, so x-size = 40
+                        \       QQ = %00011111, so y-size = 31
+                        \       PP = %00101000, so z-size = 40
                         \
                         \   * Smallest feeding alien (stage 3) or dormant alien:
                         \
-                        \       QQ = %00001111
-                        \       Q  = %00001000, so (5 Q) = &508
-                        \       RR = %00010100
-                        \       PP = %00010100
+                        \       Q  = %00001000, so (5 Q) = &508 = 1288
+                        \       RR = %00010100, so x-size = 20
+                        \       QQ = %00001111, so y-size = 15
+                        \       PP = %00010100, so z-size = 20
 
-.mval5
+.ahit5
 
  STA feedingStage       \ Store the alien's feeding stage in feedingStage
 
@@ -16160,52 +16179,64 @@ ORG CODE%
 \   Category: Theme
 \    Summary: Check to see whether the alien has been hit, and if so, initiate
 \             the explosion
+\  Deep dive: Detecting alien hits
 \
 \ ******************************************************************************
 
- LDA #0                 \ Set hitTimer = 0
+ LDA #0                 \ Set hitTimer = 0 so the default result is a miss
  STA hitTimer
 
  LDY objectId           \ Set Y to the object ID of the alien
 
- JSR L3129              \ Set the following:
+ JSR GetAlienWeakSpot   \ Calculate the coordinate of the alien's weak spot as
+                        \ follows:
                         \
                         \   (I+2 W+2) = xObject + (5 Q)
-                        \   (I+1 W+1) = yObject
-                        \   (I W)     = zObject + (5 Q)
-
- LDX #228               \ Set VV = 228 to iterate through the following in the
- STX VV                 \ outer loop below (i.e. from mval6 to the end):
                         \
-                        \   228, 230
+                        \   (I+1 W+1) = yObject
+                        \
+                        \   (I W)     = zObject + (5 Q)
+                        \
+                        \ So for the alien object, the weak spot is at a point
+                        \ coordinate of ((5 Q), 0, (5 Q)) within the object
 
-.mval6
+ LDX #228               \ Set VV to iterate through the following in the outer
+ STX VV                 \ loop below (i.e. from ahit6 to the end):
+                        \
+                        \   * 228 = the trailing end of the left bullet trail
+                        \
+                        \   * 230 = the trailing end of the right bullet trail
 
- LDX VV                 \ Set X = 228, 230
+.ahit6
 
- LDA #31                \ Set WW = 31
- STA WW
+ LDX VV                 \ Set X to denote the trailing end of the bullet trail
+                        \ that we are analysing (228 or 230)
 
- LDY #0                 \ Set Y = 0, 1, 2
+ LDA #31                \ Set WW to act as a loop counter for when we check
+ STA WW                 \ along the length of the bullet trail for a hit, moving
+                        \ 1/32 of the way for each of the 32 iterations
 
-.mval7
+ LDY #0                 \ Set Y to loop through the three axes
 
- STY Q                  \ Set Q = Y
+.ahit7
 
- JSR L3181
+ STY Q                  \ Store the axis counter in Q so we can retrieve it below
 
- LDY Q
- STA xTemp2Hi,Y
+ JSR BulletTrailVector  \ Set (A V R) to 1/32 of the vector for the specified
+                        \ bullet trail
+
+ LDY Q                  \ Restore the axis counter into Y
+
+ STA xTemp2Hi,Y         \ Set (xTemp2Hi xTemp2Lo xTempLo) = (A V R)
  LDA V
  STA xTemp2Lo,Y
-
  LDA R
  STA xTempLo,Y
 
- INY
+ INY                    \ Increment the loop counter to move on to the next axis
 
- CPY #3
- BNE mval7
+ CPY #3                 \ Loop back until we have calculated the bullet trail
+ BNE ahit7              \ vector
 
  LDX #LO(xTemp2Lo)      \ Set X so the call to CopyWorkToPoint copies the
                         \ coordinates from (xTemp2, yTemp2, zTemp2)
@@ -16216,100 +16247,162 @@ ORG CODE%
  JSR CopyWorkToPoint    \ Copy the coordinates from (xTemp2, yTemp2, zTemp2)
                         \ to point 0
 
- LDY VV
+                        \ Point 0 now contains the vector of the bullet trail
+                        \ for the bullet specified in VV, with the lowest byte
+                        \ dropped, so each axis contains (A V) from the above
 
- JSR L3152
+ LDY VV                 \ Set Y to the bullet that we are analysing (228 or 230)
 
- LDY VV
+ JSR CheckAlienWeakSpot \ Check whether this end of the bullet trail has hit the
+                        \ alien's weak spot, and if it has, set up the explosion
+                        \ and return from the subroutine
 
- LDX #216               \ In the following loop X iterates through the following
-                        \ values (as 40 gets added to it before it is used, and
-                        \ 216 + 40 = 256 = 0):
-                        \
-                        \   0, 40, 80, 120, 200
-                        \
-                        \ which steps through xObjectLo, yObjectLo, xObjectLo,
-                        \ xObjectHi, yObjectHi, zObjectHi because they are all
-                        \ spaced out by 40 bytes
+ LDY VV                 \ Set Y to the bullet that we are analysing (228 or 230)
 
-.mval8
+ LDX #216               \ Set X to iterate through the coordinate offsets for
+                        \ object 0
 
- TYA                    \ Set Y = Y + 40
- CLC
- ADC #40
- TAY
+.ahit8
 
- TXA                    \ Set X = X + 40
- CLC
- ADC #40
- TAX
+ TYA                    \ Point Y to the next axis (xObject, yObject, zObject)
+ CLC                    \
+ ADC #nextAxis          \ The first iteration of this loop has Y = 228 or 230,
+ TAY                    \ so this bumps Y onto 268 or 260, which gets truncated
+                        \ in the 8-bit register to 12 or 14, so this moves Y
+                        \ through the xObject, yObject and zObject values for
+                        \ object 12 (when the initial value of Y = 228) or
+                        \ object 14 (when the initial value of Y = 230)
 
- LDA xObjectLo,Y
- STA xObjectLo,X        \ Store in first byte of all the coord tables
+ TXA                    \ Point X to the next axis (xObject, yObject, zObject)
+ CLC                    \
+ ADC #nextAxis          \ The first iteration of this loop has X = 216, so this
+ TAX                    \ bumps X onto 256, which gets truncated in the 8-bit
+                        \ register to 0, so this moves X through the xObject,
+                        \ yObject and zObject values for object 0
 
- CPX #200               \ Loop back until X has iterated through all five values
- BNE mval8
+ LDA xObjectLo,Y        \ Copy the coordinate from the bullet object to object 0
+ STA xObjectLo,X
 
-.mval9
+ CPX #200               \ Loop back until we have copied all six coordinates
+ BNE ahit8
 
- LDY #2                 \ Y goes:  2,  1, 0
- LDX #80                \ X goes: 80, 40, 0
+                        \ By this point, object 0 is at the same coordinate as
+                        \ the bullet we are checking, and we now work our way
+                        \ along the trail vector, adding the 1/32 vector that
+                        \ we calculated above for each of the 32 iterations of
+                        \ the following loop
 
-.mval10
+.ahit9
 
- LDA xTempLo,Y
- CLC
- ADC xTemp2Hi,Y
- STA xTemp2Hi,Y
- BCC mval11
+ LDY #2                 \ Set a counter in Y to iterate through the three axes
+                        \ (the comments below are for the x-axis calculation)
 
- INC xObjectLo,X
- BNE mval11
+ LDX #nextAxis*2        \ Set the index in X to point to the z-coordinate for
+                        \ object 0, which we decrement by nextAxis over each
+                        \ iteration to work through the three axes
 
- INC xObjectHi,X
+.ahit10
 
-.mval11
+                        \ Above we set (xTemp2Hi xTemp2Lo xTempLo) to the 1/32
+                        \ vector, but we only copied (xTemp2Hi xTemp2Lo) into
+                        \ point 0, and ignored the fractional part, so we add
+                        \ that part to the object 0 coordinate first
 
- TXA
+ LDA xTempLo,Y          \ Set xTemp2Hi = xTemp2Hi + xTempLo
+ CLC                    \
+ ADC xTemp2Hi,Y         \ to work out when the fractional part cumulatively
+ STA xTemp2Hi,Y         \ adds up to an integer (in other words, we store the
+                        \ cumulative sum of the fractional part from xTempLo in
+                        \ xTemp2Hi)
+
+ BCC ahit11             \ If the addition didn't overflow, jump to ahit11 to
+                        \ skip incrementing the object coordinate
+
+                        \ Otherwise the cumulative sum of the fractional part
+                        \ just reached an integer, so we need to add an extra
+                        \ integer (1) to the object 0 coordinate
+
+ INC xObjectLo,X        \ Increment the object coordinate for object 0 in
+ BNE ahit11             \ (xObjectHi xObjectLo), starting with the low byte
+ INC xObjectHi,X        \ and incrementing the high byte if the low byte
+                        \ overflows
+
+.ahit11
+
+ TXA                    \ Point X to the next axis (zObject, yObject, xObject)
  SEC
- SBC #40
+ SBC #nextAxis
  TAX
- DEY
- BPL mval10
 
- LDX #0                 \ Move object 0 by the vector in point 0
- LDY #0
+ DEY                    \ Decrement the axis counter
+
+ BPL ahit10             \ Loop back until we have processed all three axes
+
+                        \ We have now moved object 0 along the trail by adding
+                        \ the fractional part of the 1/32 vector xTempLo, so
+                        \ now we can add the rest of the vector which we stored
+                        \ in point 0 above, to move along the trail by exactly
+                        \ 1/32 of the trail vector
+
+ LDX #0                 \ Move object 0 by the vector in point 0, which we set
+ LDY #0                 \ to the vector of the bullet trail above
  JSR AddPointToObject
 
- LDY #216
- JSR L3152
+                        \ We now check whether this point along the bullet trail
+                        \ is in the alien's weak spot
 
- DEC WW
- BPL mval9
+ LDY #216               \ Check whether object 0 has hit the alien's weak
+ JSR CheckAlienWeakSpot \ spot, and if it has, set up the explosion and return
+                        \ from the subroutine
+
+ DEC WW                 \ Decrement the counter we set in WW so we repeat this
+                        \ process 32 times
+
+ BPL ahit9              \ Loop back until we have stepped all the way along the
+                        \ trail vector, from the back end of the trail all the
+                        \ way to the bullet at the front, in steps of 1/32,
+                        \ checking at each point whether it is in the weak spot
+
+                        \ If we get here then we have now checked the entire
+                        \ trail of the left bullet for a hit, so we repeat the
+                        \ whole thing for the right bullet trail
 
  LDA VV                 \ Set VV = VV + 2
- CLC
- ADC #2
+ CLC                    \
+ ADC #2                 \ so VV now points to the next bullet trail (i.e. 230)
  STA VV
 
- CMP #232               \ If VV = 232, jump to mval12 to return from the
- BEQ mval12             \ subroutine
+ CMP #232               \ If VV = 232 then we have now processed both bullet
+ BEQ ahit12             \ trails, so jump to ahit12 to return from the
+                        \ subroutine
 
- JMP mval6              \ Otherwise VV is not yet 232, so loop back to mval6
+ JMP ahit6              \ Otherwise loop back to ahit6 to process the next
+                        \ bullet trail
 
-.mval12
+.ahit12
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L3129
+\       Name: GetAlienWeakSpot
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Calculate the coordinates of an alien's weak spot
+\  Deep dive: Detecting alien hits
 \
 \ ------------------------------------------------------------------------------
 \
+\ The alien's weak spot is calculated as follows:
+\
+\   * x-coordinate = (xObjectHi xObjectLo) + (5 Q)
+\
+\   * y-coordinate = (yObjectHi yObjectLo)
+\
+\   * z-coordinate = (zObjectHi zObjectLo) + (5 Q)
+\
+\ where Q is 
+
 \ This is called STIP in the original source code.
 \
 \ Arguments:
@@ -16320,15 +16413,15 @@ ORG CODE%
 \
 \ Returns:
 \
-\   (I+2 W+2)           (xObjectHi xObjectLo) + (5 Q)
+\   (I+2 W+2)           The x-coordinate of the alien's weak spot
 \
-\   (I+1 W+1)           (yObjectHi yObjectLo)
+\   (I+1 W+1)           The y-coordinate of the alien's weak spot
 \
-\   (I W)               (zObjectHi zObjectLo) + (5 Q)
+\   (I W)               The z-coordinate of the alien's weak spot
 \
 \ ******************************************************************************
 
-.L3129
+.GetAlienWeakSpot
 
  LDX #2                 \ Set a counter in X to iterate through 2, 1, 0, which
                         \ has the following effect:
@@ -16344,10 +16437,12 @@ ORG CODE%
                         \ When X = 0:
                         \
                         \   * (I W) = (zObjectHi zObjectLo) + (5 Q)
+                        \
+                        \ note that 
 
-.L312B
+.weak1
 
- LDA xObjectLo,Y        \ Set (I W) = (xObjectHi xObjectLo) + (5 Q)
+ LDA xObjectLo,Y        \ Set (I+X W+X) = (xObjectHi xObjectLo) + (5 Q)
  CLC                    \
  ADC Q                  \ starting with the low bytes
  STA W,X
@@ -16356,136 +16451,233 @@ ORG CODE%
  ADC #5
  STA I,X
 
-.L313A
+.weak2
 
- TYA                    \ Set Y = Y + 40
- CLC                    \
- ADC #40                \ so that xObjectLo,Y and xObjectHi,Y above move on to
- TAY                    \ yObject and then zObject
+ TYA                    \ Point Y to the next axis (xObject, yObject, zObject)
+ CLC
+ ADC #nextAxis
+ TAY
 
  DEX                    \ Decrement the loop counter
 
- BPL L3143              \ If we haven't yet done all three calculations, jump
-                        \ to L3143
+ BPL weak3              \ If we haven't yet done all three calculations, jump
+                        \ to weak3
 
  RTS                    \ Return from the subroutine
 
-.L3143
+.weak3
 
- BEQ L312B              \ If X = 0, jump up to L312B to add (5 Q)
+ BEQ weak1              \ If X = 0, jump up to weak1 to add (5 Q)
 
  LDA xObjectLo,Y        \ If we get here then X = 1, so do the calculation
  STA W,X                \ without adding (5 Q)
  LDA xObjectHi,Y
  STA I,X
 
- JMP L313A              \ Jump back to L313A to move on to X = 0
+ JMP weak2              \ Jump back to weak2 to move on to X = 0
 
 \ ******************************************************************************
 \
-\       Name: L3152
+\       Name: CheckAlienWeakSpot
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Check whether an object is close enough to an alien's weak spot to
+\             be hitting it
+\  Deep dive: Detecting alien hits
 \
 \ ------------------------------------------------------------------------------
+\
+\ If the object is hitting the alien's weak spot, the routine returns to the
+\ caller of the caller - in other words, it returns from the original call to
+\ the CheckIfAlienIsHit routine, in part 6 of the main loop.
 \
 \ This is called HITS in the original source code.
 \
+\ Arguments:
+\
+\   Y                   The bullet trail to be calculated:
+\
+\                         * 216 = object 0, which we set to points along the
+\                                 bullet trail at 1/32 intervals
+\
+\                         * 228 = the trailing end of the left bullet trail
+\
+\                         * 230 = the trailing end of the right bullet trail
+\
 \ ******************************************************************************
 
-.L3152
+.CheckAlienWeakSpot
 
- LDX #2
+ LDX #2                 \ Set a counter in X to iterate through the three axes
 
-.L3154
+.spot1
 
- TYA
- CLC
- ADC #40
- TAY
- LDA xObjectLo,Y
- SEC
- SBC W,X
+ TYA                    \ Point Y to the next axis (xObject, yObject, zObject)
+ CLC                    \
+ ADC #nextAxis          \ The routine is called is with Y = 216, 228 or 230, so
+ TAY                    \ this bumps X onto 256, 268 or 260, which gets
+                        \ truncated in the 8-bit register to 0, 12 or 14, so
+                        \ this moves X through the xObject, yObject and zObject
+                        \ values for object 0 (when called with X = 216), object
+                        \ 12 (when called with X = 228) or object 14 (when called
+                        \ with X = 230)
+                        \
+                        \ Objects 12 and 14 are the trailing ends of the two
+                        \ bullet trails, so the following checks whether the
+                        \ trailing end is within the weak spot, rather than the
+                        \ bullets themselves
+
+ LDA xObjectLo,Y        \ Set (A T) = (xObjectHi xObjectLo) - (I+X W+X)
+ SEC                    \
+ SBC W,X                \ starting with the low bytes
  STA T
- LDA xObjectHi,Y
+
+ LDA xObjectHi,Y        \ And then the high bytes
  SBC I,X
- BNE L3180
 
- LDA T
- CMP PP,X
- BCS L3180
+                        \ So we now have:
+                        \
+                        \   (A T) = xObject - (I W)
+                        \
+                        \ where xObject is the coordinate of the bullet, and
+                        \ (I W) is the coordinate of the alien's weak spot
+                        \
+                        \ In other words, (A T) is the distance between the
+                        \ bullet and the alien's weak spot
 
- DEX
- BPL L3154
+ BNE spot2              \ If the high byte in A is non-zero, then the bullet is
+                        \ too far from the weak spot to do any damage, so jump
+                        \ to spot2 to return from the subroutine
 
- LDA objectId
+ LDA T                  \ If the low byte in T is >= the corresponding value in
+ CMP PP,X               \ PP, QQ or RR (for the z, y and x-axes respectively),
+ BCS spot2              \ then the bullet is too far away from the weak spot to
+                        \ to do any damage, so jump to spot2 to return from the
+                        \ subroutine
+
+ DEX                    \ Otherwise the bullet is close enough to the weak spot
+                        \ to cause damage in this axis, so decrement X to point
+                        \ to the next axis
+
+ BPL spot1              \ Loop back until we have checked all three axes
+
+                        \ If we get here then the bullet is close enough to the
+                        \ weak spot in all three axes, so we have a hit
+
+ LDA objectId           \ Store the object ID of the hit alien in hitObjectId
  STA hitObjectId
 
- TSX                    \ Remove two bytes from the top of the stack
- INX
- INX
+ TSX                    \ Remove two bytes from the top of the stack, so the
+ INX                    \ RTS below returns us to the JSR CheckIfAlienIsHit in
+ INX                    \ part 6 of the main loop
  TXS
 
- LDA #27
+ LDA #27                \ Set the hitTimer to 27 to start the explosion counter
  STA hitTimer
 
-.L3180
+.spot2
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L3181
+\       Name: BulletTrailVector
 \       Type: Subroutine
 \   Category: Theme
-\    Summary: 
+\    Summary: Calculate 1/32 of the vector for a bullet trail
+\  Deep dive: Detecting alien hits
 \
 \ ------------------------------------------------------------------------------
+\
+\ Calculates one axis of the vector for the 1/32 of the specified bullet trail
+\ and returns it in (A V R).
 \
 \ This is called ADIF in the original source code.
 \
 \ Arguments:
 \
-\   Y                   0, 1, 2
+\   X                   The bullet trail to be calculated:
+\
+\                         * 228 = left bullet trail
+\
+\                         * 230 = right bullet trail
+\
+\ Returns:
+\
+\   X                   Updated to point to the next axis, so the first call
+\                       will return the x-axis of the vector, the second the
+\                       y-axis, and the third the z-axis
+\
+\ (A V R)               One axis of the vector for the specified bullet trail,
+\                       as a signed 24-bit number and divided by 32
 \
 \ ******************************************************************************
 
-.L3181
+.BulletTrailVector
 
- LDA #0                 \ Set P = 0
- STA P
+ LDA #0                 \ Set P = 0, to feed bits into the top bit of (A V R) in
+ STA P                  \ the final stage below
 
- STA R                  \ Set R = 0
+ STA R                  \ Set R = 0, for use in constructing (A V R)
 
- TXA
- CLC
- ADC #40
- TAX
- LDA xObjectLo+1,X
- SEC
- SBC xObjectLo,X
+ TXA                    \ Point X to the next axis (xObject, yObject, zObject)
+ CLC                    \
+ ADC #nextAxis          \ The first time that the routine is called is with
+ TAX                    \ X = 228 or 230, so this bumps X onto 268 or 260, which
+                        \ gets truncated in the 8-bit register to 12 or 14, so
+                        \ this moves X through the xObject, yObject and zObject
+                        \ values for object 12 (when first called with X = 228)
+                        \ or object 14 (when first called with X = 230)
+
+                        \ We now subtract the following object coordinates:
+                        \
+                        \   * If first called with X = 228, we calculate object
+                        \     13 - object 12 (i.e. the left bullet minus the
+                        \     back end of the left bullet trail)
+                        \
+                        \   * If first called with X = 230, we calculate object
+                        \     15 - object 13 (i.e. the right bullet minus the
+                        \     back end of the right bullet trail)
+                        \
+                        \ In each case we end up with the vector of the relevant
+                        \ bullet trail for axis Y in (A V)
+
+ LDA xObjectLo+1,X      \ Set (A V) = xObject+1 - xObject
+ SEC                    \
+ SBC xObjectLo,X        \ starting with the low bytes
  STA V
- LDA xObjectHi+1,X
+
+ LDA xObjectHi+1,X      \ And then the high bytes
  SBC xObjectHi,X
- BPL L319F
 
- DEC P
+ BPL bulv1              \ If (A V) is negative, decrement P to &FF, so it is
+ DEC P                  \ full of bits of the correct polarity to shift into bit
+                        \ 7 of A in (A V R)
 
-.L319F
+.bulv1
 
- LDY #4
+                        \ We now have the number (A V 0) in (A V R), plus a byte
+                        \ P made up of the correct sign bits, so the final stage
+                        \ is to divide this by 32 by shifting right
 
-.L31A1
+ LDY #4                 \ We want to shift the result right by five places to
+                        \ divide the result by 32, so set a shift counter in Y
 
- LSR P
- ROR A
+.bulv2
+
+ LSR P                  \ Shift (A V R) right by one place, shifting one of the
+ ROR A                  \ sign bits from P into bit 7 of of A
  ROR V
  ROR R
- DEY
- BPL L31A1
 
- RTS
+ DEY                    \ Decrement the shift counter
+
+ BPL bulv2              \ Loop back until we have done all five shifts, so we
+                        \ now have:
+                        \
+                        \   (A V R) = (A V R) / 32
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -21189,7 +21381,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: Sequences of related points that together make up objects
-\  Deep dive: Multi-point objects
+\  Deep dive: Rotating and translating points in 3D space
 \
 \ ******************************************************************************
 
@@ -22876,7 +23068,7 @@ NEXT
 .ExplodeAlien
 
  LDA hitTimer           \ If hitTimer is zero then there is no exploding alien,
- BEQ ahit6              \ so jump to ahit8 via ahit6 to return from the
+ BEQ expl6              \ so jump to expl8 via expl6 to return from the
                         \ subroutine
 
  LDA #2                 \ Otherwise we do have an exploding alien, so make sound
@@ -22894,23 +23086,23 @@ NEXT
                         \ loop
 
  CPX feedingStage       \ If X >= feedingStage, i.e. feedingStage <= 2, then
- BCS ahit1              \ skip the following instruction
+ BCS expl1              \ skip the following instruction
 
  LDX feedingStage       \ Set X to the feeding stage, so X now contains the
                         \ feeding stage, capped to a maximum value of 2
 
-.ahit1
+.expl1
 
  LDA #%11111111         \ We now take %11111111 and shift it right by X + 1
                         \ places
 
-.ahit2
+.expl2
 
  LSR A                  \ Shift X right by one place
 
  DEX                    \ Decrement the shift counter
 
- BPL ahit2              \ Loop back until we have shifted right by X + 1 places
+ BPL expl2              \ Loop back until we have shifted right by X + 1 places
 
  STA P                  \ Store the result in P, so we get the following:
                         \
@@ -22927,7 +23119,7 @@ NEXT
                         \ scaled along with P (so fatter aliens have their
                         \ points moved further)
 
-.ahit3
+.expl3
 
  LDX #LO(xTemp2Lo)      \ Set X so the call to CopyPointToWork copies the
                         \ coordinates to (xTemp2, yTemp2, zTemp2)
@@ -22957,7 +23149,7 @@ NEXT
                         \
                         \ The comments below are for the x-coordinate
 
-.ahit4
+.expl4
 
  LDA #0                 \ Set R = 0 to act as the top byte for (R A)
  STA R
@@ -22972,7 +23164,7 @@ NEXT
 
  AND P                  \ Set A = A AND P
 
- BCC ahit5              \ If bit 0 of A before the shift was clear, skip the
+ BCC expl5              \ If bit 0 of A before the shift was clear, skip the
                         \ following two instructions, as we are going to leave
                         \ (R A) as a positive number
 
@@ -22982,7 +23174,7 @@ NEXT
  EOR #&FF               \ Flip all the bits in A to negate it, so in all we have
                         \ (R A) = ~(A AND P)
 
-.ahit5
+.expl5
 
  ADC xTemp2Lo,Y         \ Set (xTemp2Hi xTemp2Lo) = (xTemp2Hi xTemp2Lo) + (R A)
  STA xTemp2Lo,Y         \
@@ -22994,7 +23186,7 @@ NEXT
 
  DEY                    \ Derement the loop counter to move on to the next axis
 
- BPL ahit4              \ Loop back until we have done all three axes
+ BPL expl4              \ Loop back until we have done all three axes
 
                         \ We have now added random numbers to all three axes in
                         \ (xTemp2, yTemp2, zTemp2), scaled to the alien's size,
@@ -23014,22 +23206,22 @@ NEXT
                         \ next point in the "from" to "to" range
 
  CPY U                  \ Loop back until we have done the "to" point
- BCS ahit3
+ BCS expl3
 
  DEC hitTimer           \ Decrement the hit timer, to move the current explosion
                         \ process along by 1
 
- BNE ahit6              \ If the timer is still non-zero, then the explosion
+ BNE expl6              \ If the timer is still non-zero, then the explosion
                         \ hasn't finished, so skip the following instruction
 
  JSR ScoreHitPoints     \ The alien has finished exploding, so award points for
                         \ its destruction
 
-.ahit6
+.expl6
 
- LDA hitTimer           \ If hitTimer <> 26, jump to ahit8 to return from the
+ LDA hitTimer           \ If hitTimer <> 26, jump to expl8 to return from the
  CMP #26                \ subroutine
- BNE ahit8
+ BNE expl8
 
                         \ If we get here then hitTimer = 26, so it was 27 before
                         \ the decrement above, which is right at the the start
@@ -23037,25 +23229,25 @@ NEXT
 
  LDA zTemp2Hi           \ Set A to the high byte of the alien's new z-coordinate
 
- LDX hitObjectId        \ If we didn't hit the flying alien, jump to ahit7 to
+ LDX hitObjectId        \ If we didn't hit the flying alien, jump to expl7 to
  CPX #33                \ set distanceFromHit to the z-coordinate
- BNE ahit7
+ BNE expl7
 
  SEC                    \ We hit the flying alien, so set A = A - 8 to store in
  SBC #8                 \ distanceFromHit, which increases the chance of
                         \ turbulence (as turbulence only kicks in when
                         \ distanceFromHit < 16)
  
- BPL ahit7              \ If the subtraction reduced A to below zero, set A = 0
+ BPL expl7              \ If the subtraction reduced A to below zero, set A = 0
  LDA #0                 \ to store in distanceFromHit
 
-.ahit7
+.expl7
 
  STA distanceFromHit    \ Store the z-coordinate (or the z-coordinate - 8) in
                         \ distanceFromHit, so turbulence will be applied if we
                         \ are too close to the alien
 
-.ahit8
+.expl8
 
  RTS                    \ Return from the subroutine
 
