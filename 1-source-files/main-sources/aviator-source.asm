@@ -6802,8 +6802,11 @@ ORG CODE%
 \   matrixNumber        The matrix to use in the calculation:
 \
 \                         * 0 = matrix 1
+\
 \                         * 9 = matrix 2
+\
 \                         * 18 = matrix 3
+\
 \                         * 27 = matrix 4
 \
 \   objectAnchorPoint   Point ID of the anchor point to which we add the final
@@ -7330,19 +7333,34 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine supports a matrix axis, but the routine is only ever called with
+\ a value of matrixAxis = 0, which makes a lot of the code have no effect.
+\
+\ Arguments:
+\
+\   matrixAxis          The axis to be processed:
+\
+\                          * 0 = x-axis
+\
+\                          * 1 = y-axis
+\
+\                          * 2 = z-axis
+\
+\                       The routine is only ever called with matrixAxis = 0
 \
 \ ******************************************************************************
 
 .SetMatrices
 
- LDX matrixAxis
- LDA mx1Lo,X
- EOR #1
- STA I
+ LDX matrixAxis         \ Set X to the matrix axis (which is always 0)
+
+ LDA mx1Lo,X            \ Set (J I) = -(mx1Hi mx1Lo) for this axis
+ EOR #1                 \
+ STA I                  \ as we flip the the sign in bit 0
  LDA mx1Hi,X
  STA J
- LDX #5
+
+ LDX #5                 \ mx1Lo
  LDY #1
  JSR L1CF0
 
@@ -7427,13 +7445,15 @@ ORG CODE%
  STA R
  LDA my2Hi,X
  STA S
- JSR Multiply16x16Bit0
+
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
 
  LDY matrixNumber
  LDA matrix1Lo+3,Y
  STA I
  LDA matrix1Hi+3,Y
  STA J
+
  JSR L1AA6
 
  LDA R
@@ -7449,7 +7469,8 @@ ORG CODE%
  STA R
  LDA my1Hi,X
  STA S
- JSR Multiply16x16Bit0
+
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
 
  LDY matrixNumber
  LDA matrix1Lo,Y
@@ -7457,6 +7478,7 @@ ORG CODE%
  STA I
  LDA matrix1Hi,Y
  STA J
+
  JSR L1AA6
 
  LDA R
@@ -7478,7 +7500,8 @@ ORG CODE%
  STA R
  LDA my2Hi,X
  STA S
- JSR Multiply16x16Bit0
+
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
 
  LDY matrixNumber
  LDA matrix1Lo+2,Y
@@ -7494,13 +7517,15 @@ ORG CODE%
  LDA R
  EOR #1
  STA R
- JSR Multiply16x16Bit0
+
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
 
  LDY matrixNumber
  LDA matrix1Lo,Y
  STA I
  LDA matrix1Hi,Y
  STA J
+
  JSR L1AA6
 
  LDA R
@@ -7516,7 +7541,8 @@ ORG CODE%
  STA I
  LDA my1Hi,X
  STA J
- JSR Multiply16x16Bit0
+
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
 
  LDY matrixNumber
  LDA matrix1Lo+2,Y
@@ -7571,35 +7597,92 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   matrixAxis          The axis to be processed:
+\
+\                          * 0 = x-axis
+\
+\                          * 1 = y-axis
+\
+\                          * 2 = z-axis
+\
+\                       The routine is only ever called with matrixAxis = 0
+\
+\   X                   The matrix entry to read:
+\
+\                          * 0 = mx1
+\
+\                          * 1 = my1
+\
+\                          * 2 = mz1
+\
+\                          * 3 = mx2
+\
+\                          * 4 = my2
+\
+\                          * 5 = mz2
+\
+\   Y                   The matrix entry to write in matrix matrixNumber, so if
+\                       matrixNumber = 0, we would write:
+\
+\                          * 0 = m0 in matrix 1
+\
+\                          * 1 = m1 in matrix 1
+\
+\                          * 2 = m2 in matrix 1
+\
+\                            ...
+\
+\                          * 7 = m7 in matrix 1
+\
+\                          * 8 = m8 in matrix 1
+\
+\   matrixNumber        The matrix to write in the calculation:
+\
+\                         * 0 = matrix 1
+\
+\                         * 9 = matrix 2
+\
+\                         * 18 = matrix 3
+\
+\                         * 27 = matrix 4
+\
+\ Other entry points:
+\
+\   L1D03               Negate the matrix entry at X before use 
 \
 \ ******************************************************************************
 
 .L1CF0
 
- TXA
- CLC
- ADC matrixAxis
- TAX
- LDA mx1Lo,X
+ TXA                    \ Set X = matrixAxis + X
+ CLC                    \
+ ADC matrixAxis         \ This has no effect when matrixAxis = 0, which is the
+ TAX                    \ only value that this routine is called with
+
+ LDA mx1Lo,X            \ Set R = the low byte from the matrix entry to read
  STA R
 
 .L1CFB
 
- LDA mx1Hi,X
+ LDA mx1Hi,X            \ Set (S R) = the matrix entry to read
  STA S
- JMP L1D23
+
+ JMP L1D23              \ Jump down to L1D23 to write 
 
 .L1D03
 
- TXA
- CLC
- ADC matrixAxis
- TAX
- LDA mx1Lo,X
- EOR #1
+ TXA                    \ Set X = matrixAxis + X
+ CLC                    \
+ ADC matrixAxis         \ This has no effect when matrixAxis = 0, which is the
+ TAX                    \ only value that this routine is called with
+
+ LDA mx1Lo,X            \ Set R = the low byte from the matrix entry to read,
+ EOR #1                 \ with the sign in bit 0 flipped
  STA R
- JMP L1CFB
+
+ JMP L1CFB              \ Jump up to L1CFB to set the high byte
 
 \ ******************************************************************************
 \
@@ -7616,29 +7699,34 @@ ORG CODE%
 
 .L1D13
 
- TXA
- CLC
- ADC matrixAxis
- TAX
- LDA mx1Lo,X
+ TXA                    \ Set X = matrixAxis + X
+ CLC                    \
+ ADC matrixAxis         \ This has no effect when matrixAxis = 0, which is the
+ TAX                    \ only value that this routine is called with
+
+ LDA mx1Lo,X            \ Set (J I) = the matrix entry to read
  STA I
  LDA mx1Hi,X
  STA J
 
 .L1D23
 
- TYA
- CLC
- ADC matrixNumber
+ TYA                    \ Set N = Y + matrixNumber
+ CLC                    \
+ ADC matrixNumber       \ so N points to the entry Y in the correct matrix
  STA N
- JSR Multiply16x16Bit0
 
- LDY N
- LDA G
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+
+ LDY N                  \ Fetch the index of the matrix entry to write that we
+                        \ stored in N above
+
+ LDA G                  \ Store (H G) in the matrix entry to write
  STA matrix1Lo,Y
  LDA H
  STA matrix1Hi,Y
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7866,8 +7954,11 @@ ORG CODE%
 \   matrixNumber        The matrix to use in the calculation:
 \
 \                         * 0 = matrix 1
+\
 \                         * 9 = matrix 2
+\
 \                         * 18 = matrix 3
+\
 \                         * 27 = matrix 4
 \
 \   xPointHi etc.       The point's coordinates before rotation
