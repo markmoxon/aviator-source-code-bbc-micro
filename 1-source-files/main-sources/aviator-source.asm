@@ -307,55 +307,55 @@ ORG &0100
 
 ORG &0160
 
-.L0160
+.mx1Lo
 
- SKIP 1
+ SKIP 1                 \ Low byte of (mx1Hi mx1Lo)
 
-.L0161
+.my1Lo
 
- SKIP 1
+ SKIP 1                 \ Low byte of (my1Hi my1Lo)
 
-.L0162
+.mz1Lo
 
- SKIP 1
+ SKIP 1                 \ Low byte of (mz1Hi mz1Lo)
 
-.L0163
+.mx2Lo
 
- SKIP 1
+ SKIP 1                 \ Low byte of (mx2Hi mx2Lo)
 
-.L0164
+.my2Lo
 
- SKIP 1
+ SKIP 1                 \ Low byte of (my2Hi my2Lo)
 
-.L0165
+.mz2Lo
 
- SKIP 1
+ SKIP 1                 \ Low byte of (mz2Hi mz2Lo)
 
 ORG &0170
 
-.L0170
+.mx1Hi
 
- SKIP 1
+ SKIP 1                 \ High byte of (mx1Hi mx1Lo)
 
-.L0171
+.my1Hi
 
- SKIP 1
+ SKIP 1                 \ High byte of (my1Hi my1Lo)
 
-.L0172
+.mz1Hi
 
- SKIP 1
+ SKIP 1                 \ High byte of (mz1Hi mz1Lo)
 
-.L0173
+.mx2Hi
 
- SKIP 1
+ SKIP 1                 \ High byte of (mx2Hi mx2Lo)
 
-.L0174
+.my2Hi
 
- SKIP 1
+ SKIP 1                 \ High byte of (my2Hi my2Lo)
 
-.L0175
+.mz2Hi
 
- SKIP 1
+ SKIP 1                 \ High byte of (mz2Hi mz2Lo)
 
 \ ******************************************************************************
 \
@@ -1280,13 +1280,17 @@ ORG &0900
                         \
                         \   * Non-zero = engine is on
 
-.L0CEA
+.xRotationLo
 
- SKIP 2                 \ Low byte in (L0CFA L0CEA)
+ SKIP 1                 \ Low byte in (xRotationHi xRotationLo)
 
-.L0CEC
+.yRotationLo
 
- SKIP 1                 \ Low byte in (L0CFC L0CEC)
+ SKIP 1                 \ Low byte in (yRotationHi yRotationLo)
+
+.zRotationLo
+
+ SKIP 1                 \ Low byte in (zRotationHi zRotationLo)
 
 .xPlaneLo
 
@@ -1389,26 +1393,38 @@ ORG &0900
                         \ feet mentioned in the maunal, as this is set to
                         \ non-zero when the plane's altitude in yPlaneHi >= 2
 
-.L0CFA
+.xRotationHi
 
  SKIP 1                 \ Set to 7 in ResetVariables
                         \
-                        \ High byte in (L0CFA L0CEA)
+                        \ High byte in (xRotationHi xRotationLo)
+                        \
+                        \ Bit 7 contains a sign, but so does bit 6
+                        \
+                        \ Rotation angle around the x-axis? 0-255 is full circle
 
-.compassHeading
+.yRotationHi
 
  SKIP 1                 \ Direction of the compass (i.e. its heading)
                         \
-                        \   * 0 = North
-                        \   * 64 = East
-                        \   * 128 = South
-                        \   * 192 = West
+                        \   * 0 = North         (bit 6 clear, bit 7 clear)
+                        \   * 64 = East         (bit 6 set,   bit 7 clear)
+                        \   * 128 = South       (bit 6 clear, bit 7 set)
+                        \   * 192 = West        (bit 6 set,   bit 7 set)
                         \
                         \ Shown on indicator 0
+                        \
+                        \ Bit 7 contains a sign, but so does bit 6
+                        \
+                        \ Rotation angle around the y-axis? 0-255 is full circle
 
-.L0CFC
+.zRotationHi
 
- SKIP 1                 \ High byte in (L0CFC L0CEC)
+ SKIP 1                 \ High byte in (zRotationHi zRotationLo)
+                        \
+                        \ Bit 7 contains a sign, but so does bit 6
+                        \
+                        \ Rotation angle around the z-axis? 0-255 is full circle
 
 
 .xPlaneHi
@@ -6358,13 +6374,20 @@ ORG CODE%
 \       Name: SetMatrix
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: 
+\    Summary: Convert the rotation angles of the plane into rotation matrix
+\             coordinates
 \
 \ ------------------------------------------------------------------------------
 \
-\ Arguments:
+\ Sets (mx1Hi mx1Lo) and (mx2Hi mx2Lo) according to the rotation of the plane's
+\ axis in (xRotationHi xRotationLo). This converts the angle in xRotation into a
+\ Cartesian coordinate that represents a line rotated by that amount; in a
+\ sense, we are converting from Polar coordinates into Cartesian, so we can use
+\ those coordinates to populate a rotation matrix.
 \
-\   Y                   ???
+\ The calculation is done for just one axis.
+\
+\ Arguments:
 \
 \   matrixAxis          The axis to be processed:
 \
@@ -6374,143 +6397,257 @@ ORG CODE%
 \
 \                          * 2 = z-axis
 \
+\   Y                   Same value as matrixAxis
+\
 \ ******************************************************************************
 
 .SetMatrix
 
- LDA L0CFA,Y
- STA G
- STA K
- LDA L0CEA,Y
- ASL A
- ROL G
- ASL A
- ROL G
- STA W
- LDX G
- JSR L1902
+ LDA xRotationHi,Y      \ Set (G A) = (xRotationHi xRotationLo) for axis Y
+ STA G                  \
+                        \ starting with the high byte
 
- STA Q
+ STA K                  \ Set K = xRotationHi, so we can access the high byte
+                        \ when writing the results below
+
+ LDA xRotationLo,Y      \ Set the low byte of (G A)
+                        \
+                        \ so (G A) = xRotation
+
+ ASL A                  \ Set (X W) = (G A) << 2
+ ROL G                  \           = xRotation << 2
+ ASL A                  \
+ ROL G                  \ so (X W) is the angle, reduced into a quarter circle
+ STA W                  \ by removing the top four bits (the top byte of the
+ LDX G                  \ angle starts with a range of 0 to 256, but it's now
+                        \ across a quarter of the range, 0 to 64)
+
+ JSR ProjectRotation    \ Project the rotation angle in (X W) onto a Cartesian
+                        \ coordinate (A Y), to get the value on one axis
+
+ STA Q                  \ Set (Q P) = (A Y)
  STY P
- LDA G
- EOR #&FF
+
+ LDA G                  \ Set (X W) = ~(G W)
+ EOR #&FF               \           = ~xRotation << 2
  TAX
  LDA W
  EOR #&FF
  STA W
- JSR L1902
 
- STA S
+ JSR ProjectRotation    \ Project the negated rotation angle in (X W) onto a
+                        \ Cartesian coordinate (A Y), to get the value on the
+                        \ other axis
+
+ STA S                  \ Set (S R) = (A Y)
  STY R
- LDY matrixAxis
- BIT K
+
+                        \ We now copy the results into page 1, setting the sign
+                        \ in bit 0 as we go (the sign is in bit 0 as this is a
+                        \ matrix number)
+                        \
+                        \ We do this based on the value in K, which contains the
+                        \ high byte of (xRotationHi xRotationLo) for this axis
+                        \
+                        \   *   0 to  63 (bit 6 and 7 clear)
+                        \   *  64 to 127 (bit 6 set, bit 7 clear)
+                        \   * 128 to 191 (bit 6 clear, bit 7 set)
+                        \   * 192 to 255 (bit 6 set, bit 7 set)
+                        \
+                        \ These four ranges correspond to the four quadrants of
+                        \ the rotation angle. For example, for the z-axis, which
+                        \ points into the screen, we can visualise the quadrants
+                        \ by imagining the plane doing a full 360-degree roll to
+                        \ the right; for the first quarter the plane is still
+                        \ upright, for the second and third quarters it is
+                        \ upside down, and then for the final quarter it is
+                        \ upright again
+                        \
+                        \ The following sets the m1 and m2 values according to
+                        \ which quadrant this particular axis is rotated into
+
+ LDY matrixAxis         \ Set Y to the axis once again
+
+ BIT K                  \ If bit 6 of K is set, jump to L18CD
  BVS L18CD
 
- BMI L18B3
+ BMI L18B3              \ If bit 7 of K is set, jump to L18B3
 
- LDA Q
- STA L0173,Y
- LDA P
- AND #&FE
- STA L0163,Y
- LDA S
- STA L0170,Y
- LDA R
- AND #&FE
- STA L0160,Y
- JMP L1901
+                        \ If we get here then K has:
+                        \
+                        \   * Bit 6 clear
+                        \   * Bit 7 clear
+                        \
+                        \ so this is the first quadrant of the axis' rotation
+
+ LDA Q                  \ Set (mx2Hi mx2Lo) = (Q P)
+ STA mx2Hi,Y            \
+ LDA P                  \ with bit 0 clear (positive)
+ AND #%11111110
+ STA mx2Lo,Y
+
+ LDA S                  \ Set (mx1Hi mx1Lo) = (S R)
+ STA mx1Hi,Y            \
+ LDA R                  \ with bit 0 clear (positive)
+ AND #%11111110
+ STA mx1Lo,Y
+
+ JMP L1901              \ Jump to L1901 to return from the subroutine
 
 .L18B3
 
- LDA Q
- STA L0173,Y
- LDA P
+                        \ If we get here then K has:
+                        \
+                        \   * Bit 6 clear
+                        \   * Bit 7 set
+                        \
+                        \ so this is the third quadrant of the axis' rotation
+
+ LDA Q                  \ Set (mx2Hi mx2Lo) = -(Q P)
+ STA mx2Hi,Y            \
+ LDA P                  \ with bit 0 set (negative)
  ORA #1
- STA L0163,Y
- LDA S
- STA L0170,Y
- LDA R
- ORA #1
- STA L0160,Y
- BNE L1901
+ STA mx2Lo,Y
+
+ LDA S                  \ Set (mx1Hi mx1Lo) = -(S R)
+ STA mx1Hi,Y            \
+ LDA R                  \ 
+ ORA #1                 \ with bit 0 set (negative)
+ STA mx1Lo,Y
+
+ BNE L1901              \ Jump to L1901 to return from the subroutine (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .L18CD
 
- BMI L18E9
+                        \ If we get here then K has bit 6 set
 
- LDA S
- STA L0173,Y
- LDA R
- AND #&FE
- STA L0163,Y
- LDA Q
- STA L0170,Y
- LDA P
+ BMI L18E9              \ If bit 7 of K is set, jump to L18E9
+
+                        \ If we get here then K has:
+                        \
+                        \   * Bit 6 set
+                        \   * Bit 7 clear
+                        \
+                        \ so this is the second quadrant of the axis' rotation
+
+ LDA S                  \ Set (mx2Hi mx2Lo) = (S R)
+ STA mx2Hi,Y            \
+ LDA R                  \ with bit 0 clear (positive)
+ AND #%11111110
+ STA mx2Lo,Y
+
+ LDA Q                  \ Set (mx1Hi mx1Lo) = -(Q P)
+ STA mx1Hi,Y            \
+ LDA P                  \ with bit 0 set (negative)
  ORA #1
- STA L0160,Y
- BNE L1901
+ STA mx1Lo,Y
+
+ BNE L1901              \ Jump to L1901 to return from the subroutine (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .L18E9
 
- LDA S
- STA L0173,Y
- LDA R
+                        \ If we get here then K has:
+                        \
+                        \   * Bit 6 set
+                        \   * Bit 7 set
+                        \
+                        \ so this is the fourth quadrant of the axis' rotation
+
+ LDA S                  \ Set (mx2Hi mx2Lo) = -(S R)
+ STA mx2Hi,Y            \
+ LDA R                  \ with bit 0 set (negative)
  ORA #1
- STA L0163,Y
- LDA Q
- STA L0170,Y
- LDA P
- AND #&FE
- STA L0160,Y
+ STA mx2Lo,Y
+
+ LDA Q                  \ Set (mx1Hi mx1Lo) = (Q P)
+ STA mx1Hi,Y            \
+ LDA P                  \ with bit 0 clear (positive)
+ AND #%11111110
+ STA mx1Lo,Y
 
 .L1901
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L1902
+\       Name: ProjectRotation
 \       Type: Subroutine
-\   Category: 3D geometry
-\    Summary: 
+\   Category: Maths
+\    Summary: Project an axis rotation into Cartesian coordinates
 \
 \ ------------------------------------------------------------------------------
 \
+\ Sets (A Y) = (cos(X) * W / 256) + sin(X)
+\
+\ where (X W) is the 16-bit angle containins the axis rotation.
+\
 \ Arguments:
 \
-\   X                   
+\   (X W)               The 16-bit angle, reduced to a quarter-circle
+\
+\ Returns:
+\
+\   (A Y)               (cos(X) * W / 256) + sin(X)
+\
+\   (X W)               Unchanged
 \
 \ ******************************************************************************
 
-.L1902
+.ProjectRotation
 
- STX H
- SEC
- LDA Lookup4000+1,X
- SBC Lookup4000,X
- STA I
- LDA Lookup4101+1,X
- SBC Lookup4101,X
- LSR A
- ROR I
- LDX I
- LDY W
+ STX H                  \ Store X in H for later
+
+ SEC                    \ Set (A I) = cos(X)
+ LDA sinLo+1,X          \
+ SBC sinLo,X            \ We get the cosine from the sine table by calculating
+ STA I                  \ the differential, starting with the low bytes (see the
+                        \ sinLo table for an explanation)
+
+ LDA sinHi+1,X          \ Then we do the high bytes
+ SBC sinHi,X
+
+ LSR A                  \ Set (A X) = (A I) / 2
+ ROR I                  \           = cos(X) / 2
+ LDX I                  \
+                        \ The maximum differential value is 402, so the above
+                        \ result fits into one byte, so we have:
+                        \
+                        \   X = (A I) / 2
+                        \     = cos(X) / 2
+
+ LDY W                  \ Set Y = W
 
  JSR Multiply8x8        \ Set (A V) = X * Y
+                        \           = (cos(X) / 2) * W
 
- LDX H
- ASL V
- ROL A
- PHP
- CLC
- ADC Lookup4000,X
- TAY
- LDA #0
- ADC Lookup4101,X
- PLP
- ADC #0
+ LDX H                  \ Set X to the original argument we stored above
 
- RTS
+ ASL V                  \ Set (A V) = (A V) * 2
+ ROL A                  \           = (cos(X) / 2) * W * 2
+                        \           = cos(X) * W
+                        \
+                        \ and put bit 7 of (A V) into the C flag, so in effect
+                        \ we have:
+                        \
+                        \   (C A V) = cos(X) * W
+
+ PHP                    \ Store the C flag on the stack
+
+ CLC                    \ Set (A Y) = (C A) + sin(X)
+ ADC sinLo,X            \           = (cos(X) * W / 256) + sin(X)
+ TAY                    \
+                        \ starting with the low bytes
+
+ LDA #0                 \ And then adding the carry to the high byte, so now we
+ ADC sinHi,X            \ have the interim result for (0 A) + sin(X)
+
+ PLP                    \ And finally adding C (which we retrieve from the stack)
+ ADC #0                 \ to give the final result for (C A) + sin(X)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7200,10 +7337,10 @@ ORG CODE%
 .SetMatrices
 
  LDX matrixAxis
- LDA L0160,X
+ LDA mx1Lo,X
  EOR #1
  STA I
- LDA L0170,X
+ LDA mx1Hi,X
  STA J
  LDX #5
  LDY #1
@@ -7239,30 +7376,30 @@ ORG CODE%
 
  LDX matrixAxis
  LDY matrixNumber
- LDA L0162,X
+ LDA mz1Lo,X
  STA matrix3Lo,Y
  STA matrix3Lo+4,Y
  STA matrix4Lo,Y
- LDA L0172,X
+ LDA mz1Hi,X
  STA matrix3Hi,Y
  STA matrix3Hi+4,Y
  STA matrix4Hi,Y
- LDA L0165,X
+ LDA mz2Lo,X
  STA matrix3Lo+3,Y
  STA matrix4Lo+3,Y
  EOR #1
  STA matrix3Lo+1,Y
- LDA L0175,X
+ LDA mz2Hi,X
  STA matrix3Hi+1,Y
  STA matrix3Hi+3,Y
  STA matrix4Hi+3,Y
- LDA L0160,X
+ LDA mx1Lo,X
  STA matrix4Lo+8,Y
- LDA L0170,X
+ LDA mx1Hi,X
  STA matrix4Hi+8,Y
- LDA L0163,X
+ LDA mx2Lo,X
  STA matrix4Lo+7,Y
- LDA L0173,X
+ LDA mx2Hi,X
  STA matrix4Hi+7,Y
  LDY #5
 
@@ -7286,9 +7423,9 @@ ORG CODE%
  LDA H
  STA J
  LDX matrixAxis
- LDA L0164,X
+ LDA my2Lo,X
  STA R
- LDA L0174,X
+ LDA my2Hi,X
  STA S
  JSR Multiply16x16Bit0
 
@@ -7308,9 +7445,9 @@ ORG CODE%
  LDA matrix1Hi+5,Y
  STA J
  LDX matrixAxis
- LDA L0161,X
+ LDA my1Lo,X
  STA R
- LDA L0171,X
+ LDA my1Hi,X
  STA S
  JSR Multiply16x16Bit0
 
@@ -7327,19 +7464,19 @@ ORG CODE%
  LDA S
  STA matrix1Hi+5,Y
  LDX matrixAxis
- LDA L0161,X
+ LDA my1Lo,X
  STA R
- LDA L0171,X
+ LDA my1Hi,X
  STA S
  LDX #2
  LDY #0
  JSR L1D13
 
  LDX matrixAxis
- LDA L0164,X
+ LDA my2Lo,X
  EOR #1
  STA R
- LDA L0174,X
+ LDA my2Hi,X
  STA S
  JSR Multiply16x16Bit0
 
@@ -7375,9 +7512,9 @@ ORG CODE%
  LDA xTempHi
  STA S
  LDX matrixAxis
- LDA L0161,X
+ LDA my1Lo,X
  STA I
- LDA L0171,X
+ LDA my1Hi,X
  STA J
  JSR Multiply16x16Bit0
 
@@ -7393,9 +7530,9 @@ ORG CODE%
  LDA S
  STA matrix1Hi+2,Y
  LDX matrixAxis
- LDA L0163,X
+ LDA mx2Lo,X
  STA matrix1Lo+7,Y
- LDA L0173,X
+ LDA mx2Hi,X
  STA matrix1Hi+7,X
  LDA #2
  STA T
@@ -7444,12 +7581,12 @@ ORG CODE%
  CLC
  ADC matrixAxis
  TAX
- LDA L0160,X
+ LDA mx1Lo,X
  STA R
 
 .L1CFB
 
- LDA L0170,X
+ LDA mx1Hi,X
  STA S
  JMP L1D23
 
@@ -7459,7 +7596,7 @@ ORG CODE%
  CLC
  ADC matrixAxis
  TAX
- LDA L0160,X
+ LDA mx1Lo,X
  EOR #1
  STA R
  JMP L1CFB
@@ -7483,9 +7620,9 @@ ORG CODE%
  CLC
  ADC matrixAxis
  TAX
- LDA L0160,X
+ LDA mx1Lo,X
  STA I
- LDA L0170,X
+ LDA mx1Hi,X
  STA J
 
 .L1D23
@@ -8041,7 +8178,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the compass heading from compassHeading and reduces it to
+\ This section takes the compass heading from yRotationHi and reduces it to
 \ the range 0 to 73, before passing it to the DrawIndicatorHand to update the
 \ on-screen compass.
 \
@@ -8051,7 +8188,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 0
 
- LDA compassHeading     \ Set T = compassHeading
+ LDA yRotationHi        \ Set T = yRotationHi
  STA T
 
                         \ We now calculate A = T * n / 256 with a hardcoded n,
@@ -11614,7 +11751,7 @@ ORG CODE%
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
                         \ the rset4 loop
 
- STX L0CFA              \ Set L0CFA = 7
+ STX xRotationHi        \ Set xRotationHi = 7
 
 .rset4
 
@@ -14227,15 +14364,15 @@ ORG CODE%
 
 .phor1
 
- BIT L0CFA              \ If bit 7 of (L0CFA L0CEA) is set, jump to phor3
+ BIT xRotationHi        \ If bit 7 of xRotation is set, jump to phor3
  BMI phor3
 
- BVS phor4              \ If bit 6 of (L0CFA L0CEA) is set (so bit 7 is clear
+ BVS phor4              \ If bit 6 of xRotation is set (so bit 7 is clear
                         \ and bit 6 is set), jump to phor4
 
 .phor2
 
-                        \ We get here if in (L0CFA L0CEA):
+                        \ We get here if in xRotation:
                         \
                         \   * Bit 7 set, bit 6 set
                         \   * Bit 7 clear, bit 6 clear
@@ -14248,12 +14385,12 @@ ORG CODE%
 
 .phor3
 
- BVS phor2              \ If bit 6 of (L0CFA L0CEA) is set (so both bits 6 and 7
+ BVS phor2              \ If bit 6 of xRotation is set (so both bits 6 and 7
                         \ are set), jump to phor2
 
 .phor4
 
-                        \ We get here if in (L0CFA L0CEA):
+                        \ We get here if in xRotation:
                         \
                         \   * Bit 7 clear, bit 6 set
                         \   * Bit 7 set, bit 6 clear
@@ -14580,7 +14717,7 @@ ORG CODE%
  LDA #0                 \ Set N = 0 so the call to DrawVectorLine draws the
  STA N                  \ new line
 
- LDA compassHeading     \ Set A to the current compass heading, for use in the
+ LDA yRotationHi        \ Set A to the current compass heading, for use in the
                         \ call to GetRadarVector if this is the runway (if this
                         \ is an alien, this value is ignored)
 
@@ -14756,7 +14893,7 @@ ORG CODE%
 \ Arguments:
 \
 \   A                   For the runway line only, this is either the current
-\                       compass direction from compassHeading (if we are drawing
+\                       compass direction from yRotationHi (if we are drawing
 \                       the radar line), or a previous compass direction (if we
 \                       are erasing the existing radar line)
 \
@@ -15045,8 +15182,8 @@ ORG CODE%
 \       Name: previousCompass
 \       Type: Variable
 \   Category: Dashboard
-\    Summary: Stores the value of compassHeading when we draw the runway on the
-\             radar, so we can erase the line later
+\    Summary: Stores the value of the compass heading when we draw the runway
+\             on the radar, so we can erase the line later
 \
 \ ******************************************************************************
 
@@ -15580,8 +15717,8 @@ ORG CODE%
  LDA #1                 \ Set the alien's state to 1
  STA alienState,X
 
- BNE upal11             \ Jump to upal11 to terminate the inner loop (this BNE is
-                        \ effectively a JMP as A is never zero)
+ BNE upal11             \ Jump to upal11 to terminate the inner loop (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .upal10
 
@@ -15784,11 +15921,12 @@ ORG CODE%
 \
 \ This routine grows the alien in slot 31 or 32 by scaling the z-coordinates for
 \ the alien's four object points. Because object points are stored with the
-\ scale factor in bits 4 to 7, we can double the length of the alien by adding 16
-\ to each z-coordinate (as the alien object's "nose" points along the z-axis).
+\ scale factor in bits 4 to 7, we can double the length of the alien by adding
+\ 16 to each z-coordinate (as the alien object's "nose" points along the
+\ z-axis).
 \
-\ If bit 7 of A is set, then this routine resets the size to the smallest feeding
-\ stage, which has a scale factor of 32 (i.e. 2^2).
+\ If bit 7 of A is set, then this routine resets the size to the smallest
+\ feeding stage, which has a scale factor of 32 (i.e. 2^2).
 \
 \ Arguments:
 \
@@ -15829,8 +15967,8 @@ ORG CODE%
  LDA #186               \ Set A to the object point ID to update for slot 31, so
                         \ we update points 183 to 186 in the loop
 
- CPY #31                \ If the alien slot is 31, skip the following instruction
- BEQ size1
+ CPY #31                \ If this is alien slot 31, skip the following
+ BEQ size1              \ instruction
 
  LDA #191               \ Set A to the object point ID to update for slot 32, so
                         \ we update points 188 to 191 in the loop
@@ -16105,7 +16243,8 @@ ORG CODE%
 
 .ahit7
 
- STY Q                  \ Store the axis counter in Q so we can retrieve it below
+ STY Q                  \ Store the axis counter in Q so we can retrieve it
+                        \ below
 
  JSR GetTrailVectorStep \ Set (A V R) to 1/32 of the vector for the specified
                         \ bullet trail
@@ -16404,8 +16543,8 @@ ORG CODE%
                         \ truncated in the 8-bit register to 0, 12 or 14, so
                         \ this moves X through the xObject, yObject and zObject
                         \ values for object 0 (when called with X = 216), object
-                        \ 12 (when called with X = 228) or object 14 (when called
-                        \ with X = 230)
+                        \ 12 (when called with X = 228) or object 14 (when
+                        \ called with X = 230)
                         \
                         \ Objects 12 and 14 are the trailing ends of the two
                         \ bullet trails, so the following checks whether the
@@ -16574,14 +16713,34 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ Shows the upside down bar in the artificial horizon if bit 7 and bit 6 of
-\ L0CFC are different
+\ This routine shows the upside down bar in the artificial horizon if bit 6 and
+\ bit 7 of zRotationHi are different.
+\
+\ This is how it works. The value of zRotationHi contains the following:
+\
+\   *   0 to  63 (bit 6 and 7 clear)
+\   *  64 to 127 (bit 6 set, bit 7 clear)
+\   * 128 to 191 (bit 6 clear, bit 7 set)
+\   * 192 to 255 (bit 6 set, bit 7 set)
+\
+\ The zRotation angle determines how the plane is rotated around the z-axis. The
+\ z-axis points into the screen, so rotating the plane around this axis is the
+\ same as rolling the plane. A zRotation of 0 is a horizontal plane, and as the
+\ angle increases, the plane rolls to the right. If we consider the plane doing
+\ a full 360-degree roll, then for the first quarter the plane is still upright,
+\ for the second and third quarters it is upside down, and then for the final
+\ quarter it is upright again.
+\
+\ You will notice that bits 6 and 7 differ in the second and third quarters in
+\ the list above, so if bits 6 and 7 of zRotationHi are different, then the
+\ plane is upside down, and we should show a bar at the bottom of the artificial
+\ horizon indicator.
 \
 \ ******************************************************************************
 
 .ShowUpsideDownBar
 
- LDA L0CFC              \ If bit 7 of L0CFC is clear, skip the following
+ LDA zRotationHi        \ If bit 7 of zRotationHi is clear, skip the following
  BPL upsi1              \ instruction
 
  EOR #%11000000         \ Flip bits 6 and 7 of A, making bit 7 clear and bit 6
@@ -16599,8 +16758,8 @@ ORG CODE%
 
                         \ We get here if one of the following is true:
                         \
-                        \   * Bit 7 of L0CFC is clear and bit 6 is set
-                        \   * Bit 7 of L0CFC is set and bit 6 is clear
+                        \   * Bit 7 of zRotationHi is clear and bit 6 is set
+                        \   * Bit 7 of zRotationHi is set and bit 6 is clear
                         \
                         \ either of which means the plane is upside down
 
@@ -17288,9 +17447,10 @@ ORG CODE%
 
 .prun25
 
-                        \ If we get here then point 6 has a positive z-coordinate
-                        \ so point Y must have a negative z-coordinate, and the
-                        \ point before Y must have a positive z-coordinate
+                        \ If we get here then point 6 has a positive
+                        \ z-coordinate, so point Y must have a negative
+                        \ z-coordinate, and the point before Y must have a
+                        \ positive z-coordinate
                         \
                         \ In other words, the dashes start in front of us, and
                         \ go behind us at point Y, which is the first point
@@ -20131,101 +20291,82 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup4000
+\       Name: sinLo
 \       Type: Variable
-\   Category: 3D geometry
-\    Summary: 
+\   Category: Maths
+\    Summary: Low byte of the sine lookup table
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This table contains sine values for a quarter of a circle, i.e. for the range
+\ 0 to 90 degrees, or 0 to PI/2 radians. The table contains values for indexes
+\ 0 to 256, which cover the quarter from 0 to PI/2 radians. Entry X in the table
+\ is therefore (X / 256) * (PI / 2) radians of the way round the quarter circle,
+\ so the table at index X contains the sine of this value.
+\
+\ The value of sine across the quarter circle ranges from 0 to 1:
+\
+\   sin(0)    = 0
+\   sin(PI/2) = 1
+\
+\ but assembly language doesn't support fractions, so instead we store the sine
+\ in a 16-bit number that contains the sine multiplied by 65536, so the range of
+\ (sinHi sinLo) over the course of the quarter circle is 0 to 65536.
+\
+\ In other words, entry X in this table contains sin(X) * 65536, where X ranges
+\ from 0 to 256 over the course of a quarter circle.
+\
+\ Aviator doesn't have a separate cosine table, and instead calculates cos(X) by
+\ using the fact that the differential of sine is the cosine. The differential
+\ of a function is the same as the gradient of its graph - the rate of change of
+\ the function, in other words - so Aviator calculates cos(X) by working out the
+\ slope of the sine function at that point. In other words, it does the simple
+\ calculation as follows:
+\
+\   cos(X) = sin(X+1) - sin(X)
 \
 \ ******************************************************************************
 
-.Lookup4000
+.sinLo
 
- EQUB &00
- EQUB &92, &24, &B6, &48, &DA, &6C, &FE, &8F
- EQUB &21, &B2, &44, &D5, &66, &F6, &87, &17
- EQUB &A7, &37, &C7, &56, &E5, &73, &02, &90
- EQUB &1D, &AA, &37, &C4, &50, &DB, &66, &F1
- EQUB &7B, &05, &8E, &17, &9F, &26, &AD, &33
- EQUB &B9, &3E, &C3, &47, &CA, &4D, &CE, &50
- EQUB &D0, &50, &CF, &4D, &CA, &47, &C3, &3E
- EQUB &B8, &31, &AA, &22, &98, &0E, &83, &F7
- EQUB &6A, &DC, &4D, &BD, &2D, &9B, &08, &74
- EQUB &DF, &49, &B1, &19, &80, &E5, &4A, &AD
- EQUB &0F, &70, &D0, &2E, &8B, &E7, &42, &9C
- EQUB &F4, &4B, &A1, &F5, &48, &9A, &EA, &39
- EQUB &87, &D3, &1E, &68, &B0, &F6, &3C, &7F
- EQUB &C2, &02, &42, &7F, &BC, &F6, &2F, &67
- EQUB &9D, &D2, &05, &36, &66, &94, &C0, &EB
- EQUB &14, &3B, &61, &85, &A8, &C8, &E7, &04
- EQUB &20, &3A, &52, &68, &7C, &8F, &A0, &AE
- EQUB &BC, &C7, &D0, &D8, &DE, &E2, &E3, &E4
- EQUB &E2, &DE, &D8, &D1, &C7, &BB, &AE, &9F
- EQUB &8D, &7A, &64, &4D, &33, &18, &FA, &DB
- EQUB &B9, &95, &70, &48, &1E, &F2, &C4, &94
- EQUB &61, &2D, &F6, &BE, &83, &46, &06, &C5
- EQUB &82, &3C, &F4, &AA, &5E, &0F, &BE, &6B
- EQUB &16, &BF, &65, &09, &AB, &4B, &E8, &83
- EQUB &1C, &B2, &46, &D8, &68, &F5, &80, &09
- EQUB &8F, &13, &94, &14, &91, &0B, &84, &FA
- EQUB &6D, &DE, &4D, &BA, &24, &8B, &F1, &53
- EQUB &B4, &12, &6E, &C7, &1E, &73, &C5, &14
- EQUB &61, &AC, &F5, &3B, &7E, &BF, &FE, &3A
- EQUB &74, &AB, &E0, &13, &43, &70, &9B, &C4
- EQUB &EA, &0E, &2F, &4E, &6A, &84, &9C, &B1
- EQUB &C3, &D3, &E1, &EC, &F4, &FB, &FE, &FF
+FOR I%, 0, 256
+
+ N = SIN((I% / 256) * (PI / 2))
+
+ IF N >= 1
+  EQUB 255
+ ELSE
+  EQUB LO(INT(N * 65536))
+ ENDIF
+
+NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup4101
+\       Name: sinHi
 \       Type: Variable
-\   Category: 3D geometry
-\    Summary: 
+\   Category: Maths
+\    Summary: High byte of the sine lookup table
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ See sinLo for an explanation of this table.
 \
 \ ******************************************************************************
 
-.Lookup4101
+.sinHi
 
- EQUB &00
- EQUB &01, &03, &04, &06, &07, &09, &0A, &0C
- EQUB &0E, &0F, &11, &12, &14, &15, &17, &19
- EQUB &1A, &1C, &1D, &1F, &20, &22, &24, &25
- EQUB &27, &28, &2A, &2B, &2D, &2E, &30, &31
- EQUB &33, &35, &36, &38, &39, &3B, &3C, &3E
- EQUB &3F, &41, &42, &44, &45, &47, &48, &4A
- EQUB &4B, &4D, &4E, &50, &51, &53, &54, &56
- EQUB &57, &59, &5A, &5C, &5D, &5F, &60, &61
- EQUB &63, &64, &66, &67, &69, &6A, &6C, &6D
- EQUB &6E, &70, &71, &73, &74, &75, &77, &78
- EQUB &7A, &7B, &7C, &7E, &7F, &80, &82, &83
- EQUB &84, &86, &87, &88, &8A, &8B, &8C, &8E
- EQUB &8F, &90, &92, &93, &94, &95, &97, &98
- EQUB &99, &9B, &9C, &9D, &9E, &9F, &A1, &A2
- EQUB &A3, &A4, &A6, &A7, &A8, &A9, &AA, &AB
- EQUB &AD, &AE, &AF, &B0, &B1, &B2, &B3, &B5
- EQUB &B6, &B7, &B8, &B9, &BA, &BB, &BC, &BD
- EQUB &BE, &BF, &C0, &C1, &C2, &C3, &C4, &C5
- EQUB &C6, &C7, &C8, &C9, &CA, &CB, &CC, &CD
- EQUB &CE, &CF, &D0, &D1, &D2, &D3, &D3, &D4
- EQUB &D5, &D6, &D7, &D8, &D9, &D9, &DA, &DB
- EQUB &DC, &DD, &DD, &DE, &DF, &E0, &E1, &E1
- EQUB &E2, &E3, &E3, &E4, &E5, &E6, &E6, &E7
- EQUB &E8, &E8, &E9, &EA, &EA, &EB, &EB, &EC
- EQUB &ED, &ED, &EE, &EE, &EF, &EF, &F0, &F1
- EQUB &F1, &F2, &F2, &F3, &F3, &F4, &F4, &F4
- EQUB &F5, &F5, &F6, &F6, &F7, &F7, &F7, &F8
- EQUB &F8, &F9, &F9, &F9, &FA, &FA, &FA, &FB
- EQUB &FB, &FB, &FB, &FC, &FC, &FC, &FC, &FD
- EQUB &FD, &FD, &FD, &FE, &FE, &FE, &FE, &FE
- EQUB &FE, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+FOR I%, 0, 256
+
+ N = SIN((I% / 256) * (PI / 2))
+
+ IF N >= 1
+  EQUB 255
+ ELSE
+  EQUB HI(INT(N * 65536))
+ ENDIF
+
+NEXT
 
 \ ******************************************************************************
 \
@@ -24776,7 +24917,7 @@ NEXT
  LDY ucStatus
  BNE L50E7
 
- LDA L0CFA
+ LDA xRotationHi
  AND L0C90
  BPL L50DE
 
@@ -25151,37 +25292,37 @@ NEXT
  LDA xPlaneTop,X
  ADC R
  STA xPlaneTop,X
- LDA L0CEA,X
+ LDA xRotationLo,X
  CLC
  ADC L0C86,X
- STA L0CEA,X
- LDA L0CFA,X
+ STA xRotationLo,X
+ LDA xRotationHi,X
  ADC L0C96,X
- STA L0CFA,X
+ STA xRotationHi,X
  DEX
  BPL L522F
 
  ASL A
- EOR L0CFA
+ EOR xRotationHi
  BPL L5294
 
  LDX #1
 
 .L5278
 
- LDA compassHeading,X
+ LDA yRotationHi,X
  EOR #&80
- STA compassHeading,X
+ STA yRotationHi,X
  DEX
  BPL L5278
 
  LDA #0
  SEC
- SBC L0CEA
- STA L0CEA
+ SBC xRotationLo
+ STA xRotationLo
  LDA #&80
- SBC L0CFA
- STA L0CFA
+ SBC xRotationHi
+ STA xRotationHi
 
 .L5294
 
@@ -26134,7 +26275,7 @@ NEXT
 
 .L56D8
 
- LDX L0CFA
+ LDX xRotationHi
  BPL L56E7
 
  LDX #&EA
@@ -26151,16 +26292,16 @@ NEXT
 
 .L56E8
 
- LDX L0CFA
+ LDX xRotationHi
  BMI L56E7
 
  CPX #7
  BCC L56E7
 
  LDA #7
- STA L0CFA
+ STA xRotationHi
  LDA #0
- STA L0CEA
+ STA xRotationLo
  LDX L0C10
  BPL L56E2
 
@@ -26247,8 +26388,8 @@ NEXT
 
 .L5762
 
- LDY L0CEC
- LDA L0CFC
+ LDY zRotationLo
+ LDA zRotationHi
  JSR L546E
 
  SEC
@@ -26279,7 +26420,7 @@ NEXT
  LDX #&EC
  JSR L57F6
 
- LDA L0CFA
+ LDA xRotationHi
  BPL L579F
 
  LDA ucStatus
