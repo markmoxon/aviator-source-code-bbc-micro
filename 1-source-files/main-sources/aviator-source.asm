@@ -896,7 +896,7 @@ ORG &0900
                         \ U or B (undercarriage, brakes)    =  0 or 0
                         \ F or SHIFT (flaps, fire)          =  0 or 0
 
- SKIP 2
+ SKIP 2                 \ These bytes appear to be unused
 
 .xTemp2Hi
 
@@ -1282,15 +1282,22 @@ ORG &0900
 
 .xRotationLo
 
- SKIP 1                 \ Low byte in (xRotationHi xRotationLo)
+ SKIP 1                 \ Plane rotation angle around the x-axis (low byte)
+                        \
+                        \ Same as the plane's pitch angle
 
 .yRotationLo
 
- SKIP 1                 \ Low byte in (yRotationHi yRotationLo)
+ SKIP 1                 \ Plane rotation angle around the y-axis (low byte)
+                        \
+                        \ Same as the plane's yaw angle, which is also the
+                        \ direction of the compass (i.e. the plane's heading)
 
 .zRotationLo
 
- SKIP 1                 \ Low byte in (zRotationHi zRotationLo)
+ SKIP 1                 \ Plane rotation angle around the z-axis (low byte)
+                        \
+                        \ Same as the plane's roll angle
 
 .xPlaneLo
 
@@ -1395,37 +1402,41 @@ ORG &0900
 
 .xRotationHi
 
- SKIP 1                 \ Set to 7 in ResetVariables
+ SKIP 1                 \ Plane rotation angle around the x-axis (high byte)
                         \
-                        \ High byte in (xRotationHi xRotationLo)
+                        \ Same as the plane's pitch angle
                         \
-                        \ Bit 7 contains a sign, but so does bit 6
+                        \   *   0 = straight ahead  (bit 6 clear, bit 7 clear)
+                        \   *  64 = vertical up     (bit 6 set,   bit 7 clear)
+                        \   * 128 = backwards       (bit 6 clear, bit 7 set)
+                        \   * 192 = nosedive        (bit 6 set,   bit 7 set)
                         \
-                        \ Rotation angle around the x-axis? 0-255 is full circle
-
+                        \ Set to 7 in ResetVariables
+                        
 .yRotationHi
 
- SKIP 1                 \ Direction of the compass (i.e. its heading)
+ SKIP 1                 \ Plane rotation angle around the y-axis (high byte)
                         \
-                        \   * 0 = North         (bit 6 clear, bit 7 clear)
-                        \   * 64 = East         (bit 6 set,   bit 7 clear)
-                        \   * 128 = South       (bit 6 clear, bit 7 set)
-                        \   * 192 = West        (bit 6 set,   bit 7 set)
+                        \ Same as the plane's yaw angle, which is also the
+                        \ direction of the compass (i.e. the plane's heading)
+                        \
+                        \   *   0 = north           (bit 6 clear, bit 7 clear)
+                        \   *  64 = east            (bit 6 set,   bit 7 clear)
+                        \   * 128 = south           (bit 6 clear, bit 7 set)
+                        \   * 192 = west            (bit 6 set,   bit 7 set)
                         \
                         \ Shown on indicator 0
-                        \
-                        \ Bit 7 contains a sign, but so does bit 6
-                        \
-                        \ Rotation angle around the y-axis? 0-255 is full circle
 
 .zRotationHi
 
- SKIP 1                 \ High byte in (zRotationHi zRotationLo)
+ SKIP 1                 \ Plane rotation angle around the z-axis (high byte)
                         \
-                        \ Bit 7 contains a sign, but so does bit 6
+                        \ Same as the plane's roll angle
                         \
-                        \ Rotation angle around the z-axis? 0-255 is full circle
-
+                        \   *   0 = horizontal      (bit 6 clear, bit 7 clear)
+                        \   *  64 = vertical right  (bit 6 set,   bit 7 clear)
+                        \   * 128 = upside down     (bit 6 clear, bit 7 set)
+                        \   * 192 = vertical left   (bit 6 set,   bit 7 set)
 
 .xPlaneHi
 
@@ -6371,37 +6382,58 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: SetMatrix
+\       Name: ProjectAxisAngle
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Convert the rotation angles of the plane into rotation matrix
-\             coordinates
+\    Summary: Convert the rotation angles of the plane into coordinates
 \
 \ ------------------------------------------------------------------------------
 \
-\ Sets (mx1Hi mx1Lo) and (mx2Hi mx2Lo) according to the rotation of the plane's
-\ axis in (xRotationHi xRotationLo). This converts the angle in xRotation into a
-\ Cartesian coordinate that represents a line rotated by that amount; in a
-\ sense, we are converting from Polar coordinates into Cartesian, so we can use
-\ those coordinates to populate a rotation matrix.
+\ This routine converts the plane's rotation angles into a set of coordinate
+\ values that we can use in the SetMatrices routine to populate the four
+\ rotation matrices. There are six of these values, each of which is a 16-bit
+\ number with the sign in bit 0:
 \
-\ The calculation is done for just one axis.
+\   * (mx1Hi mx1Lo), which we can refer to as mx1
+\   * (mx2Hi mx2Lo), which we can refer to as mx2
+\
+\   * (my1Hi my1Lo), which we can refer to as my1
+\   * (my2Hi my2Lo), which we can refer to as my2
+\
+\   * (mz1Hi mz1Lo), which we can refer to as mz1
+\   * (mz2Hi mz2Lo), which we can refer to as mz2
+\
+\ The calculation is done for one axis at a time, so the same routine not only
+\ sets mx1 and mx2, but also my1 and my2, and mx1 and mz2.
+\
+\ Considering the x-axis calculation, the routine sets mx1 and mx2 according to
+\ the current rotation of the plane around the x-axis, which is stored in
+\ (xRotationHi xRotationLo), which we can refer to as xRotation. The routine
+\ converts the angle in xRotation into a pair of Cartesian coordinates, by
+\ projecting a line rotated by that amount onto the Cartesian axes; in a
+\ sense, we are converting from Polar coordinates into Cartesian, so we can
+\ use those coordinates to populate the rotation matrices in SetMatrices.
 \
 \ Arguments:
 \
 \   matrixAxis          The axis to be processed:
 \
-\                          * 0 = x-axis
+\                          * 0 = set mx1 and mx2 from xRotation
 \
-\                          * 1 = y-axis
+\                          * 1 = set my1 and my2 from yRotation
 \
-\                          * 2 = z-axis
+\                          * 2 = set mz1 and mz2 from zRotation
 \
 \   Y                   Same value as matrixAxis
 \
 \ ******************************************************************************
 
-.SetMatrix
+.ProjectAxisAngle
+
+                        \ The routine processes the axis defined in Y, but the
+                        \ comments below are for the x-axis, where we set the
+                        \ values of mx1 and mx2 depending on the value of
+                        \ xRotation
 
  LDA xRotationHi,Y      \ Set (G A) = (xRotationHi xRotationLo) for axis Y
  STA G                  \
@@ -6422,7 +6454,7 @@ ORG CODE%
  LDX G                  \ angle starts with a range of 0 to 256, but it's now
                         \ across a quarter of the range, 0 to 64)
 
- JSR ProjectRotation    \ Project the rotation angle in (X W) onto a Cartesian
+ JSR ProjectAngle       \ Project the rotation angle in (X W) onto a Cartesian
                         \ coordinate (A Y), to get the value on one axis
 
  STA Q                  \ Set (Q P) = (A Y)
@@ -6435,7 +6467,7 @@ ORG CODE%
  EOR #&FF
  STA W
 
- JSR ProjectRotation    \ Project the negated rotation angle in (X W) onto a
+ JSR ProjectAngle       \ Project the negated rotation angle in (X W) onto a
                         \ Cartesian coordinate (A Y), to get the value on the
                         \ other axis
 
@@ -6449,10 +6481,10 @@ ORG CODE%
                         \ We do this based on the value in K, which contains the
                         \ high byte of (xRotationHi xRotationLo) for this axis
                         \
-                        \   *   0 to  63 (bit 6 and 7 clear)
-                        \   *  64 to 127 (bit 6 set, bit 7 clear)
+                        \   *   0 to  63 (bit 6 clear, bit 7 clear)
+                        \   *  64 to 127 (bit 6 set,   bit 7 clear)
                         \   * 128 to 191 (bit 6 clear, bit 7 set)
-                        \   * 192 to 255 (bit 6 set, bit 7 set)
+                        \   * 192 to 255 (bit 6 set,   bit 7 set)
                         \
                         \ These four ranges correspond to the four quadrants of
                         \ the rotation angle. For example, for the z-axis, which
@@ -6468,10 +6500,10 @@ ORG CODE%
 
  LDY matrixAxis         \ Set Y to the axis once again
 
- BIT K                  \ If bit 6 of K is set, jump to L18CD
- BVS L18CD
+ BIT K                  \ If bit 6 of K is set, jump to setm2
+ BVS setm2
 
- BMI L18B3              \ If bit 7 of K is set, jump to L18B3
+ BMI setm1              \ If bit 7 of K is set, jump to setm1
 
                         \ If we get here then K has:
                         \
@@ -6492,9 +6524,9 @@ ORG CODE%
  AND #%11111110
  STA mx1Lo,Y
 
- JMP L1901              \ Jump to L1901 to return from the subroutine
+ JMP setm4              \ Jump to setm4 to return from the subroutine
 
-.L18B3
+.setm1
 
                         \ If we get here then K has:
                         \
@@ -6515,14 +6547,14 @@ ORG CODE%
  ORA #1                 \ with bit 0 set (negative)
  STA mx1Lo,Y
 
- BNE L1901              \ Jump to L1901 to return from the subroutine (this BNE
+ BNE setm4              \ Jump to setm4 to return from the subroutine (this BNE
                         \ is effectively a JMP as A is never zero)
 
-.L18CD
+.setm2
 
                         \ If we get here then K has bit 6 set
 
- BMI L18E9              \ If bit 7 of K is set, jump to L18E9
+ BMI setm3              \ If bit 7 of K is set, jump to setm3
 
                         \ If we get here then K has:
                         \
@@ -6543,10 +6575,10 @@ ORG CODE%
  ORA #1
  STA mx1Lo,Y
 
- BNE L1901              \ Jump to L1901 to return from the subroutine (this BNE
+ BNE setm4              \ Jump to setm4 to return from the subroutine (this BNE
                         \ is effectively a JMP as A is never zero)
 
-.L18E9
+.setm3
 
                         \ If we get here then K has:
                         \
@@ -6567,16 +6599,16 @@ ORG CODE%
  AND #%11111110
  STA mx1Lo,Y
 
-.L1901
+.setm4
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: ProjectRotation
+\       Name: ProjectAngle
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Project an axis rotation into Cartesian coordinates
+\    Summary: Project an axis rotation angle into Cartesian coordinates
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6596,7 +6628,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.ProjectRotation
+.ProjectAngle
 
  STX H                  \ Store X in H for later
 
@@ -7252,25 +7284,44 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L1AA6
+\       Name: Add16x16Bit0
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Add two 16-bit numbers that have their signs in bit 0
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine adds two 16-bit numbers, both of which have their signs in bit 0
+\ of the low byte. It calculates:
+\
+\   (S R) = (H G) + (J I)
+\
+\ The result in (S R) has the sign in bit 0 of the low byte.
+\
+\ Arguments:
+\
+\   (H G)               A signed 16-bit number, with the sign in bit 0 of G
+\
+\   (J I)               A signed 16-bit number, with the sign in bit 0 of I
+\
+\ Returns:
+\
+\   (S R)               The result of the multiplication, with the sign in bit 0
+\                       of R
+\
+\   K                   The sign of the result (in bit 0)
 \
 \ ******************************************************************************
 
-.L1AA6
+.Add16x16Bit0
 
  LDA G
  AND #1
  STA K
+
  EOR I
  AND #1
- BNE L1AD0
+ BNE abit2
 
  LDA G
  CLC
@@ -7281,19 +7332,20 @@ ORG CODE%
  LDA H
  ADC J
  STA S
- BCC L1ACF
+
+ BCC abit1
 
  LDA #&FF
  STA S
- LDA #&FE
+ LDA #%11111110
  ORA K
  STA R
 
-.L1ACF
+.abit1
 
- RTS
+ RTS                    \ Return from the subroutine
 
-.L1AD0
+.abit2
 
  LDA G
  SEC
@@ -7302,314 +7354,457 @@ ORG CODE%
  LDA H
  SBC J
  STA S
- BCC L1AE8
+ BCC abit3
 
  LDA R
- AND #&FE
+ AND #%11111110
  ORA K
  STA R
- RTS
 
-.L1AE8
+ RTS                    \ Return from the subroutine
+
+.abit3
 
  LDA #0
  SEC
  SBC R
- AND #&FE
+ AND #%11111110
  ORA K
  EOR #1
  STA R
  LDA #0
  SBC S
  STA S
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: SetMatrices
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: 
+\    Summary: Set up matrices 1 to 4
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine supports a matrix axis, but the routine is only ever called with
-\ a value of matrixAxis = 0, which makes a lot of the code have no effect.
+\ Matrix 1 is the most complex matrix:
+\
+\   [  (mx2 * my2 * mz2)     -mx1 * mz2      (mx2 * my1 * mz2) ]
+\   [    + (my2 * mz2)                         - (my2 * mz1)   ]
+\   [                                                          ]
+\   [ -(mx2 * my2 * mz1)      mx1 * mz1     -(mx2 * my1 * mz1) ]
+\   [    + (my1 * mz2)                         - (my2 * mz2)   ]
+\   [                                                          ]
+\   [     mx1 * my2              mx2            mx1 * my1      ]
+\
+\ Matrix 2 is the transpose of matrix 1:
+\
+\   [ m0 m3 m6 ]
+\   [ m1 m4 m7 ]
+\   [ m2 m5 m8 ]
+\
+\ Matrix 3 is a 2x2 matrix, but we store it in the standard 3x3 grid:
+\
+\   [ mz1  -mz2  - ]
+\   [ mz2   mz1  - ]
+\   [  -     -   - ]
+\
+\ Matrix 4 doesn't have m6 set at any point, but it is a zero in the source
+\ code and stays that way:
+\
+\   [ mz1     -mx1 * mz2      mx2 * mz2 ]
+\   [ mz2      mx1 * mz1     -mx2 * mz1 ]
+\   [  0          mx2            mx1    ]
 \
 \ Arguments:
 \
-\   matrixAxis          The axis to be processed:
+\   matrixNumber        The routine is only ever called with matrixNumber = 0,
+\                       so it only ever writes to matrices 1 to 4 - presumably
+\                       the need for this argument was dropped at some point
 \
-\                          * 0 = x-axis
-\
-\                          * 1 = y-axis
-\
-\                          * 2 = z-axis
-\
-\                       The routine is only ever called with matrixAxis = 0
+\   matrixAxis          The routine is only ever called with matrixAxis = 0,
+\                       so it only ever reads from mx1 and mx2 - presumably
+\                       the need for this argument was dropped at some point
 \
 \ ******************************************************************************
 
 .SetMatrices
 
- LDX matrixAxis         \ Set X to the matrix axis (which is always 0)
+ LDX matrixAxis         \ Set X to the matrix axis (this routine is only ever
+                        \ called with a matrixAxis of 0, so this sets X = 0
 
- LDA mx1Lo,X            \ Set (J I) = -(mx1Hi mx1Lo) for this axis
- EOR #1                 \
- STA I                  \ as we flip the the sign in bit 0
- LDA mx1Hi,X
+                        \ We first set up a load of temporary variables that we
+                        \ can use to populate the various matrices, storing them
+                        \ in the matrix 1 variables (we will populate matrix 1
+                        \ properly after we have populated matrices 2, 3 and 4)
+
+ LDA mx1Lo,X            \ Set (J I) = -(mx1Hi mx1Lo)
+ EOR #1                 \           = -mx1
+ STA I                  \
+ LDA mx1Hi,X            \ by flipping the sign in bit 0
  STA J
 
- LDX #5                 \ mx1Lo
- LDY #1
- JSR L1CF0
+ LDX #5                 \ Set m1 = (J I) * mz2 / 256
+ LDY #1                 \        = -mx1 * mz2 / 256
+ JSR SetMatrixEntry     \
+                        \ Also set (S R) = mz2
 
- LDX #1
- LDY #3
- JSR L1D13
+ LDX #1                 \ Set m3 = (S R) * my1 / 256
+ LDY #3                 \        = mz2 * my1 / 256
+ JSR SetMatrixEntry2
 
- LDX #3
- LDY #2
- JSR L1D13
+ LDX #3                 \ Set m2 = (S R) * mx2 / 256
+ LDY #2                 \        = mz2 * mx2 / 256
+ JSR SetMatrixEntry2
 
- LDX #4
- LDY #0
- JSR L1D13
+ LDX #4                 \ Set m0 = (S R) * my2 / 256
+ LDY #0                 \        = mz2 * my2 / 256
+ JSR SetMatrixEntry2    \
+                        \ Also set (J I) = my2
 
- LDX #0
- LDY #6
- JSR L1CF0
+ LDX #0                 \ Set m6 = (J I) * mx1 / 256
+ LDY #6                 \        = my2 * mx1 / 256
+ JSR SetMatrixEntry     \
+                        \ Also set (S R) = mx1
 
- LDX #1
- LDY #8
- JSR L1D13
+ LDX #1                 \ Set m8 = (S R) * my1 / 256
+ LDY #8                 \        = mx1 * my1 / 256
+ JSR SetMatrixEntry2
 
- LDX #2
- LDY #4
- JSR L1D13
+ LDX #2                 \ Set m4 = (S R) * mz1 / 256
+ LDY #4                 \        = mx1 * mz1 / 256
+ JSR SetMatrixEntry2    \
+                        \ Also set (J I) = mz1
 
- LDX #3
- LDY #5
- JSR L1D03
+ LDX #3                 \ Set m5 = (J I) * -mx2 / 256
+ LDY #5                 \        = mz1 * -mx2 / 256
+ JSR SetMatrixEntry3    \
+                        \ Also set (H G) = m5
 
- LDX matrixAxis
- LDY matrixNumber
- LDA mz1Lo,X
- STA matrix3Lo,Y
- STA matrix3Lo+4,Y
+                        \ So we now have the following set of values (stripping
+                        \ out the division by 256 and reordering the
+                        \ multiplications for clarity):
+                        \
+                        \   m0 =  my2 * mz2
+                        \   m1 = -mx1 * mz2
+                        \   m2 =  mx2 * mz2
+                        \   m3 =  my1 * mz2
+                        \   m4 =  mx1 * mz1
+                        \   m5 = -mx2 * mz1
+                        \   m6 =  mx1 * my2
+                        \   m8 =  mx1 * my1
+                        \
+                        \ Note that we didn't set m7 in the above
+                        \
+                        \ We now work our way through the matrices as follows:
+                        \
+                        \   * Populate matrix 3 (which is a 2x2 matrix)
+                        \
+                        \   * Populate matrix 4 (except m6, which is never set)
+                        \
+                        \   * Populate matrix 1 (by overwriting some of the
+                        \     m0-m8 variables we just set, but keeping others)
+                        \
+                        \   * Set matrix 2 to the transpose of matrix 1
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDY matrixNumber       \ Set Y = 0
+
+ LDA mz1Lo,X            \ Set m0 in matrix 3 = mz1
+ STA matrix3Lo,Y        \     m4 in matrix 3 = mz1
+ STA matrix3Lo+4,Y      \     m0 in matrix 4 = mz1
  STA matrix4Lo,Y
  LDA mz1Hi,X
  STA matrix3Hi,Y
  STA matrix3Hi+4,Y
  STA matrix4Hi,Y
- LDA mz2Lo,X
- STA matrix3Lo+3,Y
- STA matrix4Lo+3,Y
+
+ LDA mz2Lo,X            \ Set m3 in matrix 3 = mz2
+ STA matrix3Lo+3,Y      \     m3 in matrix 4 = mz2
+ STA matrix4Lo+3,Y      \     m1 in matrix 3 = -mz2
  EOR #1
  STA matrix3Lo+1,Y
  LDA mz2Hi,X
  STA matrix3Hi+1,Y
  STA matrix3Hi+3,Y
  STA matrix4Hi+3,Y
- LDA mx1Lo,X
+
+ LDA mx1Lo,X            \ Set m8 in matrix 4 = mx1
  STA matrix4Lo+8,Y
  LDA mx1Hi,X
  STA matrix4Hi+8,Y
- LDA mx2Lo,X
+ 
+ LDA mx2Lo,X            \ Set m7 in matrix 4 = mx2
  STA matrix4Lo+7,Y
  LDA mx2Hi,X
  STA matrix4Hi+7,Y
- LDY #5
 
-.L1B95
+                        \ The following loop does the following:
+                        \
+                        \   * Set m1 in matrix 4 = m1 in matrix 1 = -mx1 * mz2
+                        \   * Set m2 in matrix 4 = m2 in matrix 1 =  mx2 * mz2
+                        \   * Set m4 in matrix 4 = m4 in matrix 1 =  mx1 * mz1
+                        \   * Set m5 in matrix 4 = m5 in matrix 1 = -mx2 * mz1
+                        
+ LDY #5                 \ Set a loop counter in Y to count through 5, 4, 2, 1
 
- CPY #3
- BEQ L1BA5
+.smat1
 
- LDA matrix1Lo,Y
+ CPY #3                 \ If Y = 3 then jump to smat2 to skip this iteration
+ BEQ smat2
+
+ LDA matrix1Lo,Y        \ Set mY in matrix 4 = mY in matrix 1
  STA matrix4Lo,Y
  LDA matrix1Hi,Y
  STA matrix4Hi,Y
 
-.L1BA5
+.smat2
 
- DEY
- BNE L1B95
+ DEY                    \ Decrement the loop counter
 
- LDA G
- STA I
- LDA H
+ BNE smat1              \ Loop back until we have copied all four entries from
+                        \ matrix 1 to matrix 4
+
+ LDA G                  \ Set (J I) = (H G)
+ STA I                  \           = m5
+ LDA H                  \           = -mx2 * mz1
  STA J
- LDX matrixAxis
- LDA my2Lo,X
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDA my2Lo,X            \ Set (S R) = my2
  STA R
  LDA my2Hi,X
  STA S
 
  JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+                        \           = -(mx2 * mz1 * my2) / 256
 
- LDY matrixNumber
- LDA matrix1Lo+3,Y
- STA I
+ LDY matrixNumber       \ Set Y = 0
+
+ LDA matrix1Lo+3,Y      \ Set (J I) = m3
+ STA I                  \           = my1 * mz2
  LDA matrix1Hi+3,Y
  STA J
 
- JSR L1AA6
+ JSR Add16x16Bit0       \ Set (S R) = (H G) + (J I)
+                        \           = -(mx2 * mz1 * my2) + (my1 * mz2)
 
- LDA R
+ LDA R                  \ Set m3 = (S R)
  STA matrix1Lo+3,Y
  LDA S
  STA matrix1Hi+3,Y
- LDA matrix1Lo+5,Y
- STA I
+
+ LDA matrix1Lo+5,Y      \ Set (J I) = m5
+ STA I                  \           = -mx2 * mz1
  LDA matrix1Hi+5,Y
  STA J
- LDX matrixAxis
- LDA my1Lo,X
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDA my1Lo,X            \ Set (S R) = my1
  STA R
  LDA my1Hi,X
  STA S
 
  JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+                        \           = -(mx2 * mz1 * my1) / 256
 
- LDY matrixNumber
- LDA matrix1Lo,Y
- EOR #1
+ LDY matrixNumber       \ Set Y = 0
+
+ LDA matrix1Lo,Y        \ Set (J I) = -m0
+ EOR #1                 \           = -my2 * mz2
  STA I
  LDA matrix1Hi,Y
  STA J
 
- JSR L1AA6
+ JSR Add16x16Bit0       \ Set (S R) = (H G) + (J I)
+                        \           = -(mx2 * mz1 * my1) - (my2 * mz2)
 
- LDA R
+ LDA R                  \ Set m5 = (S R)
  STA matrix1Lo+5,Y
  LDA S
  STA matrix1Hi+5,Y
- LDX matrixAxis
- LDA my1Lo,X
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDA my1Lo,X            \ Set (S R) = my1
  STA R
  LDA my1Hi,X
  STA S
- LDX #2
- LDY #0
- JSR L1D13
 
- LDX matrixAxis
- LDA my2Lo,X
+ LDX #2                 \ Set m0 = (S R) * mz1 / 256
+ LDY #0                 \        = my1 * mz1 / 256
+ JSR SetMatrixEntry2    \
+                        \ Also set (J I) = mz1
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDA my2Lo,X            \ Set (S R) = -my2
  EOR #1
  STA R
  LDA my2Hi,X
  STA S
 
  JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+                        \           = mz1 * -my2 / 256
 
- LDY matrixNumber
- LDA matrix1Lo+2,Y
- STA I
- STA xTempLo
- LDA matrix1Hi+2,Y
- STA J
+ LDY matrixNumber       \ Set Y = 0
+
+ LDA matrix1Lo+2,Y      \ Set (J I) = m2
+ STA I                  \           = mx2 * mz2
+ STA xTempLo            \
+ LDA matrix1Hi+2,Y      \ Also set xTemp = m2
+ STA J                  \                = mx2 * mz2
  STA xTempHi
- LDA G
- STA matrix1Lo+2,Y
+
+ LDA G                  \ Set m2 = (H G)
+ STA matrix1Lo+2,Y      \        = -my2 * mz1
  LDA H
  STA matrix1Hi+2,Y
- LDA R
- EOR #1
+
+ LDA R                  \ Set (S R) = -(S R)
+ EOR #1                 \           = my2
  STA R
 
  JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+                        \           = mx2 * mz2 * my2 / 256
 
- LDY matrixNumber
- LDA matrix1Lo,Y
- STA I
+ LDY matrixNumber       \ Set Y = 0
+
+ LDA matrix1Lo,Y        \ Set (J I) = m0
+ STA I                  \           = my2 * mz2
  LDA matrix1Hi,Y
  STA J
 
- JSR L1AA6
+ JSR Add16x16Bit0       \ Set (S R) = (H G) + (J I)
+                        \           = (mx2 * mz2 * my2) + (my2 * mz2)
 
- LDA R
+ LDA R                  \ Set m0 = (S R)
  STA matrix1Lo,Y
  LDA S
  STA matrix1Hi,Y
- LDA xTempLo
- STA R
+
+ LDA xTempLo            \ Set (S R) = xTemp
+ STA R                  \           = mx2 * mz2
  LDA xTempHi
  STA S
- LDX matrixAxis
- LDA my1Lo,X
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDA my1Lo,X            \ Set (J I) = my1
  STA I
  LDA my1Hi,X
  STA J
 
  JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+                        \           = my1 * mx2 * mz2 / 256
 
- LDY matrixNumber
- LDA matrix1Lo+2,Y
- STA I
- LDA matrix1Hi+2,Y
- STA J
- JSR L1AA6
+ LDY matrixNumber       \ Set Y = 0
 
- LDA R
- STA matrix1Lo+2,Y
+ LDA matrix1Lo+2,Y      \ Set (J I) = m2
+ STA I                  \           = -my2 * mz1
+ LDA matrix1Hi+2,Y      \
+ STA J                  \ (note that we updated m2 above, so this is different
+                        \ to the first value we gave m2)
+
+ JSR Add16x16Bit0       \ Set (S R) = (H G) + (J I)
+                        \           = (my1 * mx2 * mz2) - (my2 * mz1)
+
+ LDA R                  \ Set m2 = (S R)
+ STA matrix1Lo+2,Y      \        = (my1 * mx2 * mz2) - (my2 * mz1)
  LDA S
  STA matrix1Hi+2,Y
- LDX matrixAxis
- LDA mx2Lo,X
+
+ LDX matrixAxis         \ Set X = 0
+
+ LDA mx2Lo,X            \ Set m7 = mx2
  STA matrix1Lo+7,Y
  LDA mx2Hi,X
  STA matrix1Hi+7,X
- LDA #2
- STA T
- LDY matrixNumber
- LDX matrixNumber
 
-.L1CC3
+                        \ We now set matrix 2 to the transpose of matrix 1, so
+                        \ if matrix 1 looks like this:
+                        \
+                        \   [ m0 m1 m2 ]
+                        \   [ m3 m4 m5 ]
+                        \   [ m6 m7 m8 ]
+                        \
+                        \ then matrix 2 looks like this:
+                        \
+                        \   [ m0 m3 m6 ]
+                        \   [ m1 m4 m7 ]
+                        \   [ m2 m5 m8 ]
+                        \
+                        \ This sets matrix 2 to the inverse of matrix 1
 
- LDA matrix1Lo,Y
- STA matrix2Lo,X
- LDA matrix1Hi,Y
+ LDA #2                 \ We transpose the matrix by looping through each column
+ STA T                  \ in matrix 1 and copy it into the corresponding column
+                        \ in matrix 2, so set a loop counter in T for each row
+
+ LDY matrixNumber       \ Set Y = 0 to loop through the start of each row in
+                        \ matrix 1, so it iterates through 0, 3 and 6
+
+ LDX matrixNumber       \ Set X = 0 to loop through the top of each column in
+                        \ matrix 2, so it iterates through 0, 1 and 2
+
+.smat3
+
+                        \ The following blocks iterate through the nine copies
+                        \ (three in each loop) as follows:
+
+ LDA matrix1Lo,Y        \ Set m0 in matrix 2 = m0 in matrix 1
+ STA matrix2Lo,X        \     m1             = m3
+ LDA matrix1Hi,Y        \     m2             = m6
  STA matrix2Hi,X
- LDA matrix1Lo+1,Y
- STA matrix2Lo+3,X
- LDA matrix1Hi+1,Y
- STA matrix2Hi+3,X
- LDA matrix1Lo+2,Y
- STA matrix2Lo+6,X
- LDA matrix1Hi+2,Y
- STA matrix2Hi+6,X
- INY
- INY
- INY
- INX
- DEC T
- BPL L1CC3
 
- RTS
+ LDA matrix1Lo+1,Y      \ Set m3 in matrix 2 = m1 in matrix 1
+ STA matrix2Lo+3,X      \     m4             = m4
+ LDA matrix1Hi+1,Y      \     m5             = m7
+ STA matrix2Hi+3,X
+
+ LDA matrix1Lo+2,Y      \ Set m6 in matrix 2 = m2 in matrix 1
+ STA matrix2Lo+6,X      \     m7             = m5
+ LDA matrix1Hi+2,Y      \     m8             = m8
+ STA matrix2Hi+6,X
+
+ INY                    \ Set Y = Y + 3
+ INY                    \
+ INY                    \ to point to the start of the next row in matrix 1
+
+ INX                    \ Set X = X + 1
+                        \
+                        \ to point to the top of the next column in matrix 2
+
+ DEC T                  \ Decrement the loop counter
+
+ BPL smat3              \ Loop back until we have copied all nine entries from
+                        \ matrix 1 to matrix 2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L1CF0
+\       Name: SetMatrixEntry
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: 
+\    Summary: Calculate a matrix entry
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine reads one of the projected coordinate values that we calculated
+\ in ProjectAxisAngle (in mx1 to mz2), performs a multiplication, and writes the
+\ result to the sprcified entry in matrix 1.
+\
+\ If mRead is the matrix entry in X (from mx1 to mz2) and mWrite is the matrix
+\ entry in Y (from m0 to m8), then it calculates the following:
+\
+\   mWrite = (J I) * mRead / 256
+\
 \ Arguments:
 \
-\   matrixAxis          The axis to be processed:
-\
-\                          * 0 = x-axis
-\
-\                          * 1 = y-axis
-\
-\                          * 2 = z-axis
-\
-\                       The routine is only ever called with matrixAxis = 0
-\
-\   X                   The matrix entry to read:
+\   X                   The matrix entry to read (mRead):
 \
 \                          * 0 = mx1
 \
@@ -7623,38 +7818,47 @@ ORG CODE%
 \
 \                          * 5 = mz2
 \
-\   Y                   The matrix entry to write in matrix matrixNumber, so if
-\                       matrixNumber = 0, we would write:
+\   Y                   The matrix entry to write (mWrite) in matrix 1:
 \
-\                          * 0 = m0 in matrix 1
+\                          * 0 = m0
 \
-\                          * 1 = m1 in matrix 1
+\                          * 1 = m1
 \
-\                          * 2 = m2 in matrix 1
+\                          * 2 = m2
 \
 \                            ...
 \
-\                          * 7 = m7 in matrix 1
+\                          * 7 = m7
 \
-\                          * 8 = m8 in matrix 1
+\                          * 8 = m8
 \
-\   matrixNumber        The matrix to write in the calculation:
+\   matrixNumber        The routine is only ever called with matrixNumber = 0,
+\                       so it only ever writes to matrix 1, but calling the
+\                       routine with a different value would allow us to write
+\                       to a different matrix
 \
-\                         * 0 = matrix 1
+\   matrixAxis          The routine is only ever called with matrixAxis = 0,
+\                       which has no effect on the calculation, but calling the
+\                       routine with a non-zero value of matrixAxis would allow
+\                       different mRead values to be used, i.e. matrixAxis+X
 \
-\                         * 9 = matrix 2
+\ Returns:
 \
-\                         * 18 = matrix 3
+\   mWrite              (J I) * mRead / 256
 \
-\                         * 27 = matrix 4
+\   (S R)               The value of mRead
+\
+\   (H G)               The value written to mWrite
 \
 \ Other entry points:
 \
-\   L1D03               Negate the matrix entry at X before use 
+\   SetMatrixEntry2     Set mWrite = (S R) * mRead / 256 and (J I) = mRead
+\
+\   SetMatrixEntry3     Set mWrite = (J I) * -mRead / 256 and (S R) = -mRead
 \
 \ ******************************************************************************
 
-.L1CF0
+.SetMatrixEntry
 
  TXA                    \ Set X = matrixAxis + X
  CLC                    \
@@ -7664,14 +7868,14 @@ ORG CODE%
  LDA mx1Lo,X            \ Set R = the low byte from the matrix entry to read
  STA R
 
-.L1CFB
+.smen1
 
  LDA mx1Hi,X            \ Set (S R) = the matrix entry to read
  STA S
 
- JMP L1D23              \ Jump down to L1D23 to write 
+ JMP smen2              \ Jump down to smen2 to do the calculation 
 
-.L1D03
+.SetMatrixEntry3
 
  TXA                    \ Set X = matrixAxis + X
  CLC                    \
@@ -7682,22 +7886,9 @@ ORG CODE%
  EOR #1                 \ with the sign in bit 0 flipped
  STA R
 
- JMP L1CFB              \ Jump up to L1CFB to set the high byte
+ JMP smen1              \ Jump up to smen1 to set the high byte
 
-\ ******************************************************************************
-\
-\       Name: L1D13
-\       Type: Subroutine
-\   Category: 3D geometry
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L1D13
+.SetMatrixEntry2
 
  TXA                    \ Set X = matrixAxis + X
  CLC                    \
@@ -7709,12 +7900,12 @@ ORG CODE%
  LDA mx1Hi,X
  STA J
 
-.L1D23
+.smen2
 
  TYA                    \ Set N = Y + matrixNumber
  CLC                    \
- ADC matrixNumber       \ so N points to the entry Y in the correct matrix
- STA N
+ ADC matrixNumber       \ This sets N = Y when matrixNumber = 0, which is the
+ STA N                  \ only value that this routine is called with
 
  JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
 
@@ -10958,9 +11149,11 @@ ORG CODE%
 .pkey16
 
  STY matrixAxis         \ Set matrixAxis to the current axis in Y, to pass to
-                        \ SetMatrix
+                        \ ProjectAxisAngle
 
- JSR SetMatrix          \ Set up the matrix values in page 1
+ JSR ProjectAxisAngle   \ Convert the rotation angles of the plane in axis Y to
+                        \ coordinates that we can use to populate the matrices
+                        \ in the call to SetMatrices
 
  LDY matrixAxis         \ Restore the axis counter that we stored above
 
@@ -10968,12 +11161,13 @@ ORG CODE%
 
  BPL pkey16             \ Loop back until we have processed all three axes
 
- LDA #0                 \ Set matrixNumber = 0 to pass to SetMatrices
- STA matrixNumber
+ LDA #0                 \ Set matrixNumber = 0 to pass to SetMatrices, so we
+ STA matrixNumber       \ set the values for matrices 1 to 4
 
- STA matrixAxis         \ Set matrixAxis = 0 to pass to SetMatrices
+ STA matrixAxis         \ Set matrixAxis = 0 to pass to SetMatrices, so we set
+                        \ the three standard axes in matrices 1 to 4
 
- JSR SetMatrices        \ Set up the rotation matrices
+ JSR SetMatrices        \ Set up the four rotation matrices
 
  JSR ApplyFlightModel   \ Apply the flight model to our plane
 
@@ -15036,28 +15230,28 @@ ORG CODE%
                         \ in A lets us work out the direction of the runway line
                         \ on the radar. The value of our compass in A is:
                         \
-                        \   * 0 = North
-                        \   * &40 = East
-                        \   * &80 = South
-                        \   * &C0 = West
+                        \   *   0 = north
+                        \   *  64 = east
+                        \   * 128 = south
+                        \   * 192 = west
 
  STA previousCompass    \ Store A in previousCompass, so we can pass it to this
                         \ routine again when we want to erase the line we are
                         \ about to draw
 
- CLC                    \ Set A = A + &10
- ADC #&10               \
-                        \ This rotates the compass needle clockwise by &10, or
+ CLC                    \ Set A = A + 16
+ ADC #16                \
+                        \ This rotates the compass needle clockwise by 16, or
                         \ 22.5 degrees, so if the needle is just anticlockwise
                         \ of a cardinal compass point (e.g. NNW, ENE) it will be
                         \ bumped along to the quadrant and will inherit the
                         \ correct direction bit in bit 7. At the cardinal
                         \ points, A now contains the following:
                         \
-                        \   * &10 = North   -> bit 7 clear
-                        \   * &50 = East    -> bit 7 clear
-                        \   * &90 = South   -> bit 7 set
-                        \   * &D0 = West    -> bit 7 set
+                        \   *  16 = north   -> bit 7 clear
+                        \   *  80 = east    -> bit 7 clear
+                        \   * 144 = south   -> bit 7 set
+                        \   * 208 = west    -> bit 7 set
                         \
                         \ So bit 7 contains the direction of the needle along
                         \ the x-axis, with 0 to the right and 1 to the left
@@ -15067,14 +15261,14 @@ ORG CODE%
 
  STA P                  \ Store the result in P, so:
                         \
-                        \   P = (A + &10) << 1
+                        \   P = (A + 16) << 1
                         \
                         \ which looks like this:
                         \
-                        \   * %00100000 = North
-                        \   * %10100000 = East
-                        \   * %00100000 = South
-                        \   * %10100000 = West
+                        \   * %00100000 = north
+                        \   * %10100000 = east
+                        \   * %00100000 = south
+                        \   * %10100000 = west
                         \
                         \ We use this below to work out the line's vector
 
@@ -15085,9 +15279,9 @@ ORG CODE%
  ROR A                  \ Shift the C flag back into bit 7 of A, so bit 7 once
                         \ again contains the direction of the x-delta
 
- SEC                    \ Set A = A - &40
- SBC #&40
-                        \ This rotates the compass needle anticlockwise by &40,
+ SEC                    \ Set A = A - 64
+ SBC #64                \
+                        \ This rotates the compass needle anticlockwise by 64,
                         \ or 90 degrees, which will change bit 7 from being the
                         \ direction of the x-delta to the being the direction of
                         \ the y-delta
@@ -15107,10 +15301,10 @@ ORG CODE%
 
                         \ Above, we stored a value in P like this:
                         \
-                        \   * %00100000 = North
-                        \   * %10100000 = East
-                        \   * %00100000 = South
-                        \   * %10100000 = West
+                        \   * %00100000 = north
+                        \   * %10100000 = east
+                        \   * %00100000 = south
+                        \   * %10100000 = west
                         \
                         \ We can use this below to work out the vector of the
                         \ line to show, as follows:
@@ -16809,10 +17003,10 @@ ORG CODE%
 \
 \ This is how it works. The value of zRotationHi contains the following:
 \
-\   *   0 to  63 (bit 6 and 7 clear)
-\   *  64 to 127 (bit 6 set, bit 7 clear)
+\   *   0 to  63 (bit 6 clear, bit 7 clear)
+\   *  64 to 127 (bit 6 set,   bit 7 clear)
 \   * 128 to 191 (bit 6 clear, bit 7 set)
-\   * 192 to 255 (bit 6 set, bit 7 set)
+\   * 192 to 255 (bit 6 set,   bit 7 set)
 \
 \ The zRotation angle determines how the plane is rotated around the z-axis. The
 \ z-axis points into the screen, so rotating the plane around this axis is the
