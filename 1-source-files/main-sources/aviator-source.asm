@@ -6386,6 +6386,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Convert the rotation angles of the plane into coordinates
+ \ Deep dive: Rotation matrices
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6405,6 +6406,13 @@ ORG CODE%
 \
 \ The calculation is done for one axis at a time, so the same routine not only
 \ sets mx1 and mx2, but also my1 and my2, and mx1 and mz2.
+\
+\ If we take the x-axis as an example, and assume for simplicity that the angle
+\ in xRotation is less than 90 degrees, the routine will calculate the
+\ following:
+\
+\   * mx1 = -cos(xRotation)
+\   * mx2 =  sin(xRotation)
 \
 \ Considering the x-axis calculation, the routine sets mx1 and mx2 according to
 \ the current rotation of the plane around the x-axis, which is stored in
@@ -6446,37 +6454,52 @@ ORG CODE%
                         \
                         \ so (G A) = xRotation
 
- ASL A                  \ Set (X W) = (G A) << 2
+ ASL A                  \ Set (G W) = (G A) << 2
  ROL G                  \           = xRotation << 2
  ASL A                  \
- ROL G                  \ so (X W) is the angle, reduced into a quarter circle
- STA W                  \ by removing the top four bits (the top byte of the
- LDX G                  \ angle starts with a range of 0 to 256, but it's now
-                        \ across a quarter of the range, 0 to 64)
+ ROL G                  \ so (G W) is the angle, reduced into a quarter circle
+ STA W                  \ by removing the top four bits
+                        \
+                        \ The original angle is stored as the portion of a whole
+                        \ circle, where xRotation is in the range 0 to 65535 and
+                        \ 65535 represents a full circle, so shifting it to the
+                        \ left and dropping the top two bits out reduces the
+                        \ range of the angle to a quarter circle, while leaving
+                        \ the range of the top byte as 0 to 255, which is what
+                        \ we need for looking up the reduced angle in the sine
+                        \ table
 
- JSR ProjectAngle       \ Project the rotation angle in (X W) onto a Cartesian
-                        \ coordinate (A Y), to get the value on one axis
+ LDX G                  \ Set (X W) = (G W) to pass the rotation angle to
+                        \ Sine16Bit
+
+ JSR Sine16Bit          \ Set (A Y) = sin(X W)
+                        \           = sin(xRotation)
 
  STA Q                  \ Set (Q P) = (A Y)
  STY P
 
  LDA G                  \ Set (X W) = ~(G W)
  EOR #&FF               \           = ~xRotation << 2
- TAX
- LDA W
- EOR #&FF
- STA W
+ TAX                    \
+ LDA W                  \ This sets (X W) to the original xRotation, reduced to
+ EOR #&FF               \ the quarter circle as before, and then inverted within
+ STA W                  \ that quarter - or, to put it another way, if (G W) is
+                        \ the angle within the quarter (0 to 90 degrees), then
+                        \ (X W) is now 90 - (G W)
+                        \
+                        \ Because sin(90 - X) = -cos(X), this means the call to
+                        \ Sine16Bit returns the cosine instead of the sine
 
- JSR ProjectAngle       \ Project the negated rotation angle in (X W) onto a
-                        \ Cartesian coordinate (A Y), to get the value on the
-                        \ other axis
+ JSR Sine16Bit          \ Set (A Y) = sin(X W)
+                        \           = sin(~xRotation)
+                        \           = -cos(xRotation)
 
  STA S                  \ Set (S R) = (A Y)
  STY R
 
-                        \ We now copy the results into page 1, setting the sign
-                        \ in bit 0 as we go (the sign is in bit 0 as this is a
-                        \ matrix number)
+                        \ We now copy the results into mx1 and mx2, setting the
+                        \ sign in bit 0 as we go (the sign is in bit 0 as this
+                        \ is a matrix number)
                         \
                         \ We do this based on the value in K, which contains the
                         \ high byte of (xRotationHi xRotationLo) for this axis
@@ -6513,15 +6536,15 @@ ORG CODE%
                         \ so this is the first quadrant of the axis' rotation
 
  LDA Q                  \ Set (mx2Hi mx2Lo) = (Q P)
- STA mx2Hi,Y            \
- LDA P                  \ with bit 0 clear (positive)
- AND #%11111110
+ STA mx2Hi,Y            \                   = sin(xRotation)
+ LDA P                  \
+ AND #%11111110         \ with bit 0 clear (positive)
  STA mx2Lo,Y
 
  LDA S                  \ Set (mx1Hi mx1Lo) = (S R)
- STA mx1Hi,Y            \
- LDA R                  \ with bit 0 clear (positive)
- AND #%11111110
+ STA mx1Hi,Y            \                   = -cos(xRotation)
+ LDA R                  \
+ AND #%11111110         \ with bit 0 clear (positive)
  STA mx1Lo,Y
 
  JMP setm4              \ Jump to setm4 to return from the subroutine
@@ -6605,20 +6628,29 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ProjectAngle
+\       Name: Sine16Bit
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Project an axis rotation angle into Cartesian coordinates
+\    Summary: Calculate the sine of a 16-bit number
 \
 \ ------------------------------------------------------------------------------
 \
-\ Sets (A Y) = (cos(X) * W / 256) + sin(X)
+\ Sets (A Y) = sin(X W)
 \
-\ where (X W) is the 16-bit angle containins the axis rotation.
+\ where (X W) is a 16-bit angle, with 0 to 65535 representing a quarter circle.
+\
+\ The sine lookup table contains 256 entries that represent a quater circle, so
+\ we work out the result by first looking up the sine for the high byte X, and
+\ then interpolating W/256 of the way between the results for X and X + 1. It
+\ might help to think of X being an integer (0 to 255) and W being a fraction
+\ (0 to 255) and we're trying to map X.W onto the sine table by finding the
+\ entry for X and doing linear interpolation between X and X + 1 for the
+\ fractional amount.
 \
 \ Arguments:
 \
-\   (X W)               The 16-bit angle, reduced to a quarter-circle
+\   (X W)               The 16-bit angle, representing a quarter-circle in the
+\                       range 0 to 255
 \
 \ Returns:
 \
@@ -6628,48 +6660,51 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.ProjectAngle
+.Sine16Bit
 
  STX H                  \ Store X in H for later
 
- SEC                    \ Set (A I) = cos(X)
+ SEC                    \ Set (A I) = sin(X + 1) - sin(X)
  LDA sinLo+1,X          \
- SBC sinLo,X            \ We get the cosine from the sine table by calculating
- STA I                  \ the differential, starting with the low bytes (see the
-                        \ sinLo table for an explanation)
+ SBC sinLo,X            \ starting with the low bytes
+ STA I
 
- LDA sinHi+1,X          \ Then we do the high bytes
+ LDA sinHi+1,X          \ And then the high bytes
  SBC sinHi,X
 
- LSR A                  \ Set (A X) = (A I) / 2
- ROR I                  \           = cos(X) / 2
- LDX I                  \
-                        \ The maximum differential value is 402, so the above
-                        \ result fits into one byte, so we have:
+                        \ Let's call this dX, the difference between sin(X + 1)
+                        \ sin(X) and, so (A I) = dX
+
+ LSR A                  \ The maximum differential value we can have is 402, so
+ ROR I                  \ we halve (A I) to fit the result into one byte, like
+ LDX I                  \ this:
                         \
-                        \   X = (A I) / 2
-                        \     = cos(X) / 2
+                        \   (A I) = dX / 2
+                        \
+                        \ and then setting X to the low byte in I, so:
+                        \
+                        \   X = dX / 2
 
  LDY W                  \ Set Y = W
 
  JSR Multiply8x8        \ Set (A V) = X * Y
-                        \           = (cos(X) / 2) * W
+                        \           = (dX / 2) * W
 
  LDX H                  \ Set X to the original argument we stored above
 
  ASL V                  \ Set (A V) = (A V) * 2
- ROL A                  \           = (cos(X) / 2) * W * 2
-                        \           = cos(X) * W
+ ROL A                  \           = (dX / 2) * W * 2
+                        \           = dX * W
                         \
                         \ and put bit 7 of (A V) into the C flag, so in effect
                         \ we have:
                         \
-                        \   (C A V) = cos(X) * W
+                        \   (C A V) = dX * W
 
  PHP                    \ Store the C flag on the stack
 
  CLC                    \ Set (A Y) = (C A) + sin(X)
- ADC sinLo,X            \           = (cos(X) * W / 256) + sin(X)
+ ADC sinLo,X            \           = (dX * W / 256) + sin(X)
  TAY                    \
                         \ starting with the low bytes
 
@@ -6678,6 +6713,14 @@ ORG CODE%
 
  PLP                    \ And finally adding C (which we retrieve from the stack)
  ADC #0                 \ to give the final result for (C A) + sin(X)
+
+                        \ So at this point we have:
+                        \
+                        \   (A Y) = sin(X) + (dX * W / 256)
+                        \
+                        \ which is the reault we want, as it takes sin(X) and
+                        \ adds on W/256 of the difference between sin(X) and
+                        \ sin(X + 1)
 
  RTS                    \ Return from the subroutine
 
@@ -7315,29 +7358,34 @@ ORG CODE%
 
 .Add16x16Bit0
 
- LDA G
+ LDA G                  \ Set K to the sign of G (from bit 0)
  AND #1
  STA K
 
- EOR I
- AND #1
+ EOR I                  \ If G and I have different sign bits, then this will
+ AND #1                 \ set A to 1, in which case jump to abit2
  BNE abit2
 
- LDA G
- CLC
- ADC I
- AND #&FE
- ORA K
+                        \ If we get here then the two arguments (H G) and (J I)
+                        \ have the same sign, which is stored in K
+
+ LDA G                  \ Set (S R) = (H G) + (J I)
+ CLC                    \
+ ADC I                  \ starting with the low bytes, setting bit 0 of the
+ AND #%11111110         \ result to the sign in K (as the result of adding two
+ ORA K                  \ numbers with sign K will have sign K)
  STA R
- LDA H
+
+ LDA H                  \ Then adding the high bytes
  ADC J
  STA S
 
- BCC abit1
+ BCC abit1              \ If the addition didn't overflow, jump to abit1 to
+                        \ return from the subroutine, as the result is correct
 
- LDA #&FF
- STA S
- LDA #%11111110
+ LDA #%11111111         \ The addition overflowed, so we return the maximum
+ STA S                  \ value in (R S), which has every bit set except for the
+ LDA #%11111110         \ sign bit, which is set to K
  ORA K
  STA R
 
@@ -7347,17 +7395,29 @@ ORG CODE%
 
 .abit2
 
- LDA G
- SEC
- SBC I
+                        \ If we get here then the two arguments (H G) and (J I)
+                        \ have different signs, with the sign of (H G) stored in
+                        \ K
+
+ LDA G                  \ Set (S R) = (H G) - (J I)
+ SEC                    \
+ SBC I                  \ starting with the low bytes
  STA R
- LDA H
+
+ LDA H                  \ And then the high bytes
  SBC J
  STA S
- BCC abit3
 
- LDA R
- AND #%11111110
+ BCC abit3              \ If the subtraction underflowed, jump to abit3
+
+                        \ Otherwise the result is correct apart from the sign,
+                        \ and the sign of the result should be that of (H G), as
+                        \ (H G) is the larger value (i.e. it has the highest
+                        \ magnitude), as otherwise the subtraction would
+                        \ underflow
+
+ LDA R                  \ Set the sign bit of (S R) to K, as that contains the
+ AND #%11111110         \ sign of (H G)
  ORA K
  STA R
 
@@ -7365,12 +7425,24 @@ ORG CODE%
 
 .abit3
 
- LDA #0
- SEC
- SBC R
- AND #%11111110
- ORA K
- EOR #1
+                        \ If we get here then the (H G) - (J I) subtraction
+                        \ underflowed, so (J I) is the larger value (i.e. it has
+                        \ the highest magnitude)
+                        \
+                        \ We therefore need to negate the subtraction result to
+                        \ get (J I) - (H G), and the sign of the final result
+                        \ should be given the sign of (J I), as that's the
+                        \ dominant part... and as K contains the sign of (H G)
+                        \ and we know (H G) and (J I) have opposite signs, we
+                        \ should therefore give the result the opposite sign to
+                        \ the sign in K
+
+ LDA #0                 \ Negate the (S R) to get the correct result,
+ SEC                    \ 
+ SBC R                  \   (S R) = 0 - (S R)
+ AND #%11111110         \
+ ORA K                  \ while also setting the sign in bit 0 to the opposite
+ EOR #1                 \ of K
  STA R
  LDA #0
  SBC S
@@ -7384,13 +7456,19 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Set up matrices 1 to 4
+ \ Deep dive: Rotation matrices
 \
 \ ------------------------------------------------------------------------------
 \
-\ Matrix 1 is the most complex matrix:
+\ This routine populates the four matrix tables with 16-bit values.
+\
+\ Matrix 1 is the most complex matrix, and contains the rotation matrix for
+\ rotating a point around the origin by the plane's roll, then pitch, then yaw.
+\ It is constructed from the coordinates produced by the ProjectAxisAngle
+\ routine as follows:
 \
 \   [  (mx2 * my2 * mz2)     -mx1 * mz2      (mx2 * my1 * mz2) ]
-\   [    + (my2 * mz2)                         - (my2 * mz1)   ]
+\   [    + (my1 * mz1)                         - (my2 * mz1)   ]
 \   [                                                          ]
 \   [ -(mx2 * my2 * mz1)      mx1 * mz1     -(mx2 * my1 * mz1) ]
 \   [    + (my1 * mz2)                         - (my2 * mz2)   ]
@@ -7403,18 +7481,27 @@ ORG CODE%
 \   [ m1 m4 m7 ]
 \   [ m2 m5 m8 ]
 \
+\ and therefore represents the inverse transformation of matrix 1.
+\
 \ Matrix 3 is a 2x2 matrix, but we store it in the standard 3x3 grid:
 \
 \   [ mz1  -mz2  - ]
 \   [ mz2   mz1  - ]
 \   [  -     -   - ]
 \
-\ Matrix 4 doesn't have m6 set at any point, but it is a zero in the source
-\ code and stays that way:
+\ This is a 2D rotation matrix that rotates a 2D coordinate through the plane's
+\ roll angle.
+\
+\ Matrix 4 contains an interim step from the calculation of matrix 1, and
+\ contains the rotation matrix for the roll-and-pitch rotation (i.e. without any
+\ yaw). It looks like this:
 \
 \   [ mz1     -mx1 * mz2      mx2 * mz2 ]
 \   [ mz2      mx1 * mz1     -mx2 * mz1 ]
 \   [  0          mx2            mx1    ]
+\
+\ The m6 entry is not set by any code, but it contains a zero in the source code
+\ and stays that way.
 \
 \ Arguments:
 \
@@ -7494,7 +7581,10 @@ ORG CODE%
                         \   m6 =  mx1 * my2
                         \   m8 =  mx1 * my1
                         \
-                        \ Note that we didn't set m7 in the above
+                        \ Note that we didn't set m7 in the above, and also note
+                        \ that in the following, we update some of these values,
+                        \ so, for example, m0 and m2 change part way through the
+                        \ calculation process (which I have pointed out)
                         \
                         \ We now work our way through the matrices as follows:
                         \
@@ -7674,12 +7764,13 @@ ORG CODE%
  LDY matrixNumber       \ Set Y = 0
 
  LDA matrix1Lo,Y        \ Set (J I) = m0
- STA I                  \           = my2 * mz2
- LDA matrix1Hi,Y
- STA J
+ STA I                  \           = my1 * mz1
+ LDA matrix1Hi,Y        \
+ STA J                  \ (note that we updated m0 above, so this is different
+                        \ to the first value we gave m0)
 
  JSR Add16x16Bit0       \ Set (S R) = (H G) + (J I)
-                        \           = (mx2 * mz2 * my2) + (my2 * mz2)
+                        \           = (mx2 * mz2 * my2) + (my1 * mz1)
 
  LDA R                  \ Set m0 = (S R)
  STA matrix1Lo,Y
@@ -11142,9 +11233,10 @@ ORG CODE%
 
 .pkey15
 
- LDY #2                 \ We now set up the matrices, starting with the matrix
-                        \ in page 1, which we populate one axis at a time, so
-                        \ set a counter in Y to denote the current axis
+ LDY #2                 \ We now set up the matrices, starting with the
+                        \ projected rotation angles, which we populate one axis
+                        \ at a time, so set a counter in Y to work through the
+                        \ three axes
 
 .pkey16
 
@@ -20591,24 +20683,19 @@ NEXT
 \
 \ The value of sine across the quarter circle ranges from 0 to 1:
 \
-\   sin(0)    = 0
-\   sin(PI/2) = 1
+\   sin(0) = 0
+\
+\   sin(90) = sin(PI/2) = 1
 \
 \ but assembly language doesn't support fractions, so instead we store the sine
 \ in a 16-bit number that contains the sine multiplied by 65536, so the range of
-\ (sinHi sinLo) over the course of the quarter circle is 0 to 65536.
+\ (sinHi sinLo) over the course of the quarter circle is 0 to 65536. It might
+\ help to think of sinHi as an integer ranging from 0 to 256 across the quarter
+\ circle, with sinLo as the fractional part ranging from 0 to 255; this is the
+\ approach taken in the Sine16Bit routine.
 \
 \ In other words, entry X in this table contains sin(X) * 65536, where X ranges
 \ from 0 to 256 over the course of a quarter circle.
-\
-\ Aviator doesn't have a separate cosine table, and instead calculates cos(X) by
-\ using the fact that the differential of sine is the cosine. The differential
-\ of a function is the same as the gradient of its graph - the rate of change of
-\ the function, in other words - so Aviator calculates cos(X) by working out the
-\ slope of the sine function at that point. In other words, it does the simple
-\ calculation as follows:
-\
-\   cos(X) = sin(X+1) - sin(X)
 \
 \ ******************************************************************************
 
