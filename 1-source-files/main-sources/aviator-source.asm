@@ -489,36 +489,42 @@ ORG &0900
  SKIP 256               \ The high byte of the y-coordinate for the point with
                         \ ID X is at yPointHi,X
 
-.L0C00
+.xTurnLo
 
- SKIP 1
+ SKIP 1                 \ Turn rate around the x-axis (low byte)
 
-.turnLo
+.yTurnLo
 
- SKIP 1                 \ Turn rate (low byte)
+ SKIP 1                 \ Turn rate around the y-axis (low byte)
                         \
                         \ Stored as 35 * the turn rate in 180 degrees per minute
                         \ 
                         \ Shown on indicator 5
 
-.L0C02
+.zTurnLo
 
- SKIP 1
+ SKIP 1                 \ Turn rate around the z-axis (high byte)
 
-.L0C03
+.xVelocityLo
 
- SKIP 2
+ SKIP 1                 \ Plane velocity along the x-axis (low byte)
 
-.airspeedLo
+.yVelocityLo
 
- SKIP 1                 \ Air speed (low byte)
+ SKIP 1                 \ Plane velocity along the y-axis (low byte)
+
+.zVelocityLo
+
+ SKIP 1                 \ Plane velocity along the a-axis (low byte)
+                        \
+                        \ This is the same as the forward airspeed
                         \
                         \ 100 mph is stored as 9.25 * 256 = 2368
                         \
-                        \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
-                        \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
-                        \ so 100 mph =   1 * 2368 = 2368 = (9 64)
-                        \ so 400 mph =   4 * 2368 = 9472 = (37 00)
+                        \   so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
+                        \   so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
+                        \   so 100 mph =   1 * 2368 = 2368 = (9 64)
+                        \   so 400 mph =   4 * 2368 = 9472 = (37 00)
                         \
                         \ Shown on indicator 1
 
@@ -560,36 +566,42 @@ ORG &0900
                         \
                         \ Shown on indicator 11
 
-.L0C10
+.xTurnHi
 
- SKIP 1
+ SKIP 1                 \ Turn rate around the x-axis (high byte)
 
-.turnHi
+.yTurnHi
 
- SKIP 1                 \ Turn rate (low byte)
+ SKIP 1                 \ Turn rate around the y-axis (high byte)
                         \
                         \ Stored as 35 * the turn rate in 180 degrees per minute
                         \
                         \ Shown on indicator 5
 
-.L0C12
+.zTurnHi
 
- SKIP 1
+ SKIP 1                 \ Turn rate around the z-axis (high byte)
 
-.L0C13
+.xVelocityHi
 
- SKIP 2
+ SKIP 1                 \ Plane velocity along the x-axis (high byte)
 
-.airspeedHi
+.yVelocityHi
 
- SKIP 1                 \ Air speed (high byte)
+ SKIP 1                 \ Plane velocity along the y-axis (high byte)
+
+.zVelocityHi
+
+ SKIP 1                 \ Plane velocity along the a-axis (high byte)
+                        \
+                        \ This is the same as the forward airspeed
                         \
                         \ 100 mph is stored as 9.25 * 256 = 2368
                         \
-                        \ so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
-                        \ so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
-                        \ so 100 mph =   1 * 2368 = 2368 = (9 64)
-                        \ so 400 mph =   4 * 2368 = 9472 = (37 00)
+                        \   so 50 mph  = 0.5 * 2368 = 1184 = (4 160)
+                        \   so 70 mph  = 0.7 * 2368 = 1658 = (6 122)
+                        \   so 100 mph =   1 * 2368 = 2368 = (9 64)
+                        \   so 400 mph =   4 * 2368 = 9472 = (37 00)
                         \
                         \ Shown on indicator 1
 
@@ -631,7 +643,9 @@ ORG &0900
                         \ pressed in UpdateFlightModel:
                         \
                         \   * axisKeyUsage   = elevator
+                        \
                         \   * axisKeyUsage+1 = rudder
+                        \
                         \   * axisKeyUsage+2 = aileron
                         \
                         \ In each case, the value is updated by adding the
@@ -775,35 +789,58 @@ ORG &0900
 
  SKIP 1
 
-.L0C83
+.xCoord1Lo
 
  SKIP 1
 
-.L0C84
-
- SKIP 2
-
-.L0C86
-
- SKIP 3
-
-.L0C89
+.yCoord1Lo
 
  SKIP 1
 
-.verticalSpeedLo
+.zCoord1Lo
 
- SKIP 1                 \ Vertical speed (low byte)
+ SKIP 1
+
+.xCoord2Lo
+
+ SKIP 1
+
+.yCoord2Lo
+
+ SKIP 1
+
+.zCoord2Lo
+
+ SKIP 1
+
+.xSpeedLo
+
+ SKIP 1                 \ Speed in the x-axis (low byte)
+
+.ySpeedLo
+
+ SKIP 1                 \ Speed in the y-axis (low byte)
+                        \
+                        \ This is the same as the vertical speed, and is from
+                        \ the perspective of the world, so ySpeed is the
+                        \ vertical speed of the plane, irrespective of how the
+                        \ plane is orientated
+                        \
+                        \ For the plane's speed from the point of view of the
+                        \ plane, see (xVelocity yVelocity zVelocity)
                         \
                         \ Stored as 128/425 * vertical speed in feet per minute,
                         \ so:
                         \
-                        \ 1000 feet/minute is stored as 128/425 * 1000 = 301
-                        \ 4000 feet/minute is stored as 128/425 * 4000 = 1205
+                        \   1000 feet/minute is stored as 128/425 * 1000 = 301
+                        \
+                        \   4000 feet/minute is stored as 128/425 * 4000 = 1205
                         \
                         \ Shown on indicator 4
 
- SKIP 1
+.zSpeedLo
+
+ SKIP 1                 \ Speed in the z-axis (low byte)
 
 .L0C8C
 
@@ -817,29 +854,45 @@ ORG &0900
 
  SKIP 1
 
-.L0C93
+.xCoord1Hi
 
  SKIP 1
 
-.L0C94
-
- SKIP 2
-
-.L0C96
-
- SKIP 3
-
-.L0C99
+.yCoord1Hi
 
  SKIP 1
 
-.verticalSpeedHi
+.zCoord1Hi
 
- SKIP 1                 \ Vertical speed (high byte)
+ SKIP 1
+
+.xCoord2Hi
+
+ SKIP 1
+
+.yCoord2Hi
+
+ SKIP 1
+
+.zCoord2Hi
+
+ SKIP 1
+
+.xSpeedHi
+
+ SKIP 1                 \ Speed in the x-axis (high byte)
+
+.ySpeedHi
+
+ SKIP 1                 \ Speed in the y-axis (high byte)
+                        \
+                        \ This is the same as the vertical speed                        \
                         \
                         \ Shown on indicator 4
 
- SKIP 1
+.zSpeedHi
+
+ SKIP 1                 \ Speed in the z-axis (high byte)
 
 .slipRate
 
@@ -856,12 +909,12 @@ ORG &0900
                         \ Populated with values from keyTable1Lo or keyTable2Lo
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
-                        \ L or < (elevator dive/pitch)      =   1 or  1
-                        \ A or + (rudder yaw left/right)    =   1 or  1
-                        \ S or D (aileron bank left/right)  =   1 or  1
-                        \ W or E (throttle down/up)         = -15 or 15
-                        \ U or B (undercarriage, brakes)    =   4 or  7
-                        \ F or SHIFT (flaps, fire)          =   5 or  8
+                        \   L or < (elevator dive/pitch)      =   1 or  1
+                        \   A or + (rudder yaw left/right)    =   1 or  1
+                        \   S or D (aileron bank left/right)  =   1 or  1
+                        \   W or E (throttle down/up)         = -15 or 15
+                        \   U or B (undercarriage, brakes)    =   4 or  7
+                        \   F or SHIFT (flaps, fire)          =   5 or  8
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -889,12 +942,12 @@ ORG &0900
                         \ Populated with values from keyTable1Hi or keyTable2Hi
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
-                        \ L or < (elevator dive/pitch)      = -1 or 1
-                        \ A or + (rudder yaw left/right)    = -1 or 1
-                        \ S or D (aileron bank left/right)  = -1 or 1
-                        \ W or E (throttle down/up)         = -1 or 0
-                        \ U or B (undercarriage, brakes)    =  0 or 0
-                        \ F or SHIFT (flaps, fire)          =  0 or 0
+                        \   L or < (elevator dive/pitch)      = -1 or 1
+                        \   A or + (rudder yaw left/right)    = -1 or 1
+                        \   S or D (aileron bank left/right)  = -1 or 1
+                        \   W or E (throttle down/up)         = -1 or 0
+                        \   U or B (undercarriage, brakes)    =  0 or 0
+                        \   F or SHIFT (flaps, fire)          =  0 or 0
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -982,8 +1035,9 @@ ORG &0900
                         \ showing, so we can use colour cycling for smooth
                         \ animation
                         \
-                        \ %00001111 = show colour 1, hide colour 2
-                        \ %11110000 = show colour 2, hide colour 1
+                        \   * %00001111 = show colour 1, hide colour 2
+                        \
+                        \   * %11110000 = show colour 2, hide colour 1
                         \
                         \ We show a colour by mapping it to white, and hide a
                         \ colour by mapping it to black
@@ -995,7 +1049,9 @@ ORG &0900
  SKIP 1                 \ The axis to be processed by the matrix routines
                         \
                         \   * 0 = x-axis
+                        \
                         \   * 1 = y-axis
+                        \
                         \   * 2 = z-axis
 
 .onGround
@@ -1003,6 +1059,7 @@ ORG &0900
  SKIP 1                 \ "On the ground" status
                         \
                         \   * 0 = we are not on the ground
+                        \
                         \   * 1 = we are on the ground
                         \
                         \ Set to 1 in ResetVariables (on the ground)
@@ -1267,7 +1324,7 @@ ORG &0900
                         \
                         \ Set to 1 in ResetVariables (do all landing tasks)
                         \
-                        \ Set to %01000000 when speed is 0 in L50F7
+                        \ Set to %01000000 when speed is 0 in ApplyFlightModel
                         \
                         \ Gets shifted left with a 1 inserted in bit 0 in
                         \ CheckLanding if we are not on the runway
@@ -1351,6 +1408,7 @@ ORG &0900
  SKIP 1                 \ Flaps status
                         \
                         \   * 0 = flaps are off (raised)
+                        \
                         \   * Non-zero = flaps are on (dropped)
                         \
                         \ Set to 0 (flaps are off) in ResetVariables
@@ -4036,7 +4094,7 @@ ORG CODE%
 \       Name: DrawCanopyLine (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Draw a line in the canopy view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6259,12 +6317,15 @@ ORG CODE%
 \       Name: Multiply8x8
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Calculate (A V) = X * Y
+\    Summary: Multiply two unsigned 8-bit numbers
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine multiplies two unsigned 8-bit numbers. It uses the following
-\ algorithm:
+\ This routine multiplies two unsigned 8-bit numbers, as follows:
+\
+\   (A V) = X * Y
+\
+\ It uses the following algorithm:
 \
 \   %XXXXxxxx * %YYYYyyyy = (%XXXX0000 + %0000xxxx) * (%YYYY0000 + %0000yyyy)
 \
@@ -6386,7 +6447,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Convert the rotation angles of the plane into coordinates
- \ Deep dive: Rotation matrices
+\  Deep dive: Rotation matrices
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6729,13 +6790,15 @@ ORG CODE%
 \       Name: Multiply4x16
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Calculate (G W) = V * (S R)
+\    Summary: Multiply a 4-bit and a 16-bit number
 \
 \ ------------------------------------------------------------------------------
 \
 \ This routine multiplies a 4-bit number by a 16-bit number, using the lookup
-\ table at timesTable for fast results.
-
+\ table at timesTable for fast results. It does the following calculation:
+\
+\   (G W) = V * (S R)
+\
 \ Arguments:
 \
 \   (S R)               A 16-bit number
@@ -7456,7 +7519,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Set up matrices 1 to 4
- \ Deep dive: Rotation matrices
+\  Deep dive: Rotation matrices
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8615,10 +8678,10 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the airspeed from (airspeedHi airspeedLo) and reduces it to
-\ match the scale of the indicator, which is represented by a value of 9 (for
-\ 50 mph) to 74 (for 400 mph). The airspeed value can be outside these limits,
-\ but this shows the scale factor.
+\ This section takes the forward airspeed from (zVelocityHi zVelocityLo) and
+\ reduces it to match the scale of the indicator, which is represented by a
+\ value of 9 (for 50 mph) to 74 (for 400 mph). The airspeed value can be outside
+\ these limits, but these examples show the scale factor.
 \
 \ It then passes this value to the DrawIndicatorHand to update the on-screen
 \ airspeed indicator.
@@ -8629,8 +8692,8 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 1
 
- LDA airspeedHi         \ If the high byte of the airspeed in airspeedHi is
- BPL uind3              \ positive, jump down to uind3 to skip the following
+ LDA zVelocityHi        \ If the high byte of the forward airspeed in zVelocity
+ BPL uind3              \ is positive, jump down to uind3 to skip the following
 
  LDA #0                 \ The airspeed is negative, so set A to 0 and jump to
  JMP DrawIndicatorHand  \ DrawIndicatorHand to zero the indicator on-screen,
@@ -8638,9 +8701,9 @@ ORG CODE%
 
 .uind3
 
- LDA airspeedLo         \ Set A = (airspeedHi airspeedLo) * 2 / 256
- ASL A                  \
- LDA airspeedHi
+ LDA zVelocityLo        \ Set A = (zVelocityHi zVelocityLo) * 2 / 256
+ ASL A
+ LDA zVelocityHi
  ROL A
 
                         \ So by now, A matches the range of the airspeed
@@ -8656,12 +8719,12 @@ ORG CODE%
                         \ represents 400 mph (as 48 + 74 = 122), for example
                         \
                         \ These values correspond to the following 16-bit values
-                        \ of (airspeedHi airspeedLo):
+                        \ of (zVelocityHi zVelocityLo):
                         \
-                        \   * If A = 9, then Airspeed = (00000100 10100000),
+                        \   * If A = 9, then airspeed = (00000100 10100000),
                         \     which is 1184, or 50 mph
                         \
-                        \   * If A = 74, then Airspeed = (00100101 00000000),
+                        \   * If A = 74, then airspeed = (00100101 00000000),
                         \     which is 9472, or 400 mph
                         \
                         \ The plane can go faster or slower than in these
@@ -8898,9 +8961,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the vertical speed from (verticalSpeedHi verticalSpeedLo)
-\ and reduces it to the range -40 to +40, before passing it to the
-\ DrawIndicatorHand to update the on-screen vertical speed indicator.
+\ This section takes the vertical speed from (ySpeedHi ySpeedLo) and reduces it
+\ to the range -40 to +40, before passing it to the DrawIndicatorHand routine to
+\ update the on-screen vertical speed indicator.
 \
 \ ******************************************************************************
 
@@ -8908,9 +8971,9 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 4
 
- LDA verticalSpeedLo    \ Set (A T) = (verticalSpeedHi verticalSpeedLo)
- STA T                  \           = VerticalSpeed
- LDA verticalSpeedHi
+ LDA ySpeedLo           \ Set (A T) = (ySpeedHi ySpeedLo)
+ STA T                  \           = ySpeed
+ LDA ySpeedHi
 
  BPL uind9              \ If the vertical speed is positive, jump down to uind9
 
@@ -8922,14 +8985,14 @@ ORG CODE%
                         \ starting with the low bytes
 
  LDA #0                 \ And then the high bytes
- SBC verticalSpeedHi
+ SBC ySpeedHi
 
 .uind9
 
-                        \ By this point, (A T) = |VerticalSpeed|
+                        \ By this point, (A T) = |ySpeed|
 
  LSR A                  \ Set (A T) = (A T) / 8
- ROR T                  \           = |VerticalSpeed| / 8
+ ROR T                  \           = |ySpeed| / 8
  LSR A
  ROR T
  LSR A
@@ -8937,15 +9000,15 @@ ORG CODE%
 
  CMP #0                 \ If A = 0, so (A T) = (0 T) = T, so jump to uind10 to
  BEQ uind10             \ skip the following as T contains the correct value of
-                        \ |VerticalSpeed| / 8
+                        \ |ySpeed| / 8
 
  LDA #255               \ A is non-zero, which means that (A T) > 255, so set
  STA T                  \ T = 255 so that T has a maximum value of 255
 
 .uind10
 
-                        \ At this point, T contains |VerticalSpeed| / 8, capped
-                        \ to a maximum value of 255
+                        \ At this point, T contains |ySpeed| / 8, capped to a
+                        \ maximum value of 255
 
                         \ We now calculate A = T * n / 256 with a hardcoded n,
                         \ using unrolled shift-and-add multiplication
@@ -8979,7 +9042,7 @@ ORG CODE%
                         \     = (T * 34 / 256) << 1
                         \     = T * 68 / 256
                         \
-                        \ which takes |VerticalSpeed| / 8 in the range 0 to 255
+                        \ which takes |ySpeed| / 8 in the range 0 to 255
                         \ and reduces it to the range 0 to 68
 
  CMP #40                \ If A < 40, jump to uind11 to skip the following
@@ -8990,7 +9053,7 @@ ORG CODE%
 
 .uind11
 
- BIT verticalSpeedHi    \ If the high byte in verticalSpeedHi is positive (and
+ BIT ySpeedHi           \ If the high byte in ySpeedHi is positive (and
  BPL uind12             \ therefore so is the vertical speed), jump to uind12 to
                         \ skip the following
 
@@ -9001,27 +9064,27 @@ ORG CODE%
 
                         \ So by now, A is in the range -40 to +40
                         \
-                        \ In terms of the original value of VerticalSpeed, this
+                        \ In terms of the original value of ySpeed, this
                         \ means that:
                         \
-                        \   VerticalSpeed / 8 * (68 / 256) = A
+                        \   ySpeed / 8 * (68 / 256) = A
                         \
                         \ so:
                         \
-                        \   VerticalSpeed = A * (256 / 68) * 8
-                        \                 = A * 2048 / 68
+                        \   ySpeed = A * (256 / 68) * 8
+                        \          = A * 2048 / 68
                         \
                         \ If A is 40 then this shows as a vertical speed of
                         \ 4000 feet per minute on the indicator, so if v is the
                         \ vertical speed in feet per minute, A = v / 100, and:
                         \
-                        \   VerticalSpeed = A * 2048 / 68
-                        \                 = (v / 100) * 2048 / 68
-                        \                 = v * 2048 / 6800
-                        \                 = v * 128 / 425
+                        \   ySpeed = A * 2048 / 68
+                        \          = (v / 100) * 2048 / 68
+                        \          = v * 2048 / 6800
+                        \          = v * 128 / 425
                         \
-                        \ so VerticalSpeed is stored as 128 / 425 * the vertical
-                        \ speed in feet per minute
+                        \ so ySpeed is stored as 128 / 425 * the vertical speed
+                        \ in feet per minute
 
 .uind12
 
@@ -9061,9 +9124,10 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the turn rate from (turnHi turnLo) and reduces it to the
-\ range -19 to +19, before passing it to the DrawIndicatorHand to update the
-\ bottom part of the on-screen slip-and-turn indicator.
+\ This section takes the turn rate around the y-axis (i.e. the yaw rate) from
+\ (yTurnHi yTurnLo) and reduces it to the range -19 to +19, before passing it to
+\ the DrawIndicatorHand to update the bottom part of the slip-and-turn
+\ indicator.
 \
 \ ******************************************************************************
 
@@ -9071,9 +9135,9 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 5
 
- LDA turnLo             \ Set (A T) = (turnHi turnLo)
- STA T                  \           = Turn
- LDA turnHi
+ LDA yTurnLo            \ Set (A T) = (yTurnHi yTurnLo)
+ STA T                  \            = yTurn
+ LDA yTurnHi
 
  BPL uind15             \ If the turn rate is positive, jump down to uind9
 
@@ -9085,18 +9149,18 @@ ORG CODE%
                         \ starting with the low bytes
 
  LDA #0                 \ And then the high bytes
- SBC turnHi
+ SBC yTurnHi
 
 .uind15
 
-                        \ By this point, (A T) = |Turn|
+                        \ By this point, (A T) = |yTurn|
 
  BNE uind16             \ If the high byte in A is non-zero, this means that
                         \ (A T) > 255, so skip the following three instructions
                         \ to set A to the maximum value of 140
 
  LDA T                  \ A is 0, so set A = T, so A now contains the correct
-                        \ value of |Turn|
+                        \ value of |yTurn|
 
  CMP #140               \ If T < 140, jump to uind17 to skip the following two
  BCC uind17             \ instructions
@@ -9108,7 +9172,7 @@ ORG CODE%
 
 .uind17
 
-                        \ At this point, T contains |Turn|, capped to a maximum
+                        \ At this point, T contains |yTurn|, capped to a maximum
                         \ value of 140
 
                         \ We now calculate A = T * n / 256 with a hardcoded n,
@@ -9144,10 +9208,10 @@ ORG CODE%
                         \     = (T * 18 / 256) << 1
                         \     = T * 36 / 256
                         \
-                        \ which takes |Turn| in the range 0 to 140 and reduces
+                        \ which takes |yTurn| in the range 0 to 140 and reduces
                         \ it to the range 0 to 19
 
- BIT turnHi             \ If the high byte in turnHi is negative (and therefore
+ BIT yTurnHi            \ If the high byte in yTurnHi is negative (and therefore
  BMI uind18             \ so is the turn rate), jump to uind18 to skip the
                         \ following
 
@@ -9162,7 +9226,7 @@ ORG CODE%
                         \
                         \ The maximum turn rate shown on the indicator is
                         \ 4 x 180 degrees per minute, which is shown when
-                        \ T = 140, so Turn is stored as around 35 * the turn
+                        \ T = 140, so yTurn is stored as around 35 * the turn
                         \ rate, as 140 / 4 = 35
 
  JMP DrawIndicatorHand  \ Apply min and max limits to the value in A and update
@@ -11539,11 +11603,11 @@ ORG CODE%
                         \ guns, so return from the subroutine (as FireGuns-1
                         \ contains an RTS)
 
- LDX #228               \ Set the point with ID 228 to (0, 0, airspeedHi + 200)
+ LDX #228               \ Set the point with ID 228 to (0, 0, zVelocityHi + 200)
  JSR SetPointToOrigin   \
                         \ starting with the zeroes
 
- LDA airspeedHi         \ And then setting the low byte of the z-coordinate
+ LDA zVelocityHi        \ And then setting the low byte of the z-coordinate
  CLC
  ADC #200
  STA zPointLo+228
@@ -12050,8 +12114,8 @@ ORG CODE%
 
  BNE rset1              \ Loop back until we have zeroed the whole page
 
-                        \ We now zero all the workspace variables from L0C00 to
-                        \ yPlaneHi
+                        \ We now zero all the workspace variables from xTurnLo
+                        \ to yPlaneHi
 
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
                         \ in the rset2 loop
@@ -12062,11 +12126,12 @@ ORG CODE%
 
 .rset2
 
- STA L0C00-1,X          \ Zero the X-1-th byte of page &C
+ STA xTurnLo-1,X        \ Zero the X-1-th byte of the workspace variables
 
  DEX                    \ Decrement the byte counter
 
- BNE rset2              \ Loop back until we have zeroed from L0C00 to yPlaneHi
+ BNE rset2              \ Loop back until we have zeroed from xTurnLo to
+                        \ yPlaneHi
 
                         \ We now zero the 8 bytes at alienState to reset the
                         \ state of the aliens
@@ -15456,7 +15521,7 @@ ORG CODE%
 \       Name: Lookup2E60
 \       Type: Variable
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Pixel bytes for drawing canopy lines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20839,7 +20904,7 @@ NEXT
 \       Name: alienObjectId
 \       Type: Variable
 \   Category: The Theme
-\    Summary: 
+\    Summary: Object IDs for each of the eight aliens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22720,25 +22785,22 @@ NEXT
 \       Name: CopyWorkToPoint
 \       Type: Subroutine
 \   Category: Utility routines
-\    Summary: Copy a point from the L0C00 workspace to the point tables
+\    Summary: Copy a point from the variable workspace to the point tables
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   X                   The low byte of the workspace point to copy (x, y, z):
+\   X                   The low byte of the x-coordinate of the 16-bit workspace
+\                       point to copy:
 \
-\                         * LO(L0C00) = L0C00, turnLo, L0C02
-\                                       L0C10, turnHi, L0C12
+\                         * LO(xTurnLo) = (xTurn, yTurn, zTurn)
 \
-\                         * LO(L0C89) = L0C89, verticalSpeedLo, L0C8B
-\                                       L0C99, verticalSpeedHi, L0C9B
+\                         * LO(xSpeedLo) = (xSpeed, ySpeed, zSpeed)
 \
-\                         * LO(xTemp2Lo) = xTemp2Lo, yTemp2Lo, zTemp2Lo
-\                                          xTemp2Hi, yTemp2Hi, zTemp2Hi
+\                         * LO(xTemp2Lo) = (xTemp2, yTemp2, zTemp2)
 \
-\                         * LO(xPlaneLo) = xPlaneLo, yPlaneLo, zPlaneLo
-\                                          xPlaneHi, yPlaneHi, zPlaneHi
+\                         * LO(xPlaneLo) = (xPlane, yPlane, zPlane)
 \
 \   Y                   The ID of the point to update in the point tables
 \
@@ -22746,18 +22808,18 @@ NEXT
 
 .CopyWorkToPoint
 
- LDA L0C00,X            \ Copy the X-th tuple from the L0C00 workspace to the
- STA xPointLo,Y         \ Y-th point coordinate, starting with the low bytes
- LDA turnLo,X
+ LDA xTurnLo,X          \ Copy the X-th coordinate in the variable workspace to
+ STA xPointLo,Y         \ the Y-th point coordinate, starting with the low bytes
+ LDA yTurnLo,X
  STA yPointLo,Y
- LDA L0C02,X
+ LDA zTurnLo,X
  STA zPointLo,Y
 
- LDA L0C10,X            \ And then the high bytes
+ LDA xTurnHi,X          \ And then the high bytes
  STA xPointHi,Y
- LDA turnHi,X
+ LDA yTurnHi,X
  STA yPointHi,Y
- LDA L0C12,X
+ LDA zTurnHi,X
  STA zPointHi,Y
 
  RTS                    \ Return from the subroutine
@@ -22767,7 +22829,7 @@ NEXT
 \       Name: CopyPointToWork
 \       Type: Subroutine
 \   Category: Utility routines
-\    Summary: Copy a point from the point tables to the L0C00 workspace
+\    Summary: Copy a point from the point tables to the variable workspace
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22775,37 +22837,34 @@ NEXT
 \
 \   Y                   The ID of the point to copy from the point tables
 \
-\   X                   The low byte of the workspace point to update (x, y, z):
+\   X                   The low byte of the x-coordinate of the 16-bit workspace
+\                       point to update:
 \
-\                         * LO(L0C03) = L0C03, L0C04, airspeedLo
-\                                       L0C13, L0C14, airspeedHi
+\                         * LO(xVelocityLo) = (xVelocity, yVelocity, zVelocity)
 \
-\                         * LO(L0C83) = L0C83, L0C84, L0C85
-\                                       L0C93, L0C94, L0C95
+\                         * LO(xCoord1Lo) = (xCoord1, yCoord1, zCoord1)
 \
-\                         * LO(L0C86) = L0C86, L0C87, L0C88
-\                                       L0C96, L0C97, L0C98
+\                         * LO(xCoord2Lo) = (xCoord2, yCoord2, zCoord2)
 \
-\                         * LO(xTemp2Lo) = xTemp2Lo, yTemp2Lo, zTemp2Lo
-\                                          xTemp2Hi, yTemp2Hi, zTemp2Hi
+\                         * LO(xTemp2Lo) = (xTemp2, yTemp2, zTemp2)
 \
 \ ******************************************************************************
 
 .CopyPointToWork
 
- LDA xPointLo,Y         \ Copy the Y-th point coordinate to the X-th tuple from
- STA L0C00,X            \ the L0C00 workspace, starting with the low bytes
+ LDA xPointLo,Y         \ Copy the Y-th point coordinate to the X-th coordinate
+ STA xTurnLo,X          \ in the variable workspace, starting with the low bytes
  LDA yPointLo,Y
- STA turnLo,X
+ STA yTurnLo,X
  LDA zPointLo,Y
- STA L0C02,X
+ STA zTurnLo,X
 
  LDA xPointHi,Y         \ And then the high bytes
- STA L0C10,X
+ STA xTurnHi,X
  LDA yPointHi,Y
- STA turnHi,X
+ STA yTurnHi,X
  LDA zPointHi,Y
- STA L0C12,X
+ STA zTurnHi,X
 
  RTS                    \ Return from the subroutine
 
@@ -24004,12 +24063,12 @@ NEXT
                         \ We now ignore the high byte in K, so presumably it is
                         \ zero
 
- CLC                    \ Set K = A + airspeedHi
- ADC airspeedHi         \       = (Thrust / 8) + airspeedHi
+ CLC                    \ Set K = A + zVelocityHi
+ ADC zVelocityHi        \       = (Thrust / 8) + zVelocityHi
  STA K
 
  LDA #50                \ Set A = 50 - K
- SEC                    \       = 50 - ((Thrust / 8) + airspeedHi)
+ SEC                    \       = 50 - ((Thrust / 8) + zVelocityHi)
  SBC K
 
  BEQ engs2              \ If A = 0, jump to engs2 to set the engine choppiness
@@ -24031,8 +24090,8 @@ NEXT
                         \ indicating a smoother engine, and a higher value
                         \ making the sound jump up and down in pitch more
                         \
-                        \ In other words, the lower the air speed and thrust,
-                        \ the choppier the engine sound
+                        \ In other words, the lower the forward airspeed and
+                        \ thrust, the choppier the engine sound
                         \
                         \ We can apply this to the sound envelope for the engine
                         \ by altering the amount that the pitch changes in each
@@ -24057,7 +24116,7 @@ NEXT
                         \ pitch value
 
  LDA K                  \ Set A = K + 80
- CLC                    \       = (Thrust / 8) + airspeedHi + 50
+ CLC                    \       = (Thrust / 8) + zVelocityHi + 50
  ADC #80                \
                         \ so A is a higher value when we have higher thrust and
                         \ airspeed, which is what we want
@@ -24477,7 +24536,7 @@ NEXT
 \       Name: keyTable1
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: 
+\    Summary: High priority keys that are scanned first
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24505,7 +24564,7 @@ NEXT
 \       Name: keyTable2
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: 
+\    Summary: Lower priority keys that are scanned second
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25123,47 +25182,75 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ApplyFlightModel
+\       Name: ApplyFlightModel (Part 1 of 7)
 \       Type: Subroutine
-\   Category: 
-\    Summary: Apply the flight model to our plane
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\   Category: Flight model
+\    Summary: Apply the flight model to the plane, starting by calculating the
+\             effect of gravity
 \
 \ ******************************************************************************
 
 .ApplyFlightModel
 
- LDX #253               \ Set the point with ID 253 to (0, 0, 0)
- JSR SetPointToOrigin
+ LDX #253               \ Set the point with ID 253 to (0, 0, 0), so we can use
+ JSR SetPointToOrigin   \ it to store the vector for gravity's pull
 
- LDA #&FE
- LDX onGround
- STX L
- BEQ L502B
+                        \ When we are flying normally, the gravity vector is:
+                        \
+                        \   (0, &FE00, 0) = (0, -512, 0)
+                        \
+                        \ so, as you would expect, gravity pulls the plane down
+                        \ along the y-axis (which is the up-down axis)
 
- LDX ucStatus
- BEQ L502B
+ LDA #&FE               \ Set A = &FE to set as the high byte of point 253's
+                        \ y-coordinate for when we are flying normally
 
- LDX L0C94
- BPL L502B
+ LDX onGround           \ Set L to the value of onGround, so we can check it
+ STX L                  \ again in part 5
 
- STX Q
- LDA L0C84
- SEC
- ROR Q
- ROR A
- EOR #&FF
- STA yPointLo+253
- LDA #&FE
- CLC
+ BEQ fmod1              \ If onGround is zero then we are not on the ground,
+                        \ so jump to fmod1 to skip the following and set the
+                        \ gravity vector to (0, -512, 0)
+
+ LDX ucStatus           \ If ucStatus is zero then the undercarriage is up, so
+ BEQ fmod1              \ jump to fmod1 to skip the following and set the
+                        \ gravity vector to (0, -512, 0)
+
+ LDX yCoord1Hi          \ If yCoord1 is positive then ????, so
+ BPL fmod1              \ jump to fmod1 to skip the following and set the
+                        \ gravity vector to (0, -512, 0)
+
+                        \ If we get here then we are on the ground, the
+                        \ undercarriage is down, and yCoord1 is negative, so
+                        \ we need a different gravity vector
+
+ STX Q                  \ Set (Q A) = (yCoord1Hi yCoord1Lo)
+ LDA yCoord1Lo          \           = yCoord1
+
+ SEC                    \ Set (Q A) = (Q A) / 2
+ ROR Q                  \           = yCoord1 / 2
+ ROR A                  \
+                        \ making sure to retain the correct sign in bit 7 of Q
+
+ EOR #&FF               \ Set the low byte of the gravity vector's y-coordinate
+ STA yPointLo+253       \ to ~A ???
+
+ LDA #&FE               \ Set the high byte of the gravity vector's y-coordinate
+ CLC                    \ to &FE - Q - 1 = &FD - Q ???
  SBC Q
 
-.L502B
+.fmod1
 
- STA yPointHi+253
+ STA yPointHi+253       \ Store A in the high byte of point 253's y-coordinate
+
+                        \ Finally, we calculate point 253's coordinates in the
+                        \ world, so it will contain the gravity vector rotated
+                        \ by the plane's orientation, i.e. relative to the
+                        \ plane rather than the world
+                        \
+                        \ We can get away with only rotating in the pitch and
+                        \ roll axes as point 253 is on the y-axis, so the yaw
+                        \ rotation wouldn't affect the coordinates anyway
 
  LDA #253               \ Set GG to point ID 253, to pass to the call to 
  STA GG                 \ SetPointCoords
@@ -25171,10 +25258,48 @@ NEXT
  LDA #27                \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 4 in the calculation
 
- JSR SetPointCoords     \ Calculate the coordinates for point 253
+ JSR SetPointCoords     \ Calculate the coordinates for point 253 using matrix
+                        \ 4, which only performs the pitch and roll rotations
 
- LDX #LO(L0C89)         \ Set X so the call to CopyWorkToPoint copies the
-                        \ coordinates from (L0C89, verticalSpeed, L0C8B)
+                        \ So point 253 now contains gravity, rotated to the
+                        \ plane's point of view
+
+\ ******************************************************************************
+\
+\       Name: ApplyFlightModel (Part 2 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: 
+\
+\ ******************************************************************************
+
+                        \ The following code takes the (xSpeed, ySpeed, zSpeed)
+                        \ vector, rotates it by the plane's orientation and
+                        \ stores it in the (xVelocity, yVelocity, zVelocity)
+                        \ vector
+                        \
+                        \ The (xSpeed, ySpeed, zSpeed) vector is the velocity
+                        \ of the plane with respect to the outside world, so
+                        \ ySpeed is the vertical speed of the plane (as shown on
+                        \ the vertical speed indicator) which is unaffected by
+                        \ how the plane is orientated (a plane dropping out of
+                        \ the sky is still dropping out of the sky, even when
+                        \ it's tumbling)
+                        \
+                        \ The (xVelocity, yVelocity, zVelocity) vector is the
+                        \ velocity of the plane with respect to the plane
+                        \ itself, so zVelocity is the forward speed of the plane
+                        \ from the point of view of the pilot - it's the speed
+                        \ of the air rushing past us as we fly, so this is the
+                        \ speed we show on the airspeed indicator
+                        \
+                        \ The following code calculates the latter from the
+                        \ former by setting point 255 to the speed vector,
+                        \ rotating it by the plane's orientation angles, and
+                        \ storing the result in the velocity vector
+
+ LDX #LO(xSpeedLo)      \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xSpeed, ySpeed, zSpeed)
 
  LDY #255               \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point 255
@@ -25182,22 +25307,23 @@ NEXT
  STY GG                 \ Set GG to point ID 255, to pass to the call to 
                         \ SetPointCoords
 
- JSR CopyWorkToPoint    \ Copy the coordinates from (L0C89, verticalSpeed,
-                        \ L0C8B) to point 255
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xSpeed, ySpeed, zSpeed)
+                        \ to point 255
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 1 in the calculation
+ STA matrixNumber       \ uses matrix 1 in the calculation, which will rotate
+                        \ the point by the plane's pitch, roll and yaw angles
 
  JSR SetPointCoords     \ Calculate the coordinates for point 255
 
- LDX #LO(L0C03)         \ Set X so the call to CopyPointToWork copies the
-                        \ coordinates to (L0C03, L0C04, airspeed)
+ LDX #LO(xVelocityLo)   \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (xVelocity, yVelocity, zVelocity)
 
  LDY #255               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from point 255
 
  JSR CopyPointToWork    \ Copy the coordinates from point 255 to
-                        \ (L0C03, L0C04, airspeed)
+                        \ (xVelocity, yVelocity, zVelocity)
 
  JSR L5295
 
@@ -25205,12 +25331,21 @@ NEXT
 
  JSR L5408
 
- LDA hitTimer
- BEQ L5081
+\ ******************************************************************************
+\
+\       Name: ApplyFlightModel (Part 3 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: If we are near to an exploding alien, apply turbulence
+\
+\ ******************************************************************************
+
+ LDA hitTimer           \ If the hit timer is zero, then there are no exploding
+ BEQ fmod3              \ aliens, so jump to fmod3 to skip this part
 
  LDX #&6A
 
-.L5062
+.fmod2
 
  JSR NextRandomNumber   \ Set A to point to the next item in the randomNumbers
                         \ list
@@ -25219,21 +25354,31 @@ NEXT
  LDA randomNumbers+1,Y
  STA P
 
- LDA distanceFromHit    \ If distanceFromHit >= 16, jump to L5081 to skip the
+ LDA distanceFromHit    \ If distanceFromHit >= 16, jump to fmod3 to skip the
  CMP #16                \ following
- BCS L5081
+ BCS fmod3
 
  EOR #&0F               \ Apply turbulence?
  ASL A
  LSR P
+
  LDY #1
  JSR L57BB
 
  INX
  CPX #&6D
- BNE L5062
+ BNE fmod2
 
-.L5081
+\ ******************************************************************************
+\
+\       Name: ApplyFlightModel (Part 4 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: 
+\
+\ ******************************************************************************
+
+.fmod3
 
  JSR L555D
 
@@ -25243,132 +25388,151 @@ NEXT
  LDA #0
  SBC xPointHi+252
  STA slipRate
- LDA L
- BNE L5099
 
- JMP L5151
+\ ******************************************************************************
+\
+\       Name: ApplyFlightModel (Part 5 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: Checks for when we are on the ground
+\
+\ ******************************************************************************
 
-.L5099
+ LDA L                  \ Fetch the value of onGround that we stored in L above
+
+ BNE fmod4              \ If onGround is non-zero then we are on the ground, so
+                        \ jump to fmod4 to keep going
+
+ JMP fmod17             \ We are not on the ground, so jump to fmod17 to move on
+                        \ to the next part
+
+.fmod4
 
  LDX #0
  LDY #0
- LDA airspeedHi
- BMI L50B1
 
- BNE L50AB
+ LDA zVelocityHi        \ If the forward airspeed is negative, jump to fmod6
+ BMI fmod6
 
- LDA airspeedLo
- CMP #&14
- BCC L50B1
+ BNE fmod5              \ If the high byte of the forward airspeed is non-zero,
+                        \ jump to fmod5
 
-.L50AB
+                        \ If we get here then the high byte of the foreard
+                        \ airspeed is zero
+
+ LDA zVelocityLo        \ If the low byte of the forward airspeed is less than
+ CMP #20                \ 20, jump to fmod6
+ BCC fmod6
+
+.fmod5
 
  LDY rudderPosition
- BPL L50B1
+ BPL fmod6
 
  DEX
 
-.L50B1
+.fmod6
 
- STY turnLo
+ STY yTurnLo
  TXA
  LDX #1
 
-.L50B7
+.fmod7
 
- ASL turnLo
+ ASL yTurnLo
  ROL A
  DEX
- BPL L50B7
+ BPL fmod7
 
- STA turnHi
- LDX #&82
- JSR L57F6
+ STA yTurnHi
+
+ LDX #&82               \ Set (L0C92 L0C82) = 0
+ JSR ResetVariable
 
  STA L0C32
  LDY ucStatus
- BNE L50E7
+ BNE fmod9
 
  LDA xRotationHi
  AND L0C90
- BPL L50DE
+ BPL fmod8
 
- LDX #&80
- JSR L57F6
+ LDX #&80               \ Set (L0C90 L0C80) = 0
+ JSR ResetVariable
 
  STA L0C30
 
-.L50DE
+.fmod8
 
  JSR CheckRunway
 
- BCC L50F5
+ BCC fmod10
 
  LDA #&32
- BNE L50F7
+ BNE fmod11
 
-.L50E7
+.fmod9
 
  LDX brakesStatus
- BNE L50DE
+ BNE fmod8
 
  JSR CheckRunway
 
- BCC L5127
+ BCC fmod15
 
  LDA #7
- BNE L50F7
+ BNE fmod11
 
-.L50F5
+.fmod10
 
  LDA #&0B
 
-.L50F7
+.fmod11
 
- LDX airspeedHi
- BMI L5113
+ LDX zVelocityHi
+ BMI fmod12
 
- BNE L5115
+ BNE fmod13
 
- LDX airspeedLo
- BEQ L5123
+ LDX zVelocityLo
+ BEQ fmod14
 
  CPX #&0B
- BCS L5115
+ BCS fmod13
 
  LDA #0
  STA zPointLo+252
  LDA #&FF
  STA zPointHi+252
- BNE L5123
+ BNE fmod14
 
-.L5113
+.fmod12
 
  LDA #&F8
 
-.L5115
+.fmod13
 
  STA P
  SEC
  LDA zPointHi+252
  SBC P
  STA zPointHi+252
- JMP L5127
+ JMP fmod15
 
-.L5123
+.fmod14
 
  LDA #%01000000
- BNE L5129
+ BNE fmod16
 
-.L5127
+.fmod15
 
  LDA #0
 
-.L5129
+.fmod16
 
  STA landingStatus
 
- LDA L0C03
+ LDA xVelocityLo
  LSR A
  STA P
  LDX #0
@@ -25376,7 +25540,7 @@ NEXT
  TXA
  ROR A
  STA V
- LDA L0C13
+ LDA xVelocityHi
  AND #&80
  ORA P
  STA Q
@@ -25388,7 +25552,16 @@ NEXT
  SBC Q
  STA xPointHi+252
 
-.L5151
+\ ******************************************************************************
+\
+\       Name: ApplyFlightModel (Part 6 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: 
+\
+\ ******************************************************************************
+
+.fmod17
 
  LDA #9                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 2 in the calculation
@@ -25403,21 +25576,21 @@ NEXT
  SBC #&10
  STA yPointHi+252
 
- LDX #LO(L0C83)         \ Set X so the call to CopyPointToWork copies the
-                        \ coordinates to (L0C83, L0C84, L0C85)
+ LDX #LO(xCoord1Lo)     \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (xCoord1, yCoord1, zCoord1)
 
  LDY #252               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from point 252
 
  JSR CopyPointToWork    \ Copy the coordinates from point 252 to
-                        \ (L0C83, L0C84, L0C85)
+                        \ (xCoord1, yCoord1, zCoord1)
 
  JSR L51F9
 
  JSR L51D7
 
- LDX #LO(L0C00)         \ Set X so the call to CopyWorkToPoint copies the
-                        \ coordinates from (L0C00, turnLo, L0C02)
+ LDX #LO(xTurnLo)       \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xTurnLo, yTurnLo, zTurnLo)
 
  LDY #254               \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point 254
@@ -25425,7 +25598,7 @@ NEXT
  STY GG                 \ Set GG to point ID 254, to pass to the call to 
                         \ SetPointCoords
 
- JSR CopyWorkToPoint    \ Copy the coordinates from (L0C00, turnLo, L0C02)
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xTurnLo, yTurnLo, zTurnLo)
                         \ to point 254
 
  LDA #18                \ Set the matrix number so the call to SetPointCoords
@@ -25433,14 +25606,14 @@ NEXT
 
  JSR SetPointCoords     \ Calculate the coordinates for point 254
 
- LDX #LO(L0C86)         \ Set X so the call to CopyPointToWork copies the
-                        \ coordinates to (L0C86, L0C87, L0C88)
+ LDX #LO(xCoord2Lo)     \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (xCoord2, yCoord2, zCoord2)
 
  LDY #254               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from point 254
 
  JSR CopyPointToWork    \ Copy the coordinates from point 254 to
-                        \ (L0C86, L0C87, L0C88)
+                        \ (xCoord2, yCoord2, zCoord2)
 
  JSR L522D
 
@@ -25452,11 +25625,20 @@ NEXT
  JSR ShowUpsideDownBar  \ Show or hide the bar in the artificial horizon that
                         \ shows whether the plane is upside down
 
- LDA fuelLevel          \ If the fuel tank is empty, jump to L51D1 to turn the
- BEQ L51D1              \ engine off, as we just ran out of fuel
+\ ******************************************************************************
+\
+\       Name: ApplyFlightModel (Part 7 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: Calculate fuel usage
+\
+\ ******************************************************************************
 
- LDA engineStatus       \ If the engine is off, jump to L51D6 to return from
- BEQ L51D6              \ the subroutine
+ LDA fuelLevel          \ If the fuel tank is empty, jump to fmod19 to turn the
+ BEQ fmod19             \ engine off, as we just ran out of fuel
+
+ LDA engineStatus       \ If the engine is off, jump to fmod20 to return from
+ BEQ fmod20             \ the subroutine
 
                         \ Otherwise the engine is on and we are not yet out of
                         \ fuel, so we need to calculate the correct consumption
@@ -25469,14 +25651,14 @@ NEXT
  LDX #3                 \ We now shift (R A) right by four places, so set a
                         \ shift counter in X
 
-.L51AD
+.fmod18
 
  LSR R                  \ Set (R A) = (R A) / 2
  ROR A
 
  DEX                    \ Decrement the shift counter
 
- BPL L51AD              \ Loop back until we have shifted (R A) four times
+ BPL fmod18              \ Loop back until we have shifted (R A) four times
 
                         \ By now we have:
                         \
@@ -25510,7 +25692,7 @@ NEXT
  ADC fuelUsedLo
  STA fuelUsedLo
 
- BCC L51D6              \ If the addition didn't overflow, jump to L51D6
+ BCC fmod20             \ If the addition didn't overflow, jump to fmod20
                         \ to return from the subroutine
 
  LDA #4                 \ The addition overflowed, so set:
@@ -25518,26 +25700,26 @@ NEXT
  ADC fuelUsedHi         \   fuelUsedHi = fuelUsedHi + 4
  STA fuelUsedHi
 
- BCC L51D6              \ If the addition didn't overflow, jump to L51D6
+ BCC fmod20             \ If the addition didn't overflow, jump to fmod20
                         \ to return from the subroutine
 
                         \ The addition overflowed, so it's time to reduce our
                         \ fuel level
 
- LDA fuelLevel          \ If the fuel tank is already empty, jump to L51D1 to
- BEQ L51D1              \ turn the engine off, as we just ran out of fuel
+ LDA fuelLevel          \ If the fuel tank is already empty, jump to fmod19 to
+ BEQ fmod19             \ turn the engine off, as we just ran out of fuel
 
  DEC fuelLevel          \ Otherwise decrement the fuel level by 1
 
- BNE L51D6              \ If the fuel tank is still not empty, jump to L51D6 to
+ BNE fmod20             \ If the fuel tank is still not empty, jump to fmod20 to
                         \ return from the subroutine
 
-.L51D1
+.fmod19
 
  LDA #0                 \ The fuel tank is emptry, so turn the engine off
  JSR SetEngine
 
-.L51D6
+.fmod20
 
  RTS                    \ Return from the subroutine
 
@@ -25565,11 +25747,11 @@ NEXT
  ADC L0C19,X
  STA L0C19,X
  LDA L0C80,X
- ADC L0C00,X
- STA L0C00,X
+ ADC xTurnLo,X
+ STA xTurnLo,X
  LDA L0C90,X
- ADC L0C10,X
- STA L0C10,X
+ ADC xTurnHi,X
+ STA xTurnHi,X
  DEX
  BPL L51D9
 
@@ -25596,9 +25778,9 @@ NEXT
 
  LDA #0
  STA R
- LDA L0C83,X
+ LDA xCoord1Lo,X
  STA V
- LDA L0C93,X
+ LDA xCoord1Hi,X
  BPL L520B
 
  DEC R
@@ -25614,11 +25796,11 @@ NEXT
  ADC V
  STA L0C8C,X
  PLA
- ADC L0C89,X
- STA L0C89,X
- LDA L0C99,X
+ ADC xSpeedLo,X
+ STA xSpeedLo,X
+ LDA xSpeedHi,X
  ADC R
- STA L0C99,X
+ STA xSpeedHi,X
  DEX
  BPL L51FB
 
@@ -25647,9 +25829,9 @@ NEXT
  STA R
  LDA L0C09,X
  CLC
- ADC L0C89,X
+ ADC xSpeedLo,X
  STA L0C09,X
- LDA L0C99,X
+ LDA xSpeedHi,X
  BPL L5244
 
  DEC R
@@ -25666,10 +25848,10 @@ NEXT
  STA xPlaneTop,X
  LDA xRotationLo,X
  CLC
- ADC L0C86,X
+ ADC xCoord2Lo,X
  STA xRotationLo,X
  LDA xRotationHi,X
- ADC L0C96,X
+ ADC xCoord2Hi,X
  STA xRotationHi,X
  DEX
  BPL L522F
@@ -25722,11 +25904,11 @@ NEXT
 
 .L529D
 
- LDA L0C03,X
+ LDA xVelocityLo,X
  STA P
  ASL A
  STA L0C43,X
- LDA L0C13,X
+ LDA xVelocityHi,X
  PHA
  ROL A
  STA L0C53,X
@@ -25738,7 +25920,7 @@ NEXT
  SBC P
  STA P
  LDA #0
- SBC L0C13,X
+ SBC xVelocityHi,X
 
 .L52BD
 
@@ -25784,7 +25966,8 @@ NEXT
  ROL SS
  LDY SS
  LDX RR
- JSR L57E4
+
+ JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
 
  STY SS
  STX RR
@@ -25792,20 +25975,20 @@ NEXT
  CMP #&27
  BNE L5307
 
- LDA airspeedHi
+ LDA zVelocityHi
  CMP #&0B
  BCC L533A
 
 .L5307
 
  LDA J
- CMP airspeedHi
+ CMP zVelocityHi
  BCC L5347
 
  BNE L5317
 
  LDA I
- CMP airspeedLo
+ CMP zVelocityLo
  BCC L5347
 
 .L5317
@@ -25823,11 +26006,11 @@ NEXT
  CMP #&27
  BEQ L533A
 
- LDA turnHi
+ LDA yTurnHi
  ASL A
  LDY #4
  LDX #2
- LDA L0C10
+ LDA xTurnHi
  EOR #&3F
  JSR L57BB
 
@@ -25963,8 +26146,8 @@ NEXT
  PLP
  BEQ L53F6
 
- SEC
- JSR L54AC
+ SEC                    \ Negate (G W)
+ JSR Negate16Bit
 
 .L53F6
 
@@ -26010,7 +26193,8 @@ NEXT
  STA R
  LDY L0C40,X
  LDA L0C50,X
- JSR L546E
+
+ JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
 
  LDX VV
  CPX #4
@@ -26079,118 +26263,146 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L546E
+\       Name: Multiply8x16
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Multiply an 8-bit and a 16-bit number
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine multiplies an unsigned 8-bit and a signed 16-bit number, as
+\ follows:
+\
+\   (G W V) = (Q P) * R
+\
+\ It uses the following algorithm:
+\
+\     (Q P) * R
+\   = (Q << 8 + P) * R
+\   = (Q << 8) * R + (P * R)
+\   = (Q * R) << 8 + (P * R)
+\
+\ Arguments:
+\
+\   (Q P)               A signed 16-bit number
+\
+\   R                   An unsigned 8-bit number
+\
+\ Returns:
+\
+\   (G W V)             The result, (Q P) * R
+\
+\   A                   The high byte of the result (G)
+\
+\ Other entry points:
+\
+\   Multiply8x16-2      Store X in VV before doing the calculation
+\
+\   Multiply8x16-6      Store X in VV and calculate (G W V) = (A Y) * R
 \
 \ ******************************************************************************
 
-.L546E
-
- STY P
+ STY P                  \ Set (Q P) = (A Y)
  STA Q
 
-\ ******************************************************************************
-\
-\       Name: L5472
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+ STX VV                 \ Store X in VV
 
-.L5472
+.Multiply8x16
 
- STX VV
+ LDX Q                  \ Set X to the high byte of the argument in (Q P)
 
-\ ******************************************************************************
-\
-\       Name: L5474
-\       Type: Subroutine
-\   Category: 
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+ BPL muly1              \ If X is positive, jump to muly1 to skip the following
 
-.L5474
-
- LDX Q
- BPL L5484
-
- LDA #0
- SEC
- SBC P
+ LDA #0                 \ Set (X P) = 0 - (Q P)
+ SEC                    \
+ SBC P                  \ Starting with the low bytes
  STA P
- LDA #0
+
+ LDA #0                 \ And then the high bytes
  SBC Q
  TAX
 
-.L5484
+.muly1
 
- LDY R
+                        \ By this point, (X P) is positive, and we have:
+                        \
+                        \   (X P) = |Q P|
 
- JSR Multiply8x8        \ Set (A V) = X * Y
+ LDY R                  \ Set (A V) = X * Y
+ JSR Multiply8x8        \           = |Q| * R
 
- STA G
- LDA V
+ STA G                  \ Set (G W) = (A V)
+ LDA V                  \           = |Q| * R
  STA W
- LDY R
- LDX P
 
- JSR Multiply8x8        \ Set (A V) = X * Y
+ LDY R                  \ Set (A V) = X * Y
+ LDX P                  \           = P * R
+ JSR Multiply8x8
 
- CLC
- ADC W
- STA W
- LDA #0
+                        \ We now calculate the following:
+                        \
+                        \   (G W V) = (G W 0) + (0 A V)
+                        \           = (G W) << 8 + (P * R)
+                        \           = (|Q| * R) << 8 + (P * R)
+                        \
+                        \ which is the result we want
+                        \
+                        \ We we don't need to calculate the lowest bytes, as we
+                        \ already know that V + 0 = V, so we just do the middle
+                        \ and high bytes
+
+ CLC                    \ Set (G W V) = (G W 0) + (0 A V)
+ ADC W                  \
+ STA W                  \ starting with the middle bytes
+
+ LDA #0                 \ And then the top bytes
  ADC G
  STA G
- LDX Q
- BPL L54B8
 
- LDA #0
- SEC
+ LDX Q                  \ If the original argument (Q P) was positive, the
+ BPL L54B9-1            \ result already has the correct sign, so return from
+                        \ the subroutine (as L54B9-1 contains an RTS)
+
+ LDA #0                 \ Otherwise we want to negate (G W V), so start with by
+ SEC                    \ negating V
  SBC V
  STA V
 
+                        \ And fall through into Negate16Bit to negate (G W) and
+                        \ return that as our result
+
 \ ******************************************************************************
 \
-\       Name: L54AC
+\       Name: Negate16Bit
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Negate a 16-bit number
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   (G W)               The 16-bit value to be negated
+\
+\   C flag              Must be set on entry to get the correct result
+\
+\ Returns:
+\
+\   (G W)               The original value, negated, i.e. -(G W)
 \
 \ ******************************************************************************
 
-.L54AC
+.Negate16Bit
 
- LDA #0
- SBC W
+ LDA #0                 \ Negate (G W) by setting (G W) = 0 - (G W), starting
+ SBC W                  \ with the low byte
  STA W
- LDA #0
+
+ LDA #0                 \ And then the high byte
  SBC G
  STA G
 
-.L54B8
-
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -26213,13 +26425,14 @@ NEXT
 
  LDA #&7D
  STA R
- LDA L0C00,X
+ LDA xTurnLo,X
  STA P
- LDA L0C10,X
+ LDA xTurnHi,X
  STA Q
  ASL P
  ROL Q
- JSR L5472
+
+ JSR Multiply8x16-2     \ Store X in VV and set (G W V) = (Q P) * R
 
  LDA VV
  TAX
@@ -26237,10 +26450,10 @@ NEXT
 
  SEC
  LDA #0
- SBC L0C02
+ SBC zTurnLo
  STA L0C08
  LDA #0
- SBC L0C12
+ SBC zTurnHi
  ASL L0C08
  ROL A
  STA L0C18
@@ -26323,14 +26536,15 @@ NEXT
  STA R
  LDY L0C45
  LDA L0C55
- JSR L546E
+
+ JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
 
  LDX VV
  LDY elevatorPosition,X
  BPL L554F
 
- SEC
- JSR L54AC
+ SEC                    \ Negate (G W)
+ JSR Negate16Bit
 
 .L554F
 
@@ -26419,7 +26633,7 @@ NEXT
  SBC L0C74
  STA yPointHi+252
 
- LDA airspeedHi         \ Set A to the high byte of our airspeed
+ LDA zVelocityHi        \ Set A to the high byte of our airspeed
 
  BMI L55F3              \ If it is negative, jump down to L55F3 to skip the
                         \ following checks
@@ -26448,7 +26662,7 @@ NEXT
 
  STA H
  STA G
- LDA airspeedLo
+ LDA zVelocityLo
  LDX #3
 
 .L5603
@@ -26500,7 +26714,7 @@ NEXT
 
 .L563A
 
- JSR L57E4
+ JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
 
  TXA
  SEC
@@ -26534,21 +26748,23 @@ NEXT
  SBC xObjectLo+1
  LDA xPlaneHi
  SBC xObjectHi+1
- BNE L566E
+ BNE crun1
 
  LDA zPlaneLo
  SEC
  SBC zObjectLo+1
  LDA zPlaneHi
  SBC zObjectHi+1
- BMI L566E
+ BMI crun1
 
  CMP #&18
+
  RTS
 
-.L566E
+.crun1
 
  SEC
+
  RTS
 
 \ ******************************************************************************
@@ -26567,11 +26783,11 @@ NEXT
 .CheckLanding
 
  LDA L
- BEQ L568F
+ BEQ clan1
 
  JSR CheckRunway
 
- BCC L568F
+ BCC clan1
 
  ASL landingStatus      \ Shift landingStatus left and set bit 0
 
@@ -26590,96 +26806,96 @@ NEXT
  LSR A
  JSR L57B3
 
-.L568F
+.clan1
 
  LDA yPlaneHi
- BMI L56A3
+ BMI clan3
 
- BEQ L56A8
+ BEQ clan4
 
  CMP #2
- BCC L569D
+ BCC clan2
 
  STA reached512ft       \ Set reached512ft = 2 when yPlaneHi >= 2
 
-.L569D
+.clan2
 
  LDA #0
  STA onGround
  RTS
 
-.L56A3
+.clan3
 
- LDX #&EE
- JSR L57F6
+ LDX #&EE               \ Set (yPlaneHi yPlaneLo) = 0
+ JSR ResetVariable
 
-.L56A8
+.clan4
 
  LDA L0CF0
  CMP yPlaneLo
- BCC L569D
+ BCC clan2
 
  LDX L
- BEQ L5701
+ BEQ clan10
 
  STA yPlaneLo
- LDX verticalSpeedHi
- BPL L56C1
+ LDX ySpeedHi
+ BPL clan5
 
- LDX #&8A
- JSR L57F6
+ LDX #&8A               \ Set (ySpeedHi ySpeedLo) = 0
+ JSR ResetVariable
 
-.L56C1
+.clan5
 
- LDX #&EC
- JSR L57F6
+ LDX #&EC               \ Set (zRotationHi zRotationLo) = 0
+ JSR ResetVariable
 
- LDX #2
- JSR L57F6
+ LDX #&02               \ Set (zTurnHi zTurnLo) = 0
+ JSR ResetVariable
 
  LDX ucStatus
- BNE L56E8
+ BNE clan9
 
  LDX landingStatus
- BMI L56D8
+ BMI clan6
 
  ASL landingStatus
 
-.L56D8
+.clan6
 
  LDX xRotationHi
- BPL L56E7
+ BPL clan8
 
- LDX #&EA
- JSR L57F6
+ LDX #&EA               \ Set (xRotationHi xRotationLo) = 0
+ JSR ResetVariable
 
-.L56E2
+.clan7
 
- LDX #0
- JSR L57F6
+ LDX #&00               \ Set (xTurnHi xTurnLo) = 0
+ JSR ResetVariable
 
-.L56E7
+.clan8
 
  RTS
 
-.L56E8
+.clan9
 
  LDX xRotationHi
- BMI L56E7
+ BMI clan8
 
  CPX #7
- BCC L56E7
+ BCC clan8
 
  LDA #7
  STA xRotationHi
  LDA #0
  STA xRotationLo
- LDX L0C10
- BPL L56E2
+ LDX xTurnHi
+ BPL clan7
 
  RTS
 
-.L5701
+.clan10
 
  SEC
  SBC yPlaneLo
@@ -26687,31 +26903,31 @@ NEXT
  CLC
  ADC L0CF0
  STA yPlaneLo
- LDA verticalSpeedHi
- BPL L5720
+ LDA ySpeedHi
+ BPL clan11
 
  SEC
  LDA #0
- SBC verticalSpeedLo
- STA verticalSpeedLo
+ SBC ySpeedLo
+ STA ySpeedLo
  LDA #0
- SBC verticalSpeedHi
+ SBC ySpeedHi
 
-.L5720
+.clan11
 
- STA verticalSpeedHi
+ STA ySpeedHi
  LSR A
- BNE L573D
+ BNE clan13
 
- LDA verticalSpeedLo
+ LDA ySpeedLo
  ROR A
  STA R
 
  LDX ucStatus           \ If ucStatus is non-zero, then the undercarriage
- BNE L5739              \ is down, so jump to L5739
+ BNE clan12             \ is down, so jump to clan12
 
                         \ If we get here then the undercarriage is up and
-                        \ verticalSpeedHi / 2 = 0, so we are in the process of
+                        \ ySpeedHi / 2 = 0, so we are in the process of
                         \ making a crash landing (or we've pulled up the
                         \ undercarriage when still on the runway)
 
@@ -26719,102 +26935,104 @@ NEXT
  STX propellorStatus    \ is broken, so we can't turn the engine on again
 
  CMP #&A0
- BCC L5740
+ BCC clan14
 
-.L5739
+.clan12
 
  CMP #&6E
- BCC L5745
+ BCC clan15
 
-.L573D
+.clan13
 
  JMP Crash
 
-.L5740
+.clan14
 
  LDA #0                 \ Turn the engine off
  JSR SetEngine
 
-.L5745
+.clan15
 
  JSR CheckRunway
 
- BCC L575A
+ BCC clan16
 
  LDA R
- STA verticalSpeedLo
+ STA ySpeedLo
  LDX ucStatus
- BEQ L575A
+ BEQ clan16
 
  CMP #&50
- BCC L5762
+ BCC clan17
 
- BCS L573D
+ BCS clan13
 
-.L575A
+.clan16
 
  LDA #26                \ Make sound #26, the sound of us making contact with
  JSR MakeSound          \ the ground without having our undercarriage down
 
  JSR ResetEngineSound
 
-.L5762
+.clan17
 
  LDY zRotationLo
  LDA zRotationHi
- JSR L546E
 
- SEC
- JSR L54AC
+ JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
+
+ SEC                    \ Negate (G W)
+ JSR Negate16Bit
 
  LDA #0
  STA T
  LDA G
- BPL L5779
+ BPL clan18
 
  DEC T
 
-.L5779
+.clan18
 
  LDX #1
 
-.L577B
+.clan19
 
  LSR T
  ROR A
  ROR W
  DEX
- BPL L577B
+ BPL clan19
 
- STA L0C12
+ STA zTurnHi
  LDA W
- STA L0C02
- LDX #&EC
- JSR L57F6
+ STA zTurnLo
+
+ LDX #&EC               \ Set (zRotationHi zRotationLo) = 0
+ JSR ResetVariable
 
  LDA xRotationHi
- BPL L579F
+ BPL clan20
 
  LDA ucStatus
- BNE L579F
+ BNE clan20
 
- LDX #&EA
- JSR L57F6
+ LDX #&EA               \ Set (xRotationHi xRotationLo) = 0
+ JSR ResetVariable
 
-.L579F
+.clan20
 
  LDA R
  CMP #&0C
- BCS L57B2
+ BCS clan21
 
  LDA yPlaneLo
  CMP L0CF0
- BNE L57B2
+ BNE clan21
 
  LDA #1                 \ Set onGround = 1 to denote that we are on the ground
  STA onGround
 
-.L57B2
+.clan21
 
  RTS
 
@@ -26833,8 +27051,8 @@ NEXT
 
 .L57B3
 
- LDA airspeedHi
- BMI L57E3
+ LDA zVelocityHi        \ If zVelocityHi is negative, return from the subroutine
+ BMI ScaleAltitude-1    \ (as ScaleAltitude-1 contains an RTS)
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
@@ -26876,67 +27094,96 @@ NEXT
  PLP
  BCC L57D2
 
- JSR L54AC
+ JSR Negate16Bit        \ We know the C flag is set at this point as we just
+                        \ passed through a BCC, so this negates (G W)
 
 .L57D2
 
  LDA W
  CLC
- ADC L0C00,X
- STA L0C00,X
+ ADC xTurnLo,X
+ STA xTurnLo,X
  LDA G
- ADC L0C10,X
- STA L0C10,X
-
-.L57E3
+ ADC xTurnHi,X
+ STA xTurnHi,X
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L57E4
+\       Name: ScaleAltitude
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Multiply the high byte of the plane's altitude by a 16-bit number
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Calculate:
+\
+\   (Y X V) = (Y X) * ~yPlaneHi
+\
+\ Arguments:
+\
+\   (Y X)               A signed 16-bit number
+\
+\ Returns:
+\
+\   (Y X V)             The result, (Y X) * ~yPlaneHi
 \
 \ ******************************************************************************
 
-.L57E4
+.ScaleAltitude
 
- STY Q
+ STY Q                  \ Set (Q P) = (Y X)
  STX P
- LDA yPlaneHi
+
+ LDA yPlaneHi           \ Set R = ~yPlaneHi
  EOR #&FF
  STA R
- JSR L5474
 
- TAY
+ JSR Multiply8x16       \ Set (G W V) = (Q P) * R
+                        \             = (Y X) * ~yPlaneHi
+                        \
+                        \ and also set A to the high byte of the result
+
+ TAY                    \ Set (Y X V) = (G W V)
  LDX W
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L57F6
+\       Name: ResetVariable
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Utility routines
+\    Summary: Set a 16-bit in the variable workspace to 0
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   X                   The offset from xTurnLo of the low byte of the variable
+\                       to zero:
+\
+\                         * &00 = (xTurnHi xTurnLo)
+\                         * &02 = (zTurnHi zTurnLo)
+\                         * &80 = (L0C90 L0C80)
+\                         * &82 = (L0C92 L0C82)
+\                         * &8A = (ySpeedHi ySpeedLo)
+\                         * &EA = (xRotationHi xRotationLo)
+\                         * &EC = (zRotationHi zRotationLo)
+\                         * &EE = (yPlaneHi yPlaneLo)
 \
 \ ******************************************************************************
 
-.L57F6
+.ResetVariable
 
- LDA #0
- STA L0C00,X
- STA L0C10,X
- RTS
+ LDA #0                 \ Zero the X-th byte from xTurnLo
+ STA xTurnLo,X
+
+ STA xTurnHi,X          \ Zero the X-th byte from xTurnHi
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
