@@ -505,17 +505,20 @@ ORG &0900
 
  SKIP 1                 \ Turn rate around the z-axis (high byte)
 
-.xVelocityLo
+.xVelocityPLo
 
- SKIP 1                 \ Plane velocity along the x-axis (low byte)
+ SKIP 1                 \ Plane velocity along the x-axis from the perspective
+                        \ of the pilot (low byte)
 
-.yVelocityLo
+.yVelocityPLo
 
- SKIP 1                 \ Plane velocity along the y-axis (low byte)
+ SKIP 1                 \ Plane velocity along the y-axis from the perspective
+                        \ of the pilot (low byte)
 
-.zVelocityLo
+.zVelocityPLo
 
- SKIP 1                 \ Plane velocity along the a-axis (low byte)
+ SKIP 1                 \ Plane velocity along the a-axis from the perspective
+                        \ of the pilot (low byte)
                         \
                         \ This is the same as the forward airspeed
                         \
@@ -582,17 +585,20 @@ ORG &0900
 
  SKIP 1                 \ Turn rate around the z-axis (high byte)
 
-.xVelocityHi
+.xVelocityPHi
 
- SKIP 1                 \ Plane velocity along the x-axis (high byte)
+ SKIP 1                 \ Plane velocity along the x-axis from the perspective
+                        \ of the pilot (high byte)
 
-.yVelocityHi
+.yVelocityPHi
 
- SKIP 1                 \ Plane velocity along the y-axis (high byte)
+ SKIP 1                 \ Plane velocity along the y-axis from the perspective
+                        \ of the pilot (high byte)
 
-.zVelocityHi
+.zVelocityPHi
 
- SKIP 1                 \ Plane velocity along the a-axis (high byte)
+ SKIP 1                 \ Plane velocity along the z-axis from the perspective
+                        \ of the pilot (high byte)
                         \
                         \ This is the same as the forward airspeed
                         \
@@ -734,9 +740,18 @@ ORG &0900
 
  SKIP 3
 
-.L0C6A
+.xCoord3Lo
 
- SKIP 3
+ SKIP 1
+
+.yCoord3Lo
+
+ SKIP 1
+
+.zCoord3Lo
+
+ SKIP 1
+
 
 .xPlaneTop
 
@@ -777,9 +792,19 @@ ORG &0900
 
  SKIP 3
 
-.L0C7A
+.xCoord3Hi
 
- SKIP 6
+ SKIP 1
+
+.yCoord3Hi
+
+ SKIP 1
+
+.zCoord3Hi
+
+ SKIP 1
+
+ SKIP 3
 
 .L0C80
 
@@ -813,21 +838,23 @@ ORG &0900
 
  SKIP 1
 
-.xSpeedLo
+.xVelocityLo
 
- SKIP 1                 \ Speed in the x-axis (low byte)
+ SKIP 1                 \ Plane velocity in the x-axis from the perspective
+                        \ of the outside world (low byte)
 
-.ySpeedLo
+.yVelocityLo
 
- SKIP 1                 \ Speed in the y-axis (low byte)
+ SKIP 1                 \ Plane velocity in the y-axis from the perspective
+                        \ of the outside world (low byte)
                         \
                         \ This is the same as the vertical speed, and is from
-                        \ the perspective of the world, so ySpeed is the
-                        \ vertical speed of the plane, irrespective of how the
-                        \ plane is orientated
+                        \ the perspective of the world outside the plane, so
+                        \ yVelocity is the vertical speed of the plane,
+                        \ irrespective of how the plane is orientated
                         \
                         \ For the plane's speed from the point of view of the
-                        \ plane, see (xVelocity yVelocity zVelocity)
+                        \ plane, see (xVelocityP yVelocityP zVelocityP)
                         \
                         \ Stored as 128/425 * vertical speed in feet per minute,
                         \ so:
@@ -838,9 +865,10 @@ ORG &0900
                         \
                         \ Shown on indicator 4
 
-.zSpeedLo
+.zVelocityLo
 
- SKIP 1                 \ Speed in the z-axis (low byte)
+ SKIP 1                 \ Plane velocity in the z-axis from the perspective
+                        \ of the outside world (low byte)
 
 .L0C8C
 
@@ -878,21 +906,21 @@ ORG &0900
 
  SKIP 1
 
-.xSpeedHi
+.xVelocityHi
 
- SKIP 1                 \ Speed in the x-axis (high byte)
+ SKIP 1                 \ Plane velocity in the x-axis(high byte)
 
-.ySpeedHi
+.yVelocityHi
 
- SKIP 1                 \ Speed in the y-axis (high byte)
+ SKIP 1                 \ Plane velocity in the y-axis (high byte)
                         \
-                        \ This is the same as the vertical speed                        \
+                        \ This is the same as the vertical speed
                         \
                         \ Shown on indicator 4
 
-.zSpeedHi
+.zVelocityHi
 
- SKIP 1                 \ Speed in the z-axis (high byte)
+ SKIP 1                 \ Plane velocity in the z-axis (high byte)
 
 .slipRate
 
@@ -1378,10 +1406,14 @@ ORG &0900
                         \
                         \ Set to &485C in ResetVariables
 
-.L0CF0
+.yLandingGear
 
- SKIP 1                 \ Set to 5 if undercarriage is up, 10 if it is down in
-                        \ IndicatorU
+ SKIP 1                 \ The vertical distance between the cockpit and the
+                        \ lowest part of the plane
+                        \
+                        \   * 5 when undercarriage is up
+                        \
+                        \   * 10 when undercarriage is down
 
 .firingStatus
 
@@ -6772,8 +6804,8 @@ ORG CODE%
  LDA #0                 \ And then adding the carry to the high byte, so now we
  ADC sinHi,X            \ have the interim result for (0 A) + sin(X)
 
- PLP                    \ And finally adding C (which we retrieve from the stack)
- ADC #0                 \ to give the final result for (C A) + sin(X)
+ PLP                    \ And finally adding C (which we retrieve from the
+ ADC #0                 \ stack) to give the final result for (C A) + sin(X)
 
                         \ So at this point we have:
                         \
@@ -8678,7 +8710,7 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the forward airspeed from (zVelocityHi zVelocityLo) and
+\ This section takes the forward airspeed from (zVelocityPHi zVelocityPLo) and
 \ reduces it to match the scale of the indicator, which is represented by a
 \ value of 9 (for 50 mph) to 74 (for 400 mph). The airspeed value can be outside
 \ these limits, but these examples show the scale factor.
@@ -8692,7 +8724,7 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 1
 
- LDA zVelocityHi        \ If the high byte of the forward airspeed in zVelocity
+ LDA zVelocityPHi       \ If the high byte of the forward airspeed in zVelocityP
  BPL uind3              \ is positive, jump down to uind3 to skip the following
 
  LDA #0                 \ The airspeed is negative, so set A to 0 and jump to
@@ -8701,9 +8733,9 @@ ORG CODE%
 
 .uind3
 
- LDA zVelocityLo        \ Set A = (zVelocityHi zVelocityLo) * 2 / 256
+ LDA zVelocityPLo       \ Set A = (zVelocityPHi zVelocityPLo) * 2 / 256
  ASL A
- LDA zVelocityHi
+ LDA zVelocityPHi
  ROL A
 
                         \ So by now, A matches the range of the airspeed
@@ -8719,7 +8751,7 @@ ORG CODE%
                         \ represents 400 mph (as 48 + 74 = 122), for example
                         \
                         \ These values correspond to the following 16-bit values
-                        \ of (zVelocityHi zVelocityLo):
+                        \ of (zVelocityPHi zVelocityPLo):
                         \
                         \   * If A = 9, then airspeed = (00000100 10100000),
                         \     which is 1184, or 50 mph
@@ -8961,9 +8993,9 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the vertical speed from (ySpeedHi ySpeedLo) and reduces it
-\ to the range -40 to +40, before passing it to the DrawIndicatorHand routine to
-\ update the on-screen vertical speed indicator.
+\ This section takes the vertical speed from (yVelocityHi yVelocityLo) and
+\ reduces it to the range -40 to +40, before passing it to the DrawIndicatorHand
+\ routine to update the on-screen vertical speed indicator.
 \
 \ ******************************************************************************
 
@@ -8971,9 +9003,9 @@ ORG CODE%
 
                         \ If we get here then the indicator number in X is 4
 
- LDA ySpeedLo           \ Set (A T) = (ySpeedHi ySpeedLo)
- STA T                  \           = ySpeed
- LDA ySpeedHi
+ LDA yVelocityLo        \ Set (A T) = (yVelocityHi yVelocityLo)
+ STA T                  \           = yVelocity
+ LDA yVelocityHi
 
  BPL uind9              \ If the vertical speed is positive, jump down to uind9
 
@@ -8985,14 +9017,14 @@ ORG CODE%
                         \ starting with the low bytes
 
  LDA #0                 \ And then the high bytes
- SBC ySpeedHi
+ SBC yVelocityHi
 
 .uind9
 
-                        \ By this point, (A T) = |ySpeed|
+                        \ By this point, (A T) = |yVelocity|
 
  LSR A                  \ Set (A T) = (A T) / 8
- ROR T                  \           = |ySpeed| / 8
+ ROR T                  \           = |yVelocity| / 8
  LSR A
  ROR T
  LSR A
@@ -9000,14 +9032,14 @@ ORG CODE%
 
  CMP #0                 \ If A = 0, so (A T) = (0 T) = T, so jump to uind10 to
  BEQ uind10             \ skip the following as T contains the correct value of
-                        \ |ySpeed| / 8
+                        \ |yVelocity| / 8
 
  LDA #255               \ A is non-zero, which means that (A T) > 255, so set
  STA T                  \ T = 255 so that T has a maximum value of 255
 
 .uind10
 
-                        \ At this point, T contains |ySpeed| / 8, capped to a
+                        \ At this point, T contains |yVelocity| / 8, capped to a
                         \ maximum value of 255
 
                         \ We now calculate A = T * n / 256 with a hardcoded n,
@@ -9042,7 +9074,7 @@ ORG CODE%
                         \     = (T * 34 / 256) << 1
                         \     = T * 68 / 256
                         \
-                        \ which takes |ySpeed| / 8 in the range 0 to 255
+                        \ which takes |yVelocity| / 8 in the range 0 to 255
                         \ and reduces it to the range 0 to 68
 
  CMP #40                \ If A < 40, jump to uind11 to skip the following
@@ -9053,7 +9085,7 @@ ORG CODE%
 
 .uind11
 
- BIT ySpeedHi           \ If the high byte in ySpeedHi is positive (and
+ BIT yVelocityHi        \ If the high byte in yVelocityHi is positive (and
  BPL uind12             \ therefore so is the vertical speed), jump to uind12 to
                         \ skip the following
 
@@ -9064,27 +9096,27 @@ ORG CODE%
 
                         \ So by now, A is in the range -40 to +40
                         \
-                        \ In terms of the original value of ySpeed, this
+                        \ In terms of the original value of yVelocity, this
                         \ means that:
                         \
-                        \   ySpeed / 8 * (68 / 256) = A
+                        \   yVelocity / 8 * (68 / 256) = A
                         \
                         \ so:
                         \
-                        \   ySpeed = A * (256 / 68) * 8
+                        \   yVelocity = A * (256 / 68) * 8
                         \          = A * 2048 / 68
                         \
                         \ If A is 40 then this shows as a vertical speed of
                         \ 4000 feet per minute on the indicator, so if v is the
                         \ vertical speed in feet per minute, A = v / 100, and:
                         \
-                        \   ySpeed = A * 2048 / 68
+                        \   yVelocity = A * 2048 / 68
                         \          = (v / 100) * 2048 / 68
                         \          = v * 2048 / 6800
                         \          = v * 128 / 425
                         \
-                        \ so ySpeed is stored as 128 / 425 * the vertical speed
-                        \ in feet per minute
+                        \ so yVelocity is stored as 128 / 425 * the vertical
+                        \ speed in feet per minute
 
 .uind12
 
@@ -11455,7 +11487,9 @@ ORG CODE%
  SEC                    \ Set A = A - 10
  SBC #10
 
- LDX #5                 \ Set X = 5 to store in L0CF0 below
+ LDX #5                 \ Set X = 5 to store in yLandingGear below, as the
+                        \ vertical distance between the cockpit and the bottom
+                        \ of the plane
 
  LDY #%01010101         \ Set Y to a four-pixel block with pixels 0 and 2 in
                         \ white, to act as the centre of the undercarriage
@@ -11470,12 +11504,14 @@ ORG CODE%
 
  LDY onGround           \ If onGround is non-zero, then we are on the ground, so
  BNE indu4              \ jump to indu4 to set the undercarriage to up and
-                        \ return from the subroutine
+                        \ return from the subroutine ???
 
  CLC                    \ Set A = A + 10
  ADC #10
 
- LDX #10                \ Set X = 10 to store in L0CF0 below
+ LDX #10                \ Set X = 10 to store in in yLandingGear below, as the
+                        \ vertical distance between the cockpit and the bottom
+                        \ of the plane
 
  LDY #%01110111         \ Set Y to a four-pixel block with pixels 0, 1 and 2 in
                         \ white, to act as the centre of the undercarriage
@@ -11486,8 +11522,9 @@ ORG CODE%
  STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 10 or
                         \ reduced by 10 for undercarriage down/up) ???
 
- STX L0CF0              \ Store X in L0CF0 (5 if undercarriage is up, 10 if it
-                        \ is down) ???
+ STX yLandingGear       \ Store X in yLandingGear, so the vertical distance
+                        \ between the cockpit and the bottom of the plane is 5
+                        \ if the undercarriage is up, or 10 if it is down
 
  TYA                    \ Set A to the pixel pattern in Y
 
@@ -11603,11 +11640,11 @@ ORG CODE%
                         \ guns, so return from the subroutine (as FireGuns-1
                         \ contains an RTS)
 
- LDX #228               \ Set the point with ID 228 to (0, 0, zVelocityHi + 200)
+ LDX #228               \ Set point 228 to (0, 0, zVelocityPHi + 200)
  JSR SetPointToOrigin   \
                         \ starting with the zeroes
 
- LDA zVelocityHi        \ And then setting the low byte of the z-coordinate
+ LDA zVelocityPHi       \ And then setting the low byte of the z-coordinate
  CLC
  ADC #200
  STA zPointLo+228
@@ -13738,8 +13775,7 @@ ORG CODE%
  JSR SetObjPointCoords  \ Calculate the coordinates for this object point
 
  LDA showLine           \ If showLine is non-zero, then the line is not visible,
- BNE plin20             \ so jump to plin20 to return from the subroutine (as
-                        \ plin20 contains an RTS)
+ BNE plin20             \ so jump to plin20 to return from the subroutine
 
 \ ******************************************************************************
 \
@@ -20456,23 +20492,23 @@ NEXT
                         \ since the last call to this routine (unless the time
                         \ has wrapped, in which case it will be negative)
 
- BPL L3F1E              \ If A is positive, skip the following three
+ BPL time1              \ If A is positive, skip the following three
                         \ instructions
 
  EOR #&FF               \ A is negative, so negate A using two's complement, so:
  CLC                    \
  ADC #1                 \   A = |P - previousTime|
 
-.L3F1E
+.time1
 
  CMP #9                 \ If |A| < 9, skip the following instruction
- BCC L3F25
+ BCC time2
 
  STX previousTime       \ Update previousTime to the current timer in X, so the
                         \ count of 9 centiseconds since the last call can start
                         \ again
 
-.L3F25
+.time2
 
  RTS                    \ Return from the subroutine
 
@@ -22796,7 +22832,7 @@ NEXT
 \
 \                         * LO(xTurnLo) = (xTurn, yTurn, zTurn)
 \
-\                         * LO(xSpeedLo) = (xSpeed, ySpeed, zSpeed)
+\                         * LO(xVelocityLo) = (xVelocity, yVelocity, zVelocity)
 \
 \                         * LO(xTemp2Lo) = (xTemp2, yTemp2, zTemp2)
 \
@@ -22840,7 +22876,8 @@ NEXT
 \   X                   The low byte of the x-coordinate of the 16-bit workspace
 \                       point to update:
 \
-\                         * LO(xVelocityLo) = (xVelocity, yVelocity, zVelocity)
+\                         * LO(xVelocityPLo)
+\                                         = (xVelocityP, yVelocityP, zVelocityP)
 \
 \                         * LO(xCoord1Lo) = (xCoord1, yCoord1, zCoord1)
 \
@@ -23305,7 +23342,7 @@ NEXT
 
  LDX #0                 \ Print characters 0-15 from scoreText, which moves the
  LDY #16                \ text cursor to column 1, row 3 and prints
- JSR PrintscoreText     \ "HIGH SCORE:  "
+ JSR PrintScoreText     \ "HIGH SCORE:  "
 
  LDA highScoreHi        \ Print the high byte of the high score
  JSR PrintScore
@@ -23315,11 +23352,11 @@ NEXT
 
  LDX #16                \ Print characters 16-19 from scoreText, which prints a
  LDY #20                \ "0" and moves the text cursor to column 3, row 10
- JSR PrintscoreText
+ JSR PrintScoreText
 
  LDX #8                 \ Print characters 8-15 from scoreText, which prints
  LDY #16                \ "SCORE:  "
- JSR PrintscoreText
+ JSR PrintScoreText
 
  LDA scoreHi            \ Print the high byte of the score
  JSR PrintScore
@@ -23372,7 +23409,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: PrintscoreText
+\       Name: PrintScoreText
 \       Type: Subroutine
 \   Category: Scoring
 \    Summary: Print text when showing the scores on-screen
@@ -23388,12 +23425,12 @@ NEXT
 \
 \ ******************************************************************************
 
-.PrintscoreText
+.PrintScoreText
 
  STY T                  \ Set Y to the offset of the character that's just after
                         \ the end of the string to print
 
-.L4C5E
+.prins1
 
  LDA scoreText,X        \ Print the X-th character from scoreText
  JSR OSWRCH
@@ -23401,7 +23438,7 @@ NEXT
  INX                    \ Increment X to point to the next character
 
  CPX T                  \ Loop back to print the next character until we have
- BNE L4C5E              \ printed all of them
+ BNE prins1              \ printed all of them
 
  RTS                    \ Return from the subroutine
 
@@ -23832,12 +23869,12 @@ NEXT
  ADC #1                 \ so A points to the next item in the randomNumbers list
 
  CMP #11                \ If A < 11, skip the following instruction as the
- BCC L4D83              \ pointer hasn't yet reached the end of the list
+ BCC rand1              \ pointer hasn't yet reached the end of the list
 
  LDA #0                 \ A >= 11, which is past the end of the list, so set
                         \ A = 0 to set the pointer back at the start of the list
 
-.L4D83
+.rand1
 
  STA randomNumbers      \ Store the updated pointer in randomNumbers
 
@@ -24063,12 +24100,12 @@ NEXT
                         \ We now ignore the high byte in K, so presumably it is
                         \ zero
 
- CLC                    \ Set K = A + zVelocityHi
- ADC zVelocityHi        \       = (Thrust / 8) + zVelocityHi
+ CLC                    \ Set K = A + zVelocityPHi
+ ADC zVelocityPHi       \       = (Thrust / 8) + zVelocityPHi
  STA K
 
  LDA #50                \ Set A = 50 - K
- SEC                    \       = 50 - ((Thrust / 8) + zVelocityHi)
+ SEC                    \       = 50 - ((Thrust / 8) + zVelocityPHi)
  SBC K
 
  BEQ engs2              \ If A = 0, jump to engs2 to set the engine choppiness
@@ -24116,7 +24153,7 @@ NEXT
                         \ pitch value
 
  LDA K                  \ Set A = K + 80
- CLC                    \       = (Thrust / 8) + zVelocityHi + 50
+ CLC                    \       = (Thrust / 8) + zVelocityPHi + 50
  ADC #80                \
                         \ so A is a higher value when we have higher thrust and
                         \ airspeed, which is what we want
@@ -25269,37 +25306,37 @@ NEXT
 \       Name: ApplyFlightModel (Part 2 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Convert velocity to the plane's perspective
 \
 \ ******************************************************************************
 
-                        \ The following code takes the (xSpeed, ySpeed, zSpeed)
-                        \ vector, rotates it by the plane's orientation and
-                        \ stores it in the (xVelocity, yVelocity, zVelocity)
-                        \ vector
-                        \
-                        \ The (xSpeed, ySpeed, zSpeed) vector is the velocity
-                        \ of the plane with respect to the outside world, so
-                        \ ySpeed is the vertical speed of the plane (as shown on
-                        \ the vertical speed indicator) which is unaffected by
-                        \ how the plane is orientated (a plane dropping out of
-                        \ the sky is still dropping out of the sky, even when
-                        \ it's tumbling)
+                        \ The following code takes the plane's velocity vector
+                        \ in (xVelocity, yVelocity, zVelocity), rotates it by
+                        \ the plane's orientation and stores the result in the
+                        \ (xVelocityP, yVelocityP, zVelocityP) vector
                         \
                         \ The (xVelocity, yVelocity, zVelocity) vector is the
+                        \ velocity of the plane with respect to the outside
+                        \ world, so yVelocity is the vertical speed of the plane
+                        \ (as shown on the vertical speed indicator), which is
+                        \ unaffected by how the plane is orientated (a plane
+                        \ dropping out of the sky is still dropping out of the
+                        \ sky, even when it's tumbling)
+                        \
+                        \ The (xVelocityP, yVelocityP, zVelocityP) vector is the
                         \ velocity of the plane with respect to the plane
-                        \ itself, so zVelocity is the forward speed of the plane
-                        \ from the point of view of the pilot - it's the speed
-                        \ of the air rushing past us as we fly, so this is the
-                        \ speed we show on the airspeed indicator
+                        \ itself, so zVelocityP is the forward speed of the
+                        \ plane from the point of view of the pilot - it's the
+                        \ speed of the air rushing past us as we fly, so this is
+                        \ the speed we show on the airspeed indicator
                         \
                         \ The following code calculates the latter from the
                         \ former by setting point 255 to the speed vector,
                         \ rotating it by the plane's orientation angles, and
                         \ storing the result in the velocity vector
 
- LDX #LO(xSpeedLo)      \ Set X so the call to CopyWorkToPoint copies the
-                        \ coordinates from (xSpeed, ySpeed, zSpeed)
+ LDX #LO(xVelocityLo)   \ Set X so the call to CopyWorkToPoint copies the
+                        \ coordinates from (xVelocity, yVelocity, zVelocity)
 
  LDY #255               \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point 255
@@ -25307,8 +25344,8 @@ NEXT
  STY GG                 \ Set GG to point ID 255, to pass to the call to 
                         \ SetPointCoords
 
- JSR CopyWorkToPoint    \ Copy the coordinates from (xSpeed, ySpeed, zSpeed)
-                        \ to point 255
+ JSR CopyWorkToPoint    \ Copy the coordinates from (xVelocity, yVelocity,
+                        \ zVelocity) to point 255
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 1 in the calculation, which will rotate
@@ -25316,20 +25353,20 @@ NEXT
 
  JSR SetPointCoords     \ Calculate the coordinates for point 255
 
- LDX #LO(xVelocityLo)   \ Set X so the call to CopyPointToWork copies the
-                        \ coordinates to (xVelocity, yVelocity, zVelocity)
+ LDX #LO(xVelocityPLo)  \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (xVelocityP, yVelocityP, zVelocityP)
 
  LDY #255               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from point 255
 
  JSR CopyPointToWork    \ Copy the coordinates from point 255 to
-                        \ (xVelocity, yVelocity, zVelocity)
+                        \ (xVelocityP, yVelocityP, zVelocityP)
 
- JSR L5295
+ JSR L5295              \ ???
 
- JSR L5500
+ JSR L5500              \ ???
 
- JSR L5408
+ JSR L5408              \ ???
 
 \ ******************************************************************************
 \
@@ -25343,31 +25380,60 @@ NEXT
  LDA hitTimer           \ If the hit timer is zero, then there are no exploding
  BEQ fmod3              \ aliens, so jump to fmod3 to skip this part
 
- LDX #&6A
+                        \ We now apply turbulence to the plane by applying a
+                        \ random amount to the (xCoord3, yCoord3, zCoord3)
+                        \ vector, with the random amount being positive or
+                        \ negative, and with a larger magnitude the closer we
+                        \ are to the alien
+
+ LDX #&6A               \ Set X so in the following loop, the call to AddScaled
+                        \ updates the xCoord3, yCoord3 and zCoord3 variables,
+                        \ one on each iteration of the loop
+                        \
+                        \ The comments below are for xCoord3
 
 .fmod2
 
  JSR NextRandomNumber   \ Set A to point to the next item in the randomNumbers
                         \ list
 
- TAY
+ TAY                    \ Set P to the next random number from the list
  LDA randomNumbers+1,Y
  STA P
 
  LDA distanceFromHit    \ If distanceFromHit >= 16, jump to fmod3 to skip the
- CMP #16                \ following
- BCS fmod3
+ CMP #16                \ following, as we are too far from the exploding alien
+ BCS fmod3              \ to feel the effects
 
- EOR #&0F               \ Apply turbulence?
- ASL A
- LSR P
+ EOR #&0F               \ As A < 16, this flips the value of A so instead of
+                        \ being in the range 0 to 15, it's reversed to the
+                        \ range 15 to 0 - so A is now 15 if we are really close
+                        \ to the exploding alien, or 0 if we are further away
 
- LDY #1
- JSR L57BB
+ ASL A                  \ Double the value of A, so it's in the range 0 to 30,
+                        \ with the number being higher the closer we are to the
+                        \ exploding alien
 
- INX
- CPX #&6D
- BNE fmod2
+ LSR P                  \ We set P to a random number above, so this sets the C
+                        \ flag randomly, so the call to AddScaled randomly adds
+                        \ or subtracts the amount of turbulence in A
+
+ LDY #1                 \ Set the scale factor in Y so we add or subtract
+                        \ (A 0) >> 2, which is in the range 0 to 1920, as
+                        \ (30 0) >> 2 is 1920
+
+ JSR AddScaled          \ Set xCoord3 = xCoord3 +/- (A 0) >> 2
+                        \
+                        \ So this changes the xCoord3 vector by a random amount
+                        \ in the range 0 to 1920, with a higher amount the
+                        \ closer we are to the exploding alien
+
+ INX                    \ Increment the value of X so the next iteration updates
+                        \ the next axis from the xCoord3, yCoord3 and zCoord3
+                        \ variables
+
+ CPX #&6D               \ Loop back until we have applied turbulence to all
+ BNE fmod2              \ three axes
 
 \ ******************************************************************************
 \
@@ -25380,12 +25446,13 @@ NEXT
 
 .fmod3
 
- JSR L555D
+ JSR L555D              \ ???
 
- LDA xPointLo+252
- EOR #&80
+ LDA xPointLo+252       \ Set the C flag to bit 7 of xPointLo+252, flipped
+ EOR #%10000000
  ASL A
- LDA #0
+
+ LDA #0                 \ Set slipRate = 0 - xPointHi+252 - (1 - C)
  SBC xPointHi+252
  STA slipRate
 
@@ -25411,7 +25478,7 @@ NEXT
  LDX #0
  LDY #0
 
- LDA zVelocityHi        \ If the forward airspeed is negative, jump to fmod6
+ LDA zVelocityPHi       \ If the forward airspeed is negative, jump to fmod6
  BMI fmod6
 
  BNE fmod5              \ If the high byte of the forward airspeed is non-zero,
@@ -25420,7 +25487,7 @@ NEXT
                         \ If we get here then the high byte of the foreard
                         \ airspeed is zero
 
- LDA zVelocityLo        \ If the low byte of the forward airspeed is less than
+ LDA zVelocityPLo       \ If the low byte of the forward airspeed is less than
  CMP #20                \ 20, jump to fmod6
  BCC fmod6
 
@@ -25464,9 +25531,9 @@ NEXT
 
 .fmod8
 
- JSR CheckRunway
+ JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
- BCC fmod10
+ BCC fmod10             \ If the approach is good, then jump to fmod10
 
  LDA #&32
  BNE fmod11
@@ -25476,9 +25543,9 @@ NEXT
  LDX brakesStatus
  BNE fmod8
 
- JSR CheckRunway
+ JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
- BCC fmod15
+ BCC fmod15             \ If the approach is good, then jump to fmod15
 
  LDA #7
  BNE fmod11
@@ -25489,12 +25556,12 @@ NEXT
 
 .fmod11
 
- LDX zVelocityHi
+ LDX zVelocityPHi
  BMI fmod12
 
  BNE fmod13
 
- LDX zVelocityLo
+ LDX zVelocityPLo
  BEQ fmod14
 
  CPX #&0B
@@ -25532,7 +25599,7 @@ NEXT
 
  STA landingStatus
 
- LDA xVelocityLo
+ LDA xVelocityPLo
  LSR A
  STA P
  LDX #0
@@ -25540,7 +25607,7 @@ NEXT
  TXA
  ROR A
  STA V
- LDA xVelocityHi
+ LDA xVelocityPHi
  AND #&80
  ORA P
  STA Q
@@ -25615,7 +25682,7 @@ NEXT
  JSR CopyPointToWork    \ Copy the coordinates from point 254 to
                         \ (xCoord2, yCoord2, zCoord2)
 
- JSR L522D
+ JSR L522D              \ ???
 
  LDA #7                 \ Make the engine sound
  JSR ToggleEngineSound
@@ -25645,7 +25712,7 @@ NEXT
                         \ rate and deplete the fuel supplies
 
  LDA thrustHi           \ Set (R A) = (thrustHi thrustLo)
- STA R
+ STA R                  \           = thrust
  LDA thrustLo
 
  LDX #3                 \ We now shift (R A) right by four places, so set a
@@ -25654,20 +25721,20 @@ NEXT
 .fmod18
 
  LSR R                  \ Set (R A) = (R A) / 2
- ROR A
+ ROR A                  \           = thrust / 2
 
  DEX                    \ Decrement the shift counter
 
- BPL fmod18              \ Loop back until we have shifted (R A) four times
+ BPL fmod18             \ Loop back until we have shifted (R A) four times
 
                         \ By now we have:
                         \
-                        \   (R A) = (thrustHi thrustLo) / 16
+                        \   (R A) = thrust / 16
                         \
-                        \ and because the maximum value of (thrustHi thrustLo)
-                        \ is 1280, we know R is 0, so:
+                        \ and because the maximum value of thrust is 1280, we
+                        \ know R must be 0, so:
                         \
-                        \   A = (thrustHi thrustLo) / 16
+                        \   A = thrust / 16
                         \
                         \ We use this value of A as the amount of fuel used in
                         \ this iteration of the main loop, so the higher the
@@ -25796,11 +25863,11 @@ NEXT
  ADC V
  STA L0C8C,X
  PLA
- ADC xSpeedLo,X
- STA xSpeedLo,X
- LDA xSpeedHi,X
+ ADC xVelocityLo,X
+ STA xVelocityLo,X
+ LDA xVelocityHi,X
  ADC R
- STA xSpeedHi,X
+ STA xVelocityHi,X
  DEX
  BPL L51FB
 
@@ -25829,9 +25896,9 @@ NEXT
  STA R
  LDA L0C09,X
  CLC
- ADC xSpeedLo,X
+ ADC xVelocityLo,X
  STA L0C09,X
- LDA xSpeedHi,X
+ LDA xVelocityHi,X
  BPL L5244
 
  DEC R
@@ -25904,11 +25971,11 @@ NEXT
 
 .L529D
 
- LDA xVelocityLo,X
+ LDA xVelocityPLo,X
  STA P
  ASL A
  STA L0C43,X
- LDA xVelocityHi,X
+ LDA xVelocityPHi,X
  PHA
  ROL A
  STA L0C53,X
@@ -25920,7 +25987,7 @@ NEXT
  SBC P
  STA P
  LDA #0
- SBC xVelocityHi,X
+ SBC xVelocityPHi,X
 
 .L52BD
 
@@ -25975,20 +26042,20 @@ NEXT
  CMP #&27
  BNE L5307
 
- LDA zVelocityHi
+ LDA zVelocityPHi
  CMP #&0B
  BCC L533A
 
 .L5307
 
  LDA J
- CMP zVelocityHi
+ CMP zVelocityPHi
  BCC L5347
 
  BNE L5317
 
  LDA I
- CMP zVelocityLo
+ CMP zVelocityPLo
  BCC L5347
 
 .L5317
@@ -26012,7 +26079,7 @@ NEXT
  LDX #2
  LDA xTurnHi
  EOR #&3F
- JSR L57BB
+ JSR AddScaled
 
 .L533A
 
@@ -26413,7 +26480,9 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Other entry points:
+\
+\   L54B9-1             Contains an RTS
 \
 \ ******************************************************************************
 
@@ -26582,10 +26651,10 @@ NEXT
  ADC L0C2A,X
  STA L0C30,X
  LDA L0C60,X
- ADC L0C6A,X
+ ADC xCoord3Lo,X
  STA L0C80,X
  LDA L0C70,X
- ADC L0C7A,X
+ ADC xCoord3Hi,X
  STA L0C90,X
  DEX
  BPL L555F
@@ -26633,7 +26702,7 @@ NEXT
  SBC L0C74
  STA yPointHi+252
 
- LDA zVelocityHi        \ Set A to the high byte of our airspeed
+ LDA zVelocityPHi       \ Set A to the high byte of our airspeed
 
  BMI L55F3              \ If it is negative, jump down to L55F3 to skip the
                         \ following checks
@@ -26662,7 +26731,7 @@ NEXT
 
  STA H
  STA G
- LDA zVelocityLo
+ LDA zVelocityPLo
  LDX #3
 
 .L5603
@@ -26730,48 +26799,89 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: CheckRunway
+\       Name: CheckApproachAngle
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight model
+\    Summary: Check whether the plane is on a good approach angle for the runway
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ The runway runs north-south. The plane is on a good approach angle for the
+\ runway if:
+\
+\   * The distance between the plane and the runway in the x-axis is < 256 (so
+\     the plane is not too far either side of the correct approach, i.e. not too
+\     far to the east or west of the line of the runway)
+\
+\   * The distance between the plane and the runway in the z-axis is < 24 * 256
+\     (so the plane is not too far to the north or south of the runway)
+\
+\ In other words, the runway approach corridor is a long, thin strip along the
+\ north-south alignment of the runway, with the strip being 24 times longer than
+\ it is wide.
+\
+\ Returns:
+\
+\   C flag              Determines whether the plane is heading along a good
+\                       approach angle for the runway:
+\
+\                         * Clear if the plane is approaching the runway
+\
+\                         * Set if the plane is not approaching the runway
 \
 \ ******************************************************************************
 
-.CheckRunway
+.CheckApproachAngle
 
- LDA xPlaneLo
- SEC
- SBC xObjectLo+1
- LDA xPlaneHi
- SBC xObjectHi+1
- BNE crun1
+ LDA xPlaneLo           \ Set A to the high byte of the following:
+ SEC                    \
+ SBC xObjectLo+1        \   (xPlaneHi xPlaneLo) - (xObjectHi xObjectLo)
+ LDA xPlaneHi           \
+ SBC xObjectHi+1        \ for object ID 1, which is the runway
 
- LDA zPlaneLo
- SEC
- SBC zObjectLo+1
- LDA zPlaneHi
- SBC zObjectHi+1
- BMI crun1
+ BNE crun1              \ If the high byte is non-zero, then the plane is a long
+                        \ way from the runway, so jump to crun1 to return from
+                        \ the subroutine with the "not approaching" result
 
- CMP #&18
+                        \ If we get here then the plane is reasonably close to
+                        \ the runway along the x-axis, so now we check the
+                        \ distance along the z-axis
 
- RTS
+ LDA zPlaneLo           \ Set A to the high byte of the following:
+ SEC                    \
+ SBC zObjectLo+1        \   (zPlaneHi zPlaneLo) - (zObjectHi zObjectLo)
+ LDA zPlaneHi           \
+ SBC zObjectHi+1        \ for object ID 1, which is the runway
+
+ BMI crun1              \ If the high byte is > 127, then the plane is a long
+                        \ way from the runway, so jump to crun1, so jump to
+                        \ crun1 to return from the subroutine with the "not
+                        \ approaching" result
+
+ CMP #24                \ Finally, if the high byte is less than 24, then this
+                        \ will clear the C flag, otherwise it will set the C
+                        \ flag, so the C flag is only clear if:
+                        \
+                        \   * The distance between the plane and the runway in
+                        \     the x-axis is < 256
+                        \
+                        \   * The distance between the plane and the runway in
+                        \     the z-axis is < 24 * 256
+
+ RTS                    \ Return from the subroutine
 
 .crun1
 
- SEC
+ SEC                    \ Set the C flag to indicate that the runway is not
+                        \ close
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: CheckLanding
 \       Type: Subroutine
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -26785,26 +26895,55 @@ NEXT
  LDA L
  BEQ clan1
 
- JSR CheckRunway
+ JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
- BCC clan1
+ BCC clan1              \ If the approach is good, then jump to clan1
 
  ASL landingStatus      \ Shift landingStatus left and set bit 0
 
- LDX #&EE
- CLC
- LDY #8
- JSR L57B3
+ LDX #&EE               \ Set X so the call to ApplyBumpyRide updates the yPlane
+                        \ variable, so it makes the plane bump up by a random
+                        \ amount
 
- LDX #&EC
- LDY #4
+ CLC                    \ Clear the C flag so the the call to ApplyBumpyRide
+                        \ adds a random amount to yPlane (rather than taking it
+                        \ away)
+
+ LDY #8                 \ Set the scale factor in Y so the random amount we bump
+                        \ the plane up by is in the range 0 to zVelocityP >> 9,
+                        \ so if we try to land at 100 mph, when zVelocityP is
+                        \ (9 64) = 2368, then this would bump the plane up
+                        \ by a random value in the range 0 to 4 (as 2368 >> 9
+                        \ is 4)
+
+ JSR ApplyBumpyRide     \ Bump the plane up by a random height in the range 0 to
+                        \ zVelocityP >> 9, so the bump height is higher with
+                        \ higher forward velocity (so the faster we are trying
+                        \ to land, the more the plane bounces up when it hits
+                        \ the runway)
+
+ LDX #&EC               \ Set X so the call to ApplyBumpyRide updates the
+                        \ zRotation variable, so it makes the plane roll by a
+                        \ random amount
+
+ LDY #4                 \ Set the scale factor in Y so the random amount we roll
+                        \ the plane by is in the range 0 to zVelocityP >> 5,
+                        \ so if we try to land at 100 mph, when zVelocityP is
+                        \ (9 64) = 2368, then this would roll the plane by a
+                        \ random value in the range 0 to 74 (as 2368 >> 5 is 74)
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
                         \ second so this will be pretty random
 
- LSR A
- JSR L57B3
+ LSR A                  \ Set the C flag randomly, so the call to ApplyBumpyRide
+                        \ randomly adds or subtracts the random roll amount
+
+ JSR ApplyBumpyRide     \ Roll the plane up by a random angle in the range 0 to
+                        \ zVelocityP >> 5, in a random direction, so the roll
+                        \ amount is higher with higher forward velocity (so the
+                        \ faster we are trying to land, the more the plane rolls
+                        \ when it hits the runway)
 
 .clan1
 
@@ -26831,7 +26970,7 @@ NEXT
 
 .clan4
 
- LDA L0CF0
+ LDA yLandingGear
  CMP yPlaneLo
  BCC clan2
 
@@ -26839,10 +26978,10 @@ NEXT
  BEQ clan10
 
  STA yPlaneLo
- LDX ySpeedHi
+ LDX yVelocityHi
  BPL clan5
 
- LDX #&8A               \ Set (ySpeedHi ySpeedLo) = 0
+ LDX #&8A               \ Set (yVelocityHi yVelocityLo) = 0
  JSR ResetVariable
 
 .clan5
@@ -26901,25 +27040,25 @@ NEXT
  SBC yPlaneLo
  LSR A
  CLC
- ADC L0CF0
+ ADC yLandingGear
  STA yPlaneLo
- LDA ySpeedHi
+ LDA yVelocityHi
  BPL clan11
 
  SEC
  LDA #0
- SBC ySpeedLo
- STA ySpeedLo
+ SBC yVelocityLo
+ STA yVelocityLo
  LDA #0
- SBC ySpeedHi
+ SBC yVelocityHi
 
 .clan11
 
- STA ySpeedHi
+ STA yVelocityHi
  LSR A
  BNE clan13
 
- LDA ySpeedLo
+ LDA yVelocityLo
  ROR A
  STA R
 
@@ -26927,7 +27066,7 @@ NEXT
  BNE clan12             \ is down, so jump to clan12
 
                         \ If we get here then the undercarriage is up and
-                        \ ySpeedHi / 2 = 0, so we are in the process of
+                        \ yVelocityHi / 2 = 0, so we are in the process of
                         \ making a crash landing (or we've pulled up the
                         \ undercarriage when still on the runway)
 
@@ -26953,12 +27092,12 @@ NEXT
 
 .clan15
 
- JSR CheckRunway
+ JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
- BCC clan16
+ BCC clan16             \ If the approach is good, then jump to clan16
 
  LDA R
- STA ySpeedLo
+ STA yVelocityLo
  LDX ucStatus
  BEQ clan16
 
@@ -27026,7 +27165,7 @@ NEXT
  BCS clan21
 
  LDA yPlaneLo
- CMP L0CF0
+ CMP yLandingGear
  BNE clan21
 
  LDA #1                 \ Set onGround = 1 to denote that we are on the ground
@@ -27034,80 +27173,176 @@ NEXT
 
 .clan21
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L57B3
+\       Name: ApplyBumpyRide
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight model
+\    Summary: Apply a random amount of roll or bumpiness to the plane
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Add zVelocityPHi, randomised and scaled, to the 16-bit variable specified in
+\ X. Specifically, we add (A 0) right-shifted by Y + 1 places, where A is the
+\ current value of zVelocityPHi, AND'd with a random number to produce a random
+\ number in the range 0 to zVelocityPHi.
+\
+\ So this calculates:
+\
+\                          (A 0)
+\   variable = variable + -------
+\                         2^(Y+1)
+\
+\ where A is a random number in the range 0 to zVelocityPHi.
+\
+\ When applied to the zRotation variable, this rolls the plane randomly, and
+\ when applied to the yPlane variable, it bumps the plane up or down. The amount
+\ of roll or bumpiness is dependent on the forward velocity of the plane, so the
+\ higher the speed, the bumpier the ride.
+\
+\ Arguments:
+\
+\   X                   The offset from xTurnLo of the low byte of the variable
+\                       to zero:
+\
+\                         * &EC = (zRotationHi zRotationLo) to apply roll
+\
+\                         * &EE = (yPlaneHi yPlaneLo) to apply bumpiness
+\
+\   Y                   The scale factor
+\
+\   C flag              If this is set, subtract the scaled value, so we
+\                       calculate:
+\
+\                                                (A 0)
+\                         variable = variable - -------
+\                                               2^(Y+1)
 \
 \ ******************************************************************************
 
-.L57B3
+.ApplyBumpyRide
 
- LDA zVelocityHi        \ If zVelocityHi is negative, return from the subroutine
- BMI ScaleAltitude-1    \ (as ScaleAltitude-1 contains an RTS)
+ LDA zVelocityPHi       \ If zVelocityPHi is negative, return from the
+ BMI ScaleAltitude-1    \ subroutine (as ScaleAltitude-1 contains an RTS)
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
                         \ second so this will be pretty random
+                        \
+                        \ Because we are AND'ing zVelocityPHi with a random
+                        \ number, the result will be random but can't be higher
+                        \ than the original value of zVelocityPHi, so this
+                        \ produces a random number in the range 0 to
+                        \ zVelocityPHi
+
+                        \ Fall through into AddScaled with the N flag clear (as
+                        \ we passed through the BMI above)
 
 \ ******************************************************************************
 \
-\       Name: L57BB
+\       Name: AddScaled
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Maths
+\    Summary: Add or subtract a scaled amount to a variable
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Add a scaled value to the 16-bit variable specified in X. Specifically, we add
+\ (A 0) right-shifted by Y + 1 places, so this calculates:
+\
+\   variable = variable + (A 0) >> (Y + 1)
+\
+\ Arguments:
+\
+\
+\   A                   The top byte of the value to scale and add
+\
+\   X                   The offset from xTurnLo of the low byte of the variable
+\                       to zero:
+\
+\                         * &6A = (xCoord3Hi xCoord3Lo)
+\
+\                         * &6B = (yCoord3Hi yCoord3Lo)
+\
+\                         * &6C = (zCoord3Hi zCoord3Lo)
+\
+\                         * &02 = (zTurnHi zTurnLo)
+\
+\                         * &EC = (zRotationHi zRotationLo)
+\
+\                         * &EE = (yPlaneHi yPlaneLo)
+\
+\   Y                   The scale factor
+\
+\   N flag              If this is set, invert A, so we calculate:
+\
+\                         variable = variable + ~(A 0) >> (Y + 1)
+\
+\   C flag              If this is set, subtract the scaled value, so we
+\                       calculate:
+\
+\                         variable = variable - (A 0) >> (Y + 1)
 \
 \ ******************************************************************************
 
-.L57BB
+.AddScaled
 
- PHP
- BPL L57C0
+ PHP                    \ Store the processor flags on the stack, so we can
+                        \ retrieve them later
 
- EOR #&FF
+ BPL adds1              \ If the N flag is clear (i.e. we called this routine
+                        \ after loading or processing a positive number), skip
+                        \ the following instruction
 
-.L57C0
+ EOR #&FF               \ Set A = ~A
+                        \
+                        \ so if we call the routine after loading or processing
+                        \ a negative number in A, then A is now positive,
+                        \ i.e. A = |A|
 
- STA G
+.adds1
+
+ STA G                  \ Set (G A) = (A 0)
  LDA #0
 
-.L57C4
+                        \ We now shift (G A) right by Y + 1 places
 
- LSR G
+.adds2
+
+ LSR G                  \ Set (G A) = (G A) >> 1
  ROR A
- DEY
- BPL L57C4
 
- STA W
- PLP
- BCC L57D2
+ DEY                    \ Decrement the shift counter in Y
+
+ BPL adds2              \ Loop back until we have shifted right by Y + 1 places
+
+ STA W                  \ Set (G W) = (G A)
+                        \           = (A 0) right-shifted by Y + 1 places
+                        \           = (A 0) / 2^(Y+1)
+
+ PLP                    \ Retrieve the flags from the original call to the
+                        \ routine
+
+ BCC adds3              \ If we called the routine with the C flag clear, skip
+                        \ the following instruction
 
  JSR Negate16Bit        \ We know the C flag is set at this point as we just
                         \ passed through a BCC, so this negates (G W)
 
-.L57D2
+.adds3
 
- LDA W
- CLC
+ LDA W                  \ Add (G W) to the variable specified in X, starting
+ CLC                    \ with the low bytes
  ADC xTurnLo,X
  STA xTurnLo,X
- LDA G
+
+ LDA G                  \ And then the high bytes
  ADC xTurnHi,X
  STA xTurnHi,X
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -27129,6 +27364,10 @@ NEXT
 \ Returns:
 \
 \   (Y X V)             The result, (Y X) * ~yPlaneHi
+\
+\ Other entry points:
+\
+\   ScaleAltitude-1     Contains an RTS
 \
 \ ******************************************************************************
 
@@ -27169,7 +27408,7 @@ NEXT
 \                         * &02 = (zTurnHi zTurnLo)
 \                         * &80 = (L0C90 L0C80)
 \                         * &82 = (L0C92 L0C82)
-\                         * &8A = (ySpeedHi ySpeedLo)
+\                         * &8A = (yVelocityHi yVelocityLo)
 \                         * &EA = (xRotationHi xRotationLo)
 \                         * &EC = (zRotationHi zRotationLo)
 \                         * &EE = (yPlaneHi yPlaneLo)
