@@ -539,9 +539,17 @@ ORG &0900
 
  SKIP 1
 
-.L0C09
+.xCoord5
 
- SKIP 3
+ SKIP 1
+
+.yCoord5
+
+ SKIP 1
+
+.zCoord5
+
+ SKIP 1
 
 .elevatorPosition
 
@@ -619,9 +627,19 @@ ORG &0900
 
  SKIP 1
 
-.L0C19
+.xTurnBot
 
- SKIP 6
+ SKIP 1
+
+.yTurnBot
+
+ SKIP 1
+
+.zTurnBot
+
+ SKIP 1
+
+ SKIP 3
 
 .thrustHi
 
@@ -631,17 +649,9 @@ ORG &0900
                         \
                         \ Shown on indicator 11
 
-.L0C20
+.xFactor1Lo
 
- SKIP 6
-
-.L0C26
-
- SKIP 4
-
-.L0C2A
-
- SKIP 3
+ SKIP 13
 
 .axisKeyUsage
 
@@ -660,98 +670,35 @@ ORG &0900
                         \ control key is pressed (in any direction), so they
                         \ measure "axis control key usage"
 
-.L0C30
-
- SKIP 2
-
-.L0C32
-
- SKIP 14
-
-.L0C40
-
- SKIP 3
-
-.L0C43
-
- SKIP 2
-
-.L0C45
+.xCoord4Lo
 
  SKIP 1
 
-.L0C46
+.yCoord4Lo
 
  SKIP 1
 
-.L0C47
-
- SKIP 3
-
-.L0C4A
-
- SKIP 6
-
-.L0C50
-
- SKIP 3
-
-.L0C53
-
- SKIP 2
-
-.L0C55
+.zCoord4Lo
 
  SKIP 1
 
-.L0C56
+ SKIP 13
 
- SKIP 1
+.xFactor2Lo
 
-.L0C57
+ SKIP 13
 
- SKIP 3
+ SKIP 3                 \ These bytes appear to be unused
 
-.L0C5A
+.xFactor2Hi
 
- SKIP 6
+ SKIP 13
 
-.L0C60
+ SKIP 3                 \ These bytes appear to be unused
 
- SKIP 3
+.xFactor1Hi
 
-.L0C63
-
- SKIP 1
-
-.L0C64
-
- SKIP 1
-
-.L0C65
-
- SKIP 1
-
-.L0C66
-
- SKIP 1
-
-.L0C67
-
- SKIP 3
-
-.xCoord3Lo
-
- SKIP 1
-
-.yCoord3Lo
-
- SKIP 1
-
-.zCoord3Lo
-
- SKIP 1
-
+ SKIP 13
 
 .xPlaneTop
 
@@ -768,49 +715,21 @@ ORG &0900
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in zPlaneHi
 
-.L0C70
+.xFactor1Top
 
- SKIP 3
+ SKIP 13
 
-.L0C73
+ SKIP 3                 \ These bytes appear to be unused
 
- SKIP 1
-
-.L0C74
+.xCoord4Hi
 
  SKIP 1
 
-.L0C75
+.yCoord4Hi
 
  SKIP 1
 
-.L0C76
-
- SKIP 1
-
-.L0C77
-
- SKIP 3
-
-.xCoord3Hi
-
- SKIP 1
-
-.yCoord3Hi
-
- SKIP 1
-
-.zCoord3Hi
-
- SKIP 1
-
- SKIP 3
-
-.L0C80
-
- SKIP 2
-
-.L0C82
+.zCoord4Hi
 
  SKIP 1
 
@@ -870,15 +789,29 @@ ORG &0900
  SKIP 1                 \ Plane velocity in the z-axis from the perspective
                         \ of the outside world (low byte)
 
-.L0C8C
+.xVelocityBot
 
- SKIP 4
+ SKIP 1
 
-.L0C90
+.yVelocityBot
 
- SKIP 2
+ SKIP 1
 
-.L0C92
+.zVelocityBot
+
+ SKIP 1
+
+ SKIP 1
+
+.xCoord4Top
+
+ SKIP 1
+
+.yCoord4Top
+
+ SKIP 1
+
+.zCoord4Top
 
  SKIP 1
 
@@ -11477,7 +11410,7 @@ ORG CODE%
 
 .IndicatorU
 
- LDA L4F85              \ Set A = L4F85
+ LDA flightFactors+5    \ Set A = flightFactors+5
 
  LDY ucStatus           \ If ucStatus is non-zero then the undercarriage is
  BNE indu1              \ down, so jump to indu1
@@ -11519,8 +11452,9 @@ ORG CODE%
 
 .indu2
 
- STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 10 or
-                        \ reduced by 10 for undercarriage down/up) ???
+ STA flightFactors+5    \ Store A in flightFactors+5 (which is flightFactors+5
+                        \ incremented by 10 for undercarriage down, or reduced
+                        \ by 10 for undercarriage up) ???
 
  STX yLandingGear       \ Store X in yLandingGear, so the vertical distance
                         \ between the cockpit and the bottom of the plane is 5
@@ -11560,7 +11494,7 @@ ORG CODE%
 
 .IndicatorF
 
- LDA L4F85              \ Set A = L4F85
+ LDA flightFactors+5    \ Set A = flightFactors+5
  
  LDY flapsStatus        \ If flapsStatus is non-zero then the flaps are on, so
  BNE indf1              \ jump to indf1
@@ -11570,7 +11504,7 @@ ORG CODE%
  SEC                    \ Set A = A - 200
  SBC #200
 
- LDX #0                 \ Set X = 0 to store in L4F87 below
+ LDX #0                 \ Set X = 0 to store in flightFactors+7 below
 
  LDY #%01000100         \ Set Y to a four-pixel block with pixel 2 in white, to
                         \ act as the centre of the flaps indicator when turned
@@ -11586,7 +11520,7 @@ ORG CODE%
  CLC                    \ Set A = A + 200
  ADC #200
 
- LDX #152               \ Set X = 152 to store in L4F87 below
+ LDX #152               \ Set X = 152 to store in flightFactors+7 below
 
  LDY #%11001100         \ Set Y to a four-pixel block with pixels 2 and 3 in
                         \ white, to act as the centre of the flaps indicator
@@ -11594,11 +11528,12 @@ ORG CODE%
 
 .indf2
 
- STA L4F85              \ Store A in L4F85 (which is L4F85 incremented by 200 or
-                        \ reduced by 200 for flaps on/off) ???
+ STA flightFactors+5    \ Store A in flightFactors+5 (which is flightFactors+5
+                        \ incremented by 200 or reduced by 200 for flaps on/off)
+                        \ ???
 
- STX L4F87              \ Store X in L4F87 (0 if flaps are off, 152 if they are
-                        \ on) ???
+ STX flightFactors+7    \ Store X in flightFactors+7 (0 if flaps are off, 152 if
+                        \ they are on)
 
  TYA                    \ Set A to the pixel pattern in Y
 
@@ -12129,7 +12064,7 @@ ORG CODE%
 
  STA alienSlot          \ Set alienSlot = 0
 
- STA L4F87              \ Set L4F87 = 0
+ STA flightFactors+7    \ Set flightFactors+7 = 0
 
  STA hitTimer           \ Set hitTimer = 0
 
@@ -12202,8 +12137,8 @@ ORG CODE%
 
  STA alienSpeed         \ Set alienSpeed = 10
 
- LDA #242               \ Set L4F85 = 242
- STA L4F85
+ LDA #242               \ Set flightFactors+5 = 242
+ STA flightFactors+5
 
  LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
  STA ucStatus
@@ -19361,7 +19296,7 @@ ORG CODE%
  TAX                    \ Either turn the engine sound off (if A = 0) or turn it
  JSR ToggleEngineSound  \ on (if A is non-zero)
 
- LDA L4F85              \ Set A = L4F85
+ LDA flightFactors+5    \ Set A = flightFactors+5
 
  LDX engineStatus       \ If the engine is now on, jump to seng1
  BNE seng1
@@ -19379,7 +19314,7 @@ ORG CODE%
 
 .seng2
 
- STA L4F85              \ Update the value of L4F85
+ STA flightFactors+5    \ Update the value of flightFactors+5
 
 .seng3
 
@@ -24768,54 +24703,26 @@ NEXT
  
 \ ******************************************************************************
 \
-\       Name: L4F80
+\       Name: flightFactors
 \       Type: Variable
 \   Category: Flight model
 \    Summary: 
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
-.L4F80
+.flightFactors
 
- EQUB &D4, &C9, &CC, &B0
+ EQUB &D4               \ 0: 
 
-\ ******************************************************************************
-\
-\       Name: L4F84
-\       Type: Variable
-\   Category: Flight model
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+ EQUB &C9               \ 1: 
 
-.L4F84
+ EQUB &CC               \ 2: 
 
- EQUB &9C               \ Always either &9C or &27 (156 or 39)
+ EQUB &B0               \ 3: 
 
-\ ******************************************************************************
-\
-\       Name: L4F85
-\       Type: Variable
-\   Category: Flight model
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
+ EQUB &9C               \ 4: Always either &9C or &27 (156 or 39)
 
-.L4F85
-
- EQUB &16               \ Drag factor? lift factor?
+ EQUB &16               \ 5: Drag factor? lift factor?
                         \
                         \ Goes up by 10 if undercarriage is down
                         \ Goes down by 10 if undercarriage is up
@@ -24826,34 +24733,27 @@ NEXT
                         \
                         \ Set to 198 in ResetVariables
 
- EQUB &28
+ EQUB &28               \ 6: 
 
-\ ******************************************************************************
-\
-\       Name: L4F87
-\       Type: Variable
-\   Category: Flight model
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
-\ ******************************************************************************
-
-.L4F87
-
- EQUB 152               \ Flaps lift factor? Drag factor?
+ EQUB 152               \ 7: Flaps lift factor? Drag factor?
                         \
                         \ Set to 0 if flaps are off, 152 if they are on
                         \
                         \ Zeroed in ResetVariables
 
- EQUB &00, &00          \ These bytes appear to be unused
- EQUB &FF, &8D
- EQUB &BE, &00
- EQUB &05, &7D
- EQUB &FF, &50
+ EQUB &00               \ 8: 
+
+ EQUB &00               \ 9: 
+
+ EQUB &FF               \ 10: x-axis
+
+ EQUB &8D               \ 11: y-axis
+
+ EQUB &BE               \ 12: z-axis
+
+ EQUB &00, &05          \ These bytes appear to be unused
+ EQUB &7D, &FF
+ EQUB &50
 
 \ ******************************************************************************
 \
@@ -25513,21 +25413,28 @@ NEXT
 
  STA yTurnHi
 
- LDX #&82               \ Set (L0C92 L0C82) = 0
- JSR ResetVariable
+ LDX #&82               \ Set (zCoord4Top zCoord4Hi) = 0
+ JSR ResetVariable      \
+                        \ This also sets A = 0
 
- STA L0C32
+ STA zCoord4Lo          \ Set xCoord4Lo = 0, so by now we have:
+                        \
+                        \   (zCoord4Top zCoord4Hi zCoord4Lo) = 0
+
  LDY ucStatus
  BNE fmod9
 
  LDA xRotationHi
- AND L0C90
+ AND xCoord4Top
  BPL fmod8
 
- LDX #&80               \ Set (L0C90 L0C80) = 0
- JSR ResetVariable
+ LDX #&80               \ Set (xCoord4Top xCoord4Hi) = 0
+ JSR ResetVariable      \
+                        \ This also sets A = 0
 
- STA L0C30
+ STA xCoord4Lo          \ Set xCoord4Lo = 0, so by now we have:
+                        \
+                        \   (xCoord4Top xCoord4Hi xCoord4Lo) = 0
 
 .fmod8
 
@@ -25805,24 +25712,29 @@ NEXT
 
 .L51D7
 
- LDX #2
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
 
 .L51D9
 
- LDA L0C30,X
- CLC
- ADC L0C19,X
- STA L0C19,X
- LDA L0C80,X
+ LDA xCoord4Lo,X        \ Set xTurn = xTurn + xCoord4
+ CLC                    \
+ ADC xTurnBot,X         \ starting with the bottom bytes
+ STA xTurnBot,X
+ 
+ LDA xCoord4Hi,X        \ And then the low bytes
  ADC xTurnLo,X
  STA xTurnLo,X
- LDA L0C90,X
+ 
+ LDA xCoord4Top,X       \ And then the high bytes
  ADC xTurnHi,X
  STA xTurnHi,X
- DEX
- BPL L51D9
+ 
+ DEX                    \ Decrement the loop counter to move to the next axis
+ 
+ BPL L51D9              \ Loop back until we have processed all three axes
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -25839,39 +25751,47 @@ NEXT
 
 .L51F9
 
- LDX #2
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
 
 .L51FB
 
- LDA #0
+ LDA #0                 \ Set R = 0, to use as the top byte in (R A V)
  STA R
- LDA xCoord1Lo,X
+
+ LDA xCoord1Lo,X        \ Set (A V) = (xCoord1Hi xCoord1Lo)
  STA V
  LDA xCoord1Hi,X
- BPL L520B
 
- DEC R
+ BPL L520B              \ If (A V) is negative, decrement R to &FF so it has the
+ DEC R                  \ correct sign for (R A V)
 
 .L520B
 
- ASL V
+ ASL V                  \ Ser (R A V) = (R A V) << 1
  ROL A
  ROL R
+
  PHA
- LDA L0C8C,X
+
+ LDA xVelocityBot,X
  CLC
  ADC V
- STA L0C8C,X
+ STA xVelocityBot,X
+
  PLA
+
  ADC xVelocityLo,X
  STA xVelocityLo,X
  LDA xVelocityHi,X
  ADC R
  STA xVelocityHi,X
- DEX
- BPL L51FB
 
- RTS
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL L51FB              \ Loop back until we have processed all three axes
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -25888,16 +25808,17 @@ NEXT
 
 .L522D
 
- LDX #2
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
 
 .L522F
 
  LDA #0
  STA R
- LDA L0C09,X
+ LDA xCoord5,X
  CLC
  ADC xVelocityLo,X
- STA L0C09,X
+ STA xCoord5,X
  LDA xVelocityHi,X
  BPL L5244
 
@@ -25907,47 +25828,57 @@ NEXT
 
  ADC xPlaneLo,X
  STA xPlaneLo,X
+
  LDA xPlaneHi,X
  ADC R
  STA xPlaneHi,X
+
  LDA xPlaneTop,X
  ADC R
  STA xPlaneTop,X
+
  LDA xRotationLo,X
  CLC
  ADC xCoord2Lo,X
  STA xRotationLo,X
+
  LDA xRotationHi,X
  ADC xCoord2Hi,X
  STA xRotationHi,X
- DEX
- BPL L522F
+
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL L522F              \ Loop back until we have processed all three axes
 
  ASL A
  EOR xRotationHi
  BPL L5294
 
- LDX #1
+ LDX #1                 \ Set a counter in X to work through the y- and z-axes
+                        \ tye comments below cover the iteration for the y-axis)
 
 .L5278
 
  LDA yRotationHi,X
- EOR #&80
+ EOR #%10000000
  STA yRotationHi,X
- DEX
- BPL L5278
+
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL L5278              \ Loop back until we have processed both axes
 
  LDA #0
  SEC
  SBC xRotationLo
  STA xRotationLo
- LDA #&80
+
+ LDA #%10000000
  SBC xRotationHi
  STA xRotationHi
 
 .L5294
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -25967,18 +25898,20 @@ NEXT
  LDA #0
  STA RR
  STA SS
- LDX #2
+
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
 
 .L529D
 
  LDA xVelocityPLo,X
  STA P
  ASL A
- STA L0C43,X
+ STA xFactor2Lo+3,X
  LDA xVelocityPHi,X
  PHA
  ROL A
- STA L0C53,X
+ STA xFactor2Hi+3,X
  PLA
  BPL L52BD
 
@@ -25995,14 +25928,18 @@ NEXT
  CPX #1
  BNE L52D3
 
- LDA P
+ LDA P                  \ Set (A I) = (Q P)
  STA I
  LDA Q
+
+ ASL I                  \ Set (A I) = (A I) << 2
+ ROL A                  \           = (Q P) << 2
  ASL I
  ROL A
- ASL I
- ROL A
- STA J
+
+ STA J                  \ Set (J I) = (A I)
+                        \           = (Q P) << 2
+
  LDA Q
 
 .L52D3
@@ -26020,25 +25957,27 @@ NEXT
 
 .L52E1
 
- STA SS
+ STA SS                 \ Set (SS RR) = (A P)
  LDA P
  STA RR
 
 .L52E7
 
- DEX
- BPL L529D
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL L529D              \ Loop back until we have processed all three axes
 
  ASL RR
  ROL SS
- LDY SS
+
+ LDY SS                 \ Set (Y X) = (SS RR)
  LDX RR
 
  JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
 
  STY SS
  STX RR
- LDA L4F84
+ LDA flightFactors+4
  CMP #&27
  BNE L5307
 
@@ -26069,7 +26008,7 @@ NEXT
 
 .L5323
 
- LDA L4F84
+ LDA flightFactors+4
  CMP #&27
  BEQ L533A
 
@@ -26098,7 +26037,7 @@ NEXT
 
 .L5349
 
- STA L4F84
+ STA flightFactors+4
  JSR L54B9
 
  LDA RR
@@ -26122,8 +26061,8 @@ NEXT
 
 .L536D
 
- LDY L0C40,X
- LDA L0C50,X
+ LDY xFactor2Lo,X
+ LDA xFactor2Hi,X
 
 .L5373
 
@@ -26173,28 +26112,28 @@ NEXT
  DEY
  BPL L53A5
 
- STA L0C40,X
+ STA xFactor2Lo,X
  LDA H
- STA L0C50,X
+ STA xFactor2Hi,X
  DEX
  BPL L5360
 
  LDA #128               \ Default
  STA mult1+1
 
- LDA L0C43
- STA L0C46
- LDA L0C53
- STA L0C56
- LDA L0C55
+ LDA xFactor2Lo+3
+ STA xFactor2Lo+6
+ LDA xFactor2Hi+3
+ STA xFactor2Hi+6
+ LDA xFactor2Hi+5
  BMI L5407
 
  STA W
- STA L0C57
+ STA xFactor2Hi+7
  LDA #0
  STA G
- LDA L0C45
- STA L0C47
+ LDA xFactor2Lo+5
+ STA xFactor2Lo+7
  LDX #2
  LDA flapsStatus
  PHP
@@ -26220,11 +26159,11 @@ NEXT
 
  CLC
  LDA W
- ADC L0C40
- STA L0C40
+ ADC xFactor2Lo
+ STA xFactor2Lo
  LDA G
- ADC L0C50
- STA L0C50
+ ADC xFactor2Hi
+ STA xFactor2Hi
 
 .L5407
 
@@ -26245,7 +26184,7 @@ NEXT
 
 .L5408
 
- LDX #&0C
+ LDX #12
 
 .L540A
 
@@ -26256,10 +26195,10 @@ NEXT
 
 .L5410
 
- LDA L4F80,X
+ LDA flightFactors,X
  STA R
- LDY L0C40,X
- LDA L0C50,X
+ LDY xFactor2Lo,X
+ LDA xFactor2Hi,X
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
 
@@ -26318,11 +26257,11 @@ NEXT
 .L545B
 
  LDA G
- STA L0C70,X
+ STA xFactor1Top,X
  LDA W
- STA L0C60,X
+ STA xFactor1Hi,X
  LDA V
- STA L0C20,X
+ STA xFactor1Lo,X
  DEX
  BPL L540A
 
@@ -26508,10 +26447,10 @@ NEXT
  EOR #1
  TAY
  SEC
- LDA L0C43,Y
+ LDA xFactor2Lo+3,Y
  SBC W
  STA L0C06,X
- LDA L0C53,Y
+ LDA xFactor2Hi+3,Y
  SBC G
  STA L0C16,X
  DEX
@@ -26603,8 +26542,8 @@ NEXT
 .L5539
 
  STA R
- LDY L0C45
- LDA L0C55
+ LDY xFactor2Lo+5
+ LDA xFactor2Hi+5
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
 
@@ -26617,9 +26556,9 @@ NEXT
 
 .L554F
 
- STA L0C5A,X
+ STA xFactor2Hi+10,X
  LDA W
- STA L0C4A,X
+ STA xFactor2Lo+10,X
  DEX
  BEQ L552F
 
@@ -26646,25 +26585,29 @@ NEXT
 
 .L555F
 
- LDA L0C20,X
+ LDA xFactor1Lo,X
  CLC
- ADC L0C2A,X
- STA L0C30,X
- LDA L0C60,X
- ADC xCoord3Lo,X
- STA L0C80,X
- LDA L0C70,X
- ADC xCoord3Hi,X
- STA L0C90,X
+ ADC xFactor1Lo+10,X
+ STA xCoord4Lo,X
+ 
+ LDA xFactor1Hi,X
+ ADC xFactor1Hi+10,X
+ STA xCoord4Hi,X
+ 
+ LDA xFactor1Top,X
+ ADC xFactor1Top+10,X
+ STA xCoord4Top,X
+ 
  DEX
+ 
  BPL L555F
 
  LDA #0
  STA S
  LDA yPointLo+253
  CLC
- ADC L0C30
- STA L0C30
+ ADC xCoord4Lo
+ STA xCoord4Lo
  LDA yPointHi+253
  BPL L5593
 
@@ -26672,34 +26615,34 @@ NEXT
 
 .L5593
 
- ADC L0C80
- STA L0C80
- LDA L0C90
+ ADC xCoord4Hi
+ STA xCoord4Hi
+ LDA xCoord4Top
  ADC S
- STA L0C90
+ STA xCoord4Top
  SEC
- LDA L0C32
- SBC L0C26
- STA L0C32
- LDA L0C82
- SBC L0C66
- STA L0C82
- LDA L0C92
- SBC L0C76
- STA L0C92
+ LDA zCoord4Lo
+ SBC xFactor1Lo+6
+ STA zCoord4Lo
+ LDA zCoord4Hi
+ SBC xFactor1Hi+6
+ STA zCoord4Hi
+ LDA zCoord4Top
+ SBC xFactor1Top+6
+ STA zCoord4Top
  SEC
  LDA #0
- SBC L0C63
+ SBC xFactor1Hi+3
  STA xPointLo+252
  LDA #0
- SBC L0C73
+ SBC xFactor1Top+3
  STA xPointHi+252
  SEC
- LDA L0C67
- SBC L0C64
+ LDA xFactor1Hi+7
+ SBC xFactor1Hi+4
  STA yPointLo+252
- LDA L0C77
- SBC L0C74
+ LDA xFactor1Top+7
+ SBC xFactor1Top+4
  STA yPointHi+252
 
  LDA zVelocityPHi       \ Set A to the high byte of our airspeed
@@ -26787,10 +26730,10 @@ NEXT
 
  TXA
  SEC
- SBC L0C65
+ SBC xFactor1Hi+5
  STA zPointLo+252
  TYA
- SBC L0C75
+ SBC xFactor1Top+5
 
 .L5649
 
@@ -27262,11 +27205,11 @@ NEXT
 \   X                   The offset from xTurnLo of the low byte of the variable
 \                       to zero:
 \
-\                         * &6A = (xCoord3Hi xCoord3Lo)
+\                         * &6A = (xFactor1Top+10 xFactor1Hi+10)
 \
-\                         * &6B = (yCoord3Hi yCoord3Lo)
+\                         * &6B = (xFactor1Top+11 xFactor1Hi+11)
 \
-\                         * &6C = (zCoord3Hi zCoord3Lo)
+\                         * &6C = (xFactor1Top+12 xFactor1Hi+12)
 \
 \                         * &02 = (zTurnHi zTurnLo)
 \
@@ -27406,12 +27349,20 @@ NEXT
 \
 \                         * &00 = (xTurnHi xTurnLo)
 \                         * &02 = (zTurnHi zTurnLo)
-\                         * &80 = (L0C90 L0C80)
-\                         * &82 = (L0C92 L0C82)
+\                         * &80 = (xCoord4Top xCoord4Hi)
+\                         * &82 = (zCoord4Top zCoord4Hi)
 \                         * &8A = (yVelocityHi yVelocityLo)
 \                         * &EA = (xRotationHi xRotationLo)
 \                         * &EC = (zRotationHi zRotationLo)
 \                         * &EE = (yPlaneHi yPlaneLo)
+\
+\                       In the case of the two 24-bit variables, X is the offset
+\                       of the high byte, and we have to zero the low byte
+\                       manually after the routine call
+\
+\ Returns:
+\
+\   A                   A is set to 0
 \
 \ ******************************************************************************
 
