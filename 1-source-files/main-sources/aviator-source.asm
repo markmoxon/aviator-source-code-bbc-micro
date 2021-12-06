@@ -1296,7 +1296,7 @@ ORG &0900
                         \ Set to %01000000 when speed is 0 in ApplyFlightModel
                         \
                         \ Gets shifted left with a 1 inserted in bit 0 in
-                        \ CheckLanding if we are not on the runway
+                        \ ProcessLanding if we are doing an emergency landing
 
 .engineStatus
 
@@ -12173,7 +12173,8 @@ ORG CODE%
  LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
                         \ the rset4 loop
 
- STX xRotationHi        \ Set xRotationHi = 7
+ STX xRotationHi        \ Set xRotationHi = 7, so the plane tilts backwards by
+                        \ 7/256 = 9.84 degrees when its wheels are on the ground
 
 .rset4
 
@@ -12645,7 +12646,8 @@ ORG CODE%
 
  BMI main16             \ If bit 7 of landingStatus is set, jump to main16 to
                         \ skip the following (enabling the Theme, filling up
-                        \ with fuel)
+                        \ with fuel) as we are on the ground following an
+                        \ emergency landing
 
  LDA firingStatus       \ If firingStatus is zero then there are no bullets in
  BEQ main14             \ the air, so jump to main14
@@ -23381,7 +23383,7 @@ NEXT
  INX                    \ Increment X to point to the next character
 
  CPX T                  \ Loop back to print the next character until we have
- BNE prins1              \ printed all of them
+ BNE prins1             \ printed all of them
 
  RTS                    \ Return from the subroutine
 
@@ -24692,8 +24694,7 @@ NEXT
 \       Name: soundData26
 \       Type: Variable
 \   Category: Sound
-\    Summary: The sound of us making contact with the ground without the
-\             undercarriage down
+\    Summary: The sound of us making contact with the ground while landing
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25354,10 +25355,10 @@ NEXT
 
 .fmod3
 
- JSR L555D              \ ???
+ JSR L555D              \ ??? (sets point 252)
 
- LDA xPointLo+252       \ Set the C flag to bit 7 of xPointLo+252, flipped
- EOR #%10000000
+ LDA xPointLo+252       \ Set the C flag to bit 7 of xPointLo+252, flipped, to
+ EOR #%10000000         \ round up the slip rate in the following calculation
  ASL A
 
  LDA #0                 \ Set slipRate = 0 - xPointHi+252 - (1 - C)
@@ -25553,9 +25554,9 @@ NEXT
 
  JSR SetPointCoords     \ Calculate the coordinates for point 252
 
- LDA yPointHi+252
+ LDA yPointHi+252       \ Subtract 16 from the high y-coordinate for point 252
  SEC
- SBC #&10
+ SBC #16
  STA yPointHi+252
 
  LDX #LO(xCoord1Lo)     \ Set X so the call to CopyPointToWork copies the
@@ -25567,9 +25568,17 @@ NEXT
  JSR CopyPointToWork    \ Copy the coordinates from point 252 to
                         \ (xCoord1, yCoord1, zCoord1)
 
- JSR L51F9
+ JSR AdjustVelocity     \ Adjust the plane's velocity as follows:
+                        \
+                        \   [ xVelocity ]   [ xVelocity ]   [ xCoord1 ]
+                        \   [ yVelocity ] = [ yVelocity ] + [ yCoord1 ] * 2
+                        \   [ zVelocity ]   [ zVelocity ]   [ zCoord1 ]
 
- JSR L51D7
+ JSR AdjustTurn         \ Adjust the plane's turn rate as follows:
+                        \
+                        \   [ xTurn ]   [ xTurn ]   [ xCoord4 ]
+                        \   [ yTurn ] = [ yTurn ] + [ yCoord4 ]
+                        \   [ zTurn ]   [ zTurn ]   [ zCoord4 ]
 
  LDX #LO(xTurnLo)       \ Set X so the call to CopyWorkToPoint copies the
                         \ coordinates from (xTurnLo, yTurnLo, zTurnLo)
@@ -25602,7 +25611,8 @@ NEXT
  LDA #7                 \ Make the engine sound
  JSR ToggleEngineSound
 
- JSR CheckLanding
+ JSR ProcessLanding     \ Check to see if we are landing, and if we are, process
+                        \ the landing and the effect on the plane
 
  JSR ShowUpsideDownBar  \ Show or hide the bar in the artificial horizon that
                         \ shows whether the plane is upside down
@@ -25707,18 +25717,31 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L51D7
+\       Name: AdjustTurn
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight model
+\    Summary: Adjust the plane's turn rate
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine adjusts the plane's turn rate by adding a 24-bit unsigned vector
+\ to each axis of the plane's turn rate. Specifically, it does the following for
+\ each of the three axes (x, y and z):
+\
+\   (xTurnHi xTurnLo xTurnBot) += (xCoord4Top xCoord4Hi xCoord4Lo)
+\
+\ so that's:
+\
+\   [ xTurn ]   [ xTurn ]   [ xCoord4 ]
+\   [ yTurn ] = [ yTurn ] + [ yCoord4 ]
+\   [ zTurn ]   [ zTurn ]   [ zCoord4 ]
+\
+\ where (xCoord4 yCoord4 zCoord4) and (xTurn yTurn zTurn) are vectors made up of
+\ unsigned 24-bit numbers representing angles.
 \
 \ ******************************************************************************
 
-.L51D7
+.AdjustTurn
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
@@ -25746,18 +25769,32 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L51F9
+\       Name: AdjustVelocity
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight model
+\    Summary: Adjust the plane's velocity vector
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine adjusts the plane's velocity vector by adding a 16-bit signed
+\ vector to each axis of the plane's velocity vector. Specifically, it does the
+\ following for each of the three axes (x, y and z):
+\
+\   (xVelocityHi xVelocityLo xVelocityBot) += (xCoord1Hi xCoord1Lo) * 2
+\
+\ so that's:
+\
+\   [ xVelocity ]   [ xVelocity ]   [ xCoord1 ]
+\   [ yVelocity ] = [ yVelocity ] + [ yCoord1 ] * 2
+\   [ zVelocity ]   [ zVelocity ]   [ zCoord1 ]
+\
+\ where (xCoord1 yCoord1 zCoord1) is a vector made up of signed 16-bit numbers
+\ and (xVelocity zVelocity zVelocity) is a vector made up of signed 24-bit
+\ numbers.
 \
 \ ******************************************************************************
 
-.L51F9
+.AdjustVelocity
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
@@ -25776,22 +25813,23 @@ NEXT
 
 .L520B
 
- ASL V                  \ Ser (R A V) = (R A V) << 1
- ROL A
+ ASL V                  \ Set (R A V) = (R A V) << 1
+ ROL A                  \             = (xCoord1Hi xCoord1Lo) * 2
  ROL R
 
- PHA
+ PHA                    \ Store the low byte on the stack, so we can retrieve
+                        \ it below
 
- LDA xVelocityBot,X
- CLC
- ADC V
+ LDA xVelocityBot,X     \ Set xVelocity = xVelocity + (R A V)
+ CLC                    \
+ ADC V                  \ starting with the bottom bytes
  STA xVelocityBot,X
 
- PLA
-
- ADC xVelocityLo,X
+ PLA                    \ And then the low bytes, retrieving the low byte
+ ADC xVelocityLo,X      \ that we stored on the stack above
  STA xVelocityLo,X
- LDA xVelocityHi,X
+
+ LDA xVelocityHi,X      \ And then the high bytes
  ADC R
  STA xVelocityHi,X
 
@@ -26830,25 +26868,39 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: CheckLanding
+\       Name: ProcessLanding (Part 1 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: If this is an emergency landing, make the landing a bumpy one
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   L                   The current value of onGround:
+\
+\                         * 0 = we are not on the ground
+\
+\                         * 1 = we are on the ground
 \
 \ ******************************************************************************
 
-.CheckLanding
+.ProcessLanding
 
- LDA L
- BEQ clan1
+ LDA L                  \ Fetch the current value of onGround
+
+ BEQ clan1              \ If onGround is zero then we are not on the ground, so
+                        \ jump to clan1 to skip the bumpy ride
 
  JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
- BCC clan1              \ If the approach is good, then jump to clan1
+ BCC clan1              \ If the approach is good, then jump to clan1 to skip
+                        \ the bumpy ride
+
+                        \ If we get here then we are on the ground but we aren't
+                        \ approaching the runway, so this must be an emergency
+                        \ landing outside the airport, and we apply a suitably
+                        \ bumpy ride, depending on the plane's velocity
 
  ASL landingStatus      \ Shift landingStatus left and set bit 0
 
@@ -26896,231 +26948,431 @@ NEXT
                         \ faster we are trying to land, the more the plane rolls
                         \ when it hits the runway)
 
+\ ******************************************************************************
+\
+\       Name: ProcessLanding (Part 2 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: If we are too high to be touching the ground then we can't be
+\             landing, so stop the landing checks
+\
+\ ******************************************************************************
+
 .clan1
 
- LDA yPlaneHi
- BMI clan3
+ LDA yPlaneHi           \ If the high byte of the plane's y-coordinate is
+ BMI clan3              \ negative, then jump to clan3 to zero it (as we can't
+                        \ be below ground level)
 
- BEQ clan4
+ BEQ clan4              \ If the high byte of the plane's y-coordinate is zero,
+                        \ then jump to clan4 to keep checking for a good landing
 
- CMP #2
- BCC clan2
+ CMP #2                 \ If the high byte of the plane's y-coordinate is < 2,
+ BCC clan2              \ skip the following instruction
 
- STA reached512ft       \ Set reached512ft = 2 when yPlaneHi >= 2
+ STA reached512ft       \ The high byte of the plane's y-coordinate is >= 2, so
+                        \ set reached512ft to a non-zero value to indicate that
+                        \ we have reached 512 feet
 
 .clan2
 
- LDA #0
- STA onGround
- RTS
+ LDA #0                 \ If we get here then either the high byte of the
+ STA onGround           \ plane's y-coordinate is positive and non-zero, in
+                        \ which case we are at least 256 feet above the ground,
+                        \ or the plane is further from the ground than the
+                        \ distance from the cockpit to the lowest part of the
+                        \ plane, in which case we have not touched down, so
+                        \ set onGround to 0 to indicate that we are not on the
+                        \ ground
+
+ RTS                    \ Return from the subroutine
 
 .clan3
 
- LDX #&EE               \ Set (yPlaneHi yPlaneLo) = 0
- JSR ResetVariable
+ LDX #&EE               \ If we get here then yPlaneHi is negative, so set
+ JSR ResetVariable      \ (yPlaneHi yPlaneLo) = 0 as we can't be below ground
 
 .clan4
 
- LDA yLandingGear
- CMP yPlaneLo
- BCC clan2
+ LDA yLandingGear       \ If yLandingGear < yPlaneLo then the plane is further
+ CMP yPlaneLo           \ from the ground than the distance from the cockpit to
+ BCC clan2              \ the lowest part of the plane, so we are still flying
+                        \ above the ground and have not touched down, so jump
+                        \ up to clan2 to return from the subroutine
 
- LDX L
- BEQ clan10
+\ ******************************************************************************
+\
+\       Name: ProcessLanding (Part 3 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: If we are already on the ground, stop the plane from falling and
+\             rolling, and make it horizontal
+\
+\ ******************************************************************************
 
- STA yPlaneLo
- LDX yVelocityHi
- BPL clan5
+                        \ If we get here then the plane is close enough to the
+                        \ ground to be touching down
 
- LDX #&8A               \ Set (yVelocityHi yVelocityLo) = 0
- JSR ResetVariable
+ LDX L                  \ Fetch the current value of onGround
+
+ BEQ clan10             \ If L is zero then we are not on the ground, so jump
+                        \ to clan10 to skip the next two parts
+
+                        \ If we get here then we are already on the ground, so
+                        \ we are in the process of landing
+
+ STA yPlaneLo           \ Set A to the low byte of the plane's y-coordinate
+
+ LDX yVelocityHi        \ If the high byte of the plane's vertical velocity is
+ BPL clan5              \ positive, skip the following
+
+ LDX #&8A               \ We are on the ground and the plane's vertical velocity
+ JSR ResetVariable      \ is negative, so set (yVelocityHi yVelocityLo) = 0 as
+                        \ the plane can't travel down into the ground
 
 .clan5
 
- LDX #&EC               \ Set (zRotationHi zRotationLo) = 0
- JSR ResetVariable
+ LDX #&EC               \ Set (zRotationHi zRotationLo) = 0 to set the plane to
+ JSR ResetVariable      \ the horizontal position (i.e. zero roll angle)
 
- LDX #&02               \ Set (zTurnHi zTurnLo) = 0
- JSR ResetVariable
+ LDX #&02               \ Set (zTurnHi zTurnLo) = 0 to stop the plane turning
+ JSR ResetVariable      \ around the z-axis (i.e. stop the plane rolling)
 
- LDX ucStatus
- BNE clan9
+ LDX ucStatus           \ If ucStatus is non-zero then the undercarriage is
+ BNE clan9              \ down, so jump to clan9
 
- LDX landingStatus
- BMI clan6
+\ ******************************************************************************
+\
+\       Name: ProcessLanding (Part 4 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: If we are already on the ground and the undercarriage is up, stop
+\             the plane from pitching down and make it level
+\
+\ ******************************************************************************
 
- ASL landingStatus
+                        \ If we get here then we are on the ground but the
+                        \ undercarriage is up
+
+ LDX landingStatus      \ If bit 7 of landingStatus is set, skip the following
+ BMI clan6              \ instruction
+
+ ASL landingStatus      \ Shift landingStatus left by one place
 
 .clan6
 
- LDX xRotationHi
- BPL clan8
+ LDX xRotationHi        \ If the high byte of the plane's rotation in the x-axis
+ BPL clan8              \ is positive, skip the following
 
- LDX #&EA               \ Set (xRotationHi xRotationLo) = 0
- JSR ResetVariable
+ LDX #&EA               \ Set (xRotationHi xRotationLo) = 0 to set the plane to
+ JSR ResetVariable      \ the horizontal position (i.e. zero pitch angle)
 
 .clan7
 
- LDX #&00               \ Set (xTurnHi xTurnLo) = 0
- JSR ResetVariable
+ LDX #&00               \ Set (xTurnHi xTurnLo) = 0 to stop the plane turning
+ JSR ResetVariable      \ around the x-axis (i.e. stop the plane pitching down)
 
 .clan8
 
- RTS
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: ProcessLanding (Part 5 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: If we are already on the ground and the undercarriage is down,
+\             stop the plane from pitching down and tilt the plane backwards
+\
+\ ******************************************************************************
 
 .clan9
 
- LDX xRotationHi
- BMI clan8
+                        \ If we get here then we are on the ground and the
+                        \ undercarriage is down
 
- CPX #7
- BCC clan8
+ LDX xRotationHi        \ If the high byte of the plane's rotation in the x-axis
+ BMI clan8              \ is negative, jump to clan8 to return from the
+                        \ subroutine as the plane is already tilted backwards
 
- LDA #7
- STA xRotationHi
- LDA #0
- STA xRotationLo
- LDX xTurnHi
- BPL clan7
+ CPX #7                 \ If the high byte of the plane's rotation in the x-axis
+ BCC clan8              \ is positive and less than 7, jump to clan8 to return
+                        \ from the subroutine
 
- RTS
+ LDA #7                 \ Set (xRotationHi xRotationLo) = (7 0), which is the
+ STA xRotationHi        \ default tilt of the plane - the undercarriage is
+ LDA #0                 \ taller than the rear tail wheel, so the whole plane
+ STA xRotationLo        \ points up by 7/256 = 9.84 degrees when its wheels are
+                        \ on the ground
+
+ LDX xTurnHi            \ If the high byte of the xTurn rate is positive, jump
+ BPL clan7              \ to clan7 to stop the plane from pitching down and
+                        \ return from the subroutine
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: ProcessLanding (Part 6 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: If we are not on the ground, process the touchdown, bouncing the
+\             plane and crashing if we are coming down too fast
+\
+\ ******************************************************************************
 
 .clan10
 
- SEC
- SBC yPlaneLo
- LSR A
- CLC
- ADC yLandingGear
- STA yPlaneLo
- LDA yVelocityHi
- BPL clan11
+                        \ When we jump here from part 3, we know that:
+                        \
+                        \   * We are not on the ground
+                        \
+                        \   * yLandingGear >= yPlaneLo
+                        \
+                        \   * A = yLandingGear
+                        \
+                        \ The second condition means that the plane is closer to
+                        \ the ground than the distance between the plane and the
+                        \ lowest part of the plane, so we have touched down and
+                        \ the bottom part of the plane is now below ground level
+                        \ (which we now need to fix)
 
- SEC
- LDA #0
- SBC yVelocityLo
+ SEC                    \ Set A = (yLandingGear - yPlaneLo) / 2
+ SBC yPlaneLo           \
+ LSR A                  \ so A contains half the distance that the wheels would
+                        \ be below the ground if we didn't fix this
+
+ CLC                    \ Set yPlaneLo = yLandingGear + A
+ ADC yLandingGear       \
+ STA yPlaneLo           \ so the plane bounces up by the distance in A, which is
+                        \ greater, the further "below" the ground the wheels are
+
+ LDA yVelocityHi        \ If the high byte of the plane's vertical velocity is
+ BPL clan11             \ positive, skip the following as the plane is already
+                        \ travelling upwards
+
+ SEC                    \ Negate the plane's vertical velocity, so the plane
+ LDA #0                 \ bounces up by the same speed as it was originally
+ SBC yVelocityLo        \ heading towards the ground
  STA yVelocityLo
  LDA #0
  SBC yVelocityHi
 
 .clan11
 
- STA yVelocityHi
- LSR A
- BNE clan13
+ STA yVelocityHi        \ Update the high byte of the plane's vertical velocity
+                        \ (this instruction should really be before the clan11
+                        \ label, as it has no effect here)
 
- LDA yVelocityLo
- ROR A
- STA R
+                        \ We now do various velocity checks to make sure we are
+                        \ not coming down to fast (if we are, we crash)
+
+ LSR A                  \ Shift bit 0 of the high byte of the plane's vertical
+                        \ velocity into the C flag
+
+ BNE clan13             \ If the above shift left any set bits in A, then the
+                        \ high byte of the plane's vertical velocity is >= 2,
+                        \ so yVelocity >= 512, so jump to clan13 to crash the
+                        \ plane, as the we are coming down far too fast to land
+
+ LDA yVelocityLo        \ Set A = (yVelocityHi yVelocity) / 2
+ ROR A                  \       = yVelocity / 2
+                        \
+                        \ by shifting the low byte right by one place and 
+                        \ shifting the C flag into the top bit
+
+ STA R                  \ Set R = A
+                        \       = yVelocity / 2
 
  LDX ucStatus           \ If ucStatus is non-zero, then the undercarriage
  BNE clan12             \ is down, so jump to clan12
 
-                        \ If we get here then the undercarriage is up and
-                        \ yVelocityHi / 2 = 0, so we are in the process of
-                        \ making a crash landing (or we've pulled up the
-                        \ undercarriage when still on the runway)
+                        \ If we get here then we are descending slowly enough
+                        \ to make the landing, but the undercarriage is up, so
+                        \ the propellor will smash into the ground
 
  DEX                    \ Set propellorStatus = 255 to denote that the propellor
  STX propellorStatus    \ is broken, so we can't turn the engine on again
 
- CMP #&A0
- BCC clan14
+ CMP #160               \ If A < 160, i.e. yVelocity < 320, jump to clan14 to
+ BCC clan14             \ turn the engine off before continuing the landing
+                        \ checks
 
 .clan12
 
- CMP #&6E
- BCC clan15
+ CMP #110               \ If A < 110, i.e. yVelocity < 220, jump to clan15 to
+ BCC clan15             \ continue the landing checks
 
 .clan13
 
- JMP Crash
+                        \ If we get here then at least one of the following is
+                        \ true:
+                        \
+                        \   * yVelocity >= 512
+                        \
+                        \   * The undercarriage is up and yVelocity >= 320
+                        \
+                        \   * The undercarriage is down and yVelocity >= 220
+                        \
+                        \   * The undercarriage is down, we are not landing on
+                        \     the runway, and yVelocity >= 160
+                        \
+                        \ In all these cases we are coming down too fast for the
+                        \ relevant conditions, so the landing has failed
+                        \
+                        \ The above means that if the undercarriage is up, we
+                        \ can successfully land at higher vertical speeds then
+                        \ when the undercarriage is down, though in this case
+                        \ both the propellor and engine get destroyed
+
+ JMP Crash              \ Crash the plane and return from the subroutine using a
+                        \ tail call
 
 .clan14
 
- LDA #0                 \ Turn the engine off
- JSR SetEngine
+ LDA #0                 \ If we get here then the undercarriage is up and we are
+ JSR SetEngine          \ making a high-speed landing, so turn off the engine
 
 .clan15
+
+                        \ If we get here then we are descending slowly enough
+                        \ to make the landing
 
  JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
  BCC clan16             \ If the approach is good, then jump to clan16
 
- LDA R
- STA yVelocityLo
- LDX ucStatus
- BEQ clan16
+ LDA R                  \ We are not landing on the runway, so set the vertical
+ STA yVelocityLo        \ velocity to R, which halves the vertical velocity
 
- CMP #&50
- BCC clan17
+ LDX ucStatus           \ If ucStatus is zero, then the undercarriage is up, so
+ BEQ clan16             \ skip the following
 
- BCS clan13
+                        \ If we get here then the undercarriage is down
+
+ CMP #80                \ If A < 80, i.e. yVelocity < 160, jump to clan17 to
+ BCC clan17             \ continue the landing checks without making the sound
+                        \ of a touchdown
+
+ BCS clan13             \ Jump to clan13 to crash the plane, as we are
+                        \ descending too fast for an emergency landing with the
+                        \ undercarriage down
 
 .clan16
 
- LDA #26                \ Make sound #26, the sound of us making contact with
- JSR MakeSound          \ the ground without having our undercarriage down
+                        \ If we get here then either we are landing on the
+                        \ runway, or we are making an emergency landing with
+                        \ the undercarriage up - in either case, we make a sound
+                        \ (though we don't make a sound if this is an emergency
+                        \ landing with the undercarriage down)
 
- JSR ResetEngineSound
+ LDA #26                \ Make sound #26, the sound of us making contact with
+ JSR MakeSound          \ the ground while landing
+
+ JSR ResetEngineSound   \ Reset the pitch of the engine sound
+
+\ ******************************************************************************
+\
+\       Name: ProcessLanding (Part 7 of 7)
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: We have successfully touched down without crashing, so process the
+\             effects of landing on the plane
+\
+\ ******************************************************************************
 
 .clan17
 
- LDY zRotationLo
+ LDY zRotationLo        \ Set (A Y) = zRotation
  LDA zRotationHi
 
- JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
+ JSR Multiply8x16-6     \ Set (G W V) = (A Y) * R
+                        \             = zRotation * yVelocity / 2
+                        \
+                        \ Note that the value of yVelocity used is the original
+                        \ value, rather than the halved value that we set in
+                        \ part 5 if this is an emergency landing
 
- SEC                    \ Negate (G W)
+ SEC                    \ Negate (G W), so (G W) = -zRotation * yVelocity / 2
  JSR Negate16Bit
 
- LDA #0
+ LDA #0                 \ Set T = 0 to act as a high byte in (T G W)
  STA T
- LDA G
- BPL clan18
 
- DEC T
+ LDA G                  \ Set (T A W) = (T G W)
+
+ BPL clan18             \ If the high byte in G is positive, jump to clan18 to
+                        \ skip the following instruction
+
+ DEC T                  \ Decrement T to &FF so it has the correct sign for
+                        \ (T A W), so we now have:
+                        \
+                        \   (T A W) = -zRotation * yVelocity / 2
 
 .clan18
 
- LDX #1
+ LDX #1                 \ We now want to halve (T A W) twice, so set a shift
+                        \ counter in X
 
 .clan19
 
- LSR T
+ LSR T                  \ Set (T A W) = (T A W) / 2
  ROR A
  ROR W
- DEX
- BPL clan19
 
- STA zTurnHi
- LDA W
- STA zTurnLo
+ DEX                    \ Decrement the shift counter
+
+ BPL clan19             \ Loop back until we have shifted right by two places,
+                        \ so now we have the following:
+                        \
+                        \   (A W) = (A W) / 4
+                        \         = (-zRotation * yVelocity / 2) / 4
+                        \         = -zRotation * yVelocity / 8
+                        \
+                        \ We can ignore the value of T as it was only used to
+                        \ feed bits of the correct polarity into the high byte
+
+
+ STA zTurnHi            \ Set (zTurnHi zTurnLo) = (A W)
+ LDA W                  \                       = -zRotation * yVelocity / 8
+ STA zTurnLo            \
+                        \ so this applies a turn moment to the plane that is in
+                        \ the opposite direction to the current roll rotation,
+                        \ and which is proportionate to the speed, so if we come
+                        \ in fast and at a large roll angle, then the plane will
+                        \ be turned fast in the opposite direction
 
  LDX #&EC               \ Set (zRotationHi zRotationLo) = 0
  JSR ResetVariable
 
- LDA xRotationHi
- BPL clan20
+ LDA xRotationHi        \ If the high byte of the plane's rotation around the
+ BPL clan20             \ x-axis is positive, jump to clan20
 
- LDA ucStatus
- BNE clan20
+ LDA ucStatus           \ If ucStatus is non-zero, then the undercarriage
+ BNE clan20             \ is down, so jump to clan20
 
- LDX #&EA               \ Set (xRotationHi xRotationLo) = 0
- JSR ResetVariable
+ LDX #&EA               \ If we get here then the undercarriage is up and the
+ JSR ResetVariable      \ plane is tilted back as we're landing, so we set
+                        \ (xRotationHi xRotationLo) = 0 to belly-flop the
+                        \ plane forwards onto the ground, so it lands (and
+                        \ slides) horizontally along the ground
 
 .clan20
 
- LDA R
- CMP #&0C
+ LDA R                  \ If R >= 12, i.e. yVelocity >= 24, jump to clan21 to
+ CMP #12                \ return from the subroutine
  BCS clan21
 
- LDA yPlaneLo
- CMP yLandingGear
+ LDA yPlaneLo           \ If yPlaneLo <> yLandingGear, jump to clan21 to return
+ CMP yLandingGear       \ from the subroutine
  BNE clan21
 
- LDA #1                 \ Set onGround = 1 to denote that we are on the ground
- STA onGround
+ LDA #1                 \ If we get here then the vertical velocity is <= 24, and
+ STA onGround           \ the distance between the plane and the ground is equal
+                        \ to the distance from the cockpit to the bottom of the
+                        \ plane... so in other words, we are exactly on the
+                        \ ground and moving very slowly, so set onGround = 1 to
+                        \ denote that we are on the ground
 
 .clan21
 
