@@ -531,11 +531,15 @@ ORG &0900
                         \
                         \ Shown on indicator 1
 
-.L0C06
+.xCoord6Lo
 
- SKIP 2
+ SKIP 1
 
-.L0C08
+.yCoord6Lo
+
+ SKIP 1
+
+.zCoord6Lo
 
  SKIP 1
 
@@ -619,11 +623,15 @@ ORG &0900
                         \
                         \ Shown on indicator 1
 
-.L0C16
+.xCoord6Hi
 
- SKIP 2
+ SKIP 1
 
-.L0C18
+.yCoord6Hi
+
+ SKIP 1
+
+.zCoord6Hi
 
  SKIP 1
 
@@ -26055,8 +26063,8 @@ NEXT
  CPX #3
  BCS L536D
 
- LDY L0C06,X
- LDA L0C16,X
+ LDY xCoord6Lo,X
+ LDA xCoord6Hi,X
  JMP L5373
 
 .L536D
@@ -26449,22 +26457,22 @@ NEXT
  SEC
  LDA xFactor2Lo+3,Y
  SBC W
- STA L0C06,X
+ STA xCoord6Lo,X
  LDA xFactor2Hi+3,Y
  SBC G
- STA L0C16,X
+ STA xCoord6Hi,X
  DEX
  BPL L54BB
 
  SEC
  LDA #0
  SBC zTurnLo
- STA L0C08
+ STA zCoord6Lo
  LDA #0
  SBC zTurnHi
- ASL L0C08
+ ASL zCoord6Lo
  ROL A
- STA L0C18
+ STA zCoord6Hi
  RTS
 
 \ ******************************************************************************
