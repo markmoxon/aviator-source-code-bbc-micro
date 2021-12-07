@@ -543,17 +543,17 @@ ORG &0900
 
  SKIP 1
 
-.xCoord5
+.xPlaneBot
 
- SKIP 1
+ SKIP 1                 \ The fractional part of the plane's coordinate (x-axis)
 
-.yCoord5
+.yPlaneBot
 
- SKIP 1
+ SKIP 1                 \ The fractional part of the plane's coordinate (y-axis)
 
-.zCoord5
+.zPlaneBot
 
- SKIP 1
+ SKIP 1                 \ The fractional part of the plane's coordinate (z-axis)
 
 .elevatorPosition
 
@@ -8066,8 +8066,8 @@ ORG CODE%
 \   (H A W) = (J I) * (S R)
 \
 \ The fractional part is rounded up or down, to the nearest integer, by adding
-\ 128 at mult1. This part of the code is modified by the L5295 routine to toggle
-\ this rounding behaviour.
+\ 128 at mult1. This part of the code is modified by the ApplyAerodynamics
+\ routine to toggle this rounding behaviour.
 \
 \ The multiplication is done using the following algorithm:
 \
@@ -8120,8 +8120,8 @@ ORG CODE%
  STA W                  \
                         \ starting with the low bytes
                         \
-                        \ The ADC #128 instruction gets modified by the L5295
-                        \ routine as follows:
+                        \ The ADC #128 instruction gets modified by the
+                        \ ApplyAerodynamics routine as follows:
                         \
                         \   * ADC #0 disables the rounding
                         \
@@ -24389,14 +24389,14 @@ NEXT
  EQUB &DC, &00          \ Uses sound envelope 2
  EQUB &02, &00
 
- EQUB &13, &00          \ Sound #3: Long, medium beep (SOUND &13, -15, 120, 7)
+ EQUB &13, &00          \ Sound #3: High-g situation (SOUND &13, -15, 120, 7)
  EQUB &F1, &FF
- EQUB &78, &00
- EQUB &07, &00
+ EQUB &78, &00          \ This sound is a long, medium beep that indicates the
+ EQUB &07, &00          \ plane's wings are coming off
 
- EQUB &13, &00          \ Sound #4: Short, low beep (SOUND &13, -12, 0, 1)
- EQUB &F4, &FF
- EQUB &00, &00
+ EQUB &13, &00          \ Sound #4: Plane is stalling (SOUND &13, -12, 0, 1)
+ EQUB &F4, &FF          \
+ EQUB &00, &00          \ This sound is a short, low beep
  EQUB &01, &00
 
  EQUB &10, &00          \ Sound #5: Crash (SOUND &10, -13, 4, 12)
@@ -24727,9 +24727,9 @@ NEXT
 
  EQUB &CC               \ 2: 
 
- EQUB &B0               \ 3: 
+ EQUB &B0               \ 3: xFactor2+3 = xVelocityP << 1 in ApplyAerodynamics
 
- EQUB &9C               \ 4: Always either &9C or &27 (156 or 39)
+ EQUB &9C               \ 4: 156 in normal flight, 39 when the plane is stalling
 
  EQUB &16               \ 5: Drag factor? lift factor?
                         \
@@ -25271,7 +25271,8 @@ NEXT
  JSR CopyPointToWork    \ Copy the coordinates from point 255 to
                         \ (xVelocityP, yVelocityP, zVelocityP)
 
- JSR L5295              \ ???
+ JSR ApplyAerodynamics  \ Apply aerodynamics to the plane, check for stalling
+                        \ and ???
 
  JSR L5500              \ ???
 
@@ -25606,7 +25607,8 @@ NEXT
  JSR CopyPointToWork    \ Copy the coordinates from point 254 to
                         \ (xCoord2, yCoord2, zCoord2)
 
- JSR L522D              \ ???
+ JSR AdjustRotation     \ Move the plane according to its velocity and adjust
+                        \ its rotation
 
  LDA #7                 \ Make the engine sound
  JSR ToggleEngineSound
@@ -25841,276 +25843,510 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L522D
+\       Name: AdjustRotation
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight model
+\    Summary: Move the plane and adjust its rotation
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine calculates the following:
+\
+\   xPlane = xPlane + xVelocity
+\
+\   xRotation = xRotation + xCoord2
 \
 \ ******************************************************************************
 
-.L522D
+.AdjustRotation
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
 
-.L522F
+.arot1
 
- LDA #0
- STA R
- LDA xCoord5,X
- CLC
- ADC xVelocityLo,X
- STA xCoord5,X
- LDA xVelocityHi,X
- BPL L5244
+                        \ We now do the following calculation:
+                        \
+                        \   xPlane = xPlane + xVelocity
+                        \
+                        \ Looking at this in more detail, we take the 24-bit
+                        \ xPlane coordinate and append an extra bottom byte in
+                        \ xPlaneBot, like this:
+                        \
+                        \   (xPlaneTop xPlaneHi xPlaneLo xPlaneBot)
+                        \
+                        \ and then we add the 16-bit velocity, like this:
+                        \
+                        \   (xVelocityHi xVelocityLo)
+                        \
+                        \ The xPlaneBot byte is not used anywhere else, it's
+                        \ just used to keep track of the fractional part of this
+                        \ calculation
+                        \
+                        \ so in terms of the original xPlane coordinate, we are
+                        \ effectively adding xVelocityHi, but keeping track of
+                        \ the fractional tally in xPlaneBot
+                        \
+                        \ Fiknally, to support negative velocities, we extend 
+                        \ xVelocity with new high and top bytes, set to 0 or &FF
+                        \ depending on the the sign of xVelocity, so that's:
+                        \
+                        \   (0 0 xVelocityHi xVelocityLo)
+                        \
+                        \ for positive velocities, or:
+                        \
+                        \   (&FF &FF xVelocityHi xVelocityLo)
+                        \
+                        \ for negative velocities
 
- DEC R
 
-.L5244
 
- ADC xPlaneLo,X
- STA xPlaneLo,X
+ LDA #0                 \ Set R = 0 to act as the high and top bytes in the
+ STA R                  \ following addition
 
- LDA xPlaneHi,X
+ LDA xPlaneBot,X        \ Set xPlaneBot = xPlaneBot + xVelocityLo
+ CLC                    \
+ ADC xVelocityLo,X      \ so we've added the fractional parts and set the C flag
+ STA xPlaneBot,X        \ accordingly
+
+ LDA xVelocityHi,X      \ Set A = xVelocityHi, ready to add the xPlaneLo and
+                        \ xVelocityHi bytes
+
+ BPL arot2              \ If A is negative, decrement R to &FF so we can use it
+ DEC R                  \ as the high and top bytes for the velocity
+
+.arot2
+
+ ADC xPlaneLo,X         \ Set xPlaneLo = xPlaneLo + xVelocityHi
+ STA xPlaneLo,X         \
+                        \ so now we've added the low bytes
+
+ LDA xPlaneHi,X         \ And then we do the high bytes
  ADC R
  STA xPlaneHi,X
 
- LDA xPlaneTop,X
- ADC R
- STA xPlaneTop,X
+ LDA xPlaneTop,X        \ And then the top bytes
+ ADC R                  \
+ STA xPlaneTop,X        \ so we now have the result we want:
+                        \
+                        \   (xPlaneTop xPlaneHi xPlaneLo xPlaneBot) +=
+                        \                              (xVelocityHi xVelocityLo)
 
- LDA xRotationLo,X
- CLC
- ADC xCoord2Lo,X
+ LDA xRotationLo,X      \ Set xRotation = xRotation + xCoord2
+ CLC                    \
+ ADC xCoord2Lo,X        \ starting with the low bytes
  STA xRotationLo,X
 
- LDA xRotationHi,X
+ LDA xRotationHi,X      \ And then the high bytes
  ADC xCoord2Hi,X
  STA xRotationHi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL L522F              \ Loop back until we have processed all three axes
+ BPL arot1              \ Loop back until we have processed all three axes
 
- ASL A
- EOR xRotationHi
- BPL L5294
+ ASL A                  \ At the end of the above loop, A = xRotationHi, so this
+ EOR xRotationHi        \ checks whether bit 6 and 7 of xRotationHi are the same
+ BPL arot4              \ and if they are, it jumps to arot4 to return from the
+                        \ subroutine
+                        \
+                        \ Bits 6 and 7 of xRotationHi are the same when the
+                        \ rotation angle is either 0 to 63 or 192 to 255 - in
+                        \ other words, when the plane is facing forwards:
+                        \
+                        \   *   0 = straight ahead  (bit 6 clear, bit 7 clear)
+                        \   *  64 = vertical up     (bit 6 set,   bit 7 clear)
+                        \   * 128 = backwards       (bit 6 clear, bit 7 set)
+                        \   * 192 = nosedive        (bit 6 set,   bit 7 set)
+                        \
+                        \ so this only runs the following if the plane is now
+                        \ pointing backwards, in which case we set bit 7 of the
+                        \ rotation in the y- and z-axes (which adds 128, or
+                        \ rotates by 180 degrees), and reflect the x-axis by
+                        \ subtracting the rotation from 128
 
  LDX #1                 \ Set a counter in X to work through the y- and z-axes
-                        \ tye comments below cover the iteration for the y-axis)
 
-.L5278
+.arot3
 
- LDA yRotationHi,X
+ LDA yRotationHi,X      \ Flip the sign of yRotationHi and zRotationHi
  EOR #%10000000
  STA yRotationHi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL L5278              \ Loop back until we have processed both axes
+ BPL arot3              \ Loop back until we have processed both axes
 
- LDA #0
- SEC
+ LDA #0                 \ Set xRotation = (128 0) - xRotation, starting with the
+ SEC                    \ low bytes
  SBC xRotationLo
  STA xRotationLo
 
- LDA #%10000000
+ LDA #128               \ And then the high bytes
  SBC xRotationHi
  STA xRotationHi
 
-.L5294
+.arot4
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L5295
+\       Name: ApplyAerodynamics (Part 1 of )
 \       Type: Subroutine
-\   Category: 
-\    Summary: 
+\   Category: Flight model
+\    Summary: Set up various variables
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ Arguments:
+\
+\   L                   The current value of onGround:
+\
+\                         * 0 = we are not on the ground
+\
+\                         * 1 = we are on the ground
 \
 \ ******************************************************************************
 
-.L5295
+.ApplyAerodynamics
 
- LDA #0
- STA RR
- STA SS
+                        \ We start by finding the maximum velocity from the
+                        \ perspective of the plane, across all three axes
+                        \
+                        \ We do this by finding the maximum of |xVelocityP|,
+                        \ |yVelocityP| and |zVelocityP|
+
+ LDA #0                 \ Set (SS RR) = 0, so we can use it to capture the
+ STA RR                 \ maximum value of |xVelocityP|, |yVelocityP| and
+ STA SS                 \ |zVelocityP|
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
 
-.L529D
+.aero1
 
- LDA xVelocityPLo,X
+ LDA xVelocityPLo,X     \ Set P = xVelocityPLo
  STA P
- ASL A
- STA xFactor2Lo+3,X
- LDA xVelocityPHi,X
+
+ ASL A                  \ Set xFactor2+3 = xVelocityP << 1
+ STA xFactor2Lo+3,X     \
+ LDA xVelocityPHi,X     \ and push xVelocityPHi onto the stack
  PHA
  ROL A
  STA xFactor2Hi+3,X
- PLA
- BPL L52BD
 
- LDA #0
- SEC
- SBC P
+ PLA                    \ Set A = xVelocityPHi, so we have
+                        \
+                        \   (A P) = (xVelocityPHi xVelocityPLo)
+                        \         = xVelocityP
+
+ BPL aero2              \ If A is positive, then skip the following as (A P) is
+                        \ already positive
+
+ LDA #0                 \ Set (A P) = -(A P)
+ SEC                    \
+ SBC P                  \ so by this point we have (A P) = |xVelocityP|
  STA P
  LDA #0
  SBC xVelocityPHi,X
 
-.L52BD
+.aero2
 
- STA Q
- CPX #1
- BNE L52D3
+ STA Q                  \ Set (Q P) = (A P)
+                        \           = |xVelocityP|
+
+ CPX #1                 \ If X <> 1, jump to aero3 to skip the following, so
+ BNE aero3              \ (J I) only gets set on the y-axis iteration
 
  LDA P                  \ Set (A I) = (Q P)
- STA I
+ STA I                  \           = |yVelocityP|
  LDA Q
 
  ASL I                  \ Set (A I) = (A I) << 2
  ROL A                  \           = (Q P) << 2
- ASL I
+ ASL I                  \           = |yVelocityP| * 4
  ROL A
 
  STA J                  \ Set (J I) = (A I)
-                        \           = (Q P) << 2
+                        \           = |yVelocityP| * 4
 
- LDA Q
+ LDA Q                  \ Set A to the high byte of (Q P), so we have
+                        \ (A P) = |xVelocityP| once again
 
-.L52D3
+.aero3
 
- CMP SS
- BCC L52E7
+                        \ We now compare the two 16-bit values in (A P) and
+                        \ (SS RR), by first comparing the high bytes, and if
+                        \ they are equal, comparing the low bytes
+                        \
+                        \ It then sets (SS RR) to the higher value, so this does
+                        \ the following:
+                        \
+                        \   (SS RR) = max((SS RR), (Q P))
+                        \           = max((SS RR), |xVelocityP|)
+                        \
+                        \ Note that at this point, (A P) and (Q P) are the same
 
- BNE L52E1
+ CMP SS                 \ If A < SS, jump to aero5 to leave (SS RR) alone, as
+ BCC aero5              \ (SS RR) is the higher value
 
- LDA P
- CMP RR
- BCC L52E7
+ BNE aero4              \ If A <> SS, i.e. A > SS, jump to aero4 with A = Q, so
+                        \ we set (SS RR) to (Q P), as (Q P) is the higher value
 
- LDA Q
+                        \ If we get here then A = SS, so now we compare the low
+                        \ bytes
 
-.L52E1
+ LDA P                  \ If P < RR, jump to aero5 to leave (SS RR) alone, as
+ CMP RR                 \ (SS RR) is the higher value
+ BCC aero5
+
+ LDA Q                  \ If we get here then A = SS and P >= RR, so set A = Q
+                        \ so we set (SS RR) to (Q P), as (Q P) is the higher
+                        \ value
+
+.aero4
 
  STA SS                 \ Set (SS RR) = (A P)
- LDA P
+ LDA P                  \             = max((SS RR), |xVelocityP|)
  STA RR
 
-.L52E7
+.aero5
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL L529D              \ Loop back until we have processed all three axes
+ BPL aero1              \ Loop back until we have processed all three axes, so
+                        \ we now have the following, as (SS RR) was zero before
+                        \ we started the loop above:
+                        \
+                        \   (SS RR) = max(0, |xVelocityP|, |yVelocityP|,
+                        \                    |zVelocityP|)
+                        \
+                        \ Let's call this max(velocityP)
 
- ASL RR
- ROL SS
+ ASL RR                 \ Set (SS RR) = (SS RR) << 1
+ ROL SS                 \             = max(velocityP) * 2
 
  LDY SS                 \ Set (Y X) = (SS RR)
- LDX RR
+ LDX RR                 \           = max(velocityP) * 2
 
  JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
+                        \             = max(velocityP) * 2 * ~yPlaneHi
 
- STY SS
- STX RR
- LDA flightFactors+4
- CMP #&27
- BNE L5307
+ STY SS                 \ Set (SS RR) = (Y X)
+ STX RR                 \             = max(velocityP) * 2 * ~yPlaneHi / 256
 
- LDA zVelocityPHi
- CMP #&0B
- BCC L533A
+\ ******************************************************************************
+\
+\       Name: ApplyAerodynamics (Part 2 of )
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: Check whether the plane is stalling, and if it is, simulate one
+\             wing stalling before the other, and make the stalling sound
+\
+\ ******************************************************************************
 
-.L5307
+                        \ In the following, we jump to aero9 to make the
+                        \ stalling beep if both of these are true:
+                        \
+                        \   * flightFactors+4 = 39, which indicates that we are
+                        \     already stalling
+                        \
+                        \   * zVelocityPHi < 11, which indicates that the
+                        \     forward speed of the plane is too low to pull us
+                        \     out of the current stall
+                        \
+                        \ In other words, if we are already stalling and the
+                        \ speed is not yet high enough to stop the stall, we
+                        \ jump straight to the part of the routine that makes
+                        \ the stalling sound
 
- LDA J
- CMP zVelocityPHi
- BCC L5347
+ LDA flightFactors+4    \ If flightFactors+4 <> 39, skip the following three
+ CMP #39                \ instructions
+ BNE aero6
 
- BNE L5317
+ LDA zVelocityPHi       \ If zVelocityPHi < 11, jump to aero9 as the plane is
+ CMP #11                \ stalling
+ BCC aero9
 
- LDA I
- CMP zVelocityPLo
- BCC L5347
+.aero6
 
-.L5317
+                        \ If we get here then we are not already stalling, so we
+                        \ now perform the stalling check
+                        \
+                        \ The plane stalls if this is true:
+                        \
+                        \   |yVelocityP| * 4 >= zVelocityP
+                        \
+                        \ in other words, when the plane is moving forwards at
+                        \ less than a quarter of the speed at which it is moving
+                        \ up or down, we stall
+                        \
+                        \ When we first stall, then the plane rolls slightly to
+                        \ simulate one of the wings stalling before the other
+                        \ (though this is skipped if the plane is flying very
+                        \ low, at less than 20 feet above the ground)
+                        \
+                        \ A reminder that we set the following above:
+                        \
+                        \   (J I) = |yVelocityP| * 4
+                        \
+                        \ We now compare the two 16-bit values in (J I) and
+                        \ zVelocityP, by first comparing the high bytes, and if
+                        \ they are equal, comparing the low bytes
+                        \
+                        \ If it turns out that (J I) < zVelocityP, we jump to
+                        \ aero10 to maintain normal flight, so that's when:
+                        \
+                        \   |yVelocityP| * 4 < zVelocityP
+                        \
+                        \ but if (J I) >= zVelocityP, we are stalling, so that's
+                        \ when:
+                        \
+                        \   |yVelocityP| * 4 >= zVelocityP
 
- LDA yPlaneHi
- BNE L5323
+ LDA J                  \ If J < zVelocityPHi, then (J I) < zVelocityP, so jump
+ CMP zVelocityPHi       \ to aero10 to maintain normal flight
+ BCC aero10
 
- LDA yPlaneLo
- CMP #&14
- BCC L533A
+ BNE aero7              \ If J <> zVelocityPHi, i.e. J > zVelocityPHi, then
+                        \ (J I) > zVelocity so jump to aero7 as we are going
+                        \ slowly enough to stall
 
-.L5323
+                        \ If we get here then J = zVelocityPHi, so now we
+                        \ compare the low bytes
 
- LDA flightFactors+4
- CMP #&27
- BEQ L533A
+ LDA I                  \ If I < zVelocityPLo, then (J I) < zVelocityP, so jump
+ CMP zVelocityPLo       \ to aero10 to maintain normal flight
+ BCC aero10
 
- LDA yTurnHi
- ASL A
- LDY #4
- LDX #2
- LDA xTurnHi
- EOR #&3F
- JSR AddScaled
+.aero7
 
-.L533A
+                        \ If we get here then (J I) >= zVelocityP, so:
+                        \
+                        \   |yVelocityP| * 4 >= zVelocityP
+                        \
+                        \ which means we are stalling
+                        \
+                        \ We now check the plane's height above the ground in
+                        \ yPlane, as we don't roll the plane if it is less than
+                        \ 20 feet from the ground (probably as this would kill
+                        \ us instantly as the wings hit the ground, which would
+                        \ be a bit unfair, even if this is what would happen in
+                        \ real life)
 
- LDA L
- BNE L5347
+ LDA yPlaneHi           \ If yPlaneHi is non-zero, i.e. yPlane >= 256, then jump
+ BNE aero8              \ to aero8 to skip the following three instructions, as
+                        \ we are high enough off the ground to roll the plane
 
- LDA #4                 \ Make sound #4, a short, low beep
- JSR MakeSound
+ LDA yPlaneLo           \ If yPlaneLo < 20, jump to aero9 to skip the roll, as
+ CMP #20                \ we are too close to the ground
+ BCC aero9
 
- LDA #&27
- BNE L5349
+.aero8
 
-.L5347
+ LDA flightFactors+4    \ If flightFactors+4 = 39 then we are already stalling,
+ CMP #39                \ so jump to aero9 to make the stalling sound without
+ BEQ aero9              \ applying any roll
 
- LDA #&9C
+                        \ Otherwise we are not already stalling, but we are now,
+                        \ so we apply a roll to the plane to simulate one of the
+                        \ wings stalling before the other
 
-.L5349
+ LDA yTurnHi            \ Set the C flag to the sign bit of yTurn so we can pass
+ ASL A                  \ it to the AddScaled routine, so the roll will be in
+                        \ direction of the current yaw (i.e. the wing dips as
+                        \ the plane slips in that direction)
 
- STA flightFactors+4
- JSR L54B9
+ LDY #4                 \ Set the scale factor in Y so we add or subtract
+                        \ (A 0) >> 5
 
- LDA RR
- AND #&FE
- STA R
- LDA SS
- STA S
- LDX #5
+ LDX #2                 \ Set X so the call to AddScaled updates the zTurn
+                        \ variable
 
- LDA #0
- STA mult1+1
+ LDA xTurnHi            \ Set A = xTurnHi with bits 0 to 5 flipped, so (A 0) is
+ EOR #%00111111         \ larger when the current pitch rate is smaller, and
+                        \ vice versa
 
-.L5360
+ JSR AddScaled          \ Set zTurn = zTurn +/- (A 0) >> 5
+                        \
+                        \ which applies a roll in the direction of the current
+                        \ yaw, with the amount of roll being inversely
+                        \ proportional to the current rate of pitch
 
- CPX #3
- BCS L536D
+.aero9
 
- LDY xCoord6Lo,X
+ LDA L                  \ Fetch the current value of onGround
+
+ BNE aero10             \ If onGround is non-zero then we are on the ground, so
+                        \ skip the following, as we can't be stalling if we are
+                        \ on the ground
+
+ LDA #4                 \ Make sound #4, a short, low beep to indicate that the
+ JSR MakeSound          \ plane is stalling
+
+ LDA #39                \ Set A = 39 so that flightFactors+4 is set to 39 below
+ BNE aero11             \ (this BNE is effectively a JMP as A is never zero)
+
+.aero10
+
+ LDA #156               \ Set A = 156 so that flightFactors+4 is set to 156
+                        \ below
+
+.aero11
+
+ STA flightFactors+4    \ Set flightFactors+4 to the value in A, which will be
+                        \ either 39 (if we are stalling) or 156 (in normal
+                        \ flight)
+
+\ ******************************************************************************
+\
+\       Name: ApplyAerodynamics (Part 3 of )
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: 
+\
+\ ******************************************************************************
+
+ JSR L54B9              \ Set the following:
+                        \
+                        \   xCoord6 = yFactor2+3 - (|xTurn| * 250 / 256)
+                        \
+                        \   yCoord6 = xFactor2+3 - (|yTurn| * 250 / 256)
+                        \
+                        \   zCoord6 = -zTurn * 2
+
+                        \ A reminder that we set the following in part 1:
+                        \
+                        \   (SS RR) = max(velocityP) * 2 * ~yPlaneHi / 256
+
+ LDA RR                 \ Set (S R) = (SS RR) with bit 0 of the low byte cleared
+ AND #%11111110         \ to convert this into a value with the sign in bit 0
+ STA R                  \ and the value as follows:
+ LDA SS                 \
+ STA S                  \   (S R) = max(velocityP) * ~yPlaneHi / 256
+
+ LDX #5                 \ Set X as a loop counter from 5 down to 0
+
+ LDA #0                 \ Change the rounding in Multiply16x16Mix so that it
+ STA mult1+1            \ rounds down, i.e. uses floor to round
+
+.aero12
+
+ CPX #3                 \ If X >= 3, jump to aero13 to skip the following
+ BCS aero13
+
+ LDY xCoord6Lo,X        \ Set (A Y) = xCoord6 or xPlaneBot
  LDA xCoord6Hi,X
- JMP L5373
 
-.L536D
+ JMP aero14             \ Jump to aero14
 
- LDY xFactor2Lo,X
+.aero13
+
+ LDY xFactor2Lo,X       \ Set (A Y) = xFactor2
  LDA xFactor2Hi,X
 
-.L5373
+.aero14
 
  STA J
  STY I
@@ -26123,7 +26359,7 @@ NEXT
  JSR Multiply16x16Mix
 
  LDA K
- BPL L5395
+ BPL aero15
 
  SEC
  LDA #0
@@ -26132,47 +26368,47 @@ NEXT
  LDA G
  SBC #0
  STA G
- BCS L5395
+ BCS aero15
 
  DEC H
 
-.L5395
+.aero15
 
  LDX VV
  LDY #0
  LDA G
  CPX #3
- BCC L53A5
+ BCC aero16
 
  CPX #5
- BEQ L53A5
+ BEQ aero16
 
  INY
  INY
 
-.L53A5
+.aero16
 
  ASL W
  ROL A
  ROL H
  DEY
- BPL L53A5
+ BPL aero16
 
  STA xFactor2Lo,X
  LDA H
  STA xFactor2Hi,X
  DEX
- BPL L5360
+ BPL aero12
 
- LDA #128               \ Default
- STA mult1+1
+ LDA #128               \ Change the rounding in Multiply16x16Mix back to the
+ STA mult1+1            \ default, so it rounds to the nearest integer
 
  LDA xFactor2Lo+3
  STA xFactor2Lo+6
  LDA xFactor2Hi+3
  STA xFactor2Hi+6
  LDA xFactor2Hi+5
- BMI L5407
+ BMI aero19
 
  STA W
  STA xFactor2Hi+7
@@ -26183,25 +26419,25 @@ NEXT
  LDX #2
  LDA flapsStatus
  PHP
- BEQ L53E7
+ BEQ aero17
 
  LDX #1
 
-.L53E7
+.aero17
 
  ASL A
  ROL W
  ROL G
  DEX
- BPL L53E7
+ BPL aero17
 
  PLP
- BEQ L53F6
+ BEQ aero18
 
  SEC                    \ Negate (G W)
  JSR Negate16Bit
 
-.L53F6
+.aero18
 
  CLC
  LDA W
@@ -26211,7 +26447,7 @@ NEXT
  ADC xFactor2Hi
  STA xFactor2Hi
 
-.L5407
+.aero19
 
  RTS
 
@@ -26219,7 +26455,7 @@ NEXT
 \
 \       Name: L5408
 \       Type: Subroutine
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -26262,8 +26498,8 @@ NEXT
  CMP #8
  BCC L5434
 
- LDA #3                 \ Make sound #3, a long, medium beep
- JSR MakeSound
+ LDA #3                 \ Make sound #3, a long, medium beep that indicates a
+ JSR MakeSound          \ high-g situation, with the wings coming off
 
  LDX #4
 
@@ -26460,10 +26696,18 @@ NEXT
 \
 \       Name: L54B9
 \       Type: Subroutine
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
+\
+\ This routine calculates:
+\
+\   xCoord6 = yFactor2+3 - (|xTurn| * 250 / 256)
+\
+\   yCoord6 = xFactor2+3 - (|yTurn| * 250 / 256)
+\
+\   zCoord6 = -zTurn * 2
 \
 \ Other entry points:
 \
@@ -26473,51 +26717,68 @@ NEXT
 
 .L54B9
 
- LDX #1
+ LDX #1                 \ Set a counter in X to work through the x- and y-axes
 
 .L54BB
 
- LDA #&7D
+ LDA #125               \ Set R = 125
  STA R
- LDA xTurnLo,X
- STA P
+
+ LDA xTurnLo,X          \ Set (Q P) = (xTurnHi xTurnLo)
+ STA P                  \           = xTurn
  LDA xTurnHi,X
  STA Q
- ASL P
- ROL Q
 
- JSR Multiply8x16-2     \ Store X in VV and set (G W V) = (Q P) * R
+ ASL P                  \ Set (Q P) = (Q P) * 2
+ ROL Q                  \           = xTurn * 2
+                        \           = |xTurn| * 2
+                        \
+                        \ because we lose the sign bit from bit 7
 
- LDA VV
- TAX
- EOR #1
- TAY
- SEC
- LDA xFactor2Lo+3,Y
+ JSR Multiply8x16-2     \ Store X in VV and set:
+                        \
+                        \   (G W V) = (Q P) * R
+                        \           = |xTurn| * 2 * 125
+                        \           = |xTurn| * 250
+
+ LDA VV                 \ Set A and X to the axis number that the above call
+ TAX                    \ stored in VV, which is the same as the axis counter X
+
+ EOR #1                 \ Set Y to the opposite axis number to X, so if we are
+ TAY                    \ processing the x-axis in this loop, then Y points to
+                        \ the y-axis, and vice verse
+
+ SEC                    \ Set xCoord6 = yFactor2+3 - (G W)
+ LDA xFactor2Lo+3,Y     \             = yFactor2+3 - (|xTurn| * 250 / 256)
  SBC W
  STA xCoord6Lo,X
  LDA xFactor2Hi+3,Y
  SBC G
  STA xCoord6Hi,X
- DEX
- BPL L54BB
 
- SEC
- LDA #0
- SBC zTurnLo
- STA zCoord6Lo
- LDA #0
+ DEX                    \ Decrement the loop counter to move to the next axis
+
+ BPL L54BB              \ Loop back until we have processed both axes
+
+ SEC                    \ Set (A zCoord6Lo) = 0 - (zTurnHi zTurnLo)
+ LDA #0                 \                   = -zTurn
+ SBC zTurnLo            \
+ STA zCoord6Lo          \ starting with the high bytes
+
+ LDA #0                 \ And then the low bytes
  SBC zTurnHi
- ASL zCoord6Lo
- ROL A
+
+ ASL zCoord6Lo          \ Set (zCoord6Hi zCoord6Lo) = (A zCoord6Lo) * 2
+ ROL A                  \                           = -zTurn * 2
  STA zCoord6Hi
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: L5500
 \       Type: Subroutine
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -26616,7 +26877,7 @@ NEXT
 \
 \       Name: L555D
 \       Type: Subroutine
-\   Category: 
+\   Category: Flight model
 \    Summary: 
 \
 \ ------------------------------------------------------------------------------
@@ -27367,10 +27628,10 @@ NEXT
  CMP yLandingGear       \ from the subroutine
  BNE clan21
 
- LDA #1                 \ If we get here then the vertical velocity is <= 24, and
- STA onGround           \ the distance between the plane and the ground is equal
-                        \ to the distance from the cockpit to the bottom of the
-                        \ plane... so in other words, we are exactly on the
+ LDA #1                 \ If we get here then the vertical velocity is <= 24,
+ STA onGround           \ and the distance between the plane and the ground is
+                        \ equal to the distance from the cockpit to the bottom
+                        \ of the plane... in other words, we are exactly on the
                         \ ground and moving very slowly, so set onGround = 1 to
                         \ denote that we are on the ground
 
@@ -27465,13 +27726,13 @@ NEXT
 \   X                   The offset from xTurnLo of the low byte of the variable
 \                       to zero:
 \
+\                         * &02 = (zTurnHi zTurnLo)
+\
 \                         * &6A = (xFactor1Top+10 xFactor1Hi+10)
 \
 \                         * &6B = (xFactor1Top+11 xFactor1Hi+11)
 \
 \                         * &6C = (xFactor1Top+12 xFactor1Hi+12)
-\
-\                         * &02 = (zTurnHi zTurnLo)
 \
 \                         * &EC = (zRotationHi zRotationLo)
 \
