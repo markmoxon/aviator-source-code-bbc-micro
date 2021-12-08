@@ -11418,7 +11418,7 @@ ORG CODE%
 
 .IndicatorU
 
- LDA flightFactors+5    \ Set A = flightFactors+5
+ LDA flightFactor+5     \ Set A = flight factor 5
 
  LDY ucStatus           \ If ucStatus is non-zero then the undercarriage is
  BNE indu1              \ down, so jump to indu1
@@ -11460,9 +11460,9 @@ ORG CODE%
 
 .indu2
 
- STA flightFactors+5    \ Store A in flightFactors+5 (which is flightFactors+5
-                        \ incremented by 10 for undercarriage down, or reduced
-                        \ by 10 for undercarriage up) ???
+ STA flightFactor+5     \ Store A in flight factor 5, so flight factor 5 is
+                        \ incremented by 10 when the undercarriage is down, and
+                        \ reduced by 10 when the undercarriage is up
 
  STX yLandingGear       \ Store X in yLandingGear, so the vertical distance
                         \ between the cockpit and the bottom of the plane is 5
@@ -11502,7 +11502,7 @@ ORG CODE%
 
 .IndicatorF
 
- LDA flightFactors+5    \ Set A = flightFactors+5
+ LDA flightFactor+5     \ Set A = flight factor 5
  
  LDY flapsStatus        \ If flapsStatus is non-zero then the flaps are on, so
  BNE indf1              \ jump to indf1
@@ -11512,7 +11512,7 @@ ORG CODE%
  SEC                    \ Set A = A - 200
  SBC #200
 
- LDX #0                 \ Set X = 0 to store in flightFactors+7 below
+ LDX #0                 \ Set X = 0 to store in flight factor 7 below
 
  LDY #%01000100         \ Set Y to a four-pixel block with pixel 2 in white, to
                         \ act as the centre of the flaps indicator when turned
@@ -11528,7 +11528,7 @@ ORG CODE%
  CLC                    \ Set A = A + 200
  ADC #200
 
- LDX #152               \ Set X = 152 to store in flightFactors+7 below
+ LDX #152               \ Set X = 152 to store in flight factor 7 below
 
  LDY #%11001100         \ Set Y to a four-pixel block with pixels 2 and 3 in
                         \ white, to act as the centre of the flaps indicator
@@ -11536,11 +11536,11 @@ ORG CODE%
 
 .indf2
 
- STA flightFactors+5    \ Store A in flightFactors+5 (which is flightFactors+5
-                        \ incremented by 200 or reduced by 200 for flaps on/off)
-                        \ ???
+ STA flightFactor+5     \ Store A in flight factor 5, so flight factor 5 is
+                        \ incremented by 200 when the flaps are on, and reduced
+                        \ by 200 when the flaps are off
 
- STX flightFactors+7    \ Store X in flightFactors+7 (0 if flaps are off, 152 if
+ STX flightFactor+7     \ Store X in flight factor 7 (0 if flaps are off, 152 if
                         \ they are on)
 
  TYA                    \ Set A to the pixel pattern in Y
@@ -12072,7 +12072,7 @@ ORG CODE%
 
  STA alienSlot          \ Set alienSlot = 0
 
- STA flightFactors+7    \ Set flightFactors+7 = 0
+ STA flightFactor+7     \ Set flight factor 7 = 0
 
  STA hitTimer           \ Set hitTimer = 0
 
@@ -12145,8 +12145,8 @@ ORG CODE%
 
  STA alienSpeed         \ Set alienSpeed = 10
 
- LDA #242               \ Set flightFactors+5 = 242
- STA flightFactors+5
+ LDA #242               \ Set flight factor 5 = 242
+ STA flightFactor+5
 
  LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
  STA ucStatus
@@ -19306,7 +19306,7 @@ ORG CODE%
  TAX                    \ Either turn the engine sound off (if A = 0) or turn it
  JSR ToggleEngineSound  \ on (if A is non-zero)
 
- LDA flightFactors+5    \ Set A = flightFactors+5
+ LDA flightFactor+5     \ Set A = flight factor 5
 
  LDX engineStatus       \ If the engine is now on, jump to seng1
  BNE seng1
@@ -19324,7 +19324,7 @@ ORG CODE%
 
 .seng2
 
- STA flightFactors+5    \ Update the value of flightFactors+5
+ STA flightFactor+5     \ Update the value of flight factor 5
 
 .seng3
 
@@ -21353,21 +21353,30 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup42F0
+\       Name: scaleFactor
 \       Type: Variable
 \   Category: Flight model
-\    Summary: 
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: Scale factors for the flight factors
 \
 \ ******************************************************************************
 
-.Lookup42F0
+.scaleFactor
 
- EQUB &00, &FE, &FF, &01, &04, &00, &FB, &02
- EQUB &33, &3A, &FF, &FE, &FE, &23, &31, &38
+ EQUB &00               \ Flight factor  0: scale by 2^0  = 1
+ EQUB &FE               \ Flight factor  1: scale by 2^-2 = 1/4
+ EQUB &FF               \ Flight factor  2: scale by 2^-1 = 1/2
+ EQUB &01               \ Flight factor  3: scale by 2^1  = 2
+ EQUB &04               \ Flight factor  4: scale by 2^4  = 16
+ EQUB &00               \ Flight factor  5: scale by 2^0  = 1
+ EQUB &FB               \ Flight factor  6: scale by 2^-5 = 1/32
+ EQUB &02               \ Flight factor  7: scale by 2^2  = 4
+ EQUB &33               \ Flight factor  8: unused
+ EQUB &3A               \ Flight factor  9: unused
+ EQUB &FF               \ Flight factor 10: scale by 2^-1 = 1/2
+ EQUB &FE               \ Flight factor 11: scale by 2^-2 = 1/4
+ EQUB &FE               \ Flight factor 12: scale by 2^-2 = 1/4
+
+ EQUB &23, &31, &38     \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
@@ -24712,26 +24721,31 @@ NEXT
  
 \ ******************************************************************************
 \
-\       Name: flightFactors
+\       Name: flightFactor
 \       Type: Variable
 \   Category: Flight model
 \    Summary: 
 \
 \ ******************************************************************************
 
-.flightFactors
+.flightFactor
 
- EQUB &D4               \ 0: 
+ EQUB 212               \ 0: ??? = 212 * 1
 
- EQUB &C9               \ 1: 
+ EQUB 201               \ 1: ??? = 201 / 4
 
- EQUB &CC               \ 2: 
+ EQUB 204               \ 2: ??? = 204 / 2
 
- EQUB &B0               \ 3: xFactor2+3 = xVelocityP << 1 in ApplyAerodynamics
+ EQUB 176               \ 3: ??? = 176 * 2
+                        \
+                        \ xFactor2+3 = xVelocityP << 1 in ApplyAerodynamics
 
- EQUB &9C               \ 4: 156 in normal flight, 39 when the plane is stalling
+ EQUB 156               \ 4: Stalling effect
+                        \
+                        \ = 156 * 16 in normal flight
+                        \ = 39 * 16 when the plane is stalling
 
- EQUB &16               \ 5: Drag factor? lift factor?
+ EQUB 22                \ 5: Drag factor? lift factor?
                         \
                         \ Goes up by 10 if undercarriage is down
                         \ Goes down by 10 if undercarriage is up
@@ -24740,25 +24754,26 @@ NEXT
                         \ Goes up by 20 if engine is on
                         \ Goes down by 20 if engine is switched off
                         \
-                        \ Set to 198 in ResetVariables
+                        \ Set to 242 in ResetVariables
 
- EQUB &28               \ 6: 
+ EQUB 40                \ 6: ??? = 40 / 32
 
  EQUB 152               \ 7: Flaps lift factor? Drag factor?
                         \
-                        \ Set to 0 if flaps are off, 152 if they are on
+                        \ =   0 * 4 if flaps are off
+                        \ = 152 * 4 if flaps are on
                         \
                         \ Zeroed in ResetVariables
 
- EQUB &00               \ 8: 
+ EQUB 0                 \ 8: Unused
 
- EQUB &00               \ 9: 
+ EQUB 0                 \ 9: Unused
 
- EQUB &FF               \ 10: x-axis
+ EQUB 255               \ 10: x-axis of ??? = 255 / 2
 
- EQUB &8D               \ 11: y-axis
+ EQUB 141               \ 11: y-axis of ??? = 141 / 4
 
- EQUB &BE               \ 12: z-axis
+ EQUB 190               \ 12: z-axis of ??? = 190 / 4
 
  EQUB &00, &05          \ These bytes appear to be unused
  EQUB &7D, &FF
@@ -25276,7 +25291,7 @@ NEXT
 
  JSR L5500              \ ???
 
- JSR L5408              \ ???
+ JSR ApplyFlightFactors \ Multiply xFactor2 by the flight factors
 
 \ ******************************************************************************
 \
@@ -25992,7 +26007,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ApplyAerodynamics (Part 1 of )
+\       Name: ApplyAerodynamics (Part 1 of 3)
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Set up various variables
@@ -26138,7 +26153,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ApplyAerodynamics (Part 2 of )
+\       Name: ApplyAerodynamics (Part 2 of 3)
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Check whether the plane is stalling, and if it is, simulate one
@@ -26149,7 +26164,7 @@ NEXT
                         \ In the following, we jump to aero9 to make the
                         \ stalling beep if both of these are true:
                         \
-                        \   * flightFactors+4 = 39, which indicates that we are
+                        \   * Flight factor 4 = 39, which indicates that we are
                         \     already stalling
                         \
                         \   * zVelocityPHi < 11, which indicates that the
@@ -26161,7 +26176,7 @@ NEXT
                         \ jump straight to the part of the routine that makes
                         \ the stalling sound
 
- LDA flightFactors+4    \ If flightFactors+4 <> 39, skip the following three
+ LDA flightFactor+4     \ If flight factor 4 <> 39, skip the following three
  CMP #39                \ instructions
  BNE aero6
 
@@ -26245,7 +26260,7 @@ NEXT
 
 .aero8
 
- LDA flightFactors+4    \ If flightFactors+4 = 39 then we are already stalling,
+ LDA flightFactor+4     \ If flight factor 4 = 39 then we are already stalling,
  CMP #39                \ so jump to aero9 to make the stalling sound without
  BEQ aero9              \ applying any roll
 
@@ -26285,23 +26300,23 @@ NEXT
  LDA #4                 \ Make sound #4, a short, low beep to indicate that the
  JSR MakeSound          \ plane is stalling
 
- LDA #39                \ Set A = 39 so that flightFactors+4 is set to 39 below
+ LDA #39                \ Set A = 39 so that flight factor 4 is set to 39 below
  BNE aero11             \ (this BNE is effectively a JMP as A is never zero)
 
 .aero10
 
- LDA #156               \ Set A = 156 so that flightFactors+4 is set to 156
+ LDA #156               \ Set A = 156 so that flight factor 4 is set to 156
                         \ below
 
 .aero11
 
- STA flightFactors+4    \ Set flightFactors+4 to the value in A, which will be
+ STA flightFactor+4     \ Set flight factor 4 to the value in A, which will be
                         \ either 39 (if we are stalling) or 156 (in normal
                         \ flight)
 
 \ ******************************************************************************
 \
-\       Name: ApplyAerodynamics (Part 3 of )
+\       Name: ApplyAerodynamics (Part 3 of 3)
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: 
@@ -26453,101 +26468,153 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L5408
+\       Name: ApplyFlightFactors
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Apply the scaled flight factors to the flight model
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ For each of the 11 flight factors (0 to 7 and 10 to 12), this routine
+\ calculates the following:
+\
+\   xFactor1 = xFactor2 * flightFactor * 2 ^ scaleFactor
 \
 \ ******************************************************************************
 
-.L5408
+.ApplyFlightFactors
 
- LDX #12
+ LDX #12                \ We are about to work our way through the 13 flight
+                        \ factors, so set a counter in X to act as an index into
+                        \ the flightFactor table, iterating from 12 to 0 while
+                        \ skipping over 8 and 9
 
 .L540A
 
- CPX #9
- BNE L5410
+ CPX #9                 \ If X <> 9, jump to L5410 to skip the following
+ BNE L5410              \ instruction
 
- LDX #7
+ LDX #7                 \ If we get here then X = 9, so set X = 7 so we skip
+                        \ indexes 8 and 9
 
 .L5410
 
- LDA flightFactors,X
+ LDA flightFactor,X     \ Set R to flight factor X
  STA R
- LDY xFactor2Lo,X
+
+ LDY xFactor2Lo,X       \ Set (A Y) = the X-th entry from xFactor2
  LDA xFactor2Hi,X
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
+                        \
+                        \ Also set A to the high byte of the result (G)
 
- LDX VV
- CPX #4
+ LDX VV                 \ Retrieve X from VV so it once again contains the loop
+                        \ index
+
+ CPX #4                 \ If X <> 4, skip the following section
  BNE L5434
 
- TAY
- BPL L5429
+                        \ If we get here then X = 4, and flight factor 4
+                        \ determines whether the plane is stalling (156) or is
+                        \ in normal flight (39)
 
- EOR #&FF
+ TAY                    \ If the high byte of (A Y) * R is positive, then jump
+ BPL L5429              \ to L5429 to skip the following instruction
 
+ EOR #&FF               \ Set A = ~A, so A now contains the high byte of the
+                        \ 24-bit result, flipped, so it contains:
+                        \
+                        \   |A Y| * R / 512
+                        
 .L5429
 
- CMP #8
- BCC L5434
+ CMP #8                 \ If A < 8, jump to L5434 to skip the next three
+ BCC L5434              \ instructions
+
+                        \ If we get here then A >= 8, so:
+                        \
+                        \   |A Y| * R / 512 >= 8
+                        \
+                        \   |A Y| * R >= 4096
+                        \
+                        \   |A Y| >= 4096 / 39 = 105 if we are stalling
+                        \            4096 / 156 = 26 if we are not stalling
+                        \
+                        \ where |A Y| = |xFactor2+4|
 
  LDA #3                 \ Make sound #3, a long, medium beep that indicates a
  JSR MakeSound          \ high-g situation, with the wings coming off
 
- LDX #4
+ LDX #4                 \ Set X = 4 once again, as it will have been corrupted
+                        \ by the call to MakeSound
 
 .L5434
 
- LDY Lookup42F0,X
- BEQ L545B
+ LDY scaleFactor,X      \ Set Y = the X-th entry in the scaleFactor table, which
+                        \ contains the number of places to shift the result,
+                        \ with a negative number meaning a right shift, a
+                        \ positive number meaning a left shift, and a value of
+                        \ zero having no effect
+                        \
+                        \ In other words, we multiply the result in (G W V) by
+                        \ 2^scaleFactor, where scaleFactor is a signed integer
 
- BPL L5452
+ BEQ L545B              \ If the entry is zero, jump to L545B to write the
+                        \ result to xFactor1
 
- LDA #0
- STA R
- LDA G
- BPL L5445
+ BPL L5452              \ If the entry is positive, jump to L5452 to shift the
+                        \ result to the left
 
+                        \ If we get here then the entry is negative, so we shift
+                        \ the result to the right
+
+ LDA #0                 \ Set R = 0 to use as the byte to feed into the top byte
+ STA R                  \ when right-shifting (G W V)
+
+ LDA G                  \ If the high byte in G is negative, decrement R to &FF
+ BPL L5445              \ so it feeds in bits of the correct sign
  DEC R
 
 .L5445
 
- LSR R
- ROR G
+ LSR R                  \ Shift (G W V) right by one place, shifting in bits
+ ROR G                  \ from R into G
  ROR W
  ROR V
- INY
- BNE L5445
 
- BEQ L545B
+ INY                    \ Increment the shift counter
+
+ BNE L5445              \ Loop back until we have shifted right by -Y places
+
+ BEQ L545B              \ Jump to L545B to write the result to xFactor1
 
 .L5452
 
- ASL V
+ ASL V                  \ Shift (G W V) left by one place
  ROL W
  ROL G
- DEY
- BNE L5452
+
+ DEY                    \ Increment the shift counter
+
+ BNE L5452              \ Loop back until we have shifted left by Y places
 
 .L545B
 
- LDA G
- STA xFactor1Top,X
- LDA W
- STA xFactor1Hi,X
+ LDA G                  \ Set (xFactor1Top xFactor1Hi xFactor1Lo) = (G W V)
+ STA xFactor1Top,X      \
+ LDA W                  \ So xFactor1 = xFactor2 * flightFactor
+ STA xFactor1Hi,X       \               * 2 ^ scaleFactor
  LDA V
  STA xFactor1Lo,X
- DEX
- BPL L540A
 
- RTS
+ DEX                    \ Decrement the loop counter to move to the next flight
+                        \ factor
+
+ BPL L540A              \ Loop back until we have processed all 13 flight
+                        \ factors
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
