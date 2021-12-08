@@ -678,15 +678,15 @@ ORG &0900
                         \ control key is pressed (in any direction), so they
                         \ measure "axis control key usage"
 
-.xCoord4Lo
+.dxTurnLo
 
  SKIP 1
 
-.yCoord4Lo
+.dyTurnLo
 
  SKIP 1
 
-.zCoord4Lo
+.dzTurnLo
 
  SKIP 1
 
@@ -729,39 +729,39 @@ ORG &0900
 
  SKIP 3                 \ These bytes appear to be unused
 
-.xCoord4Hi
+.dxTurnHi
 
  SKIP 1
 
-.yCoord4Hi
+.dyTurnHi
 
  SKIP 1
 
-.zCoord4Hi
+.dzTurnHi
 
  SKIP 1
 
-.xCoord1Lo
+.dxVelocityLo
 
  SKIP 1
 
-.yCoord1Lo
+.dyVelocityLo
 
  SKIP 1
 
-.zCoord1Lo
+.dzVelocityLo
 
  SKIP 1
 
-.xCoord2Lo
+.dxRotationLo
 
  SKIP 1
 
-.yCoord2Lo
+.dyRotationLo
 
  SKIP 1
 
-.zCoord2Lo
+.dzRotationLo
 
  SKIP 1
 
@@ -811,39 +811,39 @@ ORG &0900
 
  SKIP 1
 
-.xCoord4Top
+.dxTurnTop
 
  SKIP 1
 
-.yCoord4Top
+.dyTurnTop
 
  SKIP 1
 
-.zCoord4Top
+.dzTurnTop
 
  SKIP 1
 
-.xCoord1Hi
+.dxVelocityHi
 
  SKIP 1
 
-.yCoord1Hi
+.dyVelocityHi
 
  SKIP 1
 
-.zCoord1Hi
+.dzVelocityHi
 
  SKIP 1
 
-.xCoord2Hi
+.dxRotationHi
 
  SKIP 1
 
-.yCoord2Hi
+.dyRotationHi
 
  SKIP 1
 
-.zCoord2Hi
+.dzRotationHi
 
  SKIP 1
 
@@ -1195,65 +1195,65 @@ ORG &0900
                         \ firing our guns (which makes the sound of two shots)
 
 
-.xTemp3Lo
+.xDashesVectorLo
 
  SKIP 1                 \ The low byte of the 16-bit temporary variable in
-                        \ (xTemp3Hi xTemp3Lo)
+                        \ (xDashesVectorHi xDashesVectorLo)
 
-.yTemp3Lo
-
- SKIP 1                 \ The low byte of the 16-bit temporary variable in
-                        \ (yTemp3Hi yTemp3Lo)
-
-.zTemp3Lo
+.yDashesVectorLo
 
  SKIP 1                 \ The low byte of the 16-bit temporary variable in
-                        \ (zTemp3Hi zTemp3Lo)
+                        \ (yDashesVectorHi yDashesVectorLo)
 
-.xTemp3Hi
-
- SKIP 1                 \ The high byte of the 16-bit temporary variable in
-                        \ (xTemp3Hi xTemp3Lo)
-
-.yTemp3Hi
-
- SKIP 1                 \ The high byte of the 16-bit temporary variable in
-                        \ (yTemp3Hi yTemp3Lo)
-
-.zTemp3Hi
-
- SKIP 1                 \ The high byte of the 16-bit temporary variable in
-                        \ (zTemp3Hi zTemp3Lo)
-
-.xTempLo
+.zDashesVectorLo
 
  SKIP 1                 \ The low byte of the 16-bit temporary variable in
-                        \ (xTempHi xTempLo)
+                        \ (zDashesVectorHi zDashesVectorLo)
 
-.yTempLo
+.xDashesVectorHi
+
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (xDashesVectorHi xDashesVectorLo)
+
+.yDashesVectorHi
+
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (yDashesVectorHi yDashesVectorLo)
+
+.zDashesVectorHi
+
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (zDashesVectorHi zDashesVectorLo)
+
+.xTemp1Lo
 
  SKIP 1                 \ The low byte of the 16-bit temporary variable in
-                        \ (yTempHi yTempLo)
+                        \ (xTemp1Hi xTemp1Lo)
 
-.zTempLo
+.yTemp1Lo
 
  SKIP 1                 \ The low byte of the 16-bit temporary variable in
-                        \ (zTempHi zTempLo)
+                        \ (yTemp1Hi yTemp1Lo)
 
-.xTempHi
+.zTemp1Lo
 
- SKIP 1                 \ The high byte of the 16-bit temporary variable in
-                        \ (xTempHi xTempLo)
+ SKIP 1                 \ The low byte of the 16-bit temporary variable in
+                        \ (zTemp1Hi zTemp1Lo)
 
-.yTempHi
-
- SKIP 1                 \ The high byte of the 16-bit temporary variable in
-                        \ (yTempHi yTempLo)
-
-.zTempHi
+.xTemp1Hi
 
  SKIP 1                 \ The high byte of the 16-bit temporary variable in
-                        \ (zTempHi zTempLo)
+                        \ (xTemp1Hi xTemp1Lo)
+
+.yTemp1Hi
+
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (yTemp1Hi yTemp1Lo)
+
+.zTemp1Hi
+
+ SKIP 1                 \ The high byte of the 16-bit temporary variable in
+                        \ (zTemp1Hi zTemp1Lo)
 
 .TC
 
@@ -4997,9 +4997,9 @@ ORG CODE%
  ASL A
  EOR #&C0
  STA V
- LDA xTempLo
+ LDA xTemp1Lo
  STA R
- LDA yTempLo
+ LDA yTemp1Lo
  STA S
  LDA #4
  BIT V
@@ -6019,9 +6019,9 @@ ORG CODE%
  STA V
 
  LDA R                  \ Copy the (R, S) pixel coordinate into
- STA xTempLo            \ (xTempLo, yTempLo)
+ STA xTemp1Lo           \ (xTemp1Lo, yTemp1Lo)
  LDA S
- STA yTempLo
+ STA yTemp1Lo
 
  RTS                    \ Return from the subroutine
 
@@ -6154,7 +6154,7 @@ ORG CODE%
  LDA lineBufferR,X      \ Set R to the start x-coordinate from lineBufferR
  STA R
 
- STA xTempLo
+ STA xTemp1Lo           \ ???
 
  LDA lineBufferW,X      \ Set W to the max/min x-coordinate from lineBufferW
  STA W
@@ -6162,7 +6162,7 @@ ORG CODE%
  LDA lineBufferS,X      \ Set S to the start y-coordinate from lineBufferS
  STA S
 
- STA yTempLo
+ STA yTemp1Lo           \ ???
 
  LDA lineBufferG,X      \ Set G to max/min y-coordinate from lineBufferG
  STA G
@@ -6932,7 +6932,7 @@ ORG CODE%
 \                       bit 6 is set to indicate that the line containing this
 \                       point should not be shown
 \
-\   xTempHi etc.        The rotated vector from the anchor point to the object
+\   xTemp1Hi etc.       The rotated vector from the anchor point to the object
 \                       point
 \
 \ ******************************************************************************
@@ -6962,17 +6962,17 @@ ORG CODE%
                         \ left-shifting the result (see part 2 for the scaling
                         \ code)
 
- LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) point, which is
-                        \ stored in six bytes to give us three 16-bit coordinate
-                        \ values (from xTempLo to zTempHi), so set a counter in
-                        \ X to count the bytes
+ LDX #5                 \ We now zero (xTemp1, yTemp1, zTemp1), which is stored
+                        \ in six bytes to give us three 16-bit coordinate values
+                        \ (from xTemp1Lo to zTemp1Hi), so set a counter in X to
+                        \ count the bytes
 
  LDA #0                 \ Set A = 0 to use as our zero
 
 .objp1
 
- STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
-                        \ between xTempLo and zTempHi
+ STA xTemp1Lo,X         \ Zero the X-th byte of the six-byte coordinate block
+                        \ between xTemp1Lo and zTemp1Hi
 
  DEX                    \ Decrement the loop counter
 
@@ -6980,15 +6980,15 @@ ORG CODE%
 
                         \ We now do the matrix multiplication:
                         \
-                        \   [ xTemp ]     [ m0 m1 m2 ]   [ xObjectPoint ]
-                        \   [ yTemp ]  =  [ m3 m4 m5 ] x [ yObjectPoint ]
-                        \   [ zTemp ]     [ m6 m7 m8 ]   [ zObjectPoint ]
+                        \   [ xTemp1 ]     [ m0 m1 m2 ]   [ xObjectPoint ]
+                        \   [ yTemp1 ]  =  [ m3 m4 m5 ] x [ yObjectPoint ]
+                        \   [ zTemp1 ]     [ m6 m7 m8 ]   [ zObjectPoint ]
                         \
                         \ We do this in three loops of three, using an outer and
                         \ inner loop. We set two loop counters, VV and X, for
                         \ the outer and inner loops respectively. They both
                         \ iterate through 2, 1 and 0, with VV iterating through
-                        \ zTemp, yTemp and xTemp, and X iterating through
+                        \ zTemp1, yTemp1 and xTemp1, and X iterating through
                         \ zObjectPoint, yObjectPoint and xObjectPoint
                         \
                         \ We also iterate a counter in P for the matrix entries,
@@ -6998,29 +6998,29 @@ ORG CODE%
                         \ All the iterators count backwards, so the calculations
                         \ in order are:
                         \
-                        \   * zTemp += zObjectPoint * m8
-                        \   * zTemp += yObjectPoint * m7
-                        \   * ztemp += xObjectPoint * m6
+                        \   * zTemp1 += zObjectPoint * m8
+                        \   * zTemp1 += yObjectPoint * m7
+                        \   * zTemp1 += xObjectPoint * m6
                         \
-                        \   * yTemp += zObjectPoint * m5
-                        \   * yTemp += yObjectPoint * m4
-                        \   * ytemp += xObjectPoint * m3
+                        \   * yTemp1 += zObjectPoint * m5
+                        \   * yTemp1 += yObjectPoint * m4
+                        \   * yTemp1 += xObjectPoint * m3
                         \
-                        \   * xTemp += zObjectPoint * m2
-                        \   * xTemp += yObjectPoint * m1
-                        \   * xTemp += xObjectPoint * m0
+                        \   * xTemp1 += zObjectPoint * m2
+                        \   * xTemp1 += yObjectPoint * m1
+                        \   * xTemp1 += xObjectPoint * m0
                         \
                         \ Or, to switch it around the othee way and plug in the
-                        \ initial value of (xTemp, yTemp, zTemp) = (0, 0, 0),
+                        \ initial value of (xTemp1, yTemp1, zTemp1) = (0, 0, 0),
                         \ we get:
                         \
-                        \   * xTemp = m0 * xObjectPoint + m1 * yObjectPoint
+                        \   * xTemp1 = m0 * xObjectPoint + m1 * yObjectPoint
                         \                               + m2 * zObjectPoint
                         \
-                        \   * yTemp = m3 * xObjectPoint + m4 * yObjectPoint
+                        \   * yTemp1 = m3 * xObjectPoint + m4 * yObjectPoint
                         \                               + m5 * zObjectPoint
                         \
-                        \   * zTemp = m6 * xObjectPoint + m7 * yObjectPoint
+                        \   * zTemp1 = m6 * xObjectPoint + m7 * yObjectPoint
                         \                               + m8 * zObjectPoint
                         \
                         \ which gives us the matrix multiplication that we want
@@ -7038,7 +7038,7 @@ ORG CODE%
                         \ such as matrix1Lo, contains 9 entries
 
  LDA #2                 \ Set VV = 2, to act as our outer loop counter that
- STA VV                 \ iterates through zTemp, yTemp and xTemp
+ STA VV                 \ iterates through zTemp1, yTemp1 and xTemp1
 
 .objp2
 
@@ -7099,19 +7099,19 @@ ORG CODE%
  LDX Q                  \ Restore the value of X
 
  LDY VV                 \ Fetch the outer loop counter from VV, which points to
-                        \ the relevant xTemp, yTemp or ztemp coordinate
+                        \ the relevant xTemp1, yTemp1 or zTemp1 coordinate
 
- LDA W                  \ Add (G W) to the xTemp coordinate, starting with the
+ LDA W                  \ Add (G W) to the xTemp1 coordinate, starting with the
  CLC                    \ low bytes
- ADC xTempLo,Y
- STA xTempLo,Y
+ ADC xTemp1Lo,Y
+ STA xTemp1Lo,Y
 
  LDA G                  \ And then the high bytes, so we have the following (if
- ADC xTempHi,Y          \ we are working with xTemp and m0, for example):
- STA xTempHi,Y          \
-                        \   xTemp += (G W)
-                        \         += V * (S R)
-                        \         += xObjectPoint * m0
+ ADC xTemp1Hi,Y         \ we are working with xTemp1 and m0, for example):
+ STA xTemp1Hi,Y         \
+                        \   xTemp1 += (G W)
+                        \          += V * (S R)
+                        \          += xObjectPoint * m0
                         \
                         \ which is the result we want for this element of the
                         \ matrix multiplication
@@ -7132,7 +7132,7 @@ ORG CODE%
                         \ anchor-relative points
 
  DEC VV                 \ Decrement the outer loop counter to work our way
-                        \ through zTemp, yTemp and xTemp
+                        \ through zTemp1, yTemp1 and xTemp1
 
  JMP objp2              \ Jump back to objp2 to do the next calculation
 
@@ -7168,10 +7168,10 @@ ORG CODE%
                         \ another 256 but fits into two bytes
 
  LDX #2                 \ Set X = 2 to act as a loop counter, to iterate through
-                        \ 2, 1 and 0, which we use to work through zTemp, yTemp
-                        \ and xTemp, scaling each one separately
+                        \ 2, 1 and 0, which we use to work through zTemp1,
+                        \ yTemp1 and xTemp1, scaling each one separately
                         \
-                        \ The comments below refer to xTemp, for simplicity
+                        \ The comments below refer to xTemp1, for simplicity
 
 .objp7
 
@@ -7181,16 +7181,16 @@ ORG CODE%
                         \ there is no scaling to do, so jump to objp10 to drop
                         \ the least significant byte without any shifting
 
- CPY #8                 \ If Y >= 8 then we can skip doing 8 shifts as the xTemp
+ CPY #8                 \ If Y >= 8 then we can skip doing 8 shifts as the
  BCS objp9              \ result is already correct. To see this, consider the
-                        \ process below, which creates (0 xTempHi xTempLo) and
+                        \ process below, which creates (0 xTemp1Hi xTemp1Lo) and
                         \ shifts it left by the number of places, which would be
                         \ this if Y = 8:
                         \
-                        \   (0 xTempHi xTempLo) << 8 = (xTempHi xTempLo 0)
+                        \   (0 xTemp1Hi xTemp1Lo) << 8 = (xTemp1Hi xTemp1Lo 0)
                         \
                         \ from which we would then drop the least significant
-                        \ byte to give (xTempHi xTempLo)... which is what we
+                        \ byte to give (xTemp1Hi xTemp1Lo)... which is what we
                         \ already have, so when Y >= 8 we can simply jump to
                         \ objp9 to move on to the next axis
                         \
@@ -7198,21 +7198,21 @@ ORG CODE%
                         \ result in part 1, so the above approach works for both
                         \ Y = 8 and 9)
 
- LDA xTempLo,X          \ Set P to the low byte of xTemp
+ LDA xTemp1Lo,X         \ Set P to the low byte of xTemp1
  STA P
 
  LDA #0                 \ Set R = 0 to act as the new highest byte in our 24-bit
  STA R                  \ number
 
- LDA xTempHi,X          \ Set A to the high byte of xTemp, so we now have the
+ LDA xTemp1Hi,X         \ Set A to the high byte of xTemp1, so we now have the
                         \ following 24-bit number:
                         \
-                        \   (R A P) = (0 xTempHi xTempLo)
+                        \   (R A P) = (0 xTemp1Hi xTemp1Lo)
 
- BPL objp8              \ If the high byte of xTemp is positive, skip the
+ BPL objp8              \ If the high byte of xTemp1 is positive, skip the
                         \ following instruction
 
- DEC R                  \ xTempHi is negative, so decrement R to &FF so (R A P)
+ DEC R                  \ xTemp1Hi is negative, so decrement R to &FF so (R A P)
                         \ is a correctly signed 24-bit negative number
 
                         \ We now shift (R A P) left by Y places (where Y is in
@@ -7229,15 +7229,15 @@ ORG CODE%
  BNE objp8              \ Loop back to objp8 until we have shifted (R A P) left
                         \ by Y places
 
- STA xTempLo,X          \ Set xTemp = (R A)
+ STA xTemp1Lo,X         \ Set xTemp1 = (R A)
  LDA R                  \
- STA xTempHi,X          \ so we drop the least significant byte, as discussed
+ STA xTemp1Hi,X         \ so we drop the least significant byte, as discussed
                         \ above
 
 .objp9
 
- DEX                    \ Decrement the counter in X so we work through zTemp,
-                        \ yTemp and xTemp
+ DEX                    \ Decrement the counter in X so we work through zTemp1,
+                        \ yTemp1 and xTemp1
 
  BPL objp7              \ Loop back to objp7 until we have processed all three
                         \ axes
@@ -7251,32 +7251,32 @@ ORG CODE%
                         \ simply drop the least significant byte without any
                         \ shifting, as discussed above
 
- LDA #0                 \ Set (R A) = (0 xTempHi)
+ LDA #0                 \ Set (R A) = (0 xTemp1Hi)
  STA R
- LDA xTempHi,X
+ LDA xTemp1Hi,X
 
- BPL objp11             \ If xTempHi is positive, skip the following instruction
+ BPL objp11             \ If xTemp1Hi is positive, skip the next instruction
 
- DEC R                  \ xTempHi is negative, so decrement R to &FF so (R A)
+ DEC R                  \ xTemp1Hi is negative, so decrement R to &FF so (R A)
                         \ is a 16-bit negative number
 
 .objp11
 
- STA xTempLo,X          \ Set xTemp = (R A)
+ STA xTemp1Lo,X         \ Set xTemp1 = (R A)
  LDA R
- STA xTempHi,X
+ STA xTemp1Hi,X
 
  JMP objp9              \ Jump back to objp9 to move on to the next axis (i.e.
-                        \ yTemp or zTemp)
+                        \ yTemp1 or zTemp1)
 
 .objp12
 
-                        \ Our vector in (xTemp, yTemp, zTemp) is now scaled
+                        \ Our vector in (xTemp1, yTemp1, zTemp1) is now scaled
                         \ properly, so it's time for the addition:
                         \
-                        \   [ xPoint ]   [ xAnchor ]   [ xTemp ]
-                        \   [ yPoint ] = [ yAnchor ] + [ yTemp ]
-                        \   [ zPoint ]   [ zAnchor ]   [ zTemp ]
+                        \   [ xPoint ]   [ xAnchor ]   [ xTemp1 ]
+                        \   [ yPoint ] = [ yAnchor ] + [ yTemp1 ]
+                        \   [ zPoint ]   [ zAnchor ]   [ zTemp1 ]
 
  LDX GG                 \ Set X to the point ID whose coordinates we want to
                         \ calculate, so the original point is updated with the
@@ -7285,7 +7285,7 @@ ORG CODE%
  LDY objectAnchorPoint  \ Set Y to the point ID of the object's anchor point
 
                         \ Fall through into AddTempToPoint to add the anchor
-                        \ point to the (xTemp, yTemp, zTemp) vector and store
+                        \ point to the (xTemp1, yTemp1, zTemp1) vector and store
                         \ the result in (xPoint, yPoint, zPoint)
 
 \ ******************************************************************************
@@ -7293,15 +7293,15 @@ ORG CODE%
 \       Name: AddTempToPoint (Part 1 of 2)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Add the xTemp vector to a point, store the result in another
+\    Summary: Add the xTemp1 vector to a point, store the result in another
 \             point, and set the result to hidden if it overflows
 \
 \ ------------------------------------------------------------------------------
 \
-\ Set point X to the sum of the xTemp vector and point Y. In other words, add
+\ Set point X to the sum of the xTemp1 vector and point Y. In other words, add
 \ the following:
 \
-\   (xTemp yTemp zTemp) + point Y's coordinate in (xPoint, yPoint, zPoint)
+\   (xTemp1 yTemp1 zTemp1) + point Y's coordinate in (xPoint, yPoint, zPoint)
 \
 \ and store the results in point X's coordinate in (xPoint, yPoint, zPoint).
 \
@@ -7311,7 +7311,7 @@ ORG CODE%
 \
 \   X                   The ID of the point in which to store the result
 \
-\   Y                   The ID of the point to add to the xTemp vector
+\   Y                   The ID of the point to add to the xTemp1 vector
 \
 \ Returns:
 \
@@ -7324,11 +7324,11 @@ ORG CODE%
 
 .AddTempToPoint
 
- LDA xTempLo            \ Set point X's x-coordinate to the following:
+ LDA xTemp1Lo           \ Set point X's x-coordinate to the following:
  CLC                    \
- ADC xPointLo,Y         \  (xTempHi xTempLo) + (xPointHi+Y xPointLo+Y)
+ ADC xPointLo,Y         \  (xTemp1Hi xTemp1Lo) + (xPointHi+Y xPointLo+Y)
  STA xPointLo,X         \
- LDA xTempHi            \ i.e. we add xTemp and point Y's x-coordinate
+ LDA xTemp1Hi           \ i.e. we add xTemp1 and point Y's x-coordinate
  ADC xPointHi,Y
  STA xPointHi,X
 
@@ -7336,10 +7336,10 @@ ORG CODE%
                         \ so we can check them in part 2
 
  CLC                    \ Set point X's y-coordinate to the following:
- LDA yTempLo            \
- ADC yPointLo,Y         \  (yTempHi yTempLo) + (yPointHi+Y yPointLo+Y)
+ LDA yTemp1Lo           \
+ ADC yPointLo,Y         \  (yTemp1Hi yTemp1Lo) + (yPointHi+Y yPointLo+Y)
  STA yPointLo,X         \
- LDA yTempHi            \ i.e. we add yTemp and point Y's y-coordinate
+ LDA yTemp1Hi           \ i.e. we add yTemp1 and point Y's y-coordinate
  ADC yPointHi,Y
  STA yPointHi,X
 
@@ -7347,10 +7347,10 @@ ORG CODE%
                         \ so we can check them in part 2
 
  CLC                    \ Set point X's z-coordinate to the following:
- LDA zTempLo            \
- ADC zPointLo,Y         \  (zTempHi zTempLo) + (zPointHi+Y zPointLo+Y)
+ LDA zTemp1Lo           \
+ ADC zPointLo,Y         \  (zTemp1Hi zTemp1Lo) + (zPointHi+Y zPointLo+Y)
  STA zPointLo,X         \
- LDA zTempHi            \ i.e. we add zTemp and point Y's z-coordinate
+ LDA zTemp1Hi           \ i.e. we add zTemp1 and point Y's z-coordinate
  ADC zPointHi,Y
  STA zPointHi,X
 
@@ -7780,10 +7780,10 @@ ORG CODE%
 
  LDA matrix1Lo+2,Y      \ Set (J I) = m2
  STA I                  \           = mx2 * mz2
- STA xTempLo            \
- LDA matrix1Hi+2,Y      \ Also set xTemp = m2
+ STA xTemp1Lo           \
+ LDA matrix1Hi+2,Y      \ Also set xTemp1 = m2
  STA J                  \                = mx2 * mz2
- STA xTempHi
+ STA xTemp1Hi
 
  LDA G                  \ Set m2 = (H G)
  STA matrix1Lo+2,Y      \        = -my2 * mz1
@@ -7813,9 +7813,9 @@ ORG CODE%
  LDA S
  STA matrix1Hi,Y
 
- LDA xTempLo            \ Set (S R) = xTemp
+ LDA xTemp1Lo           \ Set (S R) = xTemp1
  STA R                  \           = mx2 * mz2
- LDA xTempHi
+ LDA xTemp1Hi
  STA S
 
  LDX matrixAxis         \ Set X = 0
@@ -8285,7 +8285,7 @@ ORG CODE%
 \
 \   xPointHi etc.       The point's coordinates after rotation
 \
-\   xTempHi etc.        The point's coordinates after rotation
+\   xTemp1Hi etc.       The point's coordinates after rotation
 \
 \ ******************************************************************************
 
@@ -8309,17 +8309,17 @@ ORG CODE%
  LDA zPointHi,X
  STA UU
 
- LDX #5                 \ We now zero the (xTemp, yTemp, zTemp) vector, which is
-                        \ stored in six bytes to give us three 16-bit coordinate
-                        \ values (from xTempLo to zTempHi), so set a counter in
-                        \ X to count the bytes
+ LDX #5                 \ We now zero (xTemp1, yTemp1, zTemp1), which is stored
+                        \ in six bytes to give us three 16-bit coordinate values
+                        \ (from xTemp1Lo to zTemp1Hi), so set a counter in X to
+                        \ count the bytes
 
  LDA #0                 \ Set A = 0 to use as our zero
 
 .pcrd1
 
- STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
-                        \ between xTempLo and zTempHi
+ STA xTemp1Lo,X         \ Zero the X-th byte of the six-byte coordinate block
+                        \ between xTemp1Lo and zTemp1Hi
 
  DEX                    \ Decrement the loop counter
 
@@ -8327,15 +8327,15 @@ ORG CODE%
 
                         \ We now do the matrix multiplication:
                         \
-                        \   [ xTemp ]     [ m0 m1 m2 ]   [ xPoint ]
-                        \   [ yTemp ]  =  [ m3 m4 m5 ] x [ yPoint ]
-                        \   [ zTemp ]     [ m6 m7 m8 ]   [ zPoint ]
+                        \   [ xTemp1 ]     [ m0 m1 m2 ]   [ xPoint ]
+                        \   [ yTemp1 ]  =  [ m3 m4 m5 ] x [ yPoint ]
+                        \   [ zTemp1 ]     [ m6 m7 m8 ]   [ zPoint ]
                         \
                         \ We do this in three loops of three, using an outer and
                         \ inner loop. We set two loop counters, VV and X, for
                         \ the outer and inner loops respectively. They both
                         \ iterate through 2, 1 and 0, with VV iterating through
-                        \ zTemp, yTemp and xTemp, and X iterating through
+                        \ zTemp1, yTemp1 and xTemp1, and X iterating through
                         \ zPoint, yPoint and xPoint
                         \
                         \ We also iterate a counter in P for the matrix entries,
@@ -8345,27 +8345,27 @@ ORG CODE%
                         \ All the iterators count backwards, so the calculations
                         \ in order are:
                         \
-                        \   * zTemp += zPoint * m8
-                        \   * zTemp += yPoint * m7
-                        \   * ztemp += xPoint * m6
+                        \   * zTemp1 += zPoint * m8
+                        \   * zTemp1 += yPoint * m7
+                        \   * zTemp1 += xPoint * m6
                         \
-                        \   * yTemp += zPoint * m5
-                        \   * yTemp += yPoint * m4
-                        \   * ytemp += xPoint * m3
+                        \   * yTemp1 += zPoint * m5
+                        \   * yTemp1 += yPoint * m4
+                        \   * yTemp1 += xPoint * m3
                         \
-                        \   * xTemp += zPoint * m2
-                        \   * xTemp += yPoint * m1
-                        \   * xTemp += xPoint * m0
+                        \   * xTemp1 += zPoint * m2
+                        \   * xTemp1 += yPoint * m1
+                        \   * xTemp1 += xPoint * m0
                         \
                         \ Or, to switch it around the othee way and plug in the
-                        \ initial value of (xTemp, yTemp, zTemp) = (0, 0, 0),
+                        \ initial value of (xTemp1, yTemp1, zTemp1) = (0, 0, 0),
                         \ we get:
                         \
-                        \   * xTemp = m0 * xPoint + m1 * yPoint + m2 * zPoint
+                        \   * xTemp1 = m0 * xPoint + m1 * yPoint + m2 * zPoint
                         \
-                        \   * yTemp = m3 * xPoint + m4 * yPoint + m5 * zPoint
+                        \   * yTemp1 = m3 * xPoint + m4 * yPoint + m5 * zPoint
                         \
-                        \   * zTemp = m6 * xPoint + m7 * yPoint + m8 * zPoint
+                        \   * zTemp1 = m6 * xPoint + m7 * yPoint + m8 * zPoint
                         \
                         \ which gives us the matrix multiplication that we want
                         \ to calculate
@@ -8382,7 +8382,7 @@ ORG CODE%
                         \ such as matrix1Lo, contains 9 entries
 
  LDA #2                 \ Set VV = 2, to act as our outer loop counter that
- STA VV                 \ iterates through zTemp, yTemp and xTemp
+ STA VV                 \ iterates through zTemp1, yTemp1 and xTemp1
 
 .pcrd2
 
@@ -8432,17 +8432,17 @@ ORG CODE%
  LDX Q                  \ Restore the value of X
 
  LDY VV                 \ Fetch the outer loop counter from VV, which points to
-                        \ the relevant xTemp, yTemp or ztemp coordinate
+                        \ the relevant xTemp1, yTemp1 or zTemp1 coordinate
 
- LDA G                  \ Add (H G) to the xTemp coordinate, starting with the
+ LDA G                  \ Add (H G) to the xTemp1 coordinate, starting with the
  CLC                    \ low bytes
- ADC xTempLo,Y
- STA xTempLo,Y
+ ADC xTemp1Lo,Y
+ STA xTemp1Lo,Y
 
  LDA H                  \ And then the high bytes, so we have the following (if
- ADC xTempHi,Y          \ we are working with xTemp and m0, for example):
- STA xTempHi,Y          \
-                        \   xTemp += (H G)
+ ADC xTemp1Hi,Y         \ we are working with xTemp1 and m0, for example):
+ STA xTemp1Hi,Y         \
+                        \   xTemp1 += (H G)
                         \         += (J I) * (S R)
                         \         += xPoint * m0
                         \
@@ -8471,7 +8471,7 @@ ORG CODE%
                         \ anchor-relative points
 
  DEC VV                 \ Decrement the outer loop counter to work our way
-                        \ through zTemp, yTemp and xTemp
+                        \ through zTemp1, yTemp1 and xTemp1
 
  JMP pcrd2              \ Jump back to objp2 to do the next calculation
 
@@ -8482,38 +8482,39 @@ ORG CODE%
                         \ final result
 
                         \ Fall through into CopyTempToPoint to copy the result
-                        \ from (xTemp, yTemp, zTemp) to (xPoint, yPoint, zPoint)
+                        \ from (xTemp1, yTemp1, zTemp1) to (xPoint, yPoint,
+                        \ zPoint)
 
 \ ******************************************************************************
 \
 \       Name: CopyTempToPoint
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Set a specified point to (xTemp, yTemp, zTemp)
+\    Summary: Set a specified point to (xTemp1, yTemp1, zTemp1)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   X                   The ID of the point to set to (xTemp, yTemp, zTemp)
+\   X                   The ID of the point to set to (xTemp1, yTemp1, zTemp1)
 \
 \ ******************************************************************************
 
 .CopyTempToPoint
 
- LDA xTempLo            \ Set point X's x-coordinate to (xTempHi xTempLo)
+ LDA xTemp1Lo           \ Set point X's x-coordinate to (xTemp1Hi xTemp1Lo)
  STA xPointLo,X
- LDA xTempHi
+ LDA xTemp1Hi
  STA xPointHi,X
 
- LDA yTempLo            \ Set point X's y-coordinate to (yTempHi yTempLo)
+ LDA yTemp1Lo           \ Set point X's y-coordinate to (yTemp1Hi yTemp1Lo)
  STA yPointLo,X
- LDA yTempHi
+ LDA yTemp1Hi
  STA yPointHi,X
 
- LDA zTempLo            \ Set point X's z-coordinate to (zTempHi zTempLo)
+ LDA zTemp1Lo           \ Set point X's z-coordinate to (zTemp1Hi zTemp1Lo)
  STA zPointLo,X
- LDA zTempHi
+ LDA zTemp1Hi
  STA zPointHi,X
 
  RTS                    \ Return from the subroutine
@@ -11619,21 +11620,21 @@ ORG CODE%
                         \ non-zero)
 
  JSR SetPointCoords     \ Calculate the coordinates for point 228, which also
-                        \ returns the coordinates in (xTemp, yTemp, zTemp)
+                        \ returns the coordinates in (xTemp1, yTemp1, zTemp1)
 
- LDX #229               \ We now copy the coordinates from (xTemp, yTemp, zTemp)
-                        \ to points 229, 230 and 231, so we set a counter in X
-                        \ for the point IDs
+ LDX #229               \ We now copy the coordinates from (xTemp1, yTemp1,
+                        \ zTemp1) to points 229, 230 and 231, so we set a
+                        \ counter in Xfor the point IDs
 
 .fire1
 
- JSR CopyTempToPoint    \ Copy from (xTemp, yTemp, zTemp) into the coordinates
-                        \ for point X
+ JSR CopyTempToPoint    \ Copy from (xTemp1, yTemp1, zTemp1) into the
+                        \ coordinates for point X
 
  INX                    \ Increment the point ID
 
- CPX #232               \ Loop back until we have copied (xTemp, yTemp, zTemp)
- BNE fire1              \ into points 229, 230 and 231
+ CPX #232               \ Loop back until we have copied (xTemp1, yTemp1,
+ BNE fire1              \ zTemp1) into points 229, 230 and 231
 
  LDA #95                \ Set GG to point ID 95, to pass to the call to 
  STA GG                 \ SetPointCoords
@@ -11690,13 +11691,13 @@ ORG CODE%
  JSR SetObjPointCoords
 
  LDA #97                \ Calculate the coordinates for object point 97 with
- STA GG                 \ anchor point 95, which also sets (xTemp yTemp zTemp)
- JSR SetObjPointCoords  \ to the rotated vector from the anchor point (point 95)
-                        \ to point 97
+ STA GG                 \ anchor point 95, which also sets (xTemp1 yTemp1
+ JSR SetObjPointCoords  \ zTemp1) to the rotated vector from the anchor point
+                        \ (point 95) to point 97
 
  LDX #98                \ Set point 98's coordinates to point 96's coordinates +
- LDY #96                \ (xTemp yTemp zTemp), the latter containing the vector
- JSR AddTempToPoint     \ from point 95 to point 97
+ LDY #96                \ (xTemp1 yTemp1 zTemp1), the latter containing the
+ JSR AddTempToPoint     \ vector from point 95 to point 97
 
                         \ Finally, we add the following vectors to the object
                         \ points for objects 13 to 15:
@@ -16674,11 +16675,11 @@ ORG CODE%
 
  LDY Q                  \ Restore the axis counter into Y
 
- STA xTemp2Hi,Y         \ Set (xTemp2Hi xTemp2Lo xTempLo) = (A V R)
+ STA xTemp2Hi,Y         \ Set (xTemp2Hi xTemp2Lo xTemp1Lo) = (A V R)
  LDA V
  STA xTemp2Lo,Y
  LDA R
- STA xTempLo,Y
+ STA xTemp1Lo,Y
 
  INY                    \ Increment the loop counter to move on to the next axis
 
@@ -16750,16 +16751,16 @@ ORG CODE%
 
 .ahit10
 
-                        \ Above we set (xTemp2Hi xTemp2Lo xTempLo) to the 1/32
+                        \ Above we set (xTemp2Hi xTemp2Lo xTemp1Lo) to the 1/32
                         \ vector, but we only copied (xTemp2Hi xTemp2Lo) into
                         \ point 0, and ignored the fractional part, so we add
                         \ that part to the object 0 coordinate first
 
- LDA xTempLo,Y          \ Set xTemp2Hi = xTemp2Hi + xTempLo
+ LDA xTemp1Lo,Y         \ Set xTemp2Hi = xTemp2Hi + xTemp1Lo
  CLC                    \
  ADC xTemp2Hi,Y         \ to work out when the fractional part cumulatively
  STA xTemp2Hi,Y         \ adds up to an integer (in other words, we store the
-                        \ cumulative sum of the fractional part from xTempLo in
+                        \ cumulative sum of the fractional part from xTemp1Lo in
                         \ xTemp2Hi)
 
  BCC ahit11             \ If the addition didn't overflow, jump to ahit11 to
@@ -16786,7 +16787,7 @@ ORG CODE%
  BPL ahit10             \ Loop back until we have processed all three axes
 
                         \ We have now moved object 0 along the trail by adding
-                        \ the fractional part of the 1/32 vector xTempLo, so
+                        \ the fractional part of the 1/32 vector xTemp1Lo, so
                         \ now we can add the rest of the vector which we stored
                         \ in point 0 above, to move along the trail by exactly
                         \ 1/32 of the trail vector
@@ -17288,17 +17289,17 @@ ORG CODE%
                         \ coordinates of the runway outline, which is a
                         \ rectangle whose corners are points 1 to 4
 
- LDA #0                 \ We start by zeroing the (xTemp yTemp zTemp) vector,
+ LDA #0                 \ We start by zeroing the (xTemp1 yTemp1 zTemp1) vector,
                         \ which is stored in six bytes to give us three 16-bit
-                        \ coordinate values (from xTempLo to zTempHi), so first
-                        \ we set A = 0 to use as our zero
+                        \ coordinate values (from xTemp1Lo to zTemp1Hi), so
+                        \ first we set A = 0 to use as our zero
 
  LDX #5                 \ Set a counter in X to count the six bytes
 
 .prun4
 
- STA xTempLo,X          \ Zero the X-th byte of the six-byte coordinate block
-                        \ between xTempLo and zTempHi
+ STA xTemp1Lo,X         \ Zero the X-th byte of the six-byte coordinate block
+                        \ between xTemp1Lo and zTemp1Hi
 
  DEX                    \ Decrement the loop counter
 
@@ -17308,7 +17309,7 @@ ORG CODE%
                         \ starting with point 1
 
  LDY #217               \ Set Y so the call to AddTempToPoint adds point 217 to
-                        \ the xTemp vector
+                        \ the xTemp1 vector
 
  STY objectAnchorPoint  \ The anchor point of the runway is point 217, so set
                         \ objectAnchorPoint to this point for the call to
@@ -17317,37 +17318,37 @@ ORG CODE%
  LDX #1                 \ Set X so the call to AddTempToPoint stores the result
                         \ in point ID 1
 
- JSR AddTempToPoint     \ Add point 217 to the (xTemp yTemp zTemp) point and
+ JSR AddTempToPoint     \ Add point 217 to the (xTemp1 yTemp1 zTemp1) point and
                         \ store the result in (xPoint, yPoint, zPoint) for
                         \ point 1
                         \
                         \ This simply sets point ID 1 to the object's anchor
-                        \ point, as we just zeroed (xTemp yTemp zTemp), so point
-                        \ 1 of the runway outline is now calculated
+                        \ point, as we just zeroed (xTemp1 yTemp1 zTemp1), so
+                        \ point1 of the runway outline is now calculated
 
  LDA #2                 \ Calculate the coordinates for object point 2 with
  STA GG                 \ anchor point 217, so point 2 is now calculated
  JSR SetObjPointCoords  \
-                        \ This also sets (xTemp yTemp zTemp) to the vector from
-                        \ the anchor point to point 2, which we now copy into
-                        \ xTemp2 by copying the following values:
+                        \ This also sets (xTemp1 yTemp1 zTemp1) to the vector
+                        \ from the anchor point to point 2, which we now copy
+                        \ into xTemp2 by copying the following values:
                         \
-                        \   xTempLo, yTempLo, zTempLo
-                        \   xTempHi, yTempHi, zTempHi
+                        \   xTemp1Lo, yTemp1Lo, zTemp1Lo
+                        \   xTemp1Hi, yTemp1Hi, zTemp1Hi
                         \
                         \ into the following locations:
                         \
                         \   xTemp2Hi,  yTemp2Hi,  zTemp2Hi
                         \   xTemp2Top, yTemp2Top, zTemp2Top
                         \
-                        \ so (xTemp2Top xTempHi) etc. contain the vector from
+                        \ so (xTemp2Top xTemp2Hi) etc. contain the vector from
                         \ the anchor point to the point 2
 
  LDX #5                 \ Set a counter for six bytes
 
 .prun5
 
- LDA xTempLo,X          \ Copy the X-th byte of xTempLo to the X-th byte of
+ LDA xTemp1Lo,X         \ Copy the X-th byte of xTemp1Lo to the X-th byte of
  STA xTemp2Hi,X         \ xTemp2Hi
 
  DEX                    \ Decrement the loop counter
@@ -17362,7 +17363,7 @@ ORG CODE%
  LDA #4                 \ Calculate the coordinates for object point 4 with
  STA GG                 \ anchor point 217, so point 4 is now calculated
  JSR SetObjPointCoords  \
-                        \ This also sets (xTemp yTemp zTemp) to the vector
+                        \ This also sets (xTemp1 yTemp1 zTemp1) to the vector
                         \ from the anchor point (point 1) to point 4
 
                         \ By now we have coordinates for points 1, 2 and 4, and
@@ -17384,13 +17385,13 @@ ORG CODE%
                         \      1         4
                         \
                         \ We know the vector from point 1 to point 4 - it's in
-                        \ the (xTemp yTemp zTemp) vector - and we know the
+                        \ the (xTemp1 yTemp1 zTemp1) vector - and we know the
                         \ coordinates of point 2, so we can calculate the
                         \ coordinates of point 3 by simply adding the vector to
                         \ the coordinates of point 2, which is what we do next
 
  LDY #2                 \ Set point 3's coordinates to point 2's coordinates +
- LDX #3                 \ (xTemp yTemp zTemp), so point 3 is now calculated
+ LDX #3                 \ (xTemp1 yTemp1 zTemp1), so point 3 is now calculated
  JSR AddTempToPoint
 
  LDA showLine           \ If showLine is zero, then all four coordinates fit
@@ -17486,14 +17487,14 @@ ORG CODE%
 
 .prun12
 
-                        \ By the time we get here, (xTemp yTemp zTemp) contains
-                        \ the vector from the anchor point (point 1) to point 4,
-                        \ which is the vector from one side of the runway to the
-                        \ other
+                        \ By the time we get here, (xTemp1 yTemp1 zTemp1)
+                        \ contains the vector from the anchor point (point 1) to
+                        \ point 4, which is the vector from one side of the
+                        \ runway to the other
                         \
-                        \ We now want to halve the (xTemp yTemp zTemp) vector,
-                        \ to give the vector from one side of the runway to the
-                        \ line of dashes down the middle
+                        \ We now want to halve the (xTemp1 yTemp1 zTemp1)
+                        \ vector, to give the vector from one side of the runway
+                        \ to the line of dashes down the middle
                         \
                         \ As a reminder, the runway outline looks like this:
                         \
@@ -17507,47 +17508,48 @@ ORG CODE%
                         \       +-------+
                         \      1         4
                         \
-                        \ so we now calculate (xTemp yTemp zTemp) to be the
+                        \ so we now calculate (xTemp1 yTemp1 zTemp1) to be the
                         \ vector from the left edge of the runway to the dashes
                         \ in the middle
 
  LDX #2                 \ Set a counter in X to work through the three axes of
-                        \ the (xTemp yTemp zTemp) vector (the comments below
+                        \ the (xTemp1 yTemp1 zTemp1) vector (the comments below
                         \ cover the iteration for the x-axis)
 
 .prun13
 
- CLC                    \ Clear the C flag, to use when (xTempHi xTempLo) is
+ CLC                    \ Clear the C flag, to use when (xTemp1Hi xTemp1Lo) is
                         \ positive
 
- LDA xTempHi,X          \ If xTempHi is positive, skip the following instruction
+ LDA xTemp1Hi,X         \ If xTemp1Hi is positive, skip the next instruction
  BPL prun14
 
- SEC                    \ Set the C flag, to use when (xTempHi xTempLo) is
+ SEC                    \ Set the C flag, to use when (xTemp1Hi xTemp1Lo) is
                         \ negative
 
 .prun14
 
- ROR A                  \ Shift (xTempHi xTempLo) to the right by one place,
- STA xTempHi,X          \ inserting the C flag into the top bit of xTempHi,
- LDA xTempLo,X          \ which ensures that we retain the same sign
+ ROR A                  \ Shift (xTemp1Hi xTemp1Lo) to the right by one place,
+ STA xTemp1Hi,X         \ inserting the C flag into the top bit of xTemp1Hi,
+ LDA xTemp1Lo,X         \ which ensures that we retain the same sign
  ROR A
- STA xTempLo,X
+ STA xTemp1Lo,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL prun13             \ Loop back until we have halved xTemp, yTemp and zTemp
+ BPL prun13             \ Loop back until we have halved xTemp1, yTemp1 and
+                        \ zTemp1
 
-                        \ (xTemp yTemp zTemp) now contains the vector from one
-                        \ side of the runway to the line of dashes down the
+                        \ (xTemp1 yTemp1 zTemp1) now contains the vector from
+                        \ one side of the runway to the line of dashes down the
                         \ middle
 
  LDY #2                 \ Set point 21's coordinates to point 2's coordinates +
- LDX #21                \ (xTemp yTemp zTemp)
+ LDX #21                \ (xTemp1 yTemp1 zTemp1)
  JSR AddTempToPoint
 
  LDY #1                 \ Set point 5's coordinates to point 1's coordinates +
- LDX #5                 \ (xTemp yTemp zTemp)
+ LDX #5                 \ (xTemp1 yTemp1 zTemp1)
  JSR AddTempToPoint
 
                         \ So we've now calculated points 5 and 21 as follows:
@@ -17562,23 +17564,23 @@ ORG CODE%
                         \       +-------+
                         \      1    5    4
                         \
-                        \ Next, we make a backup of the (xTemp yTemp zTemp)
-                        \ vector into (xTemp3 yTemp3 zTemp3)
+                        \ Next, we make a backup of the (xTemp1 yTemp1 zTemp1)
+                        \ vector in (xDashesVector yDashesVector zDashesVector)
 
  LDX #5                 \ Set a counter for six bytes
 
 .prun15
 
- LDA xTempLo,X          \ Copy the X-th byte of xTempLo to the X-th byte of
- STA xTemp3Lo,X         \ xTemp3Lo
+ LDA xTemp1Lo,X         \ Copy the X-th byte of xTemp1Lo to the X-th byte of
+ STA xDashesVectorLo,X  \ xDashesVectorLo
 
  DEX                    \ Decrement the loop counter
 
  BPL prun15             \ Loop back until we have copied all six bytes
 
-                        \ So (xTemp3 yTemp3 zTemp3) now contains the vector from
-                        \ one side of the runway to the line of dashes down the
-                        \ middle
+                        \ So (xDashesVector yDashesVector zDashesVector) now
+                        \ contains the vector from one side of the runway to the
+                        \ line of dashes down the middle
 
                         \ We now zero variables T, U, V, W, G and H
 
@@ -17594,7 +17596,7 @@ ORG CODE%
 
  BPL prun16             \ Loop back until we have zeroed all six bytes
 
-                        \ In part 2 above, we set (xTemp2Top xTempHi) etc. to
+                        \ In part 2 above, we set (xTemp2Top xTemp2Hi) etc. to
                         \ the vector from the anchor point (i.e. point 1) to
                         \ point 2
 
@@ -17620,13 +17622,13 @@ ORG CODE%
 
 .prun18
 
-                        \ Set (xTempHi A T) = (xTemp2Top xTemp2Hi 0) / 2
+                        \ Set (xTemp1Hi A T) = (xTemp2Top xTemp2Hi 0) / 2
                         \
                         \ keeping the sign intact by feeding in bits from R
 
  LSR R                  \ We start with the top byte
  ROR A
- STA xTempHi,X
+ STA xTemp1Hi,X
 
  LDA xTemp2Hi,X         \ Then the high byte
  ROR A
@@ -17638,8 +17640,8 @@ ORG CODE%
 
 .prun19
 
- LSR R                  \ Set (xTempHi A T) = (xTempHi A T) / 2
- ROR xTempHi,X          \
+ LSR R                  \ Set (xTemp1Hi A T) = (xTemp1Hi A T) / 2
+ ROR xTemp1Hi,X         \
  ROR A                  \ keeping the sign intact by feeding in bits from R
  ROR T,X
 
@@ -17649,12 +17651,12 @@ ORG CODE%
 
                         \ In all, the above does the following:
                         \
-                        \   (xTempHi A T) = (xTemp2Top xTemp2Hi 0) / 16
+                        \   (xTemp1Hi A T) = (xTemp2Top xTemp2Hi 0) / 16
                         \
                         \ while retaining the sign
 
- STA xTempLo,X          \ Set (xTempHi xTempLo T) = (xTempHi A T)
-                        \                         = (xTemp2Top xTemp2Hi 0) / 16
+ STA xTemp1Lo,X         \ Set (xTemp1Hi xTemp1Lo T) = (xTemp1Hi A T)
+                        \                          = (xTemp2Top xTemp2Hi 0) / 16
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
@@ -17662,14 +17664,14 @@ ORG CODE%
 
                         \ So we have now calculated the vector from point 1 to
                         \ point 2, divided by 16, with the result stored in the
-                        \ xTemp vector and the variables T, U and V used for
+                        \ xTemp1 vector and the variables T, U and V used for
                         \ the lowest bytes, like this:
                         \
-                        \   x-coordinate = (xTempHi xTempLo T)
-                        \   y-coordinate = (yTempHi yTempLo U)
-                        \   z-coordinate = (zTempHi zTempLo V)
+                        \   x-coordinate = (xTemp1Hi xTemp1Lo T)
+                        \   y-coordinate = (yTemp1Hi yTemp1Lo U)
+                        \   z-coordinate = (zTemp1Hi zTemp1Lo V)
                         \
-                        \ In other words, the xTemp/T/U/V vector contains 1/16
+                        \ In other words, the xTemp1/T/U/V vector contains 1/16
                         \ of the full vector between points 5 and 21
 
  LDX #LO(xTemp2Lo)      \ Set X so the call to CopyPointToWork copies the
@@ -17695,17 +17697,17 @@ ORG CODE%
 
 .prun21
 
- CLC                    \ Set (xTemp2Hi xTemp2Lo W) += (xTempHi xTempLo T)
+ CLC                    \ Set (xTemp2Hi xTemp2Lo W) += (xTemp1Hi xTemp1Lo T)
  LDA W,X                \
  ADC T,X                \ starting with the lowest bytes
  STA W,X
 
  LDA xTemp2Lo,X         \ Then the middle bytes
- ADC xTempLo,X
+ ADC xTemp1Lo,X
  STA xTemp2Lo,X
 
  LDA xTemp2Hi,X         \ And then the highest bytes
- ADC xTempHi,X
+ ADC xTemp1Hi,X
  STA xTemp2Hi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
@@ -17758,24 +17760,25 @@ ORG CODE%
                         \ the screen is the best approach)
                         \
                         \ We start by restoring the vector that we stored in
-                        \ (xTemp3 yTemp3 zTemp3) back to (xTemp yTemp zTemp),
-                        \ which is the vector from one side of the runway to the
-                        \ line of dashes down the middle
+                        \ (xDashesVector yDashesVector zDashesVector) back to
+                        \ (xTemp1 yTemp1 zTemp1), which is the vector from one
+                        \ side of the runway to the line of dashes down the
+                        \ middle
 
  LDX #5                 \ Set a counter for six bytes
 
 .prun22
 
- LDA xTemp3Lo,X         \ Copy the X-th byte of xTemp3Lo to the X-th byte of
- STA xTempLo,X          \ xTempLo
+ LDA xDashesVectorLo,X  \ Copy the X-th byte of xDashesVectorLo to the X-th byte
+ STA xTemp1Lo,X         \ of xTemp1Lo
 
  DEX                    \ Decrement the loop counter
 
  BPL prun22             \ Loop back until we have copied all six bytes
 
-                        \ So (xTemp yTemp zTemp) is once again the vector from
-                        \ one side of the runway to the line of dashes down the
-                        \ middle
+                        \ So (xTemp1 yTemp1 zTemp1) is once again the vector
+                        \ from one side of the runway to the line of dashes down
+                        \ the middle
 
                         \ We now work our way along the dash line, checking the
                         \ coordinates of the points we just added to see if the
@@ -17898,48 +17901,49 @@ ORG CODE%
                         \ end of the runway that's behind us, by taking point Y
                         \ and:
                         \
-                        \   * Adding (xTemp yTemp zTemp) to point Y to get one
-                        \     corner (i.e. corner 3 or 4)
+                        \   * Adding (xTemp1 yTemp1 zTemp1) to point Y to get
+                        \     one corner (i.e. corner 3 or 4)
                         \
-                        \   * Subtracting (xTemp yTemp zTemp) from point Y to
+                        \   * Subtracting (xTemp1 yTemp1 zTemp1) from point Y to
                         \     get the other corner (i.e. corner 1 or 2)
                         \
                         \ We start with the addition
 
- JSR AddTempToPoint     \ Add point Y to the (xTemp yTemp zTemp) vector and
+ JSR AddTempToPoint     \ Add point Y to the (xTemp1 yTemp1 zTemp1) vector and
                         \ store the result in (xPoint, yPoint, zPoint) for
                         \ point X
 
-                        \ We now negate the (xTemp yTemp zTemp) vector so we can
-                        \ do the subtraction
+                        \ We now negate the (xTemp1 yTemp1 zTemp1) vector so we
+                        \ can do the subtraction
 
  LDX #2                 \ Set a counter in X to work through the three axes of
-                        \ the (xTemp yTemp zTemp) vector (the comments below
+                        \ the (xTemp1 yTemp1 zTemp1) vector (the comments below
                         \ cover the iteration for the x-axis)
 
 .prun27
 
- LDA #0                 \ Negate (xTempHi xTempLo), starting with the low bytes
- SEC
- SBC xTempLo,X
- STA xTempLo,X
+ LDA #0                 \ Negate (xTemp1Hi xTemp1Lo), starting with the low
+ SEC                    \ bytes
+ SBC xTemp1Lo,X
+ STA xTemp1Lo,X
 
  LDA #0                 \ And then the high bytes
- SBC xTempHi,X
- STA xTempHi,X
+ SBC xTemp1Hi,X
+ STA xTemp1Hi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL prun27             \ Loop back until we have negated xTemp, yTemp and zTemp
+ BPL prun27             \ Loop back until we have negated xTemp1, yTemp1 and
+                        \ zTemp1
 
-                        \ The xTemp yTemp zTemp) vector is now negated, so we
+                        \ The xTemp1 yTemp1 zTemp1) vector is now negated, so we
                         \ can add it with AddTempToPoint to do the subtraction
                         \ we want
 
  LDX Q                  \ Set X so the call to AddTempToPoint stores the result
                         \ in point Q
 
- JSR AddTempToPoint     \ Add point Y to the (xTemp yTemp zTemp) vector and
+ JSR AddTempToPoint     \ Add point Y to the (xTemp1 yTemp1 zTemp1) vector and
                         \ store the result in (xPoint, yPoint, zPoint) for
                         \ point Q
 
@@ -22833,9 +22837,11 @@ NEXT
 \                         * LO(xVelocityPLo)
 \                                         = (xVelocityP, yVelocityP, zVelocityP)
 \
-\                         * LO(xCoord1Lo) = (xCoord1, yCoord1, zCoord1)
+\                         * LO(dxVelocityLo)
+\                                         = (dxVelocity, dyVelocity, dzVelocity)
 \
-\                         * LO(xCoord2Lo) = (xCoord2, yCoord2, zCoord2)
+\                         * LO(dxRotationLo)
+\                                         = (dxRotation, dyRotation, dzRotation)
 \
 \                         * LO(xTemp2Lo) = (xTemp2, yTemp2, zTemp2)
 \
@@ -24731,21 +24737,27 @@ NEXT
 .flightFactor
 
  EQUB 212               \ 0: ??? = 212 * 1
+                        \
+                        \ factor1+0 is set in ApplyAerodynamics 3
 
  EQUB 201               \ 1: ??? = 201 / 4
+                        \
+                        \ factor1+1 is set in ApplyAerodynamics 3
 
  EQUB 204               \ 2: ??? = 204 / 2
+                        \
+                        \ factor1+0 is set in ApplyAerodynamics 3
 
  EQUB 176               \ 3: ??? = 176 * 2
                         \
-                        \ factor1+3 = xVelocityP << 1 in ApplyAerodynamics
+                        \ factor1+3 is set in ApplyAerodynamics 1, 3
 
  EQUB 156               \ 4: Stalling effect
                         \
                         \ = 156 * 16 in normal flight
                         \ = 39 * 16 when the plane is stalling
                         \
-                        \ factor1+4 = yVelocityP << 1 in ApplyAerodynamics
+                        \ factor1+4 = is set in ApplyAerodynamics 1, 3
 
  EQUB 22                \ 5: Drag factor? lift factor?
                         \
@@ -24758,7 +24770,7 @@ NEXT
                         \
                         \ Set to 242 in ResetVariables
                         \
-                        \ factor1+5 = zVelocityP << 1 in ApplyAerodynamics
+                        \ factor1+5 = is set in ApplyAerodynamics 1, 3
 
  EQUB 40                \ 6: ??? = 40 / 32
 
@@ -24768,16 +24780,24 @@ NEXT
                         \ = 152 * 4 if flaps are on
                         \
                         \ Zeroed in ResetVariables
+                        \
+                        \ factor1+7 is set in ApplyAerodynamics 3
 
  EQUB 0                 \ 8: Unused
 
  EQUB 0                 \ 9: Unused
 
  EQUB 255               \ 10: x-axis of ??? = 255 / 2
+                        \
+                        \ factor1+10 is set in L5500
 
  EQUB 141               \ 11: y-axis of ??? = 141 / 4
+                        \
+                        \ factor1+11 is set in L5500
 
  EQUB 190               \ 12: z-axis of ??? = 190 / 4
+                        \
+                        \ factor1+12 is set in L5500
 
  EQUB &00, &05          \ These bytes appear to be unused
  EQUB &7D, &FF
@@ -25181,19 +25201,19 @@ NEXT
  BEQ fmod1              \ jump to fmod1 to skip the following and set the
                         \ gravity vector to (0, -512, 0)
 
- LDX yCoord1Hi          \ If yCoord1 is positive then ????, so
+ LDX dyVelocityHi       \ If dyVelocity is positive then ????, so
  BPL fmod1              \ jump to fmod1 to skip the following and set the
                         \ gravity vector to (0, -512, 0)
 
                         \ If we get here then we are on the ground, the
-                        \ undercarriage is down, and yCoord1 is negative, so
+                        \ undercarriage is down, and dyVelocity is negative, so
                         \ we need a different gravity vector
 
- STX Q                  \ Set (Q A) = (yCoord1Hi yCoord1Lo)
- LDA yCoord1Lo          \           = yCoord1
+ STX Q                  \ Set (Q A) = (dyVelocityHi dyVelocityLo)
+ LDA dyVelocityLo       \           = dyVelocity
 
  SEC                    \ Set (Q A) = (Q A) / 2
- ROR Q                  \           = yCoord1 / 2
+ ROR Q                  \           = dyVelocity / 2
  ROR A                  \
                         \ making sure to retain the correct sign in bit 7 of Q
 
@@ -25310,16 +25330,16 @@ NEXT
  BEQ fmod3              \ aliens, so jump to fmod3 to skip this part
 
                         \ We now apply turbulence to the plane by applying a
-                        \ random amount to the (xCoord3, yCoord3, zCoord3)
-                        \ vector, with the random amount being positive or
+                        \ random amount to factor2+10, factor2+11 and
+                        \ factor2+12, with the random amount being positive or
                         \ negative, and with a larger magnitude the closer we
                         \ are to the alien
 
  LDX #&6A               \ Set X so in the following loop, the call to AddScaled
-                        \ updates the xCoord3, yCoord3 and zCoord3 variables,
-                        \ one on each iteration of the loop
+                        \ updates factor2+10, factor2+11 and factor2+12, one on
+                        \ each iteration of the loop
                         \
-                        \ The comments below are for xCoord3
+                        \ The comments below are for factor2+10
 
 .fmod2
 
@@ -25351,15 +25371,14 @@ NEXT
                         \ (A 0) >> 2, which is in the range 0 to 1920, as
                         \ (30 0) >> 2 is 1920
 
- JSR AddScaled          \ Set xCoord3 = xCoord3 +/- (A 0) >> 2
+ JSR AddScaled          \ Set factor2+10 = factor2+10 +/- (A 0) >> 2
                         \
-                        \ So this changes the xCoord3 vector by a random amount
-                        \ in the range 0 to 1920, with a higher amount the
-                        \ closer we are to the exploding alien
+                        \ So this changes factor2+10 by a random amount in the
+                        \ range 0 to 1920, with a higher amount the closer we
+                        \ are to the exploding alien
 
  INX                    \ Increment the value of X so the next iteration updates
-                        \ the next axis from the xCoord3, yCoord3 and zCoord3
-                        \ variables
+                        \ the next of factor2+10, factor2+11 and factor2+12
 
  CPX #&6D               \ Loop back until we have applied turbulence to all
  BNE fmod2              \ three axes
@@ -25442,28 +25461,28 @@ NEXT
 
  STA yTurnHi
 
- LDX #&82               \ Set (zCoord4Top zCoord4Hi) = 0
+ LDX #&82               \ Set (dzTurnTop dzTurnHi) = 0
  JSR ResetVariable      \
                         \ This also sets A = 0
 
- STA zCoord4Lo          \ Set xCoord4Lo = 0, so by now we have:
+ STA dzTurnLo           \ Set dzTurnLo = 0, so by now we have:
                         \
-                        \   (zCoord4Top zCoord4Hi zCoord4Lo) = 0
+                        \   (dzTurnTop dzTurnHi dzTurnLo) = 0
 
  LDY ucStatus
  BNE fmod9
 
  LDA xRotationHi
- AND xCoord4Top
+ AND dxTurnTop
  BPL fmod8
 
- LDX #&80               \ Set (xCoord4Top xCoord4Hi) = 0
+ LDX #&80               \ Set (dxTurnTop dxTurnHi) = 0
  JSR ResetVariable      \
                         \ This also sets A = 0
 
- STA xCoord4Lo          \ Set xCoord4Lo = 0, so by now we have:
+ STA dxTurnLo           \ Set dxTurnLo = 0, so by now we have:
                         \
-                        \   (xCoord4Top xCoord4Hi xCoord4Lo) = 0
+                        \   (dxTurnTop dxTurnHi dxTurnLo) = 0
 
 .fmod8
 
@@ -25579,26 +25598,26 @@ NEXT
  SBC #16
  STA yPointHi+252
 
- LDX #LO(xCoord1Lo)     \ Set X so the call to CopyPointToWork copies the
-                        \ coordinates to (xCoord1, yCoord1, zCoord1)
+ LDX #LO(dxVelocityLo)  \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (dxVelocity, dyVelocity, dzVelocity)
 
  LDY #252               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from point 252
 
  JSR CopyPointToWork    \ Copy the coordinates from point 252 to
-                        \ (xCoord1, yCoord1, zCoord1)
+                        \ (dxVelocity, dyVelocity, dzVelocity)
 
  JSR AdjustVelocity     \ Adjust the plane's velocity as follows:
                         \
-                        \   [ xVelocity ]   [ xVelocity ]   [ xCoord1 ]
-                        \   [ yVelocity ] = [ yVelocity ] + [ yCoord1 ] * 2
-                        \   [ zVelocity ]   [ zVelocity ]   [ zCoord1 ]
+                        \   [ xVelocity ]   [ xVelocity ]   [ dxVelocity ]
+                        \   [ yVelocity ] = [ yVelocity ] + [ dyVelocity ] * 2
+                        \   [ zVelocity ]   [ zVelocity ]   [ dzVelocity ]
 
  JSR AdjustTurn         \ Adjust the plane's turn rate as follows:
                         \
-                        \   [ xTurn ]   [ xTurn ]   [ xCoord4 ]
-                        \   [ yTurn ] = [ yTurn ] + [ yCoord4 ]
-                        \   [ zTurn ]   [ zTurn ]   [ zCoord4 ]
+                        \   [ xTurn ]   [ xTurn ]   [ dxTurn ]
+                        \   [ yTurn ] = [ yTurn ] + [ dyTurn ]
+                        \   [ zTurn ]   [ zTurn ]   [ dzTurn ]
 
  LDX #LO(xTurnLo)       \ Set X so the call to CopyWorkToPoint copies the
                         \ coordinates from (xTurnLo, yTurnLo, zTurnLo)
@@ -25617,14 +25636,14 @@ NEXT
 
  JSR SetPointCoords     \ Calculate the coordinates for point 254
 
- LDX #LO(xCoord2Lo)     \ Set X so the call to CopyPointToWork copies the
-                        \ coordinates to (xCoord2, yCoord2, zCoord2)
+ LDX #LO(dxRotationLo)  \ Set X so the call to CopyPointToWork copies the
+                        \ coordinates to (dxRotation, dyRotation, dzRotation)
 
  LDY #254               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from point 254
 
  JSR CopyPointToWork    \ Copy the coordinates from point 254 to
-                        \ (xCoord2, yCoord2, zCoord2)
+                        \ (dxRotation, dyRotation, dzRotation)
 
  JSR AdjustRotation     \ Move the plane according to its velocity and adjust
                         \ its rotation
@@ -25749,15 +25768,15 @@ NEXT
 \ to each axis of the plane's turn rate. Specifically, it does the following for
 \ each of the three axes (x, y and z):
 \
-\   (xTurnHi xTurnLo xTurnBot) += (xCoord4Top xCoord4Hi xCoord4Lo)
+\   (xTurnHi xTurnLo xTurnBot) += (dxTurnTop dxTurnHi dxTurnLo)
 \
 \ so that's:
 \
-\   [ xTurn ]   [ xTurn ]   [ xCoord4 ]
-\   [ yTurn ] = [ yTurn ] + [ yCoord4 ]
-\   [ zTurn ]   [ zTurn ]   [ zCoord4 ]
+\   [ xTurn ]   [ xTurn ]   [ dxTurn ]
+\   [ yTurn ] = [ yTurn ] + [ dyTurn ]
+\   [ zTurn ]   [ zTurn ]   [ dzTurn ]
 \
-\ where (xCoord4 yCoord4 zCoord4) and (xTurn yTurn zTurn) are vectors made up of
+\ where (dxTurn dyTurn dzTurn) and (xTurn yTurn zTurn) are vectors made up of
 \ unsigned 24-bit numbers representing angles.
 \
 \ ******************************************************************************
@@ -25767,24 +25786,24 @@ NEXT
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
 
-.L51D9
+.atur1
 
- LDA xCoord4Lo,X        \ Set xTurn = xTurn + xCoord4
+ LDA dxTurnLo,X         \ Set xTurn = xTurn + dxTurn
  CLC                    \
  ADC xTurnBot,X         \ starting with the bottom bytes
  STA xTurnBot,X
  
- LDA xCoord4Hi,X        \ And then the low bytes
+ LDA dxTurnHi,X         \ And then the low bytes
  ADC xTurnLo,X
  STA xTurnLo,X
  
- LDA xCoord4Top,X       \ And then the high bytes
+ LDA dxTurnTop,X        \ And then the high bytes
  ADC xTurnHi,X
  STA xTurnHi,X
  
  DEX                    \ Decrement the loop counter to move to the next axis
  
- BPL L51D9              \ Loop back until we have processed all three axes
+ BPL atur1              \ Loop back until we have processed all three axes
 
  RTS                    \ Return from the subroutine
 
@@ -25801,17 +25820,17 @@ NEXT
 \ vector to each axis of the plane's velocity vector. Specifically, it does the
 \ following for each of the three axes (x, y and z):
 \
-\   (xVelocityHi xVelocityLo xVelocityBot) += (xCoord1Hi xCoord1Lo) * 2
+\   (xVelocityHi xVelocityLo xVelocityBot) += (dxVelocityHi dxVelocityLo) * 2
 \
 \ so that's:
 \
-\   [ xVelocity ]   [ xVelocity ]   [ xCoord1 ]
-\   [ yVelocity ] = [ yVelocity ] + [ yCoord1 ] * 2
-\   [ zVelocity ]   [ zVelocity ]   [ zCoord1 ]
+\   [ xVelocity ]   [ xVelocity ]   [ dxVelocity ]
+\   [ yVelocity ] = [ yVelocity ] + [ dyVelocity ] * 2
+\   [ zVelocity ]   [ zVelocity ]   [ dzVelocity ]
 \
-\ where (xCoord1 yCoord1 zCoord1) is a vector made up of signed 16-bit numbers
-\ and (xVelocity zVelocity zVelocity) is a vector made up of signed 24-bit
-\ numbers.
+\ where (dxVelocity dyVelocity dzVelocity) is a vector made up of signed 16-bit
+\ numbers and (xVelocity zVelocity zVelocity) is a vector made up of signed
+\ 24-bit numbers.
 \
 \ ******************************************************************************
 
@@ -25820,31 +25839,31 @@ NEXT
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
 
-.L51FB
+.avel1
 
  LDA #0                 \ Set R = 0, to use as the top byte in (R A V)
  STA R
 
- LDA xCoord1Lo,X        \ Set (A V) = (xCoord1Hi xCoord1Lo)
- STA V
- LDA xCoord1Hi,X
+ LDA dxVelocityLo,X     \ Set (A V) = (dxVelocityHi dxVelocityLo)
+ STA V                  \           = dxVelocity
+ LDA dxVelocityHi,X
 
- BPL L520B              \ If (A V) is negative, decrement R to &FF so it has the
+ BPL avel2              \ If (A V) is negative, decrement R to &FF so it has the
  DEC R                  \ correct sign for (R A V)
 
-.L520B
+.avel2
 
  ASL V                  \ Set (R A V) = (R A V) << 1
- ROL A                  \             = (xCoord1Hi xCoord1Lo) * 2
+ ROL A                  \             = dxVelocity * 2
  ROL R
 
  PHA                    \ Store the low byte on the stack, so we can retrieve
                         \ it below
 
  LDA xVelocityBot,X     \ Set xVelocity = xVelocity + (R A V)
- CLC                    \
- ADC V                  \ starting with the bottom bytes
- STA xVelocityBot,X
+ CLC                    \               = xVelocity + dxVelocity * 2
+ ADC V                  \
+ STA xVelocityBot,X     \ starting with the bottom bytes
 
  PLA                    \ And then the low bytes, retrieving the low byte
  ADC xVelocityLo,X      \ that we stored on the stack above
@@ -25856,7 +25875,7 @@ NEXT
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL L51FB              \ Loop back until we have processed all three axes
+ BPL avel1              \ Loop back until we have processed all three axes
 
  RTS                    \ Return from the subroutine
 
@@ -25873,7 +25892,7 @@ NEXT
 \
 \   xPlane = xPlane + xVelocity
 \
-\   xRotation = xRotation + xCoord2
+\   xRotation = xRotation + dxRotation
 \
 \ ******************************************************************************
 
@@ -25951,13 +25970,13 @@ NEXT
                         \   (xPlaneTop xPlaneHi xPlaneLo xPlaneBot) +=
                         \                              (xVelocityHi xVelocityLo)
 
- LDA xRotationLo,X      \ Set xRotation = xRotation + xCoord2
+ LDA xRotationLo,X      \ Set xRotation = xRotation + dxRotation
  CLC                    \
- ADC xCoord2Lo,X        \ starting with the low bytes
+ ADC dxRotationLo,X     \ starting with the low bytes
  STA xRotationLo,X
 
  LDA xRotationHi,X      \ And then the high bytes
- ADC xCoord2Hi,X
+ ADC dxRotationHi,X
  STA xRotationHi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
@@ -26331,17 +26350,19 @@ NEXT
 \       Name: ApplyAerodynamics (Part 3 of 3)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Calculate various aerodynamic figures
 \
 \ ******************************************************************************
 
  JSR L54B9              \ Set the following:
                         \
                         \   xCoord6 = factor1+4 - (|xTurn| * 250 / 256)
+                        \           = |yVelocityP| * 2 - (|xTurn| * 250 / 256)
                         \
                         \   yCoord6 = factor1+3 - (|yTurn| * 250 / 256)
+                        \           = |xVelocityP| * 2 - (|yTurn| * 250 / 256)
                         \
-                        \   zCoord6 = -zTurn * 2
+                        \   zCoord6 = -|zTurn| * 2
 
                         \ A reminder that we set the following in part 1:
                         \
@@ -26364,7 +26385,14 @@ NEXT
  CPX #3                 \ If X >= 3, jump to aero13 to skip the following
  BCS aero13
 
-                        \ For flight factors 0 to 2, we now fetch xCoord6
+                        \ For X = 0 to 2, we now fetch the relevant axis of
+                        \ xCoord6, which we set above to:
+                        \
+                        \   xCoord6 = |yVelocityP| * 2 - (|xTurn| * 250 / 256)
+                        \
+                        \   yCoord6 = |xVelocityP| * 2 - (|yTurn| * 250 / 256)
+                        \
+                        \   zCoord6 = -|zTurn| * 2
 
  LDY xCoord6Lo,X        \ Set (A Y) = xCoord6
  LDA xCoord6Hi,X
@@ -26373,16 +26401,23 @@ NEXT
 
 .aero13
 
-                        \ For flight factors 3 to 5, we now fetch factor1
+                        \ For X = 3 to 5, we now fetch the relevant axis of
+                        \ factor1, which we set above to:
+                        \
+                        \   factor1+3 = |xVelocityP| * 2
+                        \
+                        \   factor1+4 = |yVelocityP| * 2
+                        \
+                        \   factor1+5 = |zVelocityP| * 2
 
- LDY factor1Lo,X        \ Set (A Y) = factor1 for flight factor X
+ LDY factor1Lo,X        \ Set (A Y) = factor1+X
  LDA factor1Hi,X
 
 .aero14
 
  STA J                  \ Set (J I) = (A Y)
- STY I                  \           = xCoord6 for X = 0 to 2
-                        \             factor1 for X = 3 to 5
+ STY I                  \           = xCoord6          for X = 0 to 2
+                        \             |xVelocityP| * 2 for X = 3 to 5
 
  LDA #0                 \ Set K = 0, so Multiply16x16Mix doesn't negate the
  STA K                  \ result, and returns the sign of the result in K
@@ -26393,8 +26428,8 @@ NEXT
  JSR Multiply16x16Mix   \ Call Multiply16x16Mix to calculate:
                         \
                         \   (H G W) = (J I) * (S R)
-                        \           = xCoord6 * max(velocityP) * ~yPlaneHi
-                        \             factor1 * max(velocityP) * ~yPlaneHi
+                        \        = xCoord6          * max(velocityP) * ~yPlaneHi
+                        \          |xVelocityP| * 2 * max(velocityP) * ~yPlaneHi
 
  LDA K                  \ If the result of the multiplication is positive, jump
  BPL aero15             \ to aero15 to skip the following
@@ -26442,13 +26477,31 @@ NEXT
 
  BPL aero16             \ Loop back until we have shifted left by Y + 1 places
 
- STA factor1Lo,X        \ Set factor1 for flight factor X = (H A)
+ STA factor1Lo,X        \ Set factor1+X = (H A)
  LDA H
  STA factor1Hi,X
 
  DEX                    \ Decrement the loop counter to move onto the next 
 
- BPL aero12             \ Loop back until we have set factor1 through factor1+5
+ BPL aero12             \ Loop back until we have set factor1 through factor1+5,
+                        \ so we now have:
+                        \
+                        \   factor1+0 = xCoord6 * maxv * ~yPlaneHi << 1
+                        \   factor1+1 = yCoord6 * maxv * ~yPlaneHi << 1
+                        \   factor1+2 = zCoord6 * maxv * ~yPlaneHi << 1
+                        \   factor1+3 = |xVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \   factor1+4 = |yVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \   factor1+5 = |zVelocityP| * 2 * maxv * ~yPlaneHi << 1
+                        \
+                        \ where:
+                        \
+                        \   maxv = max(velocityP)
+                        \
+                        \   xCoord6 = |yVelocityP| * 2 - (|xTurn| * 250 / 256)
+                        \
+                        \   yCoord6 = |xVelocityP| * 2 - (|yTurn| * 250 / 256)
+                        \
+                        \   zCoord6 = -|zTurn| * 2
 
  LDA #128               \ Change the rounding in Multiply16x16Mix back to the
  STA mult1+1            \ default, so it rounds to the nearest integer
@@ -26836,7 +26889,7 @@ NEXT
 \
 \   yCoord6 = factor1+3 - (|yTurn| * 250 / 256)
 \
-\   zCoord6 = -zTurn * 2
+\   zCoord6 = -|zTurn| * 2
 \
 \ Other entry points:
 \
@@ -26899,8 +26952,8 @@ NEXT
  LDA #0                 \ And then the low bytes
  SBC zTurnHi
 
- ASL zCoord6Lo          \ Set (zCoord6Hi zCoord6Lo) = (A zCoord6Lo) * 2
- ROL A                  \                           = -zTurn * 2
+ ASL zCoord6Lo          \ Set (zCoord6Hi zCoord6Lo) = (A zCoord6Lo) << 1
+ ROL A                  \                           = -|zTurn| * 2
  STA zCoord6Hi
 
  RTS                    \ Return from the subroutine
@@ -27026,15 +27079,15 @@ NEXT
  LDA factor2Lo,X
  CLC
  ADC factor2Lo+10,X
- STA xCoord4Lo,X
+ STA dxTurnLo,X
  
  LDA factor2Hi,X
  ADC factor2Hi+10,X
- STA xCoord4Hi,X
+ STA dxTurnHi,X
  
  LDA factor2Top,X
  ADC factor2Top+10,X
- STA xCoord4Top,X
+ STA dxTurnTop,X
  
  DEX
  
@@ -27044,8 +27097,8 @@ NEXT
  STA S
  LDA yPointLo+253
  CLC
- ADC xCoord4Lo
- STA xCoord4Lo
+ ADC dxTurnLo
+ STA dxTurnLo
  LDA yPointHi+253
  BPL L5593
 
@@ -27053,21 +27106,21 @@ NEXT
 
 .L5593
 
- ADC xCoord4Hi
- STA xCoord4Hi
- LDA xCoord4Top
+ ADC dxTurnHi
+ STA dxTurnHi
+ LDA dxTurnTop
  ADC S
- STA xCoord4Top
+ STA dxTurnTop
  SEC
- LDA zCoord4Lo
+ LDA dzTurnLo
  SBC factor2Lo+6
- STA zCoord4Lo
- LDA zCoord4Hi
+ STA dzTurnLo
+ LDA dzTurnHi
  SBC factor2Hi+6
- STA zCoord4Hi
- LDA zCoord4Top
+ STA dzTurnHi
+ LDA dzTurnTop
  SBC factor2Top+6
- STA zCoord4Top
+ STA dzTurnTop
  SEC
  LDA #0
  SBC factor2Hi+3
@@ -28001,8 +28054,8 @@ NEXT
 \
 \                         * &00 = (xTurnHi xTurnLo)
 \                         * &02 = (zTurnHi zTurnLo)
-\                         * &80 = (xCoord4Top xCoord4Hi)
-\                         * &82 = (zCoord4Top zCoord4Hi)
+\                         * &80 = (dxTurnTop dxTurnHi)
+\                         * &82 = (dzTurnTop dzTurnHi)
 \                         * &8A = (yVelocityHi yVelocityLo)
 \                         * &EA = (xRotationHi xRotationLo)
 \                         * &EC = (zRotationHi zRotationLo)
