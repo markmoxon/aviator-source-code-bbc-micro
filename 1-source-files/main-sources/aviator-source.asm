@@ -657,7 +657,7 @@ ORG &0900
                         \
                         \ Shown on indicator 11
 
-.xFactor1Lo
+.factor2Lo
 
  SKIP 13
 
@@ -692,19 +692,19 @@ ORG &0900
 
  SKIP 13
 
-.xFactor2Lo
+.factor1Lo
 
  SKIP 13
 
  SKIP 3                 \ These bytes appear to be unused
 
-.xFactor2Hi
+.factor1Hi
 
  SKIP 13
 
  SKIP 3                 \ These bytes appear to be unused
 
-.xFactor1Hi
+.factor2Hi
 
  SKIP 13
 
@@ -723,7 +723,7 @@ ORG &0900
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in zPlaneHi
 
-.xFactor1Top
+.factor2Top
 
  SKIP 13
 
@@ -24738,12 +24738,14 @@ NEXT
 
  EQUB 176               \ 3: ??? = 176 * 2
                         \
-                        \ xFactor2+3 = xVelocityP << 1 in ApplyAerodynamics
+                        \ factor1+3 = xVelocityP << 1 in ApplyAerodynamics
 
  EQUB 156               \ 4: Stalling effect
                         \
                         \ = 156 * 16 in normal flight
                         \ = 39 * 16 when the plane is stalling
+                        \
+                        \ factor1+4 = yVelocityP << 1 in ApplyAerodynamics
 
  EQUB 22                \ 5: Drag factor? lift factor?
                         \
@@ -24755,6 +24757,8 @@ NEXT
                         \ Goes down by 20 if engine is switched off
                         \
                         \ Set to 242 in ResetVariables
+                        \
+                        \ factor1+5 = zVelocityP << 1 in ApplyAerodynamics
 
  EQUB 40                \ 6: ??? = 40 / 32
 
@@ -25291,7 +25295,7 @@ NEXT
 
  JSR L5500              \ ???
 
- JSR ApplyFlightFactors \ Multiply xFactor2 by the flight factors
+ JSR ApplyFlightFactors \ Multiply factor1 by the flight factors
 
 \ ******************************************************************************
 \
@@ -26044,12 +26048,12 @@ NEXT
  LDA xVelocityPLo,X     \ Set P = xVelocityPLo
  STA P
 
- ASL A                  \ Set xFactor2+3 = xVelocityP << 1
- STA xFactor2Lo+3,X     \
- LDA xVelocityPHi,X     \ and push xVelocityPHi onto the stack
- PHA
+ ASL A                  \ Set factor1+3 = xVelocityP << 1
+ STA factor1Lo+3,X      \               = |xVelocityP| * 2
+ LDA xVelocityPHi,X     \
+ PHA                    \ and push xVelocityPHi onto the stack
  ROL A
- STA xFactor2Hi+3,X
+ STA factor1Hi+3,X
 
  PLA                    \ Set A = xVelocityPHi, so we have
                         \
@@ -26130,14 +26134,22 @@ NEXT
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL aero1              \ Loop back until we have processed all three axes, so
-                        \ we now have the following, as (SS RR) was zero before
-                        \ we started the loop above:
+ BPL aero1              \ Loop back until we have processed all three axes
+
+                        \ So we now have the following:
+                        \
+                        \   factor1+3 = |xVelocityP| * 2
+                        \
+                        \   factor1+4 = |yVelocityP| * 2
+                        \
+                        \   factor1+5 = |zVelocityP| * 2
+                        \
+                        \   (J I) = |yVelocityP| * 4
                         \
                         \   (SS RR) = max(0, |xVelocityP|, |yVelocityP|,
                         \                    |zVelocityP|)
                         \
-                        \ Let's call this max(velocityP)
+                        \ Let's call this last one max(velocityP)
 
  ASL RR                 \ Set (SS RR) = (SS RR) << 1
  ROL SS                 \             = max(velocityP) * 2
@@ -26325,9 +26337,9 @@ NEXT
 
  JSR L54B9              \ Set the following:
                         \
-                        \   xCoord6 = yFactor2+3 - (|xTurn| * 250 / 256)
+                        \   xCoord6 = factor1+4 - (|xTurn| * 250 / 256)
                         \
-                        \   yCoord6 = xFactor2+3 - (|yTurn| * 250 / 256)
+                        \   yCoord6 = factor1+3 - (|yTurn| * 250 / 256)
                         \
                         \   zCoord6 = -zTurn * 2
 
@@ -26337,9 +26349,10 @@ NEXT
 
  LDA RR                 \ Set (S R) = (SS RR) with bit 0 of the low byte cleared
  AND #%11111110         \ to convert this into a value with the sign in bit 0
- STA R                  \ and the value as follows:
- LDA SS                 \
- STA S                  \   (S R) = max(velocityP) * ~yPlaneHi / 256
+ STA R                  \ and the value as follows (we drop the "* 2" as bit 0
+ LDA SS                 \ is now the sign bit):
+ STA S                  \
+                        \   (S R) = max(velocityP) * ~yPlaneHi / 256
 
  LDX #5                 \ Set X as a loop counter from 5 down to 0
 
@@ -26351,120 +26364,169 @@ NEXT
  CPX #3                 \ If X >= 3, jump to aero13 to skip the following
  BCS aero13
 
- LDY xCoord6Lo,X        \ Set (A Y) = xCoord6 or xPlaneBot
+                        \ For flight factors 0 to 2, we now fetch xCoord6
+
+ LDY xCoord6Lo,X        \ Set (A Y) = xCoord6
  LDA xCoord6Hi,X
 
  JMP aero14             \ Jump to aero14
 
 .aero13
 
- LDY xFactor2Lo,X       \ Set (A Y) = xFactor2
- LDA xFactor2Hi,X
+                        \ For flight factors 3 to 5, we now fetch factor1
+
+ LDY factor1Lo,X        \ Set (A Y) = factor1 for flight factor X
+ LDA factor1Hi,X
 
 .aero14
 
- STA J
- STY I
+ STA J                  \ Set (J I) = (A Y)
+ STY I                  \           = xCoord6 for X = 0 to 2
+                        \             factor1 for X = 3 to 5
 
  LDA #0                 \ Set K = 0, so Multiply16x16Mix doesn't negate the
  STA K                  \ result, and returns the sign of the result in K
 
- STX VV
+ STX VV                 \ Store the loop counter in VV, so we can retrieve it
+                        \ below
 
- JSR Multiply16x16Mix
+ JSR Multiply16x16Mix   \ Call Multiply16x16Mix to calculate:
+                        \
+                        \   (H G W) = (J I) * (S R)
+                        \           = xCoord6 * max(velocityP) * ~yPlaneHi
+                        \             factor1 * max(velocityP) * ~yPlaneHi
 
- LDA K
- BPL aero15
+ LDA K                  \ If the result of the multiplication is positive, jump
+ BPL aero15             \ to aero15 to skip the following
 
- SEC
- LDA #0
+ SEC                    \ The result of the multiplication is negative, so now
+ LDA #0                 \ we negate (H G W), starting with the low bytes
  SBC W
  STA W
- LDA G
+
+ LDA G                  \ Then the middle bytes
  SBC #0
  STA G
- BCS aero15
 
+ BCS aero15             \ And finally the high bytes
  DEC H
 
 .aero15
 
- LDX VV
- LDY #0
- LDA G
- CPX #3
+ LDX VV                 \ Retrieve the value of the loop counter X that we
+                        \ stored in VV above
+
+ LDY #0                 \ Set Y = 0 to act as a shift counter in the loop below,
+                        \ so by default it shifts the result left by 1 place
+
+ LDA G                  \ Set (H A W) = (H G W)
+
+ CPX #3                 \ If X < 3, jump to aero16
  BCC aero16
 
- CPX #5
+ CPX #5                 \ If X = 5, jump to aero16
  BEQ aero16
 
- INY
- INY
+ INY                    \ If we get here then X = 3 or 4, so increment Y to 2 so
+ INY                    \ the following loop shifts (H A W) left by 3 places
+
+                        \ We now shift (H A W) left by Y + 1 places
 
 .aero16
 
- ASL W
+ ASL W                  \ Set (H A W) = (H A W) << 1 
  ROL A
  ROL H
- DEY
- BPL aero16
 
- STA xFactor2Lo,X
+ DEY                    \ Decrement the shift counter
+
+ BPL aero16             \ Loop back until we have shifted left by Y + 1 places
+
+ STA factor1Lo,X        \ Set factor1 for flight factor X = (H A)
  LDA H
- STA xFactor2Hi,X
- DEX
- BPL aero12
+ STA factor1Hi,X
+
+ DEX                    \ Decrement the loop counter to move onto the next 
+
+ BPL aero12             \ Loop back until we have set factor1 through factor1+5
 
  LDA #128               \ Change the rounding in Multiply16x16Mix back to the
  STA mult1+1            \ default, so it rounds to the nearest integer
 
- LDA xFactor2Lo+3
- STA xFactor2Lo+6
- LDA xFactor2Hi+3
- STA xFactor2Hi+6
- LDA xFactor2Hi+5
- BMI aero19
+ LDA factor1Lo+3        \ Set factor1+6 = factor1+3
+ STA factor1Lo+6
+ LDA factor1Hi+3
+ STA factor1Hi+6
 
- STA W
- STA xFactor2Hi+7
- LDA #0
- STA G
- LDA xFactor2Lo+5
- STA xFactor2Lo+7
- LDX #2
- LDA flapsStatus
- PHP
- BEQ aero17
+ LDA factor1Hi+5        \ If factor1+5 is negative, jump to aero19 to return
+ BMI aero19             \ from the subroutine
 
- LDX #1
+                        \ If factor1+5 is positive, then we now move on to set
+                        \ factor1+7 and factor1
+
+ STA W                  \ Set the following:
+ STA factor1Hi+7        \
+ LDA #0                 \   (G W A) = (0 factor1Hi+5 factor1Lo+5)
+ STA G                  \           = factor1+5
+ LDA factor1Lo+5        \
+ STA factor1Lo+7        \   factor1+7 = factor1+5
+
+ LDX #2                 \ Set X = 2 to act as a shift counter in the loop below,
+                        \ so by default it shifts the result left by 3 places
+
+ LDA flapsStatus        \ Set A to the current flap status (0 if flaps are off,
+                        \ 1 if they are on)
+
+ PHP                    \ Store the flags on the stack, so we can check the flap
+                        \ status later on
+
+ BEQ aero17             \ If the flaps are off, skip the following instruction
+
+ LDX #1                 \ Set X = 1 so the following loop shifts (G W A) left by
+                        \ 2 places
+
+                        \ We now shift (G W A) left by X + 1 places, so that's:
+                        \
+                        \   (G W A) = factor1+5 << 3 if the flaps are off
+                        \
+                        \   (G W A) = factor1+5 << 2 if the flaps are on
 
 .aero17
 
- ASL A
+ ASL A                  \ Set (G W A) = (G W A) << 1 
  ROL W
  ROL G
- DEX
- BPL aero17
 
- PLP
- BEQ aero18
+ DEX                    \ Decrement the shift counter
 
- SEC                    \ Negate (G W)
+ BPL aero17             \ Loop back until we have shifted left by X + 1 places
+
+ PLP                    \ Restore the processor flags, so this jumps to aero18
+ BEQ aero18             \ if flapStatus is zero, i.e. the flaps are off
+
+ SEC                    \ The flaps are on, so negate (G W)
  JSR Negate16Bit
 
 .aero18
 
- CLC
- LDA W
- ADC xFactor2Lo
- STA xFactor2Lo
- LDA G
- ADC xFactor2Hi
- STA xFactor2Hi
+                        \ We now have the following:
+                        \
+                        \   (G W A) = factor1+5 << 3 if the flaps are off
+                        \
+                        \   (G W A) = -factor1+5 << 2 if the flaps are on
+
+ CLC                    \ Set factor1 = factor1 + (G W)
+ LDA W                  \
+ ADC factor1Lo          \ starting with the low bytes
+ STA factor1Lo
+
+ LDA G                  \ And then the high bytes
+ ADC factor1Hi
+ STA factor1Hi
 
 .aero19
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -26478,7 +26540,7 @@ NEXT
 \ For each of the 11 flight factors (0 to 7 and 10 to 12), this routine
 \ calculates the following:
 \
-\   xFactor1 = xFactor2 * flightFactor * 2 ^ scaleFactor
+\   factor2 = factor1 * flightFactor * 2 ^ scaleFactor
 \
 \ ******************************************************************************
 
@@ -26502,8 +26564,8 @@ NEXT
  LDA flightFactor,X     \ Set R to flight factor X
  STA R
 
- LDY xFactor2Lo,X       \ Set (A Y) = the X-th entry from xFactor2
- LDA xFactor2Hi,X
+ LDY factor1Lo,X        \ Set (A Y) = the X-th entry from factor1
+ LDA factor1Hi,X
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
                         \
@@ -26541,7 +26603,7 @@ NEXT
                         \   |A Y| >= 4096 / 39 = 105 if we are stalling
                         \            4096 / 156 = 26 if we are not stalling
                         \
-                        \ where |A Y| = |xFactor2+4|
+                        \ where |A Y| = |factor1+4|
 
  LDA #3                 \ Make sound #3, a long, medium beep that indicates a
  JSR MakeSound          \ high-g situation, with the wings coming off
@@ -26561,7 +26623,7 @@ NEXT
                         \ 2^scaleFactor, where scaleFactor is a signed integer
 
  BEQ L545B              \ If the entry is zero, jump to L545B to write the
-                        \ result to xFactor1
+                        \ result to factor2
 
  BPL L5452              \ If the entry is positive, jump to L5452 to shift the
                         \ result to the left
@@ -26587,7 +26649,7 @@ NEXT
 
  BNE L5445              \ Loop back until we have shifted right by -Y places
 
- BEQ L545B              \ Jump to L545B to write the result to xFactor1
+ BEQ L545B              \ Jump to L545B to write the result to factor2
 
 .L5452
 
@@ -26601,12 +26663,12 @@ NEXT
 
 .L545B
 
- LDA G                  \ Set (xFactor1Top xFactor1Hi xFactor1Lo) = (G W V)
- STA xFactor1Top,X      \
- LDA W                  \ So xFactor1 = xFactor2 * flightFactor
- STA xFactor1Hi,X       \               * 2 ^ scaleFactor
+ LDA G                  \ Set (factor2Top factor2Hi factor2Lo) = (G W V)
+ STA factor2Top,X       \    
+ LDA W                  \ So factor2 = factor1 * flightFactor
+ STA factor2Hi,X        \              * 2 ^ scaleFactor
  LDA V
- STA xFactor1Lo,X
+ STA factor2Lo,X
 
  DEX                    \ Decrement the loop counter to move to the next flight
                         \ factor
@@ -26770,9 +26832,9 @@ NEXT
 \
 \ This routine calculates:
 \
-\   xCoord6 = yFactor2+3 - (|xTurn| * 250 / 256)
+\   xCoord6 = factor1+4 - (|xTurn| * 250 / 256)
 \
-\   yCoord6 = xFactor2+3 - (|yTurn| * 250 / 256)
+\   yCoord6 = factor1+3 - (|yTurn| * 250 / 256)
 \
 \   zCoord6 = -zTurn * 2
 \
@@ -26810,16 +26872,18 @@ NEXT
 
  LDA VV                 \ Set A and X to the axis number that the above call
  TAX                    \ stored in VV, which is the same as the axis counter X
+                        \ (so it's 0 for the x-axis and 1 for the y-axis)
 
- EOR #1                 \ Set Y to the opposite axis number to X, so if we are
- TAY                    \ processing the x-axis in this loop, then Y points to
-                        \ the y-axis, and vice verse
+ EOR #1                 \ Set Y to the opposite axis number to X, so when we are
+ TAY                    \ calculating xCoord6 in the following and X = 0, Y = 1
+                        \ so we use factor1+4, and when we are calculating
+                        \ yCoord6, X = 1 and Y = 0, so we use factor1+3
 
- SEC                    \ Set xCoord6 = yFactor2+3 - (G W)
- LDA xFactor2Lo+3,Y     \             = yFactor2+3 - (|xTurn| * 250 / 256)
+ SEC                    \ Set xCoord6 = factor1+4 - (G W)
+ LDA factor1Lo+3,Y      \             = factor1+4 - (|xTurn| * 250 / 256)
  SBC W
  STA xCoord6Lo,X
- LDA xFactor2Hi+3,Y
+ LDA factor1Hi+3,Y
  SBC G
  STA xCoord6Hi,X
 
@@ -26916,8 +26980,8 @@ NEXT
 .L5539
 
  STA R
- LDY xFactor2Lo+5
- LDA xFactor2Hi+5
+ LDY factor1Lo+5
+ LDA factor1Hi+5
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
 
@@ -26930,9 +26994,9 @@ NEXT
 
 .L554F
 
- STA xFactor2Hi+10,X
+ STA factor1Hi+10,X
  LDA W
- STA xFactor2Lo+10,X
+ STA factor1Lo+10,X
  DEX
  BEQ L552F
 
@@ -26959,17 +27023,17 @@ NEXT
 
 .L555F
 
- LDA xFactor1Lo,X
+ LDA factor2Lo,X
  CLC
- ADC xFactor1Lo+10,X
+ ADC factor2Lo+10,X
  STA xCoord4Lo,X
  
- LDA xFactor1Hi,X
- ADC xFactor1Hi+10,X
+ LDA factor2Hi,X
+ ADC factor2Hi+10,X
  STA xCoord4Hi,X
  
- LDA xFactor1Top,X
- ADC xFactor1Top+10,X
+ LDA factor2Top,X
+ ADC factor2Top+10,X
  STA xCoord4Top,X
  
  DEX
@@ -26996,27 +27060,27 @@ NEXT
  STA xCoord4Top
  SEC
  LDA zCoord4Lo
- SBC xFactor1Lo+6
+ SBC factor2Lo+6
  STA zCoord4Lo
  LDA zCoord4Hi
- SBC xFactor1Hi+6
+ SBC factor2Hi+6
  STA zCoord4Hi
  LDA zCoord4Top
- SBC xFactor1Top+6
+ SBC factor2Top+6
  STA zCoord4Top
  SEC
  LDA #0
- SBC xFactor1Hi+3
+ SBC factor2Hi+3
  STA xPointLo+252
  LDA #0
- SBC xFactor1Top+3
+ SBC factor2Top+3
  STA xPointHi+252
  SEC
- LDA xFactor1Hi+7
- SBC xFactor1Hi+4
+ LDA factor2Hi+7
+ SBC factor2Hi+4
  STA yPointLo+252
- LDA xFactor1Top+7
- SBC xFactor1Top+4
+ LDA factor2Top+7
+ SBC factor2Top+4
  STA yPointHi+252
 
  LDA zVelocityPHi       \ Set A to the high byte of our airspeed
@@ -27104,10 +27168,10 @@ NEXT
 
  TXA
  SEC
- SBC xFactor1Hi+5
+ SBC factor2Hi+5
  STA zPointLo+252
  TYA
- SBC xFactor1Top+5
+ SBC factor2Top+5
 
 .L5649
 
@@ -27795,11 +27859,11 @@ NEXT
 \
 \                         * &02 = (zTurnHi zTurnLo)
 \
-\                         * &6A = (xFactor1Top+10 xFactor1Hi+10)
+\                         * &6A = (factor2Top+10 factor2Hi+10)
 \
-\                         * &6B = (xFactor1Top+11 xFactor1Hi+11)
+\                         * &6B = (factor2Top+11 factor2Hi+11)
 \
-\                         * &6C = (xFactor1Top+12 xFactor1Hi+12)
+\                         * &6C = (factor2Top+12 factor2Hi+12)
 \
 \                         * &EC = (zRotationHi zRotationLo)
 \
