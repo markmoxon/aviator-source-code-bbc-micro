@@ -657,9 +657,51 @@ ORG &0900
                         \
                         \ Shown on indicator 11
 
-.factor2Lo
+.xForce1ScLo
 
- SKIP 13
+ SKIP 1
+
+.yForce1ScLo
+
+ SKIP 1
+
+.zForce1ScLo
+
+ SKIP 1
+
+.xForce2ScLo
+
+ SKIP 1
+
+.yForce2ScLo
+
+ SKIP 1
+
+.zForce2ScLo
+
+ SKIP 1
+
+.force3ScLo
+
+ SKIP 1
+
+.force4ScLo
+
+ SKIP 1
+
+ SKIP 2                 \ These bytes appear to be unused
+
+.xForce5ScLo
+
+ SKIP 1
+
+.yForce5ScLo
+
+ SKIP 1
+
+.zForce5ScLo
+
+ SKIP 1
 
 .axisKeyUsage
 
@@ -692,21 +734,147 @@ ORG &0900
 
  SKIP 13
 
-.factor1Lo
+.xForce1Lo
 
- SKIP 13
+ SKIP 1
+
+.yForce1Lo
+
+ SKIP 1
+
+.zForce1Lo
+
+ SKIP 1
+
+.xForce2Lo
+
+ SKIP 1
+
+.yForce2Lo
+
+ SKIP 1
+
+.zForce2Lo
+
+ SKIP 1
+
+.force3Lo
+
+ SKIP 1
+
+.force4Lo
+
+ SKIP 1
+
+ SKIP 2                 \ These bytes appear to be unused
+
+.xForce5Lo
+
+ SKIP 1
+
+.yForce5Lo
+
+ SKIP 1
+
+.zForce5Lo
+
+ SKIP 1
 
  SKIP 3                 \ These bytes appear to be unused
 
-.factor1Hi
+.xForce1Hi
 
- SKIP 13
+ SKIP 1
+
+.yForce1Hi
+
+ SKIP 1
+
+.zForce1Hi
+
+ SKIP 1
+
+.xForce2Hi
+
+ SKIP 1
+
+.yForce2Hi
+
+ SKIP 1
+
+.zForce2Hi
+
+ SKIP 1
+
+.force3Hi
+
+ SKIP 1
+
+.force4Hi
+
+ SKIP 1
+
+ SKIP 2                 \ These bytes appear to be unused
+
+.xForce5Hi
+
+ SKIP 1
+
+.yForce5Hi
+
+ SKIP 1
+
+.zForce5Hi
+
+ SKIP 1
 
  SKIP 3                 \ These bytes appear to be unused
 
-.factor2Hi
+.xForce1ScHi
 
- SKIP 13
+ SKIP 1
+
+.yForce1ScHi
+
+ SKIP 1
+
+.zForce1ScHi
+
+ SKIP 1
+
+.xForce2ScHi
+
+ SKIP 1
+
+.yForce2ScHi
+
+ SKIP 1
+
+.zForce2ScHi
+
+ SKIP 1
+
+.force3ScHi
+
+ SKIP 1
+
+.force4ScHi
+
+ SKIP 1
+
+ SKIP 2                 \ These bytes appear to be unused
+
+.xForce5ScHi
+
+ SKIP 1
+
+.yForce5ScHi
+
+ SKIP 1
+
+.zForce5ScHi
+
+ SKIP 1
 
 .xPlaneTop
 
@@ -723,9 +891,51 @@ ORG &0900
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in zPlaneHi
 
-.factor2Top
+.xForce1ScTop
 
- SKIP 13
+ SKIP 1
+
+.yForce1ScTop
+
+ SKIP 1
+
+.zForce1ScTop
+
+ SKIP 1
+
+.xForce2ScTop
+
+ SKIP 1
+
+.yForce2ScTop
+
+ SKIP 1
+
+.zForce2ScTop
+
+ SKIP 1
+
+.force3ScTop
+
+ SKIP 1
+
+.force4ScTop
+
+ SKIP 1
+
+ SKIP 2                 \ These bytes appear to be unused
+
+.xForce5ScTop
+
+ SKIP 1
+
+.yForce5ScTop
+
+ SKIP 1
+
+.zForce5ScTop
+
+ SKIP 1
 
  SKIP 3                 \ These bytes appear to be unused
 
@@ -11419,7 +11629,7 @@ ORG CODE%
 
 .IndicatorU
 
- LDA flightFactor+5     \ Set A = flight factor 5
+ LDA forceFactor+5      \ Set A to the force factor for zForce2
 
  LDY ucStatus           \ If ucStatus is non-zero then the undercarriage is
  BNE indu1              \ down, so jump to indu1
@@ -11461,7 +11671,7 @@ ORG CODE%
 
 .indu2
 
- STA flightFactor+5     \ Store A in flight factor 5, so flight factor 5 is
+ STA forceFactor+5      \ Store A in the force factor for zForce2, so it is
                         \ incremented by 10 when the undercarriage is down, and
                         \ reduced by 10 when the undercarriage is up
 
@@ -11503,7 +11713,7 @@ ORG CODE%
 
 .IndicatorF
 
- LDA flightFactor+5     \ Set A = flight factor 5
+ LDA forceFactor+5      \ Set A to the force factor for zForce2
  
  LDY flapsStatus        \ If flapsStatus is non-zero then the flaps are on, so
  BNE indf1              \ jump to indf1
@@ -11513,7 +11723,8 @@ ORG CODE%
  SEC                    \ Set A = A - 200
  SBC #200
 
- LDX #0                 \ Set X = 0 to store in flight factor 7 below
+ LDX #0                 \ Set X = 0 to store in the force factor for force4
+                        \ below
 
  LDY #%01000100         \ Set Y to a four-pixel block with pixel 2 in white, to
                         \ act as the centre of the flaps indicator when turned
@@ -11529,7 +11740,8 @@ ORG CODE%
  CLC                    \ Set A = A + 200
  ADC #200
 
- LDX #152               \ Set X = 152 to store in flight factor 7 below
+ LDX #152               \ Set X = 152 to store in the force factor for force4
+                        \ below
 
  LDY #%11001100         \ Set Y to a four-pixel block with pixels 2 and 3 in
                         \ white, to act as the centre of the flaps indicator
@@ -11537,12 +11749,12 @@ ORG CODE%
 
 .indf2
 
- STA flightFactor+5     \ Store A in flight factor 5, so flight factor 5 is
+ STA forceFactor+5      \ Store A in the force factor for zForce2, so it is
                         \ incremented by 200 when the flaps are on, and reduced
                         \ by 200 when the flaps are off
 
- STX flightFactor+7     \ Store X in flight factor 7 (0 if flaps are off, 152 if
-                        \ they are on)
+ STX forceFactor+7      \ Store X in the force factor for force4 (0 if flaps are
+                        \ off, 152 if they are on)
 
  TYA                    \ Set A to the pixel pattern in Y
 
@@ -12073,7 +12285,7 @@ ORG CODE%
 
  STA alienSlot          \ Set alienSlot = 0
 
- STA flightFactor+7     \ Set flight factor 7 = 0
+ STA forceFactor+7      \ Set the force factor for force4 = 0
 
  STA hitTimer           \ Set hitTimer = 0
 
@@ -12146,8 +12358,8 @@ ORG CODE%
 
  STA alienSpeed         \ Set alienSpeed = 10
 
- LDA #242               \ Set flight factor 5 = 242
- STA flightFactor+5
+ LDA #242               \ Set the force factor for zForce2 = 242
+ STA forceFactor+5
 
  LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
  STA ucStatus
@@ -19310,7 +19522,7 @@ ORG CODE%
  TAX                    \ Either turn the engine sound off (if A = 0) or turn it
  JSR ToggleEngineSound  \ on (if A is non-zero)
 
- LDA flightFactor+5     \ Set A = flight factor 5
+ LDA forceFactor+5      \ Set A to the force factor for zForce2
 
  LDX engineStatus       \ If the engine is now on, jump to seng1
  BNE seng1
@@ -19328,7 +19540,7 @@ ORG CODE%
 
 .seng2
 
- STA flightFactor+5     \ Update the value of flight factor 5
+ STA forceFactor+5      \ Update the force factor for zForce2
 
 .seng3
 
@@ -21360,25 +21572,29 @@ NEXT
 \       Name: scaleFactor
 \       Type: Variable
 \   Category: Flight model
-\    Summary: Scale factors for the flight factors
+\    Summary: Scale factors for the flight forces (in powers of 2)
 \
 \ ******************************************************************************
 
 .scaleFactor
 
- EQUB &00               \ Flight factor  0: scale by 2^0  = 1
- EQUB &FE               \ Flight factor  1: scale by 2^-2 = 1/4
- EQUB &FF               \ Flight factor  2: scale by 2^-1 = 1/2
- EQUB &01               \ Flight factor  3: scale by 2^1  = 2
- EQUB &04               \ Flight factor  4: scale by 2^4  = 16
- EQUB &00               \ Flight factor  5: scale by 2^0  = 1
- EQUB &FB               \ Flight factor  6: scale by 2^-5 = 1/32
- EQUB &02               \ Flight factor  7: scale by 2^2  = 4
- EQUB &33               \ Flight factor  8: unused
- EQUB &3A               \ Flight factor  9: unused
- EQUB &FF               \ Flight factor 10: scale by 2^-1 = 1/2
- EQUB &FE               \ Flight factor 11: scale by 2^-2 = 1/4
- EQUB &FE               \ Flight factor 12: scale by 2^-2 = 1/4
+ EQUB &00               \ xForce1: scale by 2^0  = 1
+ EQUB &FE               \ yForce1: scale by 2^-2 = 1/4
+ EQUB &FF               \ zForce1: scale by 2^-1 = 1/2
+
+ EQUB &01               \ xForce2: scale by 2^1  = 2
+ EQUB &04               \ yForce2: scale by 2^4  = 16
+ EQUB &00               \ zForce2: scale by 2^0  = 1
+
+ EQUB &FB               \ force3: scale by 2^-5 = 1/32
+ EQUB &02               \ force4: scale by 2^2  = 4
+
+ EQUB &33               \ Unused
+ EQUB &3A               \ Unused
+
+ EQUB &FF               \ xForce5: scale by 2^-1 = 1/2
+ EQUB &FE               \ yForce5: scale by 2^-2 = 1/4
+ EQUB &FE               \ zForce5: scale by 2^-2 = 1/4
 
  EQUB &23, &31, &38     \ These bytes appear to be unused
 
@@ -24727,39 +24943,40 @@ NEXT
  
 \ ******************************************************************************
 \
-\       Name: flightFactor
+\       Name: forceFactor
 \       Type: Variable
 \   Category: Flight model
-\    Summary: 
+\    Summary: The factors by which the flight forces are multiplied as part of
+\             the scaling process
 \
 \ ******************************************************************************
 
-.flightFactor
+.forceFactor
 
- EQUB 212               \ 0: ??? = 212 * 1
+ EQUB 212               \ xForce1 = 212 * 1
                         \
-                        \ factor1+0 is set in ApplyAerodynamics 3
+                        \ Set in ApplyAerodynamics 3
 
- EQUB 201               \ 1: ??? = 201 / 4
+ EQUB 201               \ yForce1 = 201 / 4
                         \
-                        \ factor1+1 is set in ApplyAerodynamics 3
+                        \ Set in ApplyAerodynamics 3
 
- EQUB 204               \ 2: ??? = 204 / 2
+ EQUB 204               \ zForce1 = 204 / 2
                         \
-                        \ factor1+0 is set in ApplyAerodynamics 3
+                        \ Set in ApplyAerodynamics 3
 
- EQUB 176               \ 3: ??? = 176 * 2
+ EQUB 176               \ xForce2 = 176 * 2
                         \
-                        \ factor1+3 is set in ApplyAerodynamics 1, 3
+                        \ Set in ApplyAerodynamics 1, 3
 
- EQUB 156               \ 4: Stalling effect
+ EQUB 156               \ yForce2 = stalling effect
                         \
                         \ = 156 * 16 in normal flight
                         \ = 39 * 16 when the plane is stalling
                         \
-                        \ factor1+4 = is set in ApplyAerodynamics 1, 3
+                        \ Set in ApplyAerodynamics 1, 3
 
- EQUB 22                \ 5: Drag factor? lift factor?
+ EQUB 22                \ zForce2 = drag factor? lift factor?
                         \
                         \ Goes up by 10 if undercarriage is down
                         \ Goes down by 10 if undercarriage is up
@@ -24770,34 +24987,33 @@ NEXT
                         \
                         \ Set to 242 in ResetVariables
                         \
-                        \ factor1+5 = is set in ApplyAerodynamics 1, 3
+                        \ Set in ApplyAerodynamics 1, 3
 
- EQUB 40                \ 6: ??? = 40 / 32
+ EQUB 40                \ force3 = 40 / 32
 
- EQUB 152               \ 7: Flaps lift factor? Drag factor?
+ EQUB 152               \ force4 = flaps lift factor? Drag factor?
                         \
                         \ =   0 * 4 if flaps are off
                         \ = 152 * 4 if flaps are on
                         \
                         \ Zeroed in ResetVariables
                         \
-                        \ factor1+7 is set in ApplyAerodynamics 3
+                        \ Set in ApplyAerodynamics 3
 
- EQUB 0                 \ 8: Unused
+ EQUB 0                 \ Unused
+ EQUB 0                 \ Unused
 
- EQUB 0                 \ 9: Unused
-
- EQUB 255               \ 10: x-axis of ??? = 255 / 2
+ EQUB 255               \ xForce5 = 255 / 2
                         \
-                        \ factor1+10 is set in L5500
+                        \ Set in L5500
 
- EQUB 141               \ 11: y-axis of ??? = 141 / 4
+ EQUB 141               \ yForce5 = 141 / 4
                         \
-                        \ factor1+11 is set in L5500
+                        \ Set in L5500
 
- EQUB 190               \ 12: z-axis of ??? = 190 / 4
+ EQUB 190               \ zForce5 = 190 / 4
                         \
-                        \ factor1+12 is set in L5500
+                        \ Set in L5500
 
  EQUB &00, &05          \ These bytes appear to be unused
  EQUB &7D, &FF
@@ -25311,11 +25527,12 @@ NEXT
                         \ (xVelocityP, yVelocityP, zVelocityP)
 
  JSR ApplyAerodynamics  \ Apply aerodynamics to the plane, check for stalling
-                        \ and ???
+                        \ and calculate various aerodynamic figures
 
  JSR L5500              \ ???
 
- JSR ApplyFlightFactors \ Multiply factor1 by the flight factors
+ JSR ScaleFlightForces  \ Scale all the flight forces by the relevant force
+                        \ and scale factors
 
 \ ******************************************************************************
 \
@@ -25330,16 +25547,16 @@ NEXT
  BEQ fmod3              \ aliens, so jump to fmod3 to skip this part
 
                         \ We now apply turbulence to the plane by applying a
-                        \ random amount to factor2+10, factor2+11 and
-                        \ factor2+12, with the random amount being positive or
-                        \ negative, and with a larger magnitude the closer we
-                        \ are to the alien
+                        \ random amount to xForce5Sc, yForce5Sc and zForce5Sc,
+                        \ with the random amount being positive or negative,
+                        \ and with a larger magnitude the closer we are to the
+                        \ alien
 
  LDX #&6A               \ Set X so in the following loop, the call to AddScaled
-                        \ updates factor2+10, factor2+11 and factor2+12, one on
+                        \ updates xForce5Sc, yForce5Sc and zForce5Sc, one on
                         \ each iteration of the loop
                         \
-                        \ The comments below are for factor2+10
+                        \ The comments below are for xForce5Sc
 
 .fmod2
 
@@ -25371,14 +25588,14 @@ NEXT
                         \ (A 0) >> 2, which is in the range 0 to 1920, as
                         \ (30 0) >> 2 is 1920
 
- JSR AddScaled          \ Set factor2+10 = factor2+10 +/- (A 0) >> 2
+ JSR AddScaled          \ Set xForce5Sc = xForce5Sc +/- (A 0) >> 2
                         \
-                        \ So this changes factor2+10 by a random amount in the
+                        \ So this changes xForce5Sc by a random amount in the
                         \ range 0 to 1920, with a higher amount the closer we
                         \ are to the exploding alien
 
  INX                    \ Increment the value of X so the next iteration updates
-                        \ the next of factor2+10, factor2+11 and factor2+12
+                        \ the next of xForce5Sc, yForce5Sc and zForce5Sc
 
  CPX #&6D               \ Loop back until we have applied turbulence to all
  BNE fmod2              \ three axes
@@ -26067,12 +26284,12 @@ NEXT
  LDA xVelocityPLo,X     \ Set P = xVelocityPLo
  STA P
 
- ASL A                  \ Set factor1+3 = xVelocityP << 1
- STA factor1Lo+3,X      \               = |xVelocityP| * 2
+ ASL A                  \ Set xForce2 = xVelocityP << 1
+ STA xForce2Lo,X        \             = |xVelocityP| * 2
  LDA xVelocityPHi,X     \
  PHA                    \ and push xVelocityPHi onto the stack
  ROL A
- STA factor1Hi+3,X
+ STA xForce2Hi,X
 
  PLA                    \ Set A = xVelocityPHi, so we have
                         \
@@ -26157,11 +26374,11 @@ NEXT
 
                         \ So we now have the following:
                         \
-                        \   factor1+3 = |xVelocityP| * 2
+                        \   xForce2 = |xVelocityP| * 2
                         \
-                        \   factor1+4 = |yVelocityP| * 2
+                        \   yForce2 = |yVelocityP| * 2
                         \
-                        \   factor1+5 = |zVelocityP| * 2
+                        \   zForce2 = |zVelocityP| * 2
                         \
                         \   (J I) = |yVelocityP| * 4
                         \
@@ -26195,8 +26412,8 @@ NEXT
                         \ In the following, we jump to aero9 to make the
                         \ stalling beep if both of these are true:
                         \
-                        \   * Flight factor 4 = 39, which indicates that we are
-                        \     already stalling
+                        \   * The force factor for yForce2 = 39, which indicates
+                        \     that we are already stalling
                         \
                         \   * zVelocityPHi < 11, which indicates that the
                         \     forward speed of the plane is too low to pull us
@@ -26207,8 +26424,8 @@ NEXT
                         \ jump straight to the part of the routine that makes
                         \ the stalling sound
 
- LDA flightFactor+4     \ If flight factor 4 <> 39, skip the following three
- CMP #39                \ instructions
+ LDA forceFactor+4      \ If the force factor for yForce2 <> 39, skip the
+ CMP #39                \ following three instructions
  BNE aero6
 
  LDA zVelocityPHi       \ If zVelocityPHi < 11, jump to aero9 as the plane is
@@ -26291,9 +26508,9 @@ NEXT
 
 .aero8
 
- LDA flightFactor+4     \ If flight factor 4 = 39 then we are already stalling,
- CMP #39                \ so jump to aero9 to make the stalling sound without
- BEQ aero9              \ applying any roll
+ LDA forceFactor+4      \ If the force factor for yForce2 = 39 then we are
+ CMP #39                \ already stalling, so jump to aero9 to make the
+ BEQ aero9              \ stalling sound without applying any roll
 
                         \ Otherwise we are not already stalling, but we are now,
                         \ so we apply a roll to the plane to simulate one of the
@@ -26331,19 +26548,20 @@ NEXT
  LDA #4                 \ Make sound #4, a short, low beep to indicate that the
  JSR MakeSound          \ plane is stalling
 
- LDA #39                \ Set A = 39 so that flight factor 4 is set to 39 below
- BNE aero11             \ (this BNE is effectively a JMP as A is never zero)
+ LDA #39                \ Set A = 39 so that the force factor for yForce2 is set
+ BNE aero11             \ to 39 below (this BNE is effectively a JMP as A is
+                        \ never zero)
 
 .aero10
 
- LDA #156               \ Set A = 156 so that flight factor 4 is set to 156
-                        \ below
+ LDA #156               \ Set A = 156 so that the force factor for yForce2 is
+                        \ set to 156 below
 
 .aero11
 
- STA flightFactor+4     \ Set flight factor 4 to the value in A, which will be
-                        \ either 39 (if we are stalling) or 156 (in normal
-                        \ flight)
+ STA forceFactor+4      \ Set the force factor for yForce2 to the value in A,
+                        \ which will be either 39 (if we are stalling) or 156
+                        \ (in normal flight)
 
 \ ******************************************************************************
 \
@@ -26356,10 +26574,10 @@ NEXT
 
  JSR L54B9              \ Set the following:
                         \
-                        \   xCoord6 = factor1+4 - (|xTurn| * 250 / 256)
+                        \   xCoord6 = yForce2 - (|xTurn| * 250 / 256)
                         \           = |yVelocityP| * 2 - (|xTurn| * 250 / 256)
                         \
-                        \   yCoord6 = factor1+3 - (|yTurn| * 250 / 256)
+                        \   yCoord6 = xForce2 - (|yTurn| * 250 / 256)
                         \           = |xVelocityP| * 2 - (|yTurn| * 250 / 256)
                         \
                         \   zCoord6 = -|zTurn| * 2
@@ -26394,7 +26612,7 @@ NEXT
                         \
                         \   zCoord6 = -|zTurn| * 2
 
- LDY xCoord6Lo,X        \ Set (A Y) = xCoord6
+ LDY xCoord6Lo,X        \ Set (A Y) = xCoord6 (or yCoord6 or zCoord6)
  LDA xCoord6Hi,X
 
  JMP aero14             \ Jump to aero14
@@ -26402,16 +26620,16 @@ NEXT
 .aero13
 
                         \ For X = 3 to 5, we now fetch the relevant axis of
-                        \ factor1, which we set above to:
+                        \ xForce2, which we set above to:
                         \
-                        \   factor1+3 = |xVelocityP| * 2
+                        \   xForce2 = |xVelocityP| * 2
                         \
-                        \   factor1+4 = |yVelocityP| * 2
+                        \   yForce2 = |yVelocityP| * 2
                         \
-                        \   factor1+5 = |zVelocityP| * 2
+                        \   zForce2 = |zVelocityP| * 2
 
- LDY factor1Lo,X        \ Set (A Y) = factor1+X
- LDA factor1Hi,X
+ LDY xForce1Lo,X        \ Set (A Y) = xForce2 (or yForce2 or zForce2)
+ LDA xForce1Hi,X
 
 .aero14
 
@@ -26477,21 +26695,22 @@ NEXT
 
  BPL aero16             \ Loop back until we have shifted left by Y + 1 places
 
- STA factor1Lo,X        \ Set factor1+X = (H A)
+ STA xForce1Lo,X        \ Set xForce1 or xForce2 = (H A)
  LDA H
- STA factor1Hi,X
+ STA xForce1Hi,X
 
  DEX                    \ Decrement the loop counter to move onto the next 
 
- BPL aero12             \ Loop back until we have set factor1 through factor1+5,
+ BPL aero12             \ Loop back until we have set xForce1 through zForce2,
                         \ so we now have:
                         \
-                        \   factor1+0 = xCoord6 * maxv * ~yPlaneHi << 1
-                        \   factor1+1 = yCoord6 * maxv * ~yPlaneHi << 1
-                        \   factor1+2 = zCoord6 * maxv * ~yPlaneHi << 1
-                        \   factor1+3 = |xVelocityP| * 2 * maxv * ~yPlaneHi << 3
-                        \   factor1+4 = |yVelocityP| * 2 * maxv * ~yPlaneHi << 3
-                        \   factor1+5 = |zVelocityP| * 2 * maxv * ~yPlaneHi << 1
+                        \   xForce1 = xCoord6 * maxv * ~yPlaneHi << 1
+                        \   yForce1 = yCoord6 * maxv * ~yPlaneHi << 1
+                        \   zForce1 = zCoord6 * maxv * ~yPlaneHi << 1
+                        \
+                        \   xForce2 = |xVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \   yForce2 = |yVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \   zForce2 = |zVelocityP| * 2 * maxv * ~yPlaneHi << 1
                         \
                         \ where:
                         \
@@ -26506,23 +26725,23 @@ NEXT
  LDA #128               \ Change the rounding in Multiply16x16Mix back to the
  STA mult1+1            \ default, so it rounds to the nearest integer
 
- LDA factor1Lo+3        \ Set factor1+6 = factor1+3
- STA factor1Lo+6
- LDA factor1Hi+3
- STA factor1Hi+6
+ LDA xForce2Lo          \ Set force3 = xForce2
+ STA force3Lo
+ LDA xForce2Hi
+ STA force3Hi
 
- LDA factor1Hi+5        \ If factor1+5 is negative, jump to aero19 to return
+ LDA zForce2Hi          \ If zForce2 is negative, jump to aero19 to return
  BMI aero19             \ from the subroutine
 
-                        \ If factor1+5 is positive, then we now move on to set
-                        \ factor1+7 and factor1
+                        \ If zForce2 is positive, then we now move on to set
+                        \ force4 and xForce1
 
  STA W                  \ Set the following:
- STA factor1Hi+7        \
- LDA #0                 \   (G W A) = (0 factor1Hi+5 factor1Lo+5)
- STA G                  \           = factor1+5
- LDA factor1Lo+5        \
- STA factor1Lo+7        \   factor1+7 = factor1+5
+ STA force4Hi           \
+ LDA #0                 \   (G W A) = (0 zForce2Hi zForce2Lo)
+ STA G                  \           = zForce2
+ LDA zForce2Lo          \
+ STA force4Lo           \   force4 = zForce2
 
  LDX #2                 \ Set X = 2 to act as a shift counter in the loop below,
                         \ so by default it shifts the result left by 3 places
@@ -26540,9 +26759,9 @@ NEXT
 
                         \ We now shift (G W A) left by X + 1 places, so that's:
                         \
-                        \   (G W A) = factor1+5 << 3 if the flaps are off
+                        \   (G W A) = zForce2 << 3 if the flaps are off
                         \
-                        \   (G W A) = factor1+5 << 2 if the flaps are on
+                        \   (G W A) = zForce2 << 2 if the flaps are on
 
 .aero17
 
@@ -26564,18 +26783,18 @@ NEXT
 
                         \ We now have the following:
                         \
-                        \   (G W A) = factor1+5 << 3 if the flaps are off
+                        \   (G W A) = zForce2 << 3 if the flaps are off
                         \
-                        \   (G W A) = -factor1+5 << 2 if the flaps are on
+                        \   (G W A) = -zForce2 << 2 if the flaps are on
 
- CLC                    \ Set factor1 = factor1 + (G W)
+ CLC                    \ Set xForce1 = xForce1 + (G W)
  LDA W                  \
- ADC factor1Lo          \ starting with the low bytes
- STA factor1Lo
+ ADC xForce1Lo          \ starting with the low bytes
+ STA xForce1Lo
 
  LDA G                  \ And then the high bytes
- ADC factor1Hi
- STA factor1Hi
+ ADC xForce1Hi
+ STA xForce1Hi
 
 .aero19
 
@@ -26583,26 +26802,36 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ApplyFlightFactors
+\       Name: ScaleFlightForces
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Apply the scaled flight factors to the flight model
+\    Summary: Scale the flight forces by the relevant scale factors
 \
 \ ------------------------------------------------------------------------------
 \
-\ For each of the 11 flight factors (0 to 7 and 10 to 12), this routine
-\ calculates the following:
+\ For each of the 11 flight forces, this routine calculates the following:
 \
-\   factor2 = factor1 * flightFactor * 2 ^ scaleFactor
+\   scaledForce = unscaledForce * forceFactor * 2 ^ scaleFactor
 \
 \ ******************************************************************************
 
-.ApplyFlightFactors
+.ScaleFlightForces
 
- LDX #12                \ We are about to work our way through the 13 flight
-                        \ factors, so set a counter in X to act as an index into
-                        \ the flightFactor table, iterating from 12 to 0 while
-                        \ skipping over 8 and 9
+ LDX #12                \ We are about to work our way through the flight
+                        \ forces, so set a counter in X to act as an index into
+                        \ these three tables:
+                        \
+                        \   * The unscaled forces from xForce1 to zForce5
+                        \
+                        \   * The forceFactor table
+                        \
+                        \   * The scaleFactor table
+                        \
+                        \   * The scaled forces from xForce1Sc to zForce5Sc
+                        \
+                        \ These three tables have the same structure, so we can
+                        \ iterate through all of them using an index in X that
+                        \ goes from 12 to 0 while skipping over 8 and 9
 
 .L540A
 
@@ -26614,11 +26843,11 @@ NEXT
 
 .L5410
 
- LDA flightFactor,X     \ Set R to flight factor X
+ LDA forceFactor,X      \ Set R to the force factor for the X-th force
  STA R
 
- LDY factor1Lo,X        \ Set (A Y) = the X-th entry from factor1
- LDA factor1Hi,X
+ LDY xForce1Lo,X        \ Set (A Y) to the X-th unscaled force
+ LDA xForce1Hi,X
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
                         \
@@ -26630,9 +26859,9 @@ NEXT
  CPX #4                 \ If X <> 4, skip the following section
  BNE L5434
 
-                        \ If we get here then X = 4, and flight factor 4
-                        \ determines whether the plane is stalling (156) or is
-                        \ in normal flight (39)
+                        \ If we get here then X = 4, and the force factor for
+                        \ yForce2 determines whether the plane is stalling (156)
+                        \ or is in normal flight (39)
 
  TAY                    \ If the high byte of (A Y) * R is positive, then jump
  BPL L5429              \ to L5429 to skip the following instruction
@@ -26656,7 +26885,7 @@ NEXT
                         \   |A Y| >= 4096 / 39 = 105 if we are stalling
                         \            4096 / 156 = 26 if we are not stalling
                         \
-                        \ where |A Y| = |factor1+4|
+                        \ where |A Y| = |yForce2|
 
  LDA #3                 \ Make sound #3, a long, medium beep that indicates a
  JSR MakeSound          \ high-g situation, with the wings coming off
@@ -26676,7 +26905,7 @@ NEXT
                         \ 2^scaleFactor, where scaleFactor is a signed integer
 
  BEQ L545B              \ If the entry is zero, jump to L545B to write the
-                        \ result to factor2
+                        \ result to the scaled force
 
  BPL L5452              \ If the entry is positive, jump to L5452 to shift the
                         \ result to the left
@@ -26702,7 +26931,7 @@ NEXT
 
  BNE L5445              \ Loop back until we have shifted right by -Y places
 
- BEQ L545B              \ Jump to L545B to write the result to factor2
+ BEQ L545B              \ Jump to L545B to write the result to the scaled force
 
 .L5452
 
@@ -26716,12 +26945,12 @@ NEXT
 
 .L545B
 
- LDA G                  \ Set (factor2Top factor2Hi factor2Lo) = (G W V)
- STA factor2Top,X       \    
- LDA W                  \ So factor2 = factor1 * flightFactor
- STA factor2Hi,X        \              * 2 ^ scaleFactor
+ LDA G                  \ Set (xForce1ScTop xForce1ScHi xForce1ScLo) = (G W V)
+ STA xForce1ScTop,X     \
+ LDA W                  \ So scaledForce = unscaledForce * forceFactor
+ STA xForce1ScHi,X      \                                * 2 ^ scaleFactor
  LDA V
- STA factor2Lo,X
+ STA xForce1ScLo,X
 
  DEX                    \ Decrement the loop counter to move to the next flight
                         \ factor
@@ -26885,9 +27114,9 @@ NEXT
 \
 \ This routine calculates:
 \
-\   xCoord6 = factor1+4 - (|xTurn| * 250 / 256)
+\   xCoord6 = yForce2 - (|xTurn| * 250 / 256)
 \
-\   yCoord6 = factor1+3 - (|yTurn| * 250 / 256)
+\   yCoord6 = xForce2 - (|yTurn| * 250 / 256)
 \
 \   zCoord6 = -|zTurn| * 2
 \
@@ -26929,14 +27158,14 @@ NEXT
 
  EOR #1                 \ Set Y to the opposite axis number to X, so when we are
  TAY                    \ calculating xCoord6 in the following and X = 0, Y = 1
-                        \ so we use factor1+4, and when we are calculating
-                        \ yCoord6, X = 1 and Y = 0, so we use factor1+3
+                        \ so we use yForce2, and when we are calculating
+                        \ yCoord6, X = 1 and Y = 0, so we use xForce2
 
- SEC                    \ Set xCoord6 = factor1+4 - (G W)
- LDA factor1Lo+3,Y      \             = factor1+4 - (|xTurn| * 250 / 256)
+ SEC                    \ Set xCoord6 = yForce2 - (G W)
+ LDA xForce2Lo,Y        \             = yForce2 - (|xTurn| * 250 / 256)
  SBC W
  STA xCoord6Lo,X
- LDA factor1Hi+3,Y
+ LDA xForce2Hi,Y
  SBC G
  STA xCoord6Hi,X
 
@@ -27033,8 +27262,8 @@ NEXT
 .L5539
 
  STA R
- LDY factor1Lo+5
- LDA factor1Hi+5
+ LDY zForce2Lo
+ LDA zForce2Hi
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
 
@@ -27047,9 +27276,9 @@ NEXT
 
 .L554F
 
- STA factor1Hi+10,X
+ STA xForce5Hi,X
  LDA W
- STA factor1Lo+10,X
+ STA xForce5Lo,X
  DEX
  BEQ L552F
 
@@ -27076,17 +27305,17 @@ NEXT
 
 .L555F
 
- LDA factor2Lo,X
+ LDA xForce1ScLo,X
  CLC
- ADC factor2Lo+10,X
+ ADC xForce5ScLo,X
  STA dxTurnLo,X
  
- LDA factor2Hi,X
- ADC factor2Hi+10,X
+ LDA xForce1ScHi,X
+ ADC xForce5ScHi,X
  STA dxTurnHi,X
  
- LDA factor2Top,X
- ADC factor2Top+10,X
+ LDA xForce1ScTop,X
+ ADC xForce5ScTop,X
  STA dxTurnTop,X
  
  DEX
@@ -27113,27 +27342,27 @@ NEXT
  STA dxTurnTop
  SEC
  LDA dzTurnLo
- SBC factor2Lo+6
+ SBC force3ScLo
  STA dzTurnLo
  LDA dzTurnHi
- SBC factor2Hi+6
+ SBC force3ScHi
  STA dzTurnHi
  LDA dzTurnTop
- SBC factor2Top+6
+ SBC force3ScTop
  STA dzTurnTop
  SEC
  LDA #0
- SBC factor2Hi+3
+ SBC xForce2ScHi
  STA xPointLo+252
  LDA #0
- SBC factor2Top+3
+ SBC xForce2ScTop
  STA xPointHi+252
  SEC
- LDA factor2Hi+7
- SBC factor2Hi+4
+ LDA force4ScHi
+ SBC yForce2ScHi
  STA yPointLo+252
- LDA factor2Top+7
- SBC factor2Top+4
+ LDA force4ScTop
+ SBC yForce2ScTop
  STA yPointHi+252
 
  LDA zVelocityPHi       \ Set A to the high byte of our airspeed
@@ -27221,10 +27450,10 @@ NEXT
 
  TXA
  SEC
- SBC factor2Hi+5
+ SBC zForce2ScHi
  STA zPointLo+252
  TYA
- SBC factor2Top+5
+ SBC zForce2ScTop
 
 .L5649
 
@@ -27912,11 +28141,11 @@ NEXT
 \
 \                         * &02 = (zTurnHi zTurnLo)
 \
-\                         * &6A = (factor2Top+10 factor2Hi+10)
+\                         * &6A = (xForce5ScTop xForce5ScHi)
 \
-\                         * &6B = (factor2Top+11 factor2Hi+11)
+\                         * &6B = (yForce5ScTop yForce5ScHi)
 \
-\                         * &6C = (factor2Top+12 factor2Hi+12)
+\                         * &6C = (zForce5ScTop zForce5ScHi)
 \
 \                         * &EC = (zRotationHi zRotationLo)
 \
