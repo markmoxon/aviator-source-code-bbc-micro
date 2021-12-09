@@ -26705,22 +26705,25 @@ NEXT
                         \ so we now have:
                         \
                         \   xForce1 = xCoord6 * maxv * ~yPlaneHi << 1
+                        \           = (|yVelocityP| * 2 - (|xTurn| * 250 / 256))
+                        \              * maxv * ~yPlaneHi << 1
+                        \
                         \   yForce1 = yCoord6 * maxv * ~yPlaneHi << 1
+                        \           = (|xVelocityP| * 2 - (|yTurn| * 250 / 256))
+                        \              * maxv * ~yPlaneHi << 1
+                        \
                         \   zForce1 = zCoord6 * maxv * ~yPlaneHi << 1
+                        \           = -|zTurn| * 2 * maxv * ~yPlaneHi << 1
                         \
                         \   xForce2 = |xVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \
                         \   yForce2 = |yVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \
                         \   zForce2 = |zVelocityP| * 2 * maxv * ~yPlaneHi << 1
                         \
                         \ where:
                         \
                         \   maxv = max(velocityP)
-                        \
-                        \   xCoord6 = |yVelocityP| * 2 - (|xTurn| * 250 / 256)
-                        \
-                        \   yCoord6 = |xVelocityP| * 2 - (|yTurn| * 250 / 256)
-                        \
-                        \   zCoord6 = -|zTurn| * 2
 
  LDA #128               \ Change the rounding in Multiply16x16Mix back to the
  STA mult1+1            \ default, so it rounds to the nearest integer
@@ -26795,6 +26798,12 @@ NEXT
  LDA G                  \ And then the high bytes
  ADC xForce1Hi
  STA xForce1Hi
+
+                        \ So if zForce2 is negative, we now have the following:
+                        \
+                        \   xForce1 = xForce1 + zForce2 << 3 when flaps are off
+                        \
+                        \   xForce1 = xForce1 - zForce2 << 2 when flaps are on
 
 .aero19
 
