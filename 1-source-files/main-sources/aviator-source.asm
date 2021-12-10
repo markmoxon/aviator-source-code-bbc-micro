@@ -459,8 +459,36 @@ ORG &0400
 
 .zPointLo
 
- SKIP 256               \ The low byte of the z-coordinate for the point with
+ SKIP 252               \ The low byte of the z-coordinate for the point with
                         \ ID X is at zPointLo,X
+
+.zAllForcesLo
+
+ SKIP 1                 \ Low byte of point 252 (z-coordinate)
+                        \
+                        \ Point 252 is used to store the aum of all the forces
+                        \ on the plane when calculating the flight model
+
+.zGravityLo
+
+ SKIP 1                 \ Low byte of point 253 (z-coordinate)
+                        \
+                        \ Point 253 is used to store the gravity vector when
+                        \ calculating the flight model
+
+.zTempPoint1Lo
+
+ SKIP 1                 \ Low byte of point 254 (z-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
+
+.zTempPoint2Lo
+
+ SKIP 1                 \ Low byte of point 255 (z-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
 
 \ ******************************************************************************
 \
@@ -476,18 +504,102 @@ ORG &0900
 
 .xPointLo
 
- SKIP 256               \ The low byte of the x-coordinate for the point with
+ SKIP 252               \ The low byte of the x-coordinate for the point with
                         \ ID X is at xPointLo,X
+
+.xAllForcesLo
+
+ SKIP 1                 \ Low byte of point 252 (x-coordinate)
+                        \
+                        \ Point 252 is used to store the aum of all the forces
+                        \ on the plane when calculating the flight model
+
+.xGravityLo
+
+ SKIP 1                 \ Low byte of point 253 (x-coordinate)
+                        \
+                        \ Point 253 is used to store the gravity vector when
+                        \ calculating the flight model
+
+.xTempPoint1Lo
+
+ SKIP 1                 \ Low byte of point 254 (x-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
+
+.xTempPoint2Lo
+
+ SKIP 1                 \ Low byte of point 255 (x-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
 
 .yPointLo
 
- SKIP 256               \ The low byte of the y-coordinate for the point with
+ SKIP 252               \ The low byte of the y-coordinate for the point with
                         \ ID X is at yPointLo,X
+
+.yAllForcesLo
+
+ SKIP 1                 \ Low byte of point 252 (y-coordinate)
+                        \
+                        \ Point 252 is used to store the aum of all the forces
+                        \ on the plane when calculating the flight model
+
+.yGravityLo
+
+ SKIP 1                 \ Low byte of point 253 (y-coordinate)
+                        \
+                        \ Point 253 is used to store the gravity vector when
+                        \ calculating the flight model
+
+.yTempPoint1Lo
+
+ SKIP 1                 \ Low byte of point 254 (y-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
+
+.yTempPoint2Lo
+
+ SKIP 1                 \ Low byte of point 255 (z-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
 
 .yPointHi
 
- SKIP 256               \ The high byte of the y-coordinate for the point with
+ SKIP 252               \ The high byte of the y-coordinate for the point with
                         \ ID X is at yPointHi,X
+
+.yAllForcesHi
+
+ SKIP 1                 \ High byte of point 252 (y-coordinate)
+                        \
+                        \ Point 252 is used to store the aum of all the forces
+                        \ on the plane when calculating the flight model
+
+.yGravityHi
+
+ SKIP 1                 \ High byte of point 253 (y-coordinate)
+                        \
+                        \ Point 253 is used to store the gravity vector when
+                        \ calculating the flight model
+
+.yTempPoint1Hi
+
+ SKIP 1                 \ High byte of point 254 (y-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
+
+.yTempPoint2Hi
+
+ SKIP 1                 \ High byte of point 255 (y-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
 
 .xTurnLo
 
@@ -22943,7 +23055,35 @@ NEXT
  EQUB &0D, &09, &74, &1C, &2E, &68, &69, &74
  EQUB &32, &20, &54, &59, &41, &3A, &43, &4C
  EQUB &43, &3A, &41, &44, &43, &23, &34, &30
- EQUB &3A, &54, &41, &59, &0D, &09, &7E, &28
+ EQUB &3A, &54, &41, &59
+
+.zAllForcesHi
+
+ EQUB &0D               \ High byte of point 252 (z-coordinate)
+                        \
+                        \ Point 252 is used to store the aum of all the forces
+                        \ on the plane when calculating the flight model
+
+.zGravityHi
+
+ EQUB &09               \ High byte of point 253 (z-coordinate)
+                        \
+                        \ Point 253 is used to store the gravity vector when
+                        \ calculating the flight model
+
+.zTempPoint1Hi
+
+ EQUB &7E               \ High byte of point 254 (z-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
+
+.zTempPoint2Hi
+
+ EQUB &28               \ High byte of point 255 (z-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
 
 \ ******************************************************************************
 \
@@ -22994,7 +23134,35 @@ NEXT
  EQUB &44, &49, &46, &20, &4C, &44, &41, &23
  EQUB &30, &3A, &53, &54, &41, &26, &37, &30
  EQUB &3A, &53, &54, &41, &26, &37, &32, &0D
- EQUB &09, &CE, &1C, &20, &20, &20, &20, &20
+ EQUB &09, &CE, &1C, &20
+
+.xAllForcesHi
+
+ EQUB &20               \ High byte of point 252 (x-coordinate)
+                        \
+                        \ Point 252 is used to store the aum of all the forces
+                        \ on the plane when calculating the flight model
+
+.xGravityHi
+
+ EQUB &20               \ High byte of point 253 (x-coordinate)
+                        \
+                        \ Point 253 is used to store the gravity vector when
+                        \ calculating the flight model
+
+.xTempPoint1Hi
+
+ EQUB &20               \ High byte of point 254 (x-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
+
+.xTempPoint2Hi
+
+ EQUB &20               \ High byte of point 255 (z-coordinate)
+                        \
+                        \ Used as temporary point storage when rotating points
+                        \ in space
 
 \ ******************************************************************************
 \
@@ -25400,8 +25568,10 @@ NEXT
 
 .ApplyFlightModel
 
- LDX #253               \ Set the point with ID 253 to (0, 0, 0), so we can use
- JSR SetPointToOrigin   \ it to store the vector for gravity's pull
+ LDX #253               \ Set the gravity vector (which is stored in point 253)
+ JSR SetPointToOrigin   \ to (0, 0, 0), so:
+                        \
+                        \   (xGravity, yGravity, zGravity) = (0, 0, 0)
 
                         \ When we are flying normally, the gravity vector is:
                         \
@@ -25410,8 +25580,8 @@ NEXT
                         \ so, as you would expect, gravity pulls the plane down
                         \ along the y-axis (which is the up-down axis)
 
- LDA #&FE               \ Set A = &FE to set as the high byte of point 253's
-                        \ y-coordinate for when we are flying normally
+ LDA #&FE               \ Set A = &FE to set as yGravityHi for when we are
+                        \ flying normally
 
  LDX onGround           \ Set L to the value of onGround, so we can check it
  STX L                  \ again in part 5
@@ -25424,13 +25594,17 @@ NEXT
  BEQ fmod1              \ jump to fmod1 to skip the following and set the
                         \ gravity vector to (0, -512, 0)
 
- LDX dyVelocityHi       \ If dyVelocity is positive then ????, so
- BPL fmod1              \ jump to fmod1 to skip the following and set the
-                        \ gravity vector to (0, -512, 0)
+ LDX dyVelocityHi       \ If dyVelocity is positive then the rate of change of
+ BPL fmod1              \ velocity in the vertical axis is positive - i.e. the
+                        \ plane is accelerating upwards - so jump to fmod1 to
+                        \ skip the following and set the gravity vector to
+                        \ (0, -512, 0)
 
                         \ If we get here then we are on the ground, the
                         \ undercarriage is down, and dyVelocity is negative, so
-                        \ we need a different gravity vector
+                        \ the plane is accelerating down and we need to change
+                        \ the gravity vector so it pushes upwards, to simulate
+                        \ the springs in the undercarriage
 
  STX Q                  \ Set (Q A) = (dyVelocityHi dyVelocityLo)
  LDA dyVelocityLo       \           = dyVelocity
@@ -25439,38 +25613,54 @@ NEXT
  ROR Q                  \           = dyVelocity / 2
  ROR A                  \
                         \ making sure to retain the correct sign in bit 7 of Q
+                        \ (as dyVelocity is negative)
 
- EOR #&FF               \ Set the low byte of the gravity vector's y-coordinate
- STA yPointLo+253       \ to ~A ???
+ EOR #&FF               \ Set yGravityLo = ~A
+ STA yGravityLo         \                = 255 - A
 
- LDA #&FE               \ Set the high byte of the gravity vector's y-coordinate
- CLC                    \ to &FE - Q - 1 = &FD - Q ???
- SBC Q
+ LDA #254               \ Set yGravityHi = 254 - Q - 1
+ CLC                    \                = 253 - Q
+ SBC Q                  \
+
+                        \ So the above does this:
+                        \
+                        \   yGravity = (253 255) - (Q A)
+                        \            = -513 - (Q A)
+                        \            = -512 - (dyVelocity / 2 + 1)
+                        \
+                        \ where dyVelocity is negative, so this reduces the
+                        \ gravitational pull by half of the plane's acceleration
+                        \ down - in other words, the wheels push up by half the
+                        \ acceleration downwards, bouncing the plane up like a
+                        \ spring
 
 .fmod1
 
- STA yPointHi+253       \ Store A in the high byte of point 253's y-coordinate
+ STA yGravityHi         \ Set yGravityHi = A, to set the y-axis of the gravity
+                        \ vector as required
 
-                        \ Finally, we calculate point 253's coordinates in the
-                        \ world, so it will contain the gravity vector rotated
-                        \ by the plane's orientation, i.e. relative to the
-                        \ plane rather than the world
+                        \ Finally, we calculate the gravity vector's coordinates
+                        \ in the world, so we get the gravity vector rotated by
+                        \ the plane's orientation, i.e. relative to the plane
+                        \ rather than the world
                         \
                         \ We can get away with only rotating in the pitch and
-                        \ roll axes as point 253 is on the y-axis, so the yaw
-                        \ rotation wouldn't affect the coordinates anyway
+                        \ roll axes as the gravity vector only has an non-zero
+                        \ value in the y-axis, so the yaw rotation wouldn't
+                        \ affect the result anyway
 
- LDA #253               \ Set GG to point ID 253, to pass to the call to 
- STA GG                 \ SetPointCoords
+ LDA #253               \ Set GG to ID of the gravity vector (which is stored in
+ STA GG                 \ point 253), to pass to the call to SetPointCoords
 
  LDA #27                \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 4 in the calculation
 
- JSR SetPointCoords     \ Calculate the coordinates for point 253 using matrix
-                        \ 4, which only performs the pitch and roll rotations
+ JSR SetPointCoords     \ Calculate the coordinates for the gravity vector,
+                        \ using matrix 4, which only performs the pitch and roll
+                        \ rotations
 
-                        \ So point 253 now contains gravity, rotated to the
-                        \ plane's point of view
+                        \ So (xGravity, yGravity, zGravity) now contains the
+                        \ gravity vector, rotated to the plane's point of view
 
 \ ******************************************************************************
 \
@@ -25481,10 +25671,14 @@ NEXT
 \
 \ ******************************************************************************
 
-                        \ The following code takes the plane's velocity vector
-                        \ in (xVelocity, yVelocity, zVelocity), rotates it by
-                        \ the plane's orientation and stores the result in the
-                        \ (xVelocityP, yVelocityP, zVelocityP) vector
+                        \ We now rotate (xVelocity, yVelocity, zVelocity), using
+                        \ matrix 1, into (xVelocityP, yVelocityP, zVelocityP)
+                        \
+                        \ In other words, the following code takes the plane's
+                        \ velocity vector in (xVelocity, yVelocity, zVelocity),
+                        \ rotates it by the plane's orientation and stores the
+                        \ result in the (xVelocityP, yVelocityP, zVelocityP)
+                        \ vector
                         \
                         \ The (xVelocity, yVelocity, zVelocity) vector is the
                         \ velocity of the plane with respect to the outside
@@ -25622,14 +25816,14 @@ NEXT
 
 .fmod3
 
- JSR L555D              \ ??? (sets point 252)
+ JSR L555D              \ ??? (sets allForces vector)
 
- LDA xPointLo+252       \ Set the C flag to bit 7 of xPointLo+252, flipped, to
+ LDA xAllForcesLo       \ Set the C flag to bit 7 of xAllForcesLo, flipped, to
  EOR #%10000000         \ round up the slip rate in the following calculation
  ASL A
 
- LDA #0                 \ Set slipRate = 0 - xPointHi+252 - (1 - C)
- SBC xPointHi+252
+ LDA #0                 \ Set slipRate = 0 - xAllForcesHi - (1 - C)
+ SBC xAllForcesHi
  STA slipRate
 
 \ ******************************************************************************
@@ -25751,9 +25945,9 @@ NEXT
  BCS fmod13
 
  LDA #0
- STA zPointLo+252
+ STA zAllForcesLo
  LDA #&FF
- STA zPointHi+252
+ STA zAllForcesHi
  BNE fmod14
 
 .fmod12
@@ -25764,9 +25958,9 @@ NEXT
 
  STA P
  SEC
- LDA zPointHi+252
+ LDA zAllForcesHi
  SBC P
- STA zPointHi+252
+ STA zAllForcesHi
  JMP fmod15
 
 .fmod14
@@ -25797,10 +25991,10 @@ NEXT
  TXA
  SEC
  SBC V
- STA xPointLo+252
+ STA xAllForcesLo
  TXA
  SBC Q
- STA xPointHi+252
+ STA xAllForcesHi
 
 \ ******************************************************************************
 \
@@ -25816,23 +26010,25 @@ NEXT
  LDA #9                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 2 in the calculation
 
- LDA #252               \ Set GG to point ID 252, to pass to the call to 
- STA GG                 \ SetPointCoords
+ LDA #252               \ Set GG to the ID of the allForces vector (which is
+ STA GG                 \ stored in point 252), to pass to the call to
+                        \ SetPointCoords
 
- JSR SetPointCoords     \ Calculate the coordinates for point 252
+ JSR SetPointCoords     \ Calculate the coordinates of the allForces vector in
+                        \ (xAllForces, yAllForces, zAllForces)
 
- LDA yPointHi+252       \ Subtract 16 from the high y-coordinate for point 252
+ LDA yAllForcesHi       \ Set yAllForcesHi = yAllForcesHi - 16
  SEC
  SBC #16
- STA yPointHi+252
+ STA yAllForcesHi
 
  LDX #LO(dxVelocityLo)  \ Set X so the call to CopyPointToWork copies the
                         \ coordinates to (dxVelocity, dyVelocity, dzVelocity)
 
  LDY #252               \ Set Y so the call to CopyPointToWork copies the
-                        \ coordinates from point 252
+                        \ coordinates from the allForces vector (in point 252)
 
- JSR CopyPointToWork    \ Copy the coordinates from point 252 to
+ JSR CopyPointToWork    \ Copy (xAllForces, yAllForces, zAllForces) to
                         \ (dxVelocity, dyVelocity, dzVelocity)
 
  JSR AdjustVelocity     \ Adjust the plane's velocity as follows:
@@ -25849,6 +26045,9 @@ NEXT
 
  LDX #LO(xTurnLo)       \ Set X so the call to CopyWorkToPoint copies the
                         \ coordinates from (xTurnLo, yTurnLo, zTurnLo)
+
+                        \ We now rotate (xTurnLo, yTurnLo, zTurnLo), using
+                        \ matrix 3, into (dxRotation, dyRotation, dzRotation)
 
  LDY #254               \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point 254
@@ -27434,14 +27633,26 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L555D
+\       Name: L555D (Part 2 of )
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Calculate the (dxTurn, dyTurn, dzTurn) vector
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This part of the routine calculates:
+\
+\   dxTurn = xForce1Sc + xForce5Sc + yGravity
+\   dyTurn = yForce1Sc + yForce5Sc
+\   dzTurn = zForce1Sc + zForce5Sc
+\
+\ Arguments:
+\
+\   L                   The current value of onGround:
+\
+\                         * 0 = we are not on the ground
+\
+\                         * 1 = we are on the ground
 \
 \ ******************************************************************************
 
@@ -27452,70 +27663,121 @@ NEXT
 
 .L555F
 
- LDA xForce1ScLo,X
- CLC
- ADC xForce5ScLo,X
+ LDA xForce1ScLo,X      \ Set dxTurn = xForce1Sc + xForce5Sc
+ CLC                    \
+ ADC xForce5ScLo,X      \ starting with the low bytes
  STA dxTurnLo,X
  
- LDA xForce1ScHi,X
+ LDA xForce1ScHi,X      \ And then the high bytes
  ADC xForce5ScHi,X
  STA dxTurnHi,X
  
- LDA xForce1ScTop,X
+ LDA xForce1ScTop,X     \ And then the top bytes
  ADC xForce5ScTop,X
  STA dxTurnTop,X
  
- DEX
+ DEX                    \ Decrement the loop counter to move to the next axis
  
- BPL L555F
+ BPL L555F              \ Loop back until we have added all three axes, so we
+                        \ now have the following, where all values are 24-bit
+                        \ numbers:
+                        \
+                        \   dxTurn = xForce1Sc + xForce5Sc
+                        \   dyTurn = yForce1Sc + yForce5Sc
+                        \   dzTurn = zForce1Sc + zForce5Sc
 
- LDA #0
+ LDA #0                 \ Set S = 0, to use as the top byte of yGravity
  STA S
- LDA yPointLo+253
- CLC
- ADC dxTurnLo
- STA dxTurnLo
- LDA yPointHi+253
- BPL L5593
 
- DEC S
+ LDA yGravityLo         \ Set dxTurn = dxTurn + yGravity
+ CLC                    \
+ ADC dxTurnLo           \ starting with the low bytes
+ STA dxTurnLo
+
+                        \ We now add the high bytes, but because dxTurn is a
+                        \ 24-bit number and yGravity is only a 16-bit number,
+                        \ we have to add an extra top byte to yGravity, which we
+                        \ do in S as follows:
+                        \
+                        \   (S yGravityHi yGravityLo)
+
+ LDA yGravityHi         \ Set A to the high byte of yGravity
+
+ BPL L5593              \ If yGravityHi is negative, decrement S to &FF so it
+ DEC S                  \ has the correct sign for (S yGravityHi yGravityLo)
 
 .L5593
 
- ADC dxTurnHi
+ ADC dxTurnHi           \ We then add the high bytes
  STA dxTurnHi
- LDA dxTurnTop
- ADC S
- STA dxTurnTop
- SEC
- LDA dzTurnLo
- SBC force3ScLo
+
+ LDA dxTurnTop          \ And finally we add the top bytes, so we now have:
+ ADC S                  \
+ STA dxTurnTop          \   dxTurn = dxTurn + yGravity
+
+ SEC                    \ Set dzTurn = dzTurn - force3Sc
+ LDA dzTurnLo           \
+ SBC force3ScLo         \ starting with the low bytes
  STA dzTurnLo
- LDA dzTurnHi
+
+ LDA dzTurnHi           \ And then the high bytes
  SBC force3ScHi
  STA dzTurnHi
- LDA dzTurnTop
+
+ LDA dzTurnTop          \ And then the top bytes
  SBC force3ScTop
  STA dzTurnTop
- SEC
- LDA #0
- SBC xForce2ScHi
- STA xPointLo+252
- LDA #0
+
+\ ******************************************************************************
+\
+\       Name: L555D (Part 2 of )
+\       Type: Subroutine
+\   Category: Flight model
+\    Summary: Calculate the (xAllForces, yAllForces, zAllForces) vector
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part of the routine calculates:
+\
+\   xAllForces = -xForce2Sc / 256
+\   yAllForces = (force4Sc - yForce2Sc) / 256
+\
+\ If zVelocityPHi >= 48, set zAllForcesHi = 234
+\ If zVelocityPHi < 48, then:
+\   If the engine is off, set zAllForces = -zForce2 / 256
+\   If the engine is on, set:
+\ zAllForces = max(0, thrustScaled - (zVelocity / 16))
+\              * ~yPlaneHi / 256
+\              - zForce2 / 256
+\
+\ It also retracts the flaps if we are going too fast.
+\
+\ ******************************************************************************
+
+ SEC                    \ Set xAllForces = -xForce2Sc / 256
+ LDA #0                 \
+ SBC xForce2ScHi        \ starting with the low bytes
+ STA xAllForcesLo
+
+ LDA #0                 \ And then the high bytes
  SBC xForce2ScTop
- STA xPointHi+252
- SEC
- LDA force4ScHi
- SBC yForce2ScHi
- STA yPointLo+252
- LDA force4ScTop
+ STA xAllForcesHi
+
+ SEC                    \ Set yAllForces = (force4Sc - yForce2Sc) / 256
+ LDA force4ScHi         \
+ SBC yForce2ScHi        \ starting with the low bytes
+ STA yAllForcesLo
+
+ LDA force4ScTop        \ And then the high bytes
  SBC yForce2ScTop
- STA yPointHi+252
+ STA yAllForcesHi
 
- LDA zVelocityPHi       \ Set A to the high byte of our airspeed
+ LDA zVelocityPHi       \ Set A to the high byte of the forward airspeed from
+                        \ the perspective of the plane
 
- BMI L55F3              \ If it is negative, jump down to L55F3 to skip the
-                        \ following checks
+ BMI L55F3              \ If it is negative, jump down to L55F3 to set A = 0 and
+                        \ skip the following checks, as we only retract the
+                        \ flaps if we are going to fast in a forward direction
 
  PHA                    \ Store A on the stack so we can retrieve it after the
                         \ following call to RetractFlapsIfFast
@@ -27524,88 +27786,142 @@ NEXT
 
  PLA                    \ Retrieve the value of A from the stack
 
- CMP #&30
+ CMP #48                \ If zVelocityPHi < 48, jump to L55F5
  BCC L55F5
 
- LDA #&EA
- BNE L5649
+ LDA #234               \ Set A = 234 and jump to L5649 to set zAllForcesHi to
+ BNE L5649              \ 234 and return from the subroutine (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .L55F3
 
- LDA #0
+ LDA #0                 \ We jump here if the value of zVelocityPHi in A is
+                        \ negative, in which case we set A = 0, so we now have:
+                        \
+                        \   A = max(0, zVelocityPHi)
 
 .L55F5
 
- LDX engineStatus
- BEQ L5636
+ LDX engineStatus       \ If engineStatus is zero, then the engine is not
+ BEQ L5636              \ running, so jump to L5636 to set the forward force
+                        \ from the engine to zero
 
- STA H
- STA G
- LDA zVelocityPLo
- LDX #3
+ STA H                  \ Set X = max(0, zVelocityPHi)
+
+ STA G                  \ Set G = max(0, zVelocityPHi)
+
+ LDA zVelocityPLo       \ Set A to the low byte of the forward airspeed
+
+ LDX #3                 \ Set X as a shift counter in the following loop, so we
+                        \ shift right by 4 places
 
 .L5603
 
- LSR G
+ LSR G                  \ Set (G A) = (G A) >> 1
  ROR A
- DEX
- BPL L5603
 
- STA W
- LDY thrustHi
- STY R
- LDA thrustLo
- LDX L
- BEQ L562B
+ DEX                    \ Decrement the shift counter
 
- CPY #4
- BCC L561E
+ BPL L5603              \ Loop back until we have shifted right by X + 1 places,
+                        \ so:
+                        \
+                        \   (G A) = (G A) >> 4
+                        \         = (zVelocityPHi zVelocityPLo) >> 4
+                        \         = zVelocity / 16
 
- ASL A
- ROL R
+ STA W                  \ Set (G W) = (G A)
+                        \           = zVelocity / 16
+
+ LDY thrustHi           \ Set Y to the high byte of the current thrust
+
+ STY R                  \ Set (R A) = (thrustHi thrustLo)
+ LDA thrustLo           \           = thrust
+
+ LDX L                  \ Fetch the current value of onGround
+
+ BEQ L562B              \ If onGround is zero then we are not on the ground, so
+                        \ jump to L562B
+
+ CPY #4                 \ If thrustHi < 4, jump to L561E to skip the following
+ BCC L561E              \ two instructions
+
+ ASL A                  \ Set (R A) = (R A) << 1
+ ROL R                  \   
+                        \ so we double the value of (R A) if the thrust is >=
+                        \ (4 0), i.e. >= 1024
 
 .L561E
 
- LDY H
- CPY #4
+ LDY H                  \ If max(0, zVelocityPHi) >= 4, jump to L562B to skip
+ CPY #4                 \ the following
  BCS L562B
 
- CPY #1
- BCC L562B
+ CPY #1                 \ If max(0, zVelocityPHi) < 1, jump to L562B to skip
+ BCC L562B              \ the following
 
- ASL A
- ROL R
+ ASL A                  \ Set (R A) = (R A) << 1
+ ROL R                  \   
+                        \ so we double the value of (R A) again if zVelocityPHi
+                        \ is 2 or 3, which means zVelocity is in the range (2 0)
+                        \ to (3 255), or 512 to 1023
+
+                        \ By now we have set (R A) to the thrust, scaled up as
+                        \ follows:
+                        \
+                        \   * Doubled if thrust >= 1024
+                        \
+                        \   * Doubled if zVelocity is in the range 512 to 1023
+                        \
+                        \ Let's call this thrustScaled
 
 .L562B
 
- SEC
- SBC W
- TAX
- LDA R
+ SEC                    \ Set (Y X) = (R A) - (G W)
+ SBC W                  \           = thrustScaled - (zVelocity / 16)
+ TAX                    \
+                        \ starting with the low bytes
+
+ LDA R                  \ And then the high bytes
  SBC G
  TAY
- BPL L563A
+
+ BPL L563A              \ If Y is positive, skip to L563A, otherwise keep going
+                        \ to set (Y X) = 0, so this means:
+                        \
+                        \   (Y X) = max(0, thrustScaled - (zVelocity / 16))
 
 .L5636
 
- LDY #0
+ LDY #0                 \ Set (Y X) = 0
  LDX #0
 
 .L563A
 
  JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
+                        \
+                        \ so (Y X) = (Y X) * ~yPlaneHi / 256
+                        \          = max(0, thrustScaled - (zVelocity / 16))
+                        \            * ~yPlaneHi / 256
+                        \
+                        \ or (Y X) = 0 if the engine is off
 
- TXA
- SEC
- SBC zForce2ScHi
- STA zPointLo+252
- TYA
- SBC zForce2ScTop
+ TXA                    \ Set zAllForces = (Y X) - zForce2 / 256
+ SEC                    \
+ SBC zForce2ScHi        \ starting with the low bytes
+ STA zAllForcesLo
+
+ TYA                    \ And then the high bytes, so now we have the following
+ SBC zForce2ScTop       \ when the engine is on:
+                        \
+                        \ zAllForces = max(0, thrustScaled - (zVelocity / 16))
+                        \              * ~yPlaneHi / 256
+                        \              - zForce2 / 256
 
 .L5649
 
- STA zPointHi+252
- RTS
+ STA zAllForcesHi       \ Store the high byte of the result in zAllForcesHi
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
