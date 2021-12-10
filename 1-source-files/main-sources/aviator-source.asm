@@ -559,17 +559,23 @@ ORG &0900
 
  SKIP 1                 \ Elevator position (pitch)
                         \
+                        \ The controls that affect rotation around the x-axis
+                        \
                         \ Shown on indicator 8 or 10 as the joystick y-position
 
 .rudderPosition
 
  SKIP 1                 \ Rudder position (yaw)
                         \
+                        \ The controls that affect rotation around the y-axis
+                        \
                         \ Shown on indicator 9
 
 .aileronPosition
 
  SKIP 1                 \ Aileron position (roll)
+                        \
+                        \ The controls that affect rotation around the z-axis
                         \
                         \ Shown on indicator 8 or 10 as the joystick x-position
 
@@ -24749,11 +24755,11 @@ NEXT
 \       Name: keyTable1
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: High priority keys that are scanned first
+\    Summary: Internal key numbers of high priority keys that are scanned first
 \
 \ ------------------------------------------------------------------------------
 \
-\ Keys in this table are scanned for first. If pressed, the corresponding value
+\ Keys in this table are scanned first. If pressed, the corresponding value
 \ in the key logger is set to the 16-bit value, with the high byte coming from
 \ keyTable1Hi and the low byte from keyTable1Lo.
 \
@@ -24777,7 +24783,8 @@ NEXT
 \       Name: keyTable2
 \       Type: Variable
 \   Category: Keyboard
-\    Summary: Lower priority keys that are scanned second
+\    Summary: Internal key numbers of lower priority keys that are scanned
+\             second
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25005,15 +25012,15 @@ NEXT
 
  EQUB 255               \ xForce5 = 255 / 2
                         \
-                        \ Set in L5500
+                        \ Set in ApplyFlightControl
 
  EQUB 141               \ yForce5 = 141 / 4
                         \
-                        \ Set in L5500
+                        \ Set in ApplyFlightControl
 
  EQUB 190               \ zForce5 = 190 / 4
                         \
-                        \ Set in L5500
+                        \ Set in ApplyFlightControl
 
  EQUB &00, &05          \ These bytes appear to be unused
  EQUB &7D, &FF
@@ -25529,7 +25536,9 @@ NEXT
  JSR ApplyAerodynamics  \ Apply aerodynamics to the plane, check for stalling
                         \ and calculate various aerodynamic figures
 
- JSR L5500              \ ???
+ JSR ApplyFlightControl \ Calculate the effects of the primary flight controls
+                        \ (elevator, rudder and ailerons), and implement the
+                        \ "instant centre" feature
 
  JSR ScaleFlightForces  \ Scale all the flight forces by the relevant force
                         \ and scale factors
@@ -25590,9 +25599,11 @@ NEXT
 
  JSR AddScaled          \ Set xForce5Sc = xForce5Sc +/- (A 0) >> 2
                         \
-                        \ So this changes xForce5Sc by a random amount in the
-                        \ range 0 to 1920, with a higher amount the closer we
-                        \ are to the exploding alien
+                        \ So this changes xForce5Sc by an amount in the range
+                        \ 0 to 1920, with a higher amount the closer we are to
+                        \ the exploding alien, with the sign being random (i.e.
+                        \ it is random whether we add or subtract the amount,
+                        \ but the amount itself is not random)
 
  INX                    \ Increment the value of X so the next iteration updates
                         \ the next of xForce5Sc, yForce5Sc and zForce5Sc
@@ -27098,6 +27109,8 @@ NEXT
 \
 \   (G W)               The original value, negated, i.e. -(G W)
 \
+\   A                   The high byte of the negated result, (G)
+\
 \ ******************************************************************************
 
 .Negate16Bit
@@ -27198,102 +27211,226 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L5500
+\       Name: ApplyFlightControl
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Calculate the effects of the primary flight controls (elevator,
+\             rudder and ailerons), and implement the "instant centre" feature
 \
 \ ------------------------------------------------------------------------------
 \
-\ 
+\ This routine sets the following, depending on the current position of each
+\ primary flight control:
+\
+\   xForce5 = zForce2 * elevatorPosition  (pitch)
+\   yForce5 = zForce2 * rudderPosition    (yaw)
+\   zForce5 = zForce2 * aileronPosition   (roll)
+\
+\ It also implements the "instant centre" feature for the aileron (roll) and
+\ the ground steering controls (the latter is controlled by using the rudder
+\ keys when on the ground). This feature is for keyboard users only, and
+\ instantly centres the control when you press the key for the opposite
+\ direction, so if we press "S" to roll left, then pressing "D" will instantly
+\ centre the joystick before rolling to the right. This feature does not apply
+\ to the elevator or rudder, though it does apply to the rudder controls when on
+\ the ground, as they double-up as brake controls for ground steering, which
+\ does have this feature.
+\
+\ Arguments:
+\
+\   L                   The current value of onGround:
+\
+\                         * 0 = we are not on the ground
+\
+\                         * 1 = we are on the ground
 \
 \ ******************************************************************************
 
-.L5500
+.ApplyFlightControl
 
- LDX #2
+ LDX #2                 \ Set a counter in X to work through the three axes, so
+                        \ we can work our way through the three primary flight
+                        \ controls as follows:
+                        \
+                        \   * 2 = aileron, for roll around the z-axis
+                        \   * 1 = rudder, for yaw around the y-axis
+                        \   * 0 = elevator, for pitch around the x-axis
+                        \
+                        \ We also work through the aileron, rudder and elevator
+                        \ key pairs, whose values are stored in these key logger
+                        \ offsets in keyLoggerLow and keyLoggerHigh, to check
+                        \ whether any of the relevant control keys are being
+                        \ pressed
+                        \
+                        \ We set a counter in X to count down through these
+                        \ index values, from 2 to 1 to 0
 
-.L5502
+.fcon1
 
- LDA elevatorPosition,X
- BEQ L552F
+ LDA elevatorPosition,X \ Fetch the position of the flight control that affects
+ BEQ fcon7              \ the axis we are currently processing
 
- LDY keyLoggerLow,X
- BNE L551B
+ LDY keyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
+                        \ if a key is being pressed, or 0 if no key is pressed
 
- TAY
- BMI L5515
+ BNE fcon3              \ If Y is non-zero then a key in this key pair is being
+                        \ pressed, so jump down to fcon3
 
- CPY #4
- BCS L552C
+ TAY                    \ No key is being pressed for this axis, so copy the
+                        \ current position of the flight control into Y
 
- BCC L552A
+ BMI fcon2              \ If the control's current position is negative then
+                        \ jump to fcon2
 
-.L5515
+ CPY #4                 \ If the control's current position >= 4, jump to fcon6
+ BCS fcon6              \ to set the control's position to A, which will make no
+                        \ difference as A already contains the current value
 
- CPY #&FD
- BCS L552A
+ BCC fcon5              \ The control's current position < 4, so jump to fcon5
+                        \ to zero the control (this BCC is effectively a JMP as
+                        \ we just passed through a BCS)
 
- BCC L552C
+.fcon2
 
-.L551B
+                        \ If we get here then the control's current position in
+                        \ Y is negative
 
- CPX #1
- BCC L552F
+ CPY #&FD               \ If the control's current position >= -3, jump to fcon5
+ BCS fcon5              \ to zero the control
 
- BNE L5525
+ BCC fcon6              \ The control's current position < -3, so jump to fcon6
+                        \ to set the control's position to A, which will make no
+                        \ difference as A already contains the current value
+                        \ (this BCC is effectively a JMP as we just passed
+                        \ through a BCS)
 
- LDY L
- BEQ L552F
+.fcon3
 
-.L5525
+                        \ If we get here then a key is being pressed for this
+                        \ control and A contains the control's current position 
 
- EOR keyLoggerHigh,X
- BPL L552F
+ CPX #1                 \ If the axis in X < 1, then an elevator key is being
+ BCC fcon7              \ pressed, so jump to fcon7 to leave the contol's
+                        \ position alone
 
-.L552A
+ BNE fcon4              \ If the axis in X <> 0, then an aileron key is being
+                        \ pressed, so jump to fcon4 to check whether to apply
+                        \ the aileron's "instant centre" feature
 
- LDA #0
+                        \ If we get here then a rudder key is being pressed
 
-.L552C
+ LDY L                  \ Fetch the current value of onGround
 
- STA elevatorPosition,X
+ BEQ fcon7              \ If onGround is zero then we are not on the ground, so
+                        \ jump to fcon7 to leave the contol's position alone,
+                        \ otherwise keep going to check whether to apply the
+                        \ ground steering's "instant centre" feature
 
-.L552F
+.fcon4
 
- LDA elevatorPosition,X
- BPL L5539
+                        \ If we get here then either an aileron key is being
+                        \ pressed, or we are on the ground and a rudder key is
+                        \ being pressed
+                        \
+                        \ Pressing the rudder key while on the ground controls
+                        \ ground steering, by applying the brakes to the
+                        \ individual wheels
 
- EOR #&FF
- CLC
- ADC #1
+ EOR keyLoggerHigh,X    \ The relevant entry in keyLoggerHigh will be -1 or +1
+                        \ depending on the direction of the aileron or rudder
+                        \ key being applied, so this EOR compares the key's
+                        \ direction with the current position, setting bit 7
+                        \ if the two have different signs, and clearing bit 7
+                        \ if they have the same sign
 
-.L5539
+ BPL fcon7              \ If bit 7 is clear, then the key's direction and the
+                        \ current position of the control have the same sign, so
+                        \ jump to fcon7 to leave the contol's position alone
+                        \
+                        \ Otherwise we are pressing a key in the opposite
+                        \ direction to the current aileron or ground steering
+                        \ position, so we instantly move the control back to the
+                        \ centre point
 
- STA R
- LDY zForce2Lo
+.fcon5
+
+                        \ We jump here if control's current position is:
+                        \
+                        \   * Positive and < 4
+                        \   * Negative and >= -3
+                        \
+                        \ i.e. -3 <= position <= 3
+                        \
+                        \ In either case, we set the position to 0, so this
+                        \ implements a dead zone around the control's centre
+                        \ point, and the "instant centre" feature for the
+                        \ aileron and ground steering
+
+ LDA #0                 \ Set A = 0 to set as the control's new position, i.e.
+                        \ centre the control
+
+.fcon6
+
+ STA elevatorPosition,X \ Set the control's new position to the value in A
+
+.fcon7
+
+ LDA elevatorPosition,X \ Fetch the updated position of the flight control for
+                        \ the current axis
+
+ BPL fcon8              \ If the control's new position is positive, jump to
+                        \ fcon8 to skip the following
+
+ EOR #&FF               \ Negate A using two's complement, so:
+ CLC                    \
+ ADC #1                 \   A = |A|
+                        \     = |controlPosition|
+
+.fcon8
+
+ STA R                  \ Set R = |A|
+                        \       = |controlPosition|
+
+ LDY zForce2Lo          \ Set (A Y) = zForce2
  LDA zForce2Hi
 
- JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
+ JSR Multiply8x16-6     \ Store X in VV and set:
+                        \
+                        \   (G W V) = (A Y) * R
+                        \           = zForce2 * |controlPosition|
+                        \
+                        \ Also set A to the high byte of the result, so (A W V)
+                        \ also contains the result
 
- LDX VV
- LDY elevatorPosition,X
- BPL L554F
+ LDX VV                 \ Retrieve X from VV so it once again contains the axis
+                        \ index
 
- SEC                    \ Negate (G W)
- JSR Negate16Bit
+ LDY elevatorPosition,X \ If the position of the flight control is positive,
+ BPL fcon9              \ jump to fcon9 to skip the following
 
-.L554F
+ SEC                    \ Negate (G W) and return the high byte in A, so (A W)
+ JSR Negate16Bit        \ contains the negated result, so we now have the
+                        \ following:
+                        \
+                        \   (A W V) = zForce2 * controlPosition
 
- STA xForce5Hi,X
- LDA W
+.fcon9
+
+ STA xForce5Hi,X        \ Set xForce5 = (A W)
+ LDA W                  \             = zForce2 * controlPosition
  STA xForce5Lo,X
- DEX
- BEQ L552F
 
- BPL L5502
+ DEX                    \ Decrement the loop counter to move to the next axis
 
- RTS
+ BEQ fcon7              \ If this is the elevator axis (X = 0), loop back to
+                        \ fcon7 to skip the "instant centre" check, as this
+                        \ feature doesn't apply to pitching
+
+ BPL fcon1              \ If this is the rudder y-axis (X = 1), loop back to
+                        \ fcon1 to apply the "instant centre" check, as this
+                        \ feature applies to the ground steering
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -27310,7 +27447,8 @@ NEXT
 
 .L555D
 
- LDX #2
+ LDX #2                 \ Set a counter in X to work through the three axes (the
+                        \ comments below cover the iteration for the x-axis)
 
 .L555F
 
