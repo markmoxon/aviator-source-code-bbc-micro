@@ -25810,20 +25810,21 @@ NEXT
 \       Name: ApplyFlightModel (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Set dxTurn, allForces and slipRate variables
 \
 \ ******************************************************************************
 
 .fmod3
 
- JSR L555D              \ ??? (sets allForces vector)
+ JSR ApplyTurnAndThrust \ Set the dxTurn and allForces vectors, depending on
+                        \ the turning moments and the forces from the engine
 
  LDA xAllForcesLo       \ Set the C flag to bit 7 of xAllForcesLo, flipped, to
- EOR #%10000000         \ round up the slip rate in the following calculation
- ASL A
+ EOR #%10000000         \ round the slip rate in the following calculation to
+ ASL A                  \ the nearest integer
 
  LDA #0                 \ Set slipRate = 0 - xAllForcesHi - (1 - C)
- SBC xAllForcesHi
+ SBC xAllForcesHi       \              = -int(xAllForces / 256)
  STA slipRate
 
 \ ******************************************************************************
@@ -25846,6 +25847,7 @@ NEXT
 .fmod4
 
  LDX #0
+
  LDY #0
 
  LDA zVelocityPHi       \ If the forward airspeed is negative, jump to fmod6
@@ -25854,7 +25856,7 @@ NEXT
  BNE fmod5              \ If the high byte of the forward airspeed is non-zero,
                         \ jump to fmod5
 
-                        \ If we get here then the high byte of the foreard
+                        \ If we get here then the high byte of the forward
                         \ airspeed is zero
 
  LDA zVelocityPLo       \ If the low byte of the forward airspeed is less than
@@ -25864,7 +25866,7 @@ NEXT
 .fmod5
 
  LDY rudderPosition
- BPL fmod6
+ BPL fmod6 
 
  DEX
 
@@ -26001,7 +26003,8 @@ NEXT
 \       Name: ApplyFlightModel (Part 6 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Adjust the plane's velocity and turn rate, rotate the plane
+\             according to the forces on the aircraft, process landing
 \
 \ ******************************************************************************
 
@@ -26780,6 +26783,10 @@ NEXT
 \   Category: Flight model
 \    Summary: Calculate various aerodynamic figures
 \
+\ ------------------------------------------------------------------------------
+\
+\ 
+\
 \ ******************************************************************************
 
  JSR L54B9              \ Set the following:
@@ -26844,8 +26851,10 @@ NEXT
 .aero14
 
  STA J                  \ Set (J I) = (A Y)
- STY I                  \           = xCoord6          for X = 0 to 2
-                        \             |xVelocityP| * 2 for X = 3 to 5
+ STY I                  \
+                        \           = xCoord6               for X = 0 to 2
+                        \
+                        \             |xVelocityP| * 2      for X = 3 to 5
 
  LDA #0                 \ Set K = 0, so Multiply16x16Mix doesn't negate the
  STA K                  \ result, and returns the sign of the result in K
@@ -26856,7 +26865,9 @@ NEXT
  JSR Multiply16x16Mix   \ Call Multiply16x16Mix to calculate:
                         \
                         \   (H G W) = (J I) * (S R)
+                        \
                         \        = xCoord6          * max(velocityP) * ~yPlaneHi
+                        \
                         \          |xVelocityP| * 2 * max(velocityP) * ~yPlaneHi
 
  LDA K                  \ If the result of the multiplication is positive, jump
@@ -26916,24 +26927,24 @@ NEXT
                         \
                         \   xForce1 = xCoord6 * maxv * ~yPlaneHi << 1
                         \           = (|yVelocityP| * 2 - (|xTurn| * 250 / 256))
-                        \              * maxv * ~yPlaneHi << 1
+                        \              * maxv * ~yPlaneHi * 2
                         \
                         \   yForce1 = yCoord6 * maxv * ~yPlaneHi << 1
                         \           = (|xVelocityP| * 2 - (|yTurn| * 250 / 256))
-                        \              * maxv * ~yPlaneHi << 1
+                        \              * maxv * ~yPlaneHi * 2
                         \
                         \   zForce1 = zCoord6 * maxv * ~yPlaneHi << 1
-                        \           = -|zTurn| * 2 * maxv * ~yPlaneHi << 1
+                        \           = -|zTurn| * 2 * maxv * ~yPlaneHi * 2
                         \
-                        \   xForce2 = |xVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \   xForce2 = |xVelocityP| * 2 * maxv * ~yPlaneHi * 8
                         \
-                        \   yForce2 = |yVelocityP| * 2 * maxv * ~yPlaneHi << 3
+                        \   yForce2 = |yVelocityP| * 2 * maxv * ~yPlaneHi * 8
                         \
-                        \   zForce2 = |zVelocityP| * 2 * maxv * ~yPlaneHi << 1
+                        \   zForce2 = |zVelocityP| * 2 * maxv * ~yPlaneHi * 2
                         \
                         \ where:
                         \
-                        \   maxv = max(velocityP)
+                        \   maxv = max(|xVelocityP|, |yVelocityP|, |zVelocityP|)
 
  LDA #128               \ Change the rounding in Multiply16x16Mix back to the
  STA mult1+1            \ default, so it rounds to the nearest integer
@@ -27633,17 +27644,19 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L555D (Part 2 of )
+\       Name: ApplyTurnAndThrust (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Calculate the (dxTurn, dyTurn, dzTurn) vector
 \
 \ ------------------------------------------------------------------------------
 \
-\ This part of the routine calculates:
+\ This part of the routine calculates the following:
 \
 \   dxTurn = xForce1Sc + xForce5Sc + yGravity
+\
 \   dyTurn = yForce1Sc + yForce5Sc
+\
 \   dzTurn = zForce1Sc + zForce5Sc
 \
 \ Arguments:
@@ -27656,7 +27669,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.L555D
+.ApplyTurnAndThrust
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
@@ -27730,27 +27743,37 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L555D (Part 2 of )
+\       Name: ApplyTurnAndThrust (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Calculate the (xAllForces, yAllForces, zAllForces) vector
 \
 \ ------------------------------------------------------------------------------
 \
-\ This part of the routine calculates:
+\ This part of the routine calculates the following:
 \
 \   xAllForces = -xForce2Sc / 256
+\
 \   yAllForces = (force4Sc - yForce2Sc) / 256
 \
-\ If zVelocityPHi >= 48, set zAllForcesHi = 234
-\ If zVelocityPHi < 48, then:
-\   If the engine is off, set zAllForces = -zForce2 / 256
-\   If the engine is on, set:
-\ zAllForces = max(0, thrustScaled - (zVelocity / 16))
-\              * ~yPlaneHi / 256
-\              - zForce2 / 256
+\   zAllForces = (234 zAllForcesLo)                        if zVelocityPHi >= 48
 \
-\ It also retracts the flaps if we are going too fast.
+\                -zForce2Sc / 256                          if zVelocityPHi < 48
+\                                                          and engine is off
+\
+\                max(0, thrustScaled                       if zVelocityPHi < 48
+\                    - (max(0, zVelocityP) / 16))          and engine is on
+\                * ~yPlaneHi / 256
+\                - zForce2Sc / 256
+\
+\ where thrustScaled is the thrust in (thrustHi thrustLo), but:
+\
+\   * Doubled if thrust >= 1024
+\
+\   * Doubled if zVelocity is in the range 512 to 1023
+\
+\ It also calls the RetractFlapsIfFast routine to retract the flaps if we are
+\ going too fast.
 \
 \ ******************************************************************************
 
@@ -27826,11 +27849,10 @@ NEXT
                         \ so:
                         \
                         \   (G A) = (G A) >> 4
-                        \         = (zVelocityPHi zVelocityPLo) >> 4
-                        \         = zVelocity / 16
+                        \         = max(0, zVelocityP) / 16
 
  STA W                  \ Set (G W) = (G A)
-                        \           = zVelocity / 16
+                        \           = max(0, zVelocityP) / 16
 
  LDY thrustHi           \ Set Y to the high byte of the current thrust
 
@@ -27877,7 +27899,7 @@ NEXT
 .L562B
 
  SEC                    \ Set (Y X) = (R A) - (G W)
- SBC W                  \           = thrustScaled - (zVelocity / 16)
+ SBC W                  \           = thrustScaled - (max(0, zVelocityP) / 16)
  TAX                    \
                         \ starting with the low bytes
 
@@ -27888,7 +27910,8 @@ NEXT
  BPL L563A              \ If Y is positive, skip to L563A, otherwise keep going
                         \ to set (Y X) = 0, so this means:
                         \
-                        \   (Y X) = max(0, thrustScaled - (zVelocity / 16))
+                        \   (Y X) = max(0, thrustScaled
+                        \                  - (max(0, zVelocityP) / 16))
 
 .L5636
 
@@ -27900,12 +27923,13 @@ NEXT
  JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
                         \
                         \ so (Y X) = (Y X) * ~yPlaneHi / 256
-                        \          = max(0, thrustScaled - (zVelocity / 16))
+                        \          = max(0, thrustScaled
+                        \                   - (max(0, zVelocityP) / 16))
                         \            * ~yPlaneHi / 256
                         \
                         \ or (Y X) = 0 if the engine is off
 
- TXA                    \ Set zAllForces = (Y X) - zForce2 / 256
+ TXA                    \ Set zAllForces = (Y X) - zForce2Sc / 256
  SEC                    \
  SBC zForce2ScHi        \ starting with the low bytes
  STA zAllForcesLo
@@ -27913,9 +27937,10 @@ NEXT
  TYA                    \ And then the high bytes, so now we have the following
  SBC zForce2ScTop       \ when the engine is on:
                         \
-                        \ zAllForces = max(0, thrustScaled - (zVelocity / 16))
+                        \ zAllForces = max(0, thrustScaled
+                        \                     - (max(0, zVelocityP) / 16))
                         \              * ~yPlaneHi / 256
-                        \              - zForce2 / 256
+                        \              - zForce2Sc / 256
 
 .L5649
 
