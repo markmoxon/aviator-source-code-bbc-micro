@@ -643,15 +643,15 @@ ORG &0900
                         \
                         \ Shown on indicator 1
 
-.xCoord6Lo
+.xTorqueLo
 
  SKIP 1
 
-.yCoord6Lo
+.yTorqueLo
 
  SKIP 1
 
-.zCoord6Lo
+.zTorqueLo
 
  SKIP 1
 
@@ -741,15 +741,15 @@ ORG &0900
                         \
                         \ Shown on indicator 1
 
-.xCoord6Hi
+.xTorqueHi
 
  SKIP 1
 
-.yCoord6Hi
+.yTorqueHi
 
  SKIP 1
 
-.zCoord6Hi
+.zTorqueHi
 
  SKIP 1
 
@@ -7852,14 +7852,15 @@ ORG CODE%
 \
 \ and therefore represents the inverse transformation of matrix 1.
 \
-\ Matrix 3 is a 2x2 matrix, but we store it in the standard 3x3 grid:
+\ Matrix 3 is as follows:
 \
-\   [ mz1  -mz2  - ]
-\   [ mz2   mz1  - ]
-\   [  -     -   - ]
+\   [ mz1  -mz2   0 ]
+\   [ mz2   mz1   0 ]
+\   [  0     0    1 ]
 \
-\ This is a 2D rotation matrix that rotates a 2D coordinate through the plane's
-\ roll angle.
+\ This is a rotation matrix that rotates through the plane's roll angle. The
+\ zeroes and 1 are hardcoded in memory, with the latter being stored as &FFFE =
+\ %11111111 11111110, with the sign in bit 0.
 \
 \ Matrix 4 contains an interim step from the calculation of matrix 1, and
 \ contains the rotation matrix for the roll-and-pitch rotation (i.e. without any
@@ -7957,9 +7958,10 @@ ORG CODE%
                         \
                         \ We now work our way through the matrices as follows:
                         \
-                        \   * Populate matrix 3 (which is a 2x2 matrix)
+                        \   * Populate matrix 3 (which is hardcoded apart from
+                        \     the 2x2 matrix in the top-left corner)
                         \
-                        \   * Populate matrix 4 (except m6, which is never set)
+                        \   * Populate matrix 4 (except m6, which is hardcoded)
                         \
                         \   * Populate matrix 1 (by overwriting some of the
                         \     m0-m8 variables we just set, but keeping others)
@@ -11947,7 +11949,9 @@ ORG CODE%
  STA GG                 \ SetPointCoords
 
  LDA #9                 \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 2 in the calculation
+ STA matrixNumber       \ uses matrix 2 in the calculation, so it rotates the
+                        \ point from the plane's frame of reference to the
+                        \ outside world's frame of reference
 
  STA firingStatus       \ Set firingStatus = 9, which is a non-zero value, to
                         \ indicate that there are bullets are in the air (the
@@ -11959,7 +11963,7 @@ ORG CODE%
 
  LDX #229               \ We now copy the coordinates from (xTemp1, yTemp1,
                         \ zTemp1) to points 229, 230 and 231, so we set a
-                        \ counter in Xfor the point IDs
+                        \ counter in X for the point IDs
 
 .fire1
 
@@ -14021,10 +14025,13 @@ ORG CODE%
 
  LDA #0                 \ Set matrixAxis = 0
  STA matrixAxis
-
- STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
-                        \ object points in the call toSetObjPointCoords
-
+                        
+ STA matrixNumber       \ Set the matrix number so the call to SetObjPointCoords
+                        \ uses matrix 1 in the calculation, which will rotate
+                        \ the point by the plane's pitch, roll and yaw angles,
+                        \ transforming it from the outside world's frame of
+                        \ reference to the plane's frame of reference
+ 
  JSR SetObjPointCoords  \ Calculate the coordinates for this object point
 
  LDA showLine           \ If showLine is non-zero, then the point is not
@@ -14050,8 +14057,11 @@ ORG CODE%
  LDA #0                 \ Set matrixAxis = 0
  STA matrixAxis
 
- STA matrixNumber       \ Set matrixNumber = 0 so matrix 1 is applied to the
-                        \ object points in the call toSetObjPointCoords
+ STA matrixNumber       \ Set the matrix number so the call to SetObjPointCoords
+                        \ uses matrix 1 in the calculation, which will rotate
+                        \ the point by the plane's pitch, roll and yaw angles,
+                        \ transforming it from the outside world's frame of
+                        \ reference to the plane's frame of reference
 
  JSR SetObjPointCoords  \ Calculate the coordinates for this object point
 
@@ -14543,7 +14553,10 @@ ORG CODE%
                         \ tidy up and return from the subroutine
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 1 in the calculation
+ STA matrixNumber       \ uses matrix 1 in the calculation, which will rotate
+                        \ the point by the plane's pitch, roll and yaw angles,
+                        \ transforming it from the outside world's frame of
+                        \ reference to the plane's frame of reference
 
  JSR SetPointCoords     \ Rotate the coordinates for point GG:
                         \
@@ -15168,7 +15181,9 @@ ORG CODE%
  STA pointStatus,X      \ calculated
 
  LDA #27                \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 4 in the calculation
+ STA matrixNumber       \ uses matrix 4 in the calculation, so it rotates the
+                        \ point by the roll and pitch angles, but not the yaw,
+                        \ as rotating a horizon by a yaw angle has no effect
 
  JSR SetPointCoords     \ Calculate the coordinates for point GG, which will
                         \ be the start or end point of the horizon
@@ -15284,7 +15299,10 @@ ORG CODE%
                         \ to point 0
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 1 in the calculation
+ STA matrixNumber       \ uses matrix 1 in the calculation, which will rotate
+                        \ the point by the plane's pitch, roll and yaw angles,
+                        \ transforming it from the outside world's frame of
+                        \ reference to the plane's frame of reference
 
  JSR SetPointCoords     \ Calculate the coordinates for point 0
 
@@ -17604,9 +17622,12 @@ ORG CODE%
 
 .prun3
 
- LDA #0                 \ Set the matrix number so the calls to SetPointCoords
- STA matrixNumber       \ and SetObjPointCoords below use matrix 1 in the
-                        \ calculation
+ LDA #0                 \ Set the matrix number so the call to SetPointCoords
+ STA matrixNumber       \ and SetObjPointCoords use matrix 1 in the calculation,
+                        \ which will rotate the point by the plane's pitch, roll
+                        \ and yaw angles,  transforming it from the outside
+                        \ world's frame of reference to the plane's frame of
+                        \ reference
 
  LDA #1                 \ Set objectId = 1 to denote the runway object
  STA objectId
@@ -21695,29 +21716,29 @@ NEXT
 \       Name: scaleFactor
 \       Type: Variable
 \   Category: Flight model
-\    Summary: Scale factors for the flight forces (in powers of 2)
+\    Summary: Scale factors for the flight forces (in signed powers of 2)
 \
 \ ******************************************************************************
 
 .scaleFactor
 
- EQUB &00               \ xForce1: scale by 2^0  = 1
- EQUB &FE               \ yForce1: scale by 2^-2 = 1/4
- EQUB &FF               \ zForce1: scale by 2^-1 = 1/2
+ EQUB &00               \ xForce1 is scaled by 2^0  = 1
+ EQUB &FE               \ yForce1 is scaled by 2^-2 = 1/4
+ EQUB &FF               \ zForce1 is scaled by 2^-1 = 1/2
 
- EQUB &01               \ xForce2: scale by 2^1  = 2
- EQUB &04               \ yForce2: scale by 2^4  = 16
- EQUB &00               \ zForce2: scale by 2^0  = 1
+ EQUB &01               \ xForce2 is scaled by 2^1  = 2
+ EQUB &04               \ yForce2 is scaled by 2^4  = 16
+ EQUB &00               \ zForce2 is scaled by 2^0  = 1
 
- EQUB &FB               \ force3: scale by 2^-5 = 1/32
- EQUB &02               \ force4: scale by 2^2  = 4
+ EQUB &FB               \ force3 is scaled by 2^-5 = 1/32
+ EQUB &02               \ force4 is scaled by 2^2  = 4
 
  EQUB &33               \ Unused
  EQUB &3A               \ Unused
 
- EQUB &FF               \ xForce5: scale by 2^-1 = 1/2
- EQUB &FE               \ yForce5: scale by 2^-2 = 1/4
- EQUB &FE               \ zForce5: scale by 2^-2 = 1/4
+ EQUB &FF               \ xForce5 is scaled by 2^-1 = 1/2
+ EQUB &FE               \ yForce5 is scaled by 2^-2 = 1/4
+ EQUB &FE               \ zForce5 is scaled by 2^-2 = 1/4
 
  EQUB &23, &31, &38     \ These bytes appear to be unused
 
@@ -25133,67 +25154,55 @@ NEXT
 
 .forceFactor
 
- EQUB 212               \ xForce1 = 212 * 1
-                        \
-                        \ Set in ApplyAerodynamics 3
+ EQUB 212               \ xForce1 is scaled by 212 * 1
 
- EQUB 201               \ yForce1 = 201 / 4
-                        \
-                        \ Set in ApplyAerodynamics 3
+ EQUB 201               \ yForce1 is scaled by 201 / 4
 
- EQUB 204               \ zForce1 = 204 / 2
-                        \
-                        \ Set in ApplyAerodynamics 3
+ EQUB 204               \ zForce1 is scaled by 204 / 2
 
- EQUB 176               \ xForce2 = 176 * 2
-                        \
-                        \ Set in ApplyAerodynamics 1, 3
+ EQUB 176               \ xForce2 is scaled by 176 * 2
 
- EQUB 156               \ yForce2 = stalling effect
+ EQUB 156               \ yForce2 is scaled as follows:
                         \
-                        \ = 156 * 16 in normal flight
-                        \ = 39 * 16 when the plane is stalling
+                        \   * Scaled by 156 * 16 in normal flight
                         \
-                        \ Set in ApplyAerodynamics 1, 3
+                        \   * Scaled by 39 * 16 when the plane is stalling
 
- EQUB 22                \ zForce2 = drag factor? lift factor?
+ EQUB 22                \ zForce2 is scaled as follows:
                         \
-                        \ Goes up by 10 if undercarriage is down
-                        \ Goes down by 10 if undercarriage is up
-                        \ Goes up by 200 if flaps are on
-                        \ Goes down by 200 if flaps are off
-                        \ Goes up by 20 if engine is on
-                        \ Goes down by 20 if engine is switched off
+                        \   * Default scaling is by 242
+                        \     (undercarriage down, flaps off, engine off)
                         \
-                        \ Set to 242 in ResetVariables
+                        \   * Goes up by 10 if undercarriage is down
+                        \   * Goes down by 10 if undercarriage is up
                         \
-                        \ Set in ApplyAerodynamics 1, 3
+                        \   * Goes up by 200 if flaps are on
+                        \   * Goes down by 200 if flaps are off
+                        \
+                        \   * Goes up by 20 if engine is on
+                        \   * Goes down by 20 if engine is switched off
+                        \
+                        \ This value is set to 242 in ResetVariables
 
- EQUB 40                \ force3 = 40 / 32
+ EQUB 40                \ force3 is scaled by 40 / 32
 
- EQUB 152               \ force4 = flaps lift factor? Drag factor?
+ EQUB 152               \ force4 is scaled as follows:
                         \
-                        \ =   0 * 4 if flaps are off
-                        \ = 152 * 4 if flaps are on
+                        \   * Scaled to 0 if flaps are off
                         \
-                        \ Zeroed in ResetVariables
+                        \   * Scaled by 152 * 4 if flaps are on
                         \
-                        \ Set in ApplyAerodynamics 3
+                        \ This value is zeroed in ResetVariables
 
  EQUB 0                 \ Unused
+
  EQUB 0                 \ Unused
 
- EQUB 255               \ xForce5 = 255 / 2
-                        \
-                        \ Set in ApplyFlightControl
+ EQUB 255               \ xForce5 is scaled by 255 / 2
 
- EQUB 141               \ yForce5 = 141 / 4
-                        \
-                        \ Set in ApplyFlightControl
+ EQUB 141               \ yForce5 is scaled by 141 / 4
 
- EQUB 190               \ zForce5 = 190 / 4
-                        \
-                        \ Set in ApplyFlightControl
+ EQUB 190               \ zForce5 is scaled by 190 / 4
 
  EQUB &00, &05          \ These bytes appear to be unused
  EQUB &7D, &FF
@@ -25567,7 +25576,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Apply the flight model to the plane, starting by calculating the
-\             effect of gravity
+\             effect of gravity and the undercarriage springs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25579,8 +25588,11 @@ NEXT
 \       (xGravity, yGravity, zGravity) = (0, -512, 0)
 \
 \   * If we are on the ground with the undercarriage down, and we are
-\     accelerating downwards, push back to simulate the springs in the
-\     undercarriage
+\     accelerating downwards, we push back up to simulate the springs in the
+\     undercarriage by setting the gravity vector to the following, again
+\     rotating it to the plane's frame of reference using matrix 4:
+\
+\       (xGravity, yGravity, zGravity) = (0, -512 - (dyVelocity / 2 + 1), 0)
 \
 \ ******************************************************************************
 
@@ -25671,7 +25683,10 @@ NEXT
  STA GG                 \ point 253), to pass to the call to SetPointCoords
 
  LDA #27                \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 4 in the calculation
+ STA matrixNumber       \ uses matrix 4 in the calculation, so it rotates the
+                        \ point by the roll and pitch angles, but not the yaw,
+                        \ as rotating a vertical vector by a yaw angle has no
+                        \ effect
 
  JSR SetPointCoords     \ Calculate the coordinates for the gravity vector,
                         \ using matrix 4, which only performs the pitch and roll
@@ -25685,19 +25700,21 @@ NEXT
 \       Name: ApplyFlightModel (Part 2 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Convert velocity to the plane's perspective
+\    Summary: Convert velocity to the plane's perspective and calculate various
+\             aerodynamic forces
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part does the following:
 \
-\   * Rotate (xVelocity, yVelocity, zVelocity) to the plane's frame of reference
-\     using matrix 1, store the result in (xVelocityP, yVelocityP, zVelocityP).
+\   * Rotate the plane's velocity vector in (xVelocity, yVelocity, zVelocity) to
+\     the plane's frame of reference using matrix 1, and store the result in
+\     (xVelocityP, yVelocityP, zVelocityP).
 \
 \   * Call the ApplyAerodynamics routine to check for stalling:
 \
 \     * If we are already stalling and not going fast enough to pull out of the
-\       stall, make the stalling sound and move on
+\       stall, make the stalling sound and move on.
 \
 \     * If we are not already stalling, or we are possibly going fast enough to
 \       pull out of the stall (zVelocityPHi >= 11), we perform the stall check:
@@ -25732,6 +25749,8 @@ NEXT
 \       yForce2 = yVelocityP * 2 * maxv * ~yPlaneHi * 8
 \
 \       zForce2 = zVelocityP * 2 * maxv * ~yPlaneHi * 2
+\
+\       force3 = xForce2
 \
 \     where:
 \
@@ -25769,7 +25788,7 @@ NEXT
 \       * force4
 \       * (xForce5, yForce5, zForce5)
 \
-\     The scaled results are storec in xForce1Sc, xForce2Sc and so on.
+\     The scaled results are stored in xForce1Sc, xForce2Sc and so on.
 \
 \ ******************************************************************************
 
@@ -25816,7 +25835,9 @@ NEXT
 
  LDA #0                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 1 in the calculation, which will rotate
-                        \ the point by the plane's pitch, roll and yaw angles
+                        \ the point by the plane's pitch, roll and yaw angles,
+                        \ transforming it from the outside world's frame of
+                        \ reference to the plane's frame of reference
 
  JSR SetPointCoords     \ Calculate the coordinates for point 255
 
@@ -25851,15 +25872,19 @@ NEXT
 \ This part does the following:
 \
 \   * If we are near an exploding alien, calculate the amount of turbulence and
-\     apply it to the (xForce5Sc, yForce5Sc, zForce5Sc) vector, where:
+\     apply it to the (xForce5Sc, yForce5Sc, zForce5Sc) vector, as follows:
 \
-\       * turbulence is in the range 0 to 1920 and is inversely proportional to
-\         the distance (0 if we are far away, 1920 if we very close)
+\       * Set the level of turbulence in the range 0 to 1920, to be inversely
+\         proportional to the distance from the explosion (so it is 0 if we are
+\         far away, 1920 if we are very close).
 \
-\       * We randomly add or subtract this amount from each axis, to give:
+\       * We randomly add or subtract this amount from each axis (with each axis
+\         being individually signed randomly), to give:
 \
 \         xForce5Sc = xForce5Sc +/- turbulence / 2
+\
 \         yForce5Sc = yForce5Sc +/- turbulence / 2
+\
 \         zForce5Sc = zForce5Sc +/- turbulence / 2
 \
 \ ******************************************************************************
@@ -25928,7 +25953,7 @@ NEXT
 \       Name: ApplyFlightModel (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Set dxTurn, allForces and slipRate variables
+\    Summary: Calculate the dxTurn, allForces and slipRate variables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25951,7 +25976,7 @@ NEXT
 \
 \           zAllForces =
 \
-\               (234 zAllForcesLo)                        if zVelocityPHi >= 48
+\               (234 zAllForcesLo)                         if zVelocityPHi >= 48
 \
 \                -zForce2Sc / 256                          if zVelocityPHi < 48
 \                                                          and engine is off
@@ -25967,9 +25992,11 @@ NEXT
 \
 \           * Doubled if zVelocity is in the range 512 to 1023
 \
-\       * Retract the flaps if we are going too fast
+\       * Retract the flaps if we are going too fast.
 \
-\   * Set slipRate = -int(xAllForces / 256)
+\   * Set the slip rate shown on the slip indicator as follows:
+\
+\       slipRate = -int(xAllForces / 256)
 \
 \ ******************************************************************************
 
@@ -25991,7 +26018,7 @@ NEXT
 \       Name: ApplyFlightModel (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Checks for when we are on the ground
+\    Summary: Calculate the forces for when we are on the ground
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26000,14 +26027,53 @@ NEXT
 \   * If we are on the ground, then:
 \
 \       * Apply ground steering to zTurn if the rudder is used and forward speed
-\         is >= 20
+\         is >= 20.
 \
 \       * If the undercarriage is up, prevent the plane from pitching forward
-\         below the level of the ground
+\         below the level of the ground.
 \
-\       * Calculate the effect of being on the ground on zAllForces
+\       * Calculate the effect of being on the ground on the forces and landing
+\         status:
 \
-\       * Calculate the effect of side velocity on xAllForces ???
+\           * If the plane is stationary, set landingStatus = %01000000 and move
+\             to the side velocity step below.
+\
+\           * If the plane is travelling forwards at a speed of 10 or less, set
+\             zAllForces = -256 and landingStatus = %01000000 and move to the
+\             side velocity step below.
+\
+\           * If the approach is good, the undercarriage is down and the brakes
+\             are off, set landingStatus = 0 and move to the side velocity step
+\             below.
+\
+\           * Otherwise, set landingStatus = 0 and subtract the following from
+\             zAllForcesHi (from the least slowdown to the biggest slowdown):
+\
+\               * 7 if the approach is bad and:
+\                       undercarriage is down and brakes are off
+\
+\               * 11 if the approach is good and:
+\                       undercarriage is up x
+\                       or undercarriage is down and brakes are on x
+\
+\               * 50 if the approach is bad and:
+\                       undercarriage is up x
+\                       or undercarriage is down and brakes are on x
+\
+\               * 248 if the plane is going backwards (zVelocityP < 0)
+\
+\             In other words, the following factors slow us down when travelling
+\             fowards along the ground:
+\
+\               * Having the brakes on
+\
+\               * Having the undercarriage up
+\
+\               * Having a bad approach
+\
+\       * Calculate the effect of side velocity on xAllForces:
+\
+\           xAllForces  = -xVelocityPLo * 128
 \
 \ ******************************************************************************
 
@@ -26151,9 +26217,10 @@ NEXT
 
  JSR CheckApproachAngle \ Check the plane's approach angle for the runway
 
- BCC fmod15             \ If the approach is good, then jump to fmod15
+ BCC fmod15             \ If the approach is good, then jump to fmod15 to set
+                        \ landingStatus = 0
 
- LDA #7                 \ Set A = 7 and jump to fmodll (this BNE is effectively
+ LDA #7                 \ Set A = 7 and jump to fmod11 (this BNE is effectively
  BNE fmod11             \ a JMP as A is never zero)
 
 .fmod10
@@ -26255,22 +26322,27 @@ NEXT
 
  TXA                    \ Set A = 0
 
- ROR A                  \ Set bit 7 of V to the bit 0 of xVelocityPLo that we
- STA V                  \ shifted into the C flag
+ ROR A                  \ Shift the C flag into bit 7 of V, so bit 7 of V now
+ STA V                  \ contains the bit 0 of xVelocityPLo that we shifted
+                        \ into the C flag above
 
  LDA xVelocityPHi       \ Set Q = P with the the sign bit from xVelocityPHi
  AND #%10000000         \       = xVelocityPLo / 2 with the correct sign
  ORA P
  STA Q                  
-                        \ This sets
+                        \ If xVelocityPLo is %vvvvvvvv and the sign bit of
+                        \ xVelocityPHi is %s, then this sets
                         \
-                        \   (Q V) = ???
+                        \   (Q V) = %svvvvvvv v0000000
+                        \
+                        \ which is xVelocityPLo << 7, or xVelocityPLo * 128
 
  TXA                    \ Set A = 0
 
  SEC                    \ Set xAllForces = (0 0) - (Q V)
- SBC V                  \
- STA xAllForcesLo       \ starting with the low bytes
+ SBC V                  \                = -xVelocityPLo * 128
+ STA xAllForcesLo       \
+                        \ starting with the low bytes
 
  TXA                    \ And then the high bytes
  SBC Q
@@ -26288,9 +26360,10 @@ NEXT
 \
 \ This part does the following:
 \
-\   * Rotate (xAllForces, yAllForces, zAllForces) to the plane's frame of
-\     reference using matrix 2, subtract 16 from yAllForcesHi and store the
-\     result in (dxVelocity, dyVelocity, dzVelocity)
+\   * Rotate (xAllForces, yAllForces, zAllForces) from the plane's frame of
+\     reference to the outside world's frame of reference using matrix 2, then
+\     subtract 16 from yAllForcesHi and store the result in (dxVelocity,
+\     dyVelocity, dzVelocity).
 \
 \   * Call the AdjustVelocity routine to adjust the plane's velocity as follows:
 \
@@ -26304,8 +26377,8 @@ NEXT
 \       [ yTurn ] = [ yTurn ] + [ dyTurn ]
 \       [ zTurn ]   [ zTurn ]   [ dzTurn ]
 \
-\   * Rotate (xTurn, yTurn, zTurn) using matrix 3, which does ???, and store
-\     the result in (dxRotation, dyRotation, dzRotation)
+\   * Rotate (xTurn, yTurn, zTurn) using matrix 3, which rotates by the current
+\     roll angle, and store the result in (dxRotation, dyRotation, dzRotation).
 \
 \   * Call the AdjustRotation routine to move the plane as follows:
 \
@@ -26319,20 +26392,24 @@ NEXT
 \       [ yRotation ] = [ yRotation ] + [ dyRotation ]
 \       [ zRotation ]   [ zRotation ]   [ dzRotation ]
 \
-\   * Make the engine sound
+\     The plane is flipped around if this makes it point backwards.
+\
+\   * Make the engine sound.
 \
 \   * Call the ProcessLanding routine to check to see if we are landing, and if
-\     we are, process the landing and the effect on the plane
+\     we are, process the landing and the effect on the plane.
 \
 \   * Call the ShowUpsideDownBar routine to show or hide the bar in the
-\     artificial horizon that shows whether the plane is upside down
+\     artificial horizon that shows whether the plane is upside down.
 \
 \ ******************************************************************************
 
 .fmod17
 
  LDA #9                 \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 2 in the calculation
+ STA matrixNumber       \ uses matrix 2 in the calculation, so it rotates the
+                        \ point from the plane's frame of reference to the
+                        \ outside world's frame of reference
 
  LDA #252               \ Set GG to the ID of the allForces vector (which is
  STA GG                 \ stored in point 252), to pass to the call to
@@ -26383,7 +26460,8 @@ NEXT
                         \ to point 254
 
  LDA #18                \ Set the matrix number so the call to SetPointCoords
- STA matrixNumber       \ uses matrix 3 in the calculation
+ STA matrixNumber       \ uses matrix 3 in the calculation, so it rotates the
+                        \ point by the plane's current roll angle
 
  JSR SetPointCoords     \ Calculate the coordinates for point 254
 
@@ -26396,8 +26474,20 @@ NEXT
  JSR CopyPointToWork    \ Copy the coordinates from point 254 to
                         \ (dxRotation, dyRotation, dzRotation)
 
- JSR AdjustRotation     \ Move the plane according to its velocity and adjust
-                        \ its rotation
+ JSR AdjustRotation     \ Move the plane according to its velocity as follows:
+                        \
+                        \       [ xPlane ]   [ xPlane ]   [ xVelocity ]
+                        \       [ yPlane ] = [ yPlane ] + [ yVelocity ]
+                        \       [ zPlane ]   [ zPlane ]   [ zVelocity ]
+                        \
+                        \ and adjust the plane's rotation as follows:
+                        \
+                        \       [ xRotation ]   [ xRotation ]   [ dxRotation ]
+                        \       [ yRotation ] = [ yRotation ] + [ dyRotation ]
+                        \       [ zRotation ]   [ zRotation ]   [ dzRotation ]
+                        \
+                        \ The plane is flipped around if this makes it point
+                        \ backwards
 
  LDA #7                 \ Make the engine sound
  JSR ToggleEngineSound
@@ -26420,7 +26510,7 @@ NEXT
 \ This routine calculates the following:
 \
 \   * Calculate fuel usage, depending on the current thrust, and decrease the
-\     fuel level as required
+\     fuel level as required.
 \
 \ ******************************************************************************
 
@@ -26660,6 +26750,8 @@ NEXT
 \
 \ to rotate the plane.
 \
+\ The plane is flipped around if this makes it point backwards.
+\
 \ ******************************************************************************
 
 .AdjustRotation
@@ -26805,7 +26897,17 @@ NEXT
 \
 \ This part does the following:
 \
-\   * Set a number of variables that are used in the calculations in part 3
+\   * Set a number of variables that are used by the calculations in part 3:
+\
+\       xForce2 = xVelocityP * 2
+\
+\       yForce2 = yVelocityP * 2
+\
+\       zForce2 = zVelocityP * 2
+\
+\       (J I) = |yVelocityP| * 4
+\
+\       (SS RR) = max(|velocityP|) * 2 * ~yPlaneHi / 256
 \
 \ Arguments:
 \
@@ -26946,7 +27048,7 @@ NEXT
  LDY SS                 \ Set (Y X) = (SS RR)
  LDX RR                 \           = max(|velocityP|) * 2
 
- JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
+ JSR ScaleByAltitude    \ Set (Y X V) = (Y X) * ~yPlaneHi
                         \             = max(|velocityP|) * 2 * ~yPlaneHi
 
  STY SS                 \ Set (SS RR) = (Y X)
@@ -26986,6 +27088,8 @@ NEXT
 \       * The +/- sign is the sign of yTurn
 \
 \       * A = xTurnHi EOR #%00111111
+\
+\   * Set the the force factor for yForce2 according to the stalling state.
 \
 \ ******************************************************************************
 
@@ -27168,6 +27272,8 @@ NEXT
 \
 \   zForce2 = zVelocityP * 2 * maxv * ~yPlaneHi * 2
 \
+\   force3 = xForce2
+\
 \ where:
 \
 \   maxv = max(|xVelocityP|, |yVelocityP|, |zVelocityP|)
@@ -27182,15 +27288,15 @@ NEXT
 \
 \ ******************************************************************************
 
- JSR L54B9              \ Set the following:
+ JSR ApplyTorque        \ Set the following:
                         \
-                        \   xCoord6 = yForce2 - (xTurn * 250 / 256)
+                        \   xTorque = yForce2 - (xTurn * 250 / 256)
                         \           = yVelocityP * 2 - (xTurn * 250 / 256)
                         \
-                        \   yCoord6 = xForce2 - (yTurn * 250 / 256)
+                        \   yTorque = xForce2 - (yTurn * 250 / 256)
                         \           = xVelocityP * 2 - (yTurn * 250 / 256)
                         \
-                        \   zCoord6 = -zTurn * 2
+                        \   zTorque = -zTurn * 2
 
                         \ A reminder that we set the following in part 1:
                         \
@@ -27214,16 +27320,16 @@ NEXT
  BCS aero13
 
                         \ For X = 0 to 2, we now fetch the relevant axis of
-                        \ xCoord6, which we set above to:
+                        \ xTorque, which we set above to:
                         \
-                        \   xCoord6 = yVelocityP * 2 - (xTurn * 250 / 256)
+                        \   xTorque = yVelocityP * 2 - (xTurn * 250 / 256)
                         \
-                        \   yCoord6 = xVelocityP * 2 - (yTurn * 250 / 256)
+                        \   yTorque = xVelocityP * 2 - (yTurn * 250 / 256)
                         \
-                        \   zCoord6 = -zTurn * 2
+                        \   zTorque = -zTurn * 2
 
- LDY xCoord6Lo,X        \ Set (A Y) = xCoord6 (or yCoord6 or zCoord6)
- LDA xCoord6Hi,X
+ LDY xTorqueLo,X        \ Set (A Y) = xTorque (or yTorque or zTorque)
+ LDA xTorqueHi,X
 
  JMP aero14             \ Jump to aero14
 
@@ -27245,7 +27351,7 @@ NEXT
 
  STA J                  \ Set (J I) = (A Y)
  STY I                  \
-                        \           = xCoord6               for X = 0 to 2
+                        \           = xTorque               for X = 0 to 2
                         \
                         \             xVelocityP * 2        for X = 3 to 5
 
@@ -27259,7 +27365,7 @@ NEXT
                         \
                         \   (H G W) = (J I) * (S R)
                         \
-                        \        = xCoord6        * max(|velocityP|) * ~yPlaneHi
+                        \        = xTorque        * max(|velocityP|) * ~yPlaneHi
                         \
                         \          xVelocityP * 2 * max(|velocityP|) * ~yPlaneHi
 
@@ -27323,15 +27429,15 @@ NEXT
  BPL aero12             \ Loop back until we have set xForce1 through zForce2,
                         \ so we now have:
                         \
-                        \   xForce1 = xCoord6 * maxv * ~yPlaneHi * 2
+                        \   xForce1 = xTorque * maxv * ~yPlaneHi * 2
                         \           = (yVelocityP * 2 - (xTurn * 250 / 256))
                         \              * maxv * ~yPlaneHi * 2
                         \
-                        \   yForce1 = yCoord6 * maxv * ~yPlaneHi * 2
+                        \   yForce1 = yTorque * maxv * ~yPlaneHi * 2
                         \           = (xVelocityP * 2 - (yTurn * 250 / 256))
                         \              * maxv * ~yPlaneHi * 2
                         \
-                        \   zForce1 = zCoord6 * maxv * ~yPlaneHi * 2
+                        \   zForce1 = zTorque * maxv * ~yPlaneHi * 2
                         \           = -zTurn * 2 * maxv * ~yPlaneHi * 2
                         \
                         \   xForce2 = xVelocityP * 2 * maxv * ~yPlaneHi * 8
@@ -27442,6 +27548,16 @@ NEXT
 \ For each of the 11 flight forces, this routine calculates the following:
 \
 \   scaledForce = unscaledForce * forceFactor * 2 ^ scaleFactor
+\
+\ The 11 flight forces are:
+\
+\   * (xForce1, yForce1, zForce1)
+\   * (xForce2, yForce2, zForce2)
+\   * force3
+\   * force4
+\   * (xForce5, yForce5, zForce5)
+\
+\ The scaled results are stored in xForce1Sc, xForce2Sc and so on.
 \
 \ ******************************************************************************
 
@@ -27689,8 +27805,8 @@ NEXT
  STA G
 
  LDX Q                  \ If the original argument (Q P) was positive, the
- BPL L54B9-1            \ result already has the correct sign, so return from
-                        \ the subroutine (as L54B9-1 contains an RTS)
+ BPL ApplyTorque-1      \ result already has the correct sign, so return from
+                        \ the subroutine (as ApplyTorque-1 contains an RTS)
 
  LDA #0                 \ Otherwise we want to negate (G W V), so start with by
  SEC                    \ negating V
@@ -27737,7 +27853,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L54B9
+\       Name: ApplyTorque
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: 
@@ -27746,23 +27862,23 @@ NEXT
 \
 \ This routine calculates:
 \
-\   xCoord6 = yForce2 - (xTurn * 250 / 256)
+\   xTorque = yForce2 - (xTurn * 250 / 256)
 \
-\   yCoord6 = xForce2 - (yTurn * 250 / 256)
+\   yTorque = xForce2 - (yTurn * 250 / 256)
 \
-\   zCoord6 = -zTurn * 2
+\   zTorque = -zTurn * 2
 \
 \ Other entry points:
 \
-\   L54B9-1             Contains an RTS
+\   ApplyTorque-1       Contains an RTS
 \
 \ ******************************************************************************
 
-.L54B9
+.ApplyTorque
 
  LDX #1                 \ Set a counter in X to work through the x- and y-axes
 
-.L54BB
+.torq1
 
  LDA #125               \ Set R = 125
  STA R
@@ -27786,33 +27902,33 @@ NEXT
                         \ (so it's 0 for the x-axis and 1 for the y-axis)
 
  EOR #1                 \ Set Y to the opposite axis number to X, so when we are
- TAY                    \ calculating xCoord6 in the following and X = 0, Y = 1
+ TAY                    \ calculating xTorque in the following and X = 0, Y = 1
                         \ so we use yForce2, and when we are calculating
-                        \ yCoord6, X = 1 and Y = 0, so we use xForce2
+                        \ yTorque, X = 1 and Y = 0, so we use xForce2
 
- SEC                    \ Set xCoord6 = yForce2 - (G W)
+ SEC                    \ Set xTorque = yForce2 - (G W)
  LDA xForce2Lo,Y        \             = yForce2 - (xTurn * 250 / 256)
  SBC W
- STA xCoord6Lo,X
+ STA xTorqueLo,X
  LDA xForce2Hi,Y
  SBC G
- STA xCoord6Hi,X
+ STA xTorqueHi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
- BPL L54BB              \ Loop back until we have processed both axes
+ BPL torq1              \ Loop back until we have processed both axes
 
- SEC                    \ Set (A zCoord6Lo) = 0 - (zTurnHi zTurnLo)
+ SEC                    \ Set (A zTorqueLo) = 0 - (zTurnHi zTurnLo)
  LDA #0                 \                   = -zTurn
  SBC zTurnLo            \
- STA zCoord6Lo          \ starting with the high bytes
+ STA zTorqueLo          \ starting with the high bytes
 
  LDA #0                 \ And then the low bytes
  SBC zTurnHi
 
- ASL zCoord6Lo          \ Set (zCoord6Hi zCoord6Lo) = (A zCoord6Lo) << 1
+ ASL zTorqueLo          \ Set (zTorqueHi zTorqueLo) = (A zTorqueLo) << 1
  ROL A                  \                           = -zTurn * 2
- STA zCoord6Hi
+ STA zTorqueHi
 
  RTS                    \ Return from the subroutine
 
@@ -28317,7 +28433,7 @@ NEXT
 
 .L563A
 
- JSR ScaleAltitude      \ Set (Y X V) = (Y X) * ~yPlaneHi
+ JSR ScaleByAltitude    \ Set (Y X V) = (Y X) * ~yPlaneHi
                         \
                         \ so (Y X) = (Y X) * ~yPlaneHi / 256
                         \          = max(0, thrustScaled
@@ -28987,7 +29103,7 @@ NEXT
 .ApplyBumpyRide
 
  LDA zVelocityPHi       \ If zVelocityPHi is negative, return from the
- BMI ScaleAltitude-1    \ subroutine (as ScaleAltitude-1 contains an RTS)
+ BMI ScaleByAltitude-1  \ subroutine (as ScaleByAltitude-1 contains an RTS)
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44) which increments 1000 times a
@@ -29108,7 +29224,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ScaleAltitude
+\       Name: ScaleByAltitude
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Multiply the high byte of the plane's altitude by a 16-bit number
@@ -29129,11 +29245,11 @@ NEXT
 \
 \ Other entry points:
 \
-\   ScaleAltitude-1     Contains an RTS
+\   ScaleByAltitude-1     Contains an RTS
 \
 \ ******************************************************************************
 
-.ScaleAltitude
+.ScaleByAltitude
 
  STY Q                  \ Set (Q P) = (Y X)
  STX P
