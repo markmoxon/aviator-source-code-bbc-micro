@@ -25963,9 +25963,9 @@ NEXT
 \
 \       * Set the dxTurn vector as follows:
 \
-\           [ dxTurn ]   [ xForce1Sc ]   [ xForce5Sc ]   [ yGravity ]
-\           [ dyTurn ] = [ yForce1Sc ] + [ yForce5Sc ] + [     0    ]
-\           [ dzTurn ]   [ zForce1Sc ]   [ zForce5Sc ]   [     0    ]
+\         [ dxTurn ]   [ xForce1Sc ]   [ xForce5Sc ]   [ yGravity ]   [   0    ]
+\         [ dyTurn ] = [ yForce1Sc ] + [ yForce5Sc ] + [     0    ] - [   0    ]
+\         [ dzTurn ]   [ zForce1Sc ]   [ zForce5Sc ]   [     0    ]   [ force3 ]
 \
 \       * Set the allForces vector, depending on the turning moments and the
 \         forces from the engine:
@@ -27579,15 +27579,15 @@ NEXT
                         \ iterate through all of them using an index in X that
                         \ goes from 12 to 0 while skipping over 8 and 9
 
-.L540A
+.scal1
 
- CPX #9                 \ If X <> 9, jump to L5410 to skip the following
- BNE L5410              \ instruction
+ CPX #9                 \ If X <> 9, jump to scal2 to skip the following
+ BNE scal2              \ instruction
 
  LDX #7                 \ If we get here then X = 9, so set X = 7 so we skip
                         \ indexes 8 and 9
 
-.L5410
+.scal2
 
  LDA forceFactor,X      \ Set R to the force factor for the X-th force
  STA R
@@ -27603,24 +27603,24 @@ NEXT
                         \ index
 
  CPX #4                 \ If X <> 4, skip the following section
- BNE L5434
+ BNE scal4
 
                         \ If we get here then X = 4, and the force factor for
                         \ yForce2 determines whether the plane is stalling (156)
                         \ or is in normal flight (39)
 
  TAY                    \ If the high byte of (A Y) * R is positive, then jump
- BPL L5429              \ to L5429 to skip the following instruction
+ BPL scal3              \ to scal3 to skip the following instruction
 
  EOR #&FF               \ Set A = ~A, so A now contains the high byte of the
                         \ 24-bit result, flipped, so it contains:
                         \
                         \   |A Y| * R / 512
                         
-.L5429
+.scal3
 
- CMP #8                 \ If A < 8, jump to L5434 to skip the next three
- BCC L5434              \ instructions
+ CMP #8                 \ If A < 8, jump to scal4 to skip the next three
+ BCC scal4              \ instructions
 
                         \ If we get here then A >= 8, so:
                         \
@@ -27639,7 +27639,7 @@ NEXT
  LDX #4                 \ Set X = 4 once again, as it will have been corrupted
                         \ by the call to MakeSound
 
-.L5434
+.scal4
 
  LDY scaleFactor,X      \ Set Y = the X-th entry in the scaleFactor table, which
                         \ contains the number of places to shift the result,
@@ -27650,10 +27650,10 @@ NEXT
                         \ In other words, we multiply the result in (G W V) by
                         \ 2^scaleFactor, where scaleFactor is a signed integer
 
- BEQ L545B              \ If the entry is zero, jump to L545B to write the
+ BEQ scal7              \ If the entry is zero, jump to scal7 to write the
                         \ result to the scaled force
 
- BPL L5452              \ If the entry is positive, jump to L5452 to shift the
+ BPL scal6              \ If the entry is positive, jump to scal6 to shift the
                         \ result to the left
 
                         \ If we get here then the entry is negative, so we shift
@@ -27663,10 +27663,10 @@ NEXT
  STA R                  \ when right-shifting (G W V)
 
  LDA G                  \ If the high byte in G is negative, decrement R to &FF
- BPL L5445              \ so it feeds in bits of the correct sign
+ BPL scal5              \ so it feeds in bits of the correct sign
  DEC R
 
-.L5445
+.scal5
 
  LSR R                  \ Shift (G W V) right by one place, shifting in bits
  ROR G                  \ from R into G
@@ -27675,11 +27675,11 @@ NEXT
 
  INY                    \ Increment the shift counter
 
- BNE L5445              \ Loop back until we have shifted right by -Y places
+ BNE scal5              \ Loop back until we have shifted right by -Y places
 
- BEQ L545B              \ Jump to L545B to write the result to the scaled force
+ BEQ scal7              \ Jump to scal7 to write the result to the scaled force
 
-.L5452
+.scal6
 
  ASL V                  \ Shift (G W V) left by one place
  ROL W
@@ -27687,9 +27687,9 @@ NEXT
 
  DEY                    \ Increment the shift counter
 
- BNE L5452              \ Loop back until we have shifted left by Y places
+ BNE scal6              \ Loop back until we have shifted left by Y places
 
-.L545B
+.scal7
 
  LDA G                  \ Set (xForce1ScTop xForce1ScHi xForce1ScLo) = (G W V)
  STA xForce1ScTop,X     \
@@ -27701,7 +27701,7 @@ NEXT
  DEX                    \ Decrement the loop counter to move to the next flight
                         \ factor
 
- BPL L540A              \ Loop back until we have processed all 13 flight
+ BPL scal1              \ Loop back until we have processed all 13 flight
                         \ factors
 
  RTS                    \ Return from the subroutine
@@ -28168,9 +28168,9 @@ NEXT
 \
 \ This part of the routine calculates the following:
 \
-\   [ dxTurn ]   [ xForce1Sc ]   [ xForce5Sc ]   [ yGravity ]
-\   [ dyTurn ] = [ yForce1Sc ] + [ yForce5Sc ] + [     0    ]
-\   [ dzTurn ]   [ zForce1Sc ]   [ zForce5Sc ]   [     0    ]
+\   [ dxTurn ]   [ xForce1Sc ]   [ xForce5Sc ]   [ yGravity ]   [   0    ]
+\   [ dyTurn ] = [ yForce1Sc ] + [ yForce5Sc ] + [     0    ] - [   0    ]
+\   [ dzTurn ]   [ zForce1Sc ]   [ zForce5Sc ]   [     0    ]   [ force3 ]
 \
 \ Arguments:
 \
@@ -28187,7 +28187,7 @@ NEXT
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
 
-.L555F
+.turn1
 
  LDA xForce1ScLo,X      \ Set dxTurn = xForce1Sc + xForce5Sc
  CLC                    \
@@ -28204,7 +28204,7 @@ NEXT
  
  DEX                    \ Decrement the loop counter to move to the next axis
  
- BPL L555F              \ Loop back until we have added all three axes, so we
+ BPL turn1              \ Loop back until we have added all three axes, so we
                         \ now have the following, where all values are 24-bit
                         \ numbers:
                         \
@@ -28229,10 +28229,10 @@ NEXT
 
  LDA yGravityHi         \ Set A to the high byte of yGravity
 
- BPL L5593              \ If yGravityHi is negative, decrement S to &FF so it
+ BPL turn2              \ If yGravityHi is negative, decrement S to &FF so it
  DEC S                  \ has the correct sign for (S yGravityHi yGravityLo)
 
-.L5593
+.turn2
 
  ADC dxTurnHi           \ We then add the high bytes
  STA dxTurnHi
@@ -28311,7 +28311,7 @@ NEXT
  LDA zVelocityPHi       \ Set A to the high byte of the forward airspeed from
                         \ the perspective of the plane
 
- BMI L55F3              \ If it is negative, jump down to L55F3 to set A = 0 and
+ BMI turn3              \ If it is negative, jump down to turn3 to set A = 0 and
                         \ skip the following checks, as we only retract the
                         \ flaps if we are going to fast in a forward direction
 
@@ -28322,24 +28322,24 @@ NEXT
 
  PLA                    \ Retrieve the value of A from the stack
 
- CMP #48                \ If zVelocityPHi < 48, jump to L55F5
- BCC L55F5
+ CMP #48                \ If zVelocityPHi < 48, jump to turn4
+ BCC turn4
 
- LDA #234               \ Set A = 234 and jump to L5649 to set zAllForcesHi to
- BNE L5649              \ 234 and return from the subroutine (this BNE is
+ LDA #234               \ Set A = 234 and jump to turn10 to set zAllForcesHi to
+ BNE turn10             \ 234 and return from the subroutine (this BNE is
                         \ effectively a JMP as A is never zero)
 
-.L55F3
+.turn3
 
  LDA #0                 \ We jump here if the value of zVelocityPHi in A is
                         \ negative, in which case we set A = 0, so we now have:
                         \
                         \   A = max(0, zVelocityPHi)
 
-.L55F5
+.turn4
 
  LDX engineStatus       \ If engineStatus is zero, then the engine is not
- BEQ L5636              \ running, so jump to L5636 to set the forward force
+ BEQ turn8              \ running, so jump to turn8 to set the forward force
                         \ from the engine to zero
 
  STA H                  \ Set X = max(0, zVelocityPHi)
@@ -28351,14 +28351,14 @@ NEXT
  LDX #3                 \ Set X as a shift counter in the following loop, so we
                         \ shift right by 4 places
 
-.L5603
+.turn5
 
  LSR G                  \ Set (G A) = (G A) >> 1
  ROR A
 
  DEX                    \ Decrement the shift counter
 
- BPL L5603              \ Loop back until we have shifted right by X + 1 places,
+ BPL turn5              \ Loop back until we have shifted right by X + 1 places,
                         \ so:
                         \
                         \   (G A) = (G A) >> 4
@@ -28374,25 +28374,25 @@ NEXT
 
  LDX L                  \ Fetch the current value of onGround
 
- BEQ L562B              \ If onGround is zero then we are not on the ground, so
-                        \ jump to L562B
+ BEQ turn7              \ If onGround is zero then we are not on the ground, so
+                        \ jump to turn7
 
- CPY #4                 \ If thrustHi < 4, jump to L561E to skip the following
- BCC L561E              \ two instructions
+ CPY #4                 \ If thrustHi < 4, jump to turn6 to skip the following
+ BCC turn6              \ two instructions
 
  ASL A                  \ Set (R A) = (R A) << 1
  ROL R                  \   
                         \ so we double the value of (R A) if the thrust is >=
                         \ (4 0), i.e. >= 1024
 
-.L561E
+.turn6
 
- LDY H                  \ If max(0, zVelocityPHi) >= 4, jump to L562B to skip
+ LDY H                  \ If max(0, zVelocityPHi) >= 4, jump to turn7 to skip
  CPY #4                 \ the following
- BCS L562B
+ BCS turn7
 
- CPY #1                 \ If max(0, zVelocityPHi) < 1, jump to L562B to skip
- BCC L562B              \ the following
+ CPY #1                 \ If max(0, zVelocityPHi) < 1, jump to turn7 to skip
+ BCC turn7              \ the following
 
  ASL A                  \ Set (R A) = (R A) << 1
  ROL R                  \   
@@ -28409,7 +28409,7 @@ NEXT
                         \
                         \ Let's call this thrustScaled
 
-.L562B
+.turn7
 
  SEC                    \ Set (Y X) = (R A) - (G W)
  SBC W                  \           = thrustScaled - (max(0, zVelocityP) / 16)
@@ -28420,18 +28420,18 @@ NEXT
  SBC G
  TAY
 
- BPL L563A              \ If Y is positive, skip to L563A, otherwise keep going
+ BPL turn9              \ If Y is positive, skip to turn9, otherwise keep going
                         \ to set (Y X) = 0, so this means:
                         \
                         \   (Y X) = max(0, thrustScaled
                         \                  - (max(0, zVelocityP) / 16))
 
-.L5636
+.turn8
 
  LDY #0                 \ Set (Y X) = 0
  LDX #0
 
-.L563A
+.turn9
 
  JSR ScaleByAltitude    \ Set (Y X V) = (Y X) * ~yPlaneHi
                         \
@@ -28455,7 +28455,7 @@ NEXT
                         \              * ~yPlaneHi / 256
                         \              - zForce2Sc / 256
 
-.L5649
+.turn10
 
  STA zAllForcesHi       \ Store the high byte of the result in zAllForcesHi
 
