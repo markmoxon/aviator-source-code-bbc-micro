@@ -462,7 +462,7 @@ ORG &0400
  SKIP 252               \ The low byte of the z-coordinate for the point with
                         \ ID X is at zPointLo,X
 
-.zAllForcesLo
+.zAllLinearLo
 
  SKIP 1                 \ Low byte of point 252 (z-coordinate)
                         \
@@ -507,7 +507,7 @@ ORG &0900
  SKIP 252               \ The low byte of the x-coordinate for the point with
                         \ ID X is at xPointLo,X
 
-.xAllForcesLo
+.xAllLinearLo
 
  SKIP 1                 \ Low byte of point 252 (x-coordinate)
                         \
@@ -540,7 +540,7 @@ ORG &0900
  SKIP 252               \ The low byte of the y-coordinate for the point with
                         \ ID X is at yPointLo,X
 
-.yAllForcesLo
+.yAllLinearLo
 
  SKIP 1                 \ Low byte of point 252 (y-coordinate)
                         \
@@ -573,7 +573,7 @@ ORG &0900
  SKIP 252               \ The high byte of the y-coordinate for the point with
                         \ ID X is at yPointHi,X
 
-.yAllForcesHi
+.yAllLinearHi
 
  SKIP 1                 \ High byte of point 252 (y-coordinate)
                         \
@@ -775,49 +775,49 @@ ORG &0900
                         \
                         \ Shown on indicator 11
 
-.xForce1ScLo
+.xMomentsScLo
 
  SKIP 1
 
-.yForce1ScLo
+.yMomentsScLo
 
  SKIP 1
 
-.zForce1ScLo
+.zMomentsScLo
 
  SKIP 1
 
-.xForce2ScLo
+.xLiftDragScLo
 
  SKIP 1
 
-.yForce2ScLo
+.yLiftDragScLo
 
  SKIP 1
 
-.zForce2ScLo
+.zLiftDragScLo
 
  SKIP 1
 
-.force3ScLo
+.zSlipMomentScLo
 
  SKIP 1
 
-.force4ScLo
+.yFlapsLiftScLo
 
  SKIP 1
 
  SKIP 2                 \ These bytes appear to be unused
 
-.xForce5ScLo
+.xControlsScLo
 
  SKIP 1
 
-.yForce5ScLo
+.yControlsScLo
 
  SKIP 1
 
-.zForce5ScLo
+.zControlsScLo
 
  SKIP 1
 
@@ -852,145 +852,145 @@ ORG &0900
 
  SKIP 13
 
-.xForce1Lo
+.xMomentsLo
 
  SKIP 1
 
-.yForce1Lo
+.yMomentsLo
 
  SKIP 1
 
-.zForce1Lo
+.zMomentsLo
 
  SKIP 1
 
-.xForce2Lo
+.xLiftDragLo
 
  SKIP 1
 
-.yForce2Lo
+.yLiftDragLo
 
  SKIP 1
 
-.zForce2Lo
+.zLiftDragLo
 
  SKIP 1
 
-.force3Lo
+.zSlipMomentLo
 
  SKIP 1
 
-.force4Lo
+.yFlapsLiftLo
 
  SKIP 1
 
  SKIP 2                 \ These bytes appear to be unused
 
-.xForce5Lo
+.xControlsLo
 
  SKIP 1
 
-.yForce5Lo
+.yControlsLo
 
  SKIP 1
 
-.zForce5Lo
+.zControlsLo
 
  SKIP 1
 
  SKIP 3                 \ These bytes appear to be unused
 
-.xForce1Hi
+.xMomentsHi
 
  SKIP 1
 
-.yForce1Hi
+.yMomentsHi
 
  SKIP 1
 
-.zForce1Hi
+.zMomentsHi
 
  SKIP 1
 
-.xForce2Hi
+.xLiftDragHi
 
  SKIP 1
 
-.yForce2Hi
+.yLiftDragHi
 
  SKIP 1
 
-.zForce2Hi
+.zLiftDragHi
 
  SKIP 1
 
-.force3Hi
+.zSlipMomentHi
 
  SKIP 1
 
-.force4Hi
+.yFlapsLiftHi
 
  SKIP 1
 
  SKIP 2                 \ These bytes appear to be unused
 
-.xForce5Hi
+.xControlsHi
 
  SKIP 1
 
-.yForce5Hi
+.yControlsHi
 
  SKIP 1
 
-.zForce5Hi
+.zControlsHi
 
  SKIP 1
 
  SKIP 3                 \ These bytes appear to be unused
 
-.xForce1ScHi
+.xMomentsScHi
 
  SKIP 1
 
-.yForce1ScHi
+.yMomentsScHi
 
  SKIP 1
 
-.zForce1ScHi
+.zMomentsScHi
 
  SKIP 1
 
-.xForce2ScHi
+.xLiftDragScHi
 
  SKIP 1
 
-.yForce2ScHi
+.yLiftDragScHi
 
  SKIP 1
 
-.zForce2ScHi
+.zLiftDragScHi
 
  SKIP 1
 
-.force3ScHi
+.zSlipMomentScHi
 
  SKIP 1
 
-.force4ScHi
+.yFlapsLiftScHi
 
  SKIP 1
 
  SKIP 2                 \ These bytes appear to be unused
 
-.xForce5ScHi
+.xControlsScHi
 
  SKIP 1
 
-.yForce5ScHi
+.yControlsScHi
 
  SKIP 1
 
-.zForce5ScHi
+.zControlsScHi
 
  SKIP 1
 
@@ -1009,49 +1009,49 @@ ORG &0900
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in zPlaneHi
 
-.xForce1ScTop
+.xMomentsScTop
 
  SKIP 1
 
-.yForce1ScTop
+.yMomentsScTop
 
  SKIP 1
 
-.zForce1ScTop
+.zMomentsScTop
 
  SKIP 1
 
-.xForce2ScTop
+.xLiftDragScTop
 
  SKIP 1
 
-.yForce2ScTop
+.yLiftDragScTop
 
  SKIP 1
 
-.zForce2ScTop
+.zLiftDragScTop
 
  SKIP 1
 
-.force3ScTop
+.zSlipMomentScTop
 
  SKIP 1
 
-.force4ScTop
+.yFlapsLiftScTop
 
  SKIP 1
 
  SKIP 2                 \ These bytes appear to be unused
 
-.xForce5ScTop
+.xControlsScTop
 
  SKIP 1
 
-.yForce5ScTop
+.yControlsScTop
 
  SKIP 1
 
-.zForce5ScTop
+.zControlsScTop
 
  SKIP 1
 
@@ -11754,7 +11754,7 @@ ORG CODE%
 
 .IndicatorU
 
- LDA forceFactor+5      \ Set A to the force factor for zForce2
+ LDA forceFactor+5      \ Set A to the force factor for zLiftDrag
 
  LDY ucStatus           \ If ucStatus is non-zero then the undercarriage is
  BNE indu1              \ down, so jump to indu1
@@ -11796,7 +11796,7 @@ ORG CODE%
 
 .indu2
 
- STA forceFactor+5      \ Store A in the force factor for zForce2, so it is
+ STA forceFactor+5      \ Store A in the force factor for zLiftDrag, so it is
                         \ incremented by 10 when the undercarriage is down, and
                         \ reduced by 10 when the undercarriage is up
 
@@ -11838,7 +11838,7 @@ ORG CODE%
 
 .IndicatorF
 
- LDA forceFactor+5      \ Set A to the force factor for zForce2
+ LDA forceFactor+5      \ Set A to the force factor for zLiftDrag
  
  LDY flapsStatus        \ If flapsStatus is non-zero then the flaps are on, so
  BNE indf1              \ jump to indf1
@@ -11848,7 +11848,7 @@ ORG CODE%
  SEC                    \ Set A = A - 200
  SBC #200
 
- LDX #0                 \ Set X = 0 to store in the force factor for force4
+ LDX #0                 \ Set X = 0 to use as the force factor for yFlapsLift
                         \ below
 
  LDY #%01000100         \ Set Y to a four-pixel block with pixel 2 in white, to
@@ -11865,7 +11865,7 @@ ORG CODE%
  CLC                    \ Set A = A + 200
  ADC #200
 
- LDX #152               \ Set X = 152 to store in the force factor for force4
+ LDX #152               \ Set X = 152 to use as the force factor for yFlapsLift
                         \ below
 
  LDY #%11001100         \ Set Y to a four-pixel block with pixels 2 and 3 in
@@ -11874,12 +11874,12 @@ ORG CODE%
 
 .indf2
 
- STA forceFactor+5      \ Store A in the force factor for zForce2, so it is
+ STA forceFactor+5      \ Store A in the force factor for zLiftDrag, so it is
                         \ incremented by 200 when the flaps are on, and reduced
                         \ by 200 when the flaps are off
 
- STX forceFactor+7      \ Store X in the force factor for force4 (0 if flaps are
-                        \ off, 152 if they are on)
+ STX forceFactor+7      \ Store X in the force factor for yFlapsLift (0 if flaps
+                        \ are off, 152 if they are on)
 
  TYA                    \ Set A to the pixel pattern in Y
 
@@ -12412,7 +12412,7 @@ ORG CODE%
 
  STA alienSlot          \ Set alienSlot = 0
 
- STA forceFactor+7      \ Set the force factor for force4 = 0
+ STA forceFactor+7      \ Set the force factor for yFlapsLift = 0
 
  STA hitTimer           \ Set hitTimer = 0
 
@@ -12485,7 +12485,7 @@ ORG CODE%
 
  STA alienSpeed         \ Set alienSpeed = 10
 
- LDA #242               \ Set the force factor for zForce2 = 242
+ LDA #242               \ Set the force factor for zLiftDrag = 242
  STA forceFactor+5
 
  LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
@@ -19666,7 +19666,7 @@ ORG CODE%
  TAX                    \ Either turn the engine sound off (if A = 0) or turn it
  JSR ToggleEngineSound  \ on (if A is non-zero)
 
- LDA forceFactor+5      \ Set A to the force factor for zForce2
+ LDA forceFactor+5      \ Set A to the force factor for zLiftDrag
 
  LDX engineStatus       \ If the engine is now on, jump to seng1
  BNE seng1
@@ -19684,7 +19684,7 @@ ORG CODE%
 
 .seng2
 
- STA forceFactor+5      \ Update the force factor for zForce2
+ STA forceFactor+5      \ Update the force factor for zLiftDrag
 
 .seng3
 
@@ -21722,23 +21722,23 @@ NEXT
 
 .scaleFactor
 
- EQUB &00               \ xForce1 is scaled by 2^0  = 1
- EQUB &FE               \ yForce1 is scaled by 2^-2 = 1/4
- EQUB &FF               \ zForce1 is scaled by 2^-1 = 1/2
+ EQUB &00               \ xMoments is scaled by 2^0  = 1
+ EQUB &FE               \ yMoments is scaled by 2^-2 = 1/4
+ EQUB &FF               \ zMoments is scaled by 2^-1 = 1/2
 
- EQUB &01               \ xForce2 is scaled by 2^1  = 2
- EQUB &04               \ yForce2 is scaled by 2^4  = 16
- EQUB &00               \ zForce2 is scaled by 2^0  = 1
+ EQUB &01               \ xLiftDrag is scaled by 2^1  = 2
+ EQUB &04               \ yLiftDrag is scaled by 2^4  = 16
+ EQUB &00               \ zLiftDrag is scaled by 2^0  = 1
 
- EQUB &FB               \ force3 is scaled by 2^-5 = 1/32
- EQUB &02               \ force4 is scaled by 2^2  = 4
+ EQUB &FB               \ zSlipMoment is scaled by 2^-5 = 1/32
+ EQUB &02               \ yFlapsLift is scaled by 2^2  = 4
 
  EQUB &33               \ Unused
  EQUB &3A               \ Unused
 
- EQUB &FF               \ xForce5 is scaled by 2^-1 = 1/2
- EQUB &FE               \ yForce5 is scaled by 2^-2 = 1/4
- EQUB &FE               \ zForce5 is scaled by 2^-2 = 1/4
+ EQUB &FF               \ xControls is scaled by 2^-1 = 1/2
+ EQUB &FE               \ yControls is scaled by 2^-2 = 1/4
+ EQUB &FE               \ zControls is scaled by 2^-2 = 1/4
 
  EQUB &23, &31, &38     \ These bytes appear to be unused
 
@@ -23083,7 +23083,7 @@ NEXT
  EQUB &43, &3A, &41, &44, &43, &23, &34, &30
  EQUB &3A, &54, &41, &59
 
-.zAllForcesHi
+.zAllLinearHi
 
  EQUB &0D               \ High byte of point 252 (z-coordinate)
                         \
@@ -23162,7 +23162,7 @@ NEXT
  EQUB &3A, &53, &54, &41, &26, &37, &32, &0D
  EQUB &09, &CE, &1C, &20
 
-.xAllForcesHi
+.xAllLinearHi
 
  EQUB &20               \ High byte of point 252 (x-coordinate)
                         \
@@ -24820,7 +24820,7 @@ NEXT
  EQUB &DC, &00          \ Uses sound envelope 2
  EQUB &02, &00
 
- EQUB &13, &00          \ Sound #3: High-g situation (SOUND &13, -15, 120, 7)
+ EQUB &13, &00          \ Sound #3: High g-forces (SOUND &13, -15, 120, 7)
  EQUB &F1, &FF
  EQUB &78, &00          \ This sound is a long, medium beep that indicates the
  EQUB &07, &00          \ plane's wings are coming off
@@ -25154,21 +25154,21 @@ NEXT
 
 .forceFactor
 
- EQUB 212               \ xForce1 is scaled by 212 * 1
+ EQUB 212               \ xMoments is scaled by 212 * 1
 
- EQUB 201               \ yForce1 is scaled by 201 / 4
+ EQUB 201               \ yMoments is scaled by 201 / 4
 
- EQUB 204               \ zForce1 is scaled by 204 / 2
+ EQUB 204               \ zMoments is scaled by 204 / 2
 
- EQUB 176               \ xForce2 is scaled by 176 * 2
+ EQUB 176               \ xLiftDrag is scaled by 176 * 2
 
- EQUB 156               \ yForce2 is scaled as follows:
+ EQUB 156               \ yLiftDrag is scaled as follows:
                         \
                         \   * Scaled by 156 * 16 in normal flight
                         \
                         \   * Scaled by 39 * 16 when the plane is stalling
 
- EQUB 22                \ zForce2 is scaled as follows:
+ EQUB 22                \ zLiftDrag is scaled as follows:
                         \
                         \   * Default scaling is by 242
                         \     (undercarriage down, flaps off, engine off)
@@ -25184,9 +25184,9 @@ NEXT
                         \
                         \ This value is set to 242 in ResetVariables
 
- EQUB 40                \ force3 is scaled by 40 / 32
+ EQUB 40                \ zSlipMoment is scaled by 40 / 32
 
- EQUB 152               \ force4 is scaled as follows:
+ EQUB 152               \ yFlapsLift is scaled as follows:
                         \
                         \   * Scaled to 0 if flaps are off
                         \
@@ -25198,11 +25198,11 @@ NEXT
 
  EQUB 0                 \ Unused
 
- EQUB 255               \ xForce5 is scaled by 255 / 2
+ EQUB 255               \ xControls is scaled by 255 / 2
 
- EQUB 141               \ yForce5 is scaled by 141 / 4
+ EQUB 141               \ yControls is scaled by 141 / 4
 
- EQUB 190               \ zForce5 is scaled by 190 / 4
+ EQUB 190               \ zControls is scaled by 190 / 4
 
  EQUB &00, &05          \ These bytes appear to be unused
  EQUB &7D, &FF
@@ -25577,6 +25577,7 @@ NEXT
 \   Category: Flight model
 \    Summary: Apply the flight model to the plane, starting by calculating the
 \             effect of gravity and the undercarriage springs
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25702,6 +25703,7 @@ NEXT
 \   Category: Flight model
 \    Summary: Convert velocity to the plane's perspective and calculate various
 \             aerodynamic forces
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25738,40 +25740,40 @@ NEXT
 \
 \   * The same routine calculates various aerodynamic forces, as follows:
 \
-\       xForce1 = (yVelocityP * 2 - (xTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
+\       xMoments = (yVelocityP * 2 - (xTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
 \
-\       yForce1 = (xVelocityP * 2 - (yTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
+\       yMoments = (xVelocityP * 2 - (yTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
 \
-\       zForce1 = -zTurn * 2 * maxv * ~yPlaneHi * 2
+\       zMoments = -zTurn * 2 * maxv * ~yPlaneHi * 2
 \
-\       xForce2 = xVelocityP * 2 * maxv * ~yPlaneHi * 8
+\       xLiftDrag = xVelocityP * 2 * maxv * ~yPlaneHi * 8
 \
-\       yForce2 = yVelocityP * 2 * maxv * ~yPlaneHi * 8
+\       yLiftDrag = yVelocityP * 2 * maxv * ~yPlaneHi * 8
 \
-\       zForce2 = zVelocityP * 2 * maxv * ~yPlaneHi * 2
+\       zLiftDrag = zVelocityP * 2 * maxv * ~yPlaneHi * 2
 \
-\       force3 = xForce2
+\       zSlipMoment = xLiftDrag
 \
 \     where:
 \
 \       maxv = max(|xVelocityP|, |yVelocityP|, |zVelocityP|)
 \
-\     If zForce2 is positive we also do:
+\     If zLiftDrag is positive we also do:
 \
-\       force4 = zForce2
+\       yFlapsLift = zLiftDrag
 \
-\       xForce1 = xForce1 + (zForce2 * 8)       when the flaps are off
+\       xMoments = xMoments + (zLiftDrag * 8)       when the flaps are off
 \
-\                 xForce1 - (zForce2 * 4)       when the flaps are on
+\                  xMoments - (zLiftDrag * 4)       when the flaps are on
 \
 \   * Call the ApplyFlightControl routine to calculate the effects of the
 \     primary flight controls (elevator, rudder and ailerons), as follows:
 \
-\       xForce5 = zForce2 * elevatorPosition  (pitch)
+\       xControls = zLiftDrag * elevatorPosition  (pitch)
 \
-\       yForce5 = zForce2 * rudderPosition    (yaw)
+\       yControls = zLiftDrag * rudderPosition    (yaw)
 \
-\       zForce5 = zForce2 * aileronPosition   (roll)
+\       zControls = zLiftDrag * aileronPosition   (roll)
 \
 \     This routine also implements the "instant centre" feature.
 \
@@ -25782,13 +25784,13 @@ NEXT
 \
 \     where the forces are:
 \
-\       * (xForce1, yForce1, zForce1)
-\       * (xForce2, yForce2, zForce2)
-\       * force3
-\       * force4
-\       * (xForce5, yForce5, zForce5)
+\       * (xMoments, yMoments, zMoments)
+\       * (xLiftDrag, yLiftDrag, zLiftDrag)
+\       * zSlipMoment
+\       * yFlapsLift
+\       * (xControls, yControls, zControls)
 \
-\     The scaled results are stored in xForce1Sc, xForce2Sc and so on.
+\     The scaled results are stored in xMomentsSc, xLiftDragSc and so on.
 \
 \ ******************************************************************************
 
@@ -25866,13 +25868,15 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: If we are near to an exploding alien, apply turbulence
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part does the following:
 \
 \   * If we are near an exploding alien, calculate the amount of turbulence and
-\     apply it to the (xForce5Sc, yForce5Sc, zForce5Sc) vector, as follows:
+\     apply it to the (xControlsSc, yControlsSc, zControlsSc) vector, as
+\     follows:
 \
 \       * Set the level of turbulence in the range 0 to 1920, to be inversely
 \         proportional to the distance from the explosion (so it is 0 if we are
@@ -25881,11 +25885,11 @@ NEXT
 \       * We randomly add or subtract this amount from each axis (with each axis
 \         being individually signed randomly), to give:
 \
-\         xForce5Sc = xForce5Sc +/- turbulence / 2
+\         xControlsSc = xControlsSc +/- turbulence / 2
 \
-\         yForce5Sc = yForce5Sc +/- turbulence / 2
+\         yControlsSc = yControlsSc +/- turbulence / 2
 \
-\         zForce5Sc = zForce5Sc +/- turbulence / 2
+\         zControlsSc = zControlsSc +/- turbulence / 2
 \
 \ ******************************************************************************
 
@@ -25893,16 +25897,16 @@ NEXT
  BEQ fmod3              \ aliens, so jump to fmod3 to skip this part
 
                         \ We now apply turbulence to the plane by applying a
-                        \ random amount to xForce5Sc, yForce5Sc and zForce5Sc,
-                        \ with the random amount being positive or negative,
-                        \ and with a larger magnitude the closer we are to the
-                        \ alien
+                        \ random amount to xControlsSc, yControlsSc and
+                        \ zControlsSc, with the random amount being positive or
+                        \ negative, and with a larger magnitude the closer we
+                        \ are to the alien
 
  LDX #&6A               \ Set X so in the following loop, the call to AddScaled
-                        \ updates xForce5Sc, yForce5Sc and zForce5Sc, one on
-                        \ each iteration of the loop
+                        \ updates xControlsSc, yControlsSc and zControlsSc, one
+                        \ on each iteration of the loop
                         \
-                        \ The comments below are for xForce5Sc
+                        \ The comments below are for xControlsSc
 
 .fmod2
 
@@ -25934,16 +25938,16 @@ NEXT
                         \ (A 0) >> 2, which is in the range 0 to 1920, as
                         \ (30 0) >> 2 is 1920
 
- JSR AddScaled          \ Set xForce5Sc = xForce5Sc +/- (A 0) >> 2
+ JSR AddScaled          \ Set xControlsSc = xControlsSc +/- (A 0) >> 2
                         \
-                        \ So this changes xForce5Sc by an amount in the range
+                        \ So this changes xControlsSc by an amount in the range
                         \ 0 to 1920, with a higher amount the closer we are to
                         \ the exploding alien, with the sign being random (i.e.
                         \ it is random whether we add or subtract the amount,
                         \ but the amount itself is not random)
 
  INX                    \ Increment the value of X so the next iteration updates
-                        \ the next of xForce5Sc, yForce5Sc and zForce5Sc
+                        \ the next of xControlsSc, yControlsSc and zControlsSc
 
  CPX #&6D               \ Loop back until we have applied turbulence to all
  BNE fmod2              \ three axes
@@ -25953,7 +25957,8 @@ NEXT
 \       Name: ApplyFlightModel (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Calculate the dxTurn, allForces and slipRate variables
+\    Summary: Calculate the dxTurn, allLinear and slipRate variables
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25963,28 +25968,32 @@ NEXT
 \
 \       * Set the dxTurn vector as follows:
 \
-\         [ dxTurn ]   [ xForce1Sc ]   [ xForce5Sc ]   [ yGravity ]   [   0    ]
-\         [ dyTurn ] = [ yForce1Sc ] + [ yForce5Sc ] + [     0    ] - [   0    ]
-\         [ dzTurn ]   [ zForce1Sc ]   [ zForce5Sc ]   [     0    ]   [ force3 ]
+\         [ dxTurn ]   [ xMomentsSc ]   [ xControlsSc ]
+\         [ dyTurn ] = [ yMomentsSc ] + [ yControlsSc ]
+\         [ dzTurn ]   [ zMomentsSc ]   [ zControlsSc ]
 \
-\       * Set the allForces vector, depending on the turning moments and the
+\                      [  yGravity  ]   [      0      ]
+\                    + [      0     ] - [      0      ]
+\                      [      0     ]   [ zSlipMoment ]
+\
+\       * Set the allLinear vector, depending on the turning moments and the
 \         forces from the engine:
 \
-\           xAllForces = -xForce2Sc / 256
+\           xAllLinear = -xLiftDragSc / 256
 \
-\           yAllForces = (force4Sc - yForce2Sc) / 256
+\           yAllLinear = (yFlapsLiftSc - yLiftDragSc) / 256
 \
-\           zAllForces =
+\           zAllLinear =
 \
-\               (234 zAllForcesLo)                         if zVelocityPHi >= 48
+\               (234 zAllLinearLo)                         if zVelocityPHi >= 48
 \
-\                -zForce2Sc / 256                          if zVelocityPHi < 48
+\                -zLiftDragSc / 256                        if zVelocityPHi < 48
 \                                                          and engine is off
 \
 \                max(0, thrustScaled                       if zVelocityPHi < 48
 \                    - (max(0, zVelocityP) / 16))          and engine is on
 \                * ~yPlaneHi / 256
-\                - zForce2Sc / 256
+\                - zLiftDragSc / 256
 \
 \         where thrustScaled is the thrust in (thrustHi thrustLo), but:
 \
@@ -25996,21 +26005,21 @@ NEXT
 \
 \   * Set the slip rate shown on the slip indicator as follows:
 \
-\       slipRate = -int(xAllForces / 256)
+\       slipRate = -int(xAllLinear / 256)
 \
 \ ******************************************************************************
 
 .fmod3
 
- JSR ApplyTurnAndThrust \ Set the dxTurn and allForces vectors, depending on
+ JSR ApplyTurnAndThrust \ Set the dxTurn and allLinear vectors, depending on
                         \ the turning moments and the forces from the engine
 
- LDA xAllForcesLo       \ Set the C flag to bit 7 of xAllForcesLo, flipped, to
+ LDA xAllLinearLo       \ Set the C flag to bit 7 of xAllLinearLo, flipped, to
  EOR #%10000000         \ round the slip rate in the following calculation to
  ASL A                  \ the nearest integer
 
- LDA #0                 \ Set slipRate = 0 - xAllForcesHi - (1 - C)
- SBC xAllForcesHi       \              = -int(xAllForces / 256)
+ LDA #0                 \ Set slipRate = 0 - xAllLinearHi - (1 - C)
+ SBC xAllLinearHi       \              = -int(xAllLinear / 256)
  STA slipRate
 
 \ ******************************************************************************
@@ -26019,6 +26028,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Calculate the forces for when we are on the ground
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26039,7 +26049,7 @@ NEXT
 \             to the side velocity step below.
 \
 \           * If the plane is travelling forwards at a speed of 10 or less, set
-\             zAllForces = -256 and landingStatus = %01000000 and move to the
+\             zAllLinear = -256 and landingStatus = %01000000 and move to the
 \             side velocity step below.
 \
 \           * If the approach is good, the undercarriage is down and the brakes
@@ -26047,18 +26057,18 @@ NEXT
 \             below.
 \
 \           * Otherwise, set landingStatus = 0 and subtract the following from
-\             zAllForcesHi (from the least slowdown to the biggest slowdown):
+\             zAllLinearHi (from the least slowdown to the biggest slowdown):
 \
 \               * 7 if the approach is bad and:
 \                       undercarriage is down and brakes are off
 \
 \               * 11 if the approach is good and:
-\                       undercarriage is up x
-\                       or undercarriage is down and brakes are on x
+\                       undercarriage is up
+\                       or undercarriage is down and brakes are on
 \
 \               * 50 if the approach is bad and:
-\                       undercarriage is up x
-\                       or undercarriage is down and brakes are on x
+\                       undercarriage is up
+\                       or undercarriage is down and brakes are on
 \
 \               * 248 if the plane is going backwards (zVelocityP < 0)
 \
@@ -26071,9 +26081,9 @@ NEXT
 \
 \               * Having a bad approach
 \
-\       * Calculate the effect of side velocity on xAllForces:
+\       * Calculate the effect of side velocity on xAllLinear:
 \
-\           xAllForces  = -xVelocityPLo * 128
+\           xAllLinear  = -xVelocityPLo * 128
 \
 \ ******************************************************************************
 
@@ -26233,21 +26243,21 @@ NEXT
  BMI fmod12             \ A = 248
 
  BNE fmod13             \ If the plane is moving forwards, jump to fmod13 to
-                        \ subtract A from zAllForcesHi
+                        \ subtract A from zAllLinearHi
 
                         \ If we get here then zVelocityPHi = 0
 
  LDX zVelocityPLo       \ if the plane is stationary (i.e. both zVelocityPLo and
- BEQ fmod14             \ zVelocityPHi = 0), jump to fmod14 to leave zAllForces
+ BEQ fmod14             \ zVelocityPHi = 0), jump to fmod14 to leave zAllLinear
                         \ untouched and set landingStatus = 01000000
 
  CPX #11                \ If the plane is moving forwards at a speed of 11 or
- BCS fmod13             \ more, jump to fmod13 to subtract A from zAllForcesHi
+ BCS fmod13             \ more, jump to fmod13 to subtract A from zAllLinearHi
 
- LDA #0                 \ Set zAllForces = -256
- STA zAllForcesLo
+ LDA #0                 \ Set zAllLinear = -256
+ STA zAllLinearLo
  LDA #&FF
- STA zAllForcesHi
+ STA zAllLinearHi
 
  BNE fmod14             \ Jump to fmod14 to set landingStatus = 01000000 (this
                         \ BNE is effectively a JMP as A is never zero)
@@ -26266,7 +26276,7 @@ NEXT
                         \
                         \   * The plane is travelling forwards at a speed of 10
                         \     or less, in which case we already moved on with
-                        \     zAllForces = -256 and landingStatus = 01000000
+                        \     zAllLinear = -256 and landingStatus = 01000000
                         \
                         \   * The approach is good, the undercarriage is down,
                         \     the brakes are off, in which case we already moved
@@ -26287,13 +26297,13 @@ NEXT
                         \   * 7 if the approach is bad and:
                         \           undercarriage is down, brakes are off
                         \
-                        \ We now subtract the value of A from zAllForcesHi
+                        \ We now subtract the value of A from zAllLinearHi
 
- STA P                  \ Set zAllForcesHi = zAllForcesHi - A
+ STA P                  \ Set zAllLinearHi = zAllLinearHi - A
  SEC  
- LDA zAllForcesHi
+ LDA zAllLinearHi
  SBC P
- STA zAllForcesHi
+ STA zAllLinearHi
 
  JMP fmod15             \ Jump to fmod15 to set landingStatus = 0
 
@@ -26339,14 +26349,14 @@ NEXT
 
  TXA                    \ Set A = 0
 
- SEC                    \ Set xAllForces = (0 0) - (Q V)
+ SEC                    \ Set xAllLinear = (0 0) - (Q V)
  SBC V                  \                = -xVelocityPLo * 128
- STA xAllForcesLo       \
+ STA xAllLinearLo       \
                         \ starting with the low bytes
 
  TXA                    \ And then the high bytes
  SBC Q
- STA xAllForcesHi
+ STA xAllLinearHi
 
 \ ******************************************************************************
 \
@@ -26355,14 +26365,15 @@ NEXT
 \   Category: Flight model
 \    Summary: Adjust the plane's velocity and turn rate, rotate the plane
 \             according to the forces on the aircraft, process landing
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part does the following:
 \
-\   * Rotate (xAllForces, yAllForces, zAllForces) from the plane's frame of
+\   * Rotate (xAllLinear, yAllLinear, zAllLinear) from the plane's frame of
 \     reference to the outside world's frame of reference using matrix 2, then
-\     subtract 16 from yAllForcesHi and store the result in (dxVelocity,
+\     subtract 16 from yAllLinearHi and store the result in (dxVelocity,
 \     dyVelocity, dzVelocity).
 \
 \   * Call the AdjustVelocity routine to adjust the plane's velocity as follows:
@@ -26411,25 +26422,25 @@ NEXT
                         \ point from the plane's frame of reference to the
                         \ outside world's frame of reference
 
- LDA #252               \ Set GG to the ID of the allForces vector (which is
+ LDA #252               \ Set GG to the ID of the allLinear vector (which is
  STA GG                 \ stored in point 252), to pass to the call to
                         \ SetPointCoords
 
- JSR SetPointCoords     \ Calculate the coordinates of the allForces vector in
-                        \ (xAllForces, yAllForces, zAllForces)
+ JSR SetPointCoords     \ Calculate the coordinates of the allLinear vector in
+                        \ (xAllLinear, yAllLinear, zAllLinear)
 
- LDA yAllForcesHi       \ Set yAllForcesHi = yAllForcesHi - 16
+ LDA yAllLinearHi       \ Set yAllLinearHi = yAllLinearHi - 16
  SEC
  SBC #16
- STA yAllForcesHi
+ STA yAllLinearHi
 
  LDX #LO(dxVelocityLo)  \ Set X so the call to CopyPointToWork copies the
                         \ coordinates to (dxVelocity, dyVelocity, dzVelocity)
 
  LDY #252               \ Set Y so the call to CopyPointToWork copies the
-                        \ coordinates from the allForces vector (in point 252)
+                        \ coordinates from the allLinear vector (in point 252)
 
- JSR CopyPointToWork    \ Copy (xAllForces, yAllForces, zAllForces) to
+ JSR CopyPointToWork    \ Copy (xAllLinear, yAllLinear, zAllLinear) to
                         \ (dxVelocity, dyVelocity, dzVelocity)
 
  JSR AdjustVelocity     \ Adjust the plane's velocity as follows:
@@ -26504,6 +26515,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Calculate fuel usage
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26892,6 +26904,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Set up various variables to use in the aerodynamics calculations
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26899,11 +26912,11 @@ NEXT
 \
 \   * Set a number of variables that are used by the calculations in part 3:
 \
-\       xForce2 = xVelocityP * 2
+\       xLiftDrag = xVelocityP * 2
 \
-\       yForce2 = yVelocityP * 2
+\       yLiftDrag = yVelocityP * 2
 \
-\       zForce2 = zVelocityP * 2
+\       zLiftDrag = zVelocityP * 2
 \
 \       (J I) = |yVelocityP| * 4
 \
@@ -26939,12 +26952,12 @@ NEXT
  LDA xVelocityPLo,X     \ Set P = xVelocityPLo
  STA P
 
- ASL A                  \ Set xForce2 = xVelocityP << 1
- STA xForce2Lo,X        \             = xVelocityP * 2
+ ASL A                  \ Set xLiftDrag = xVelocityP << 1
+ STA xLiftDragLo,X      \             = xVelocityP * 2
  LDA xVelocityPHi,X     \
  PHA                    \ and push xVelocityPHi onto the stack
  ROL A
- STA xForce2Hi,X
+ STA xLiftDragHi,X
 
  PLA                    \ Set A = xVelocityPHi, so we have
                         \
@@ -27029,11 +27042,11 @@ NEXT
 
                         \ So we now have the following:
                         \
-                        \   xForce2 = xVelocityP * 2
+                        \   xLiftDrag = xVelocityP * 2
                         \
-                        \   yForce2 = yVelocityP * 2
+                        \   yLiftDrag = yVelocityP * 2
                         \
-                        \   zForce2 = zVelocityP * 2
+                        \   zLiftDrag = zVelocityP * 2
                         \
                         \   (J I) = |yVelocityP| * 4
                         \
@@ -27061,6 +27074,7 @@ NEXT
 \   Category: Flight model
 \    Summary: Check whether the plane is stalling, and if it is, simulate one
 \             wing stalling before the other, and make the stalling sound
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27089,15 +27103,15 @@ NEXT
 \
 \       * A = xTurnHi EOR #%00111111
 \
-\   * Set the the force factor for yForce2 according to the stalling state.
+\   * Set the the force factor for yLiftDrag according to the stalling state.
 \
 \ ******************************************************************************
 
                         \ In the following, we jump to aero9 to make the
                         \ stalling beep if both of these are true:
                         \
-                        \   * The force factor for yForce2 = 39, which indicates
-                        \     that we are already stalling
+                        \   * The force factor for yLiftDrag = 39, which
+                        \     indicates that we are already stalling
                         \
                         \   * zVelocityPHi < 11, which indicates that the
                         \     forward speed of the plane is too low to pull us
@@ -27108,7 +27122,7 @@ NEXT
                         \ jump straight to the part of the routine that makes
                         \ the stalling sound
 
- LDA forceFactor+4      \ If the force factor for yForce2 <> 39, skip the
+ LDA forceFactor+4      \ If the force factor for yLiftDrag <> 39, skip the
  CMP #39                \ following three instructions as we are not currently
  BNE aero6              \ stalling
 
@@ -27194,7 +27208,7 @@ NEXT
 
 .aero8
 
- LDA forceFactor+4      \ If the force factor for yForce2 = 39 then we are
+ LDA forceFactor+4      \ If the force factor for yLiftDrag = 39 then we are
  CMP #39                \ already stalling, so jump to aero9 to make the
  BEQ aero9              \ stalling sound without applying any roll
 
@@ -27234,18 +27248,18 @@ NEXT
  LDA #4                 \ Make sound #4, a short, low beep to indicate that the
  JSR MakeSound          \ plane is stalling
 
- LDA #39                \ Set A = 39 so that the force factor for yForce2 is set
- BNE aero11             \ to 39 below (this BNE is effectively a JMP as A is
+ LDA #39                \ Set A = 39 so that the force factor for yLiftDrag is
+ BNE aero11             \ set to 39 below (this BNE is effectively a JMP as A is
                         \ never zero)
 
 .aero10
 
- LDA #156               \ Set A = 156 so that the force factor for yForce2 is
+ LDA #156               \ Set A = 156 so that the force factor for yLiftDrag is
                         \ set to 156 below
 
 .aero11
 
- STA forceFactor+4      \ Set the force factor for yForce2 to the value in A,
+ STA forceFactor+4      \ Set the force factor for yLiftDrag to the value in A,
                         \ which will be either 39 (if we are stalling) or 156
                         \ (in normal flight)
 
@@ -27255,45 +27269,46 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Calculate various aerodynamic figures
+\  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part calculates the following:
 \
-\   xForce1 = (yVelocityP * 2 - (xTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
+\   xMoments = (yVelocityP * 2 - (xTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
 \
-\   yForce1 = (xVelocityP * 2 - (yTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
+\   yMoments = (xVelocityP * 2 - (yTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
 \
-\   zForce1 = -zTurn * 2 * maxv * ~yPlaneHi * 2
+\   zMoments = -zTurn * 2 * maxv * ~yPlaneHi * 2
 \
-\   xForce2 = xVelocityP * 2 * maxv * ~yPlaneHi * 8
+\   xLiftDrag = xVelocityP * 2 * maxv * ~yPlaneHi * 8
 \
-\   yForce2 = yVelocityP * 2 * maxv * ~yPlaneHi * 8
+\   yLiftDrag = yVelocityP * 2 * maxv * ~yPlaneHi * 8
 \
-\   zForce2 = zVelocityP * 2 * maxv * ~yPlaneHi * 2
+\   zLiftDrag = zVelocityP * 2 * maxv * ~yPlaneHi * 2
 \
-\   force3 = xForce2
+\   zSlipMoment = xLiftDrag
 \
 \ where:
 \
 \   maxv = max(|xVelocityP|, |yVelocityP|, |zVelocityP|)
 \
-\ If zForce2 is positive we also do:
+\ If zLiftDrag is positive we also do:
 \
-\   force4 = zForce2
+\   yFlapsLift = zLiftDrag
 \
-\   xForce1 = xForce1 + (zForce2 * 8)       when the flaps are off
+\   xMoments = xMoments + (zLiftDrag * 8)       when the flaps are off
 \
-\             xForce1 - (zForce2 * 4)       when the flaps are on
+\              xMoments - (zLiftDrag * 4)       when the flaps are on
 \
 \ ******************************************************************************
 
  JSR ApplyTorque        \ Set the following:
                         \
-                        \   xTorque = yForce2 - (xTurn * 250 / 256)
+                        \   xTorque = yLiftDrag - (xTurn * 250 / 256)
                         \           = yVelocityP * 2 - (xTurn * 250 / 256)
                         \
-                        \   yTorque = xForce2 - (yTurn * 250 / 256)
+                        \   yTorque = xLiftDrag - (yTurn * 250 / 256)
                         \           = xVelocityP * 2 - (yTurn * 250 / 256)
                         \
                         \   zTorque = -zTurn * 2
@@ -27336,16 +27351,16 @@ NEXT
 .aero13
 
                         \ For X = 3 to 5, we now fetch the relevant axis of
-                        \ xForce2, which we set above to:
+                        \ xLiftDrag, which we set above to:
                         \
-                        \   xForce2 = xVelocityP * 2
+                        \   xLiftDrag = xVelocityP * 2
                         \
-                        \   yForce2 = yVelocityP * 2
+                        \   yLiftDrag = yVelocityP * 2
                         \
-                        \   zForce2 = zVelocityP * 2
+                        \   zLiftDrag = zVelocityP * 2
 
- LDY xForce1Lo,X        \ Set (A Y) = xForce2 (or yForce2 or zForce2)
- LDA xForce1Hi,X
+ LDY xMomentsLo,X       \ Set (A Y) = xLiftDrag (or yLiftDrag or zLiftDrag)
+ LDA xMomentsHi,X
 
 .aero14
 
@@ -27420,31 +27435,31 @@ NEXT
                         \
                         \   (H A W) = (H A W) * 2       otherwise
 
- STA xForce1Lo,X        \ Set xForce1 or xForce2 = (H A)
+ STA xMomentsLo,X       \ Set xMoments or xLiftDrag = (H A)
  LDA H
- STA xForce1Hi,X
+ STA xMomentsHi,X
 
  DEX                    \ Decrement the loop counter to move onto the next 
 
- BPL aero12             \ Loop back until we have set xForce1 through zForce2,
-                        \ so we now have:
+ BPL aero12             \ Loop back until we have set xMoments to zMoments and
+                        \ xLiftDrag to zLiftDrag, so we now have:
                         \
-                        \   xForce1 = xTorque * maxv * ~yPlaneHi * 2
-                        \           = (yVelocityP * 2 - (xTurn * 250 / 256))
-                        \              * maxv * ~yPlaneHi * 2
+                        \   xMoments = xTorque * maxv * ~yPlaneHi * 2
+                        \            = (yVelocityP * 2 - (xTurn * 250 / 256))
+                        \               * maxv * ~yPlaneHi * 2
                         \
-                        \   yForce1 = yTorque * maxv * ~yPlaneHi * 2
-                        \           = (xVelocityP * 2 - (yTurn * 250 / 256))
-                        \              * maxv * ~yPlaneHi * 2
+                        \   yMoments = yTorque * maxv * ~yPlaneHi * 2
+                        \            = (xVelocityP * 2 - (yTurn * 250 / 256))
+                        \               * maxv * ~yPlaneHi * 2
                         \
-                        \   zForce1 = zTorque * maxv * ~yPlaneHi * 2
-                        \           = -zTurn * 2 * maxv * ~yPlaneHi * 2
+                        \   zMoments = zTorque * maxv * ~yPlaneHi * 2
+                        \            = -zTurn * 2 * maxv * ~yPlaneHi * 2
                         \
-                        \   xForce2 = xVelocityP * 2 * maxv * ~yPlaneHi * 8
+                        \   xLiftDrag = xVelocityP * 2 * maxv * ~yPlaneHi * 8
                         \
-                        \   yForce2 = yVelocityP * 2 * maxv * ~yPlaneHi * 8
+                        \   yLiftDrag = yVelocityP * 2 * maxv * ~yPlaneHi * 8
                         \
-                        \   zForce2 = zVelocityP * 2 * maxv * ~yPlaneHi * 2
+                        \   zLiftDrag = zVelocityP * 2 * maxv * ~yPlaneHi * 2
                         \
                         \ where:
                         \
@@ -27453,23 +27468,23 @@ NEXT
  LDA #128               \ Change the rounding in Multiply16x16Mix back to the
  STA mult1+1            \ default, so it rounds to the nearest integer
 
- LDA xForce2Lo          \ Set force3 = xForce2
- STA force3Lo
- LDA xForce2Hi
- STA force3Hi
+ LDA xLiftDragLo        \ Set zSlipMoment = xLiftDrag
+ STA zSlipMomentLo
+ LDA xLiftDragHi
+ STA zSlipMomentHi
 
- LDA zForce2Hi          \ If zForce2 is negative, jump to aero19 to return
+ LDA zLiftDragHi        \ If zLiftDrag is negative, jump to aero19 to return
  BMI aero19             \ from the subroutine
 
-                        \ If zForce2 is positive, then we now move on to set
-                        \ force4 and xForce1
+                        \ If zLiftDrag is positive, then we now move on to set
+                        \ yFlapsLift and xMoments
 
  STA W                  \ Set the following:
- STA force4Hi           \
- LDA #0                 \   (G W A) = (0 zForce2Hi zForce2Lo)
- STA G                  \           = zForce2
- LDA zForce2Lo          \
- STA force4Lo           \   force4 = zForce2
+ STA yFlapsLiftHi       \
+ LDA #0                 \   (G W A) = (0 zLiftDragHi zLiftDragLo)
+ STA G                  \           = zLiftDrag
+ LDA zLiftDragLo        \
+ STA yFlapsLiftLo       \   yFlapsLift = zLiftDrag
 
  LDX #2                 \ Set X = 2 to act as a shift counter in the loop below,
                         \ so by default it shifts the result left by 3 places
@@ -27487,9 +27502,9 @@ NEXT
 
                         \ We now shift (G W A) left by X + 1 places, so that's:
                         \
-                        \   (G W A) = zForce2 << 3 if the flaps are off
+                        \   (G W A) = zLiftDrag << 3 if the flaps are off
                         \
-                        \   (G W A) = zForce2 << 2 if the flaps are on
+                        \   (G W A) = zLiftDrag << 2 if the flaps are on
 
 .aero17
 
@@ -27511,26 +27526,27 @@ NEXT
 
                         \ We now have the following:
                         \
-                        \   (G W A) = zForce2 << 3 if the flaps are off
+                        \   (G W A) = zLiftDrag << 3 if the flaps are off
                         \
-                        \   (G W A) = -zForce2 << 2 if the flaps are on
+                        \   (G W A) = -zLiftDrag << 2 if the flaps are on
 
- CLC                    \ Set xForce1 = xForce1 + (G W)
+ CLC                    \ Set xMoments = xMoments + (G W)
  LDA W                  \
- ADC xForce1Lo          \ starting with the low bytes
- STA xForce1Lo
+ ADC xMomentsLo         \ starting with the low bytes
+ STA xMomentsLo
 
  LDA G                  \ And then the high bytes
- ADC xForce1Hi
- STA xForce1Hi
+ ADC xMomentsHi
+ STA xMomentsHi
 
-                        \ So if zForce2 is negative, we now have the following:
+                        \ So if zLiftDrag is negative, we now have the
+                        \ following:
                         \
-                        \   xForce1 = xForce1 + zForce2 << 3      when the flaps
-                        \           = xForce1 + (zForce2 * 8)            are off
+                        \   xMoments = xMoments + zLiftDrag << 3  when the flaps
+                        \            = xMoments + (zLiftDrag * 8)        are off
                         \
-                        \   xForce1 = xForce1 - zForce2 << 2      when the flaps
-                        \           = xForce1 - (zForce2 * 4)             are on
+                        \   xMoments = xMoments - zLiftDrag << 2  when the flaps
+                        \            = xMoments - (zLiftDrag * 4)         are on
 
 .aero19
 
@@ -27551,13 +27567,18 @@ NEXT
 \
 \ The 11 flight forces are:
 \
-\   * (xForce1, yForce1, zForce1)
-\   * (xForce2, yForce2, zForce2)
-\   * force3
-\   * force4
-\   * (xForce5, yForce5, zForce5)
+\   * (xMoments, yMoments, zMoments)
+\   * (xLiftDrag, yLiftDrag, zLiftDrag)
+\   * zSlipMoment
+\   * yFlapsLift
+\   * (xControls, yControls, zControls)
 \
-\ The scaled results are stored in xForce1Sc, xForce2Sc and so on.
+\ The scaled results are stored in xMomentsSc, xLiftDragSc and so on.
+\
+\ This routine also tests for high g-forces, which occur if:
+\
+\   |yLiftDrag| >= 4096 / 39 = 105      if we are stalling
+\                  4096 / 156 = 26      if we are not stalling
 \
 \ ******************************************************************************
 
@@ -27567,13 +27588,13 @@ NEXT
                         \ forces, so set a counter in X to act as an index into
                         \ these three tables:
                         \
-                        \   * The unscaled forces from xForce1 to zForce5
+                        \   * The unscaled forces from xMoments to zControls
                         \
                         \   * The forceFactor table
                         \
                         \   * The scaleFactor table
                         \
-                        \   * The scaled forces from xForce1Sc to zForce5Sc
+                        \   * The scaled forces from xMomentsSc to zControlsSc
                         \
                         \ These three tables have the same structure, so we can
                         \ iterate through all of them using an index in X that
@@ -27592,8 +27613,8 @@ NEXT
  LDA forceFactor,X      \ Set R to the force factor for the X-th force
  STA R
 
- LDY xForce1Lo,X        \ Set (A Y) to the X-th unscaled force
- LDA xForce1Hi,X
+ LDY xMomentsLo,X       \ Set (A Y) to the X-th unscaled force
+ LDA xMomentsHi,X
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
                         \
@@ -27606,8 +27627,8 @@ NEXT
  BNE scal4
 
                         \ If we get here then X = 4, and the force factor for
-                        \ yForce2 determines whether the plane is stalling (156)
-                        \ or is in normal flight (39)
+                        \ yLiftDrag determines whether the plane is stalling
+                        \ (156) or is in normal flight (39)
 
  TAY                    \ If the high byte of (A Y) * R is positive, then jump
  BPL scal3              \ to scal3 to skip the following instruction
@@ -27631,10 +27652,10 @@ NEXT
                         \   |A Y| >= 4096 / 39 = 105 if we are stalling
                         \            4096 / 156 = 26 if we are not stalling
                         \
-                        \ where |A Y| = |yForce2|
+                        \ where |A Y| = |yLiftDrag|
 
- LDA #3                 \ Make sound #3, a long, medium beep that indicates a
- JSR MakeSound          \ high-g situation, with the wings coming off
+ LDA #3                 \ Make sound #3, a long, medium beep that indicates high
+ JSR MakeSound          \ g-forces are ripping the wings off
 
  LDX #4                 \ Set X = 4 once again, as it will have been corrupted
                         \ by the call to MakeSound
@@ -27691,12 +27712,13 @@ NEXT
 
 .scal7
 
- LDA G                  \ Set (xForce1ScTop xForce1ScHi xForce1ScLo) = (G W V)
- STA xForce1ScTop,X     \
- LDA W                  \ So scaledForce = unscaledForce * forceFactor
- STA xForce1ScHi,X      \                                * 2 ^ scaleFactor
- LDA V
- STA xForce1ScLo,X
+ LDA G                  \ Set (xMomentsScTop xMomentsScHi xMomentsScLo)
+ STA xMomentsScTop,X    \                                          = (G W V)
+ LDA W                  \
+ STA xMomentsScHi,X     \ so we have:
+ LDA V                  \
+ STA xMomentsScLo,X     \   scaledForce = unscaledForce * forceFactor
+                        \                               * 2 ^ scaleFactor
 
  DEX                    \ Decrement the loop counter to move to the next flight
                         \ factor
@@ -27856,15 +27878,15 @@ NEXT
 \       Name: ApplyTorque
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: 
+\    Summary: Calculate the torque due to the current pitch, roll and yaw rates
 \
 \ ------------------------------------------------------------------------------
 \
 \ This routine calculates:
 \
-\   xTorque = yForce2 - (xTurn * 250 / 256)
+\   xTorque = yLiftDrag - (xTurn * 250 / 256)
 \
-\   yTorque = xForce2 - (yTurn * 250 / 256)
+\   yTorque = xLiftDrag - (yTurn * 250 / 256)
 \
 \   zTorque = -zTurn * 2
 \
@@ -27903,14 +27925,14 @@ NEXT
 
  EOR #1                 \ Set Y to the opposite axis number to X, so when we are
  TAY                    \ calculating xTorque in the following and X = 0, Y = 1
-                        \ so we use yForce2, and when we are calculating
-                        \ yTorque, X = 1 and Y = 0, so we use xForce2
+                        \ so we use yLiftDrag, and when we are calculating
+                        \ yTorque, X = 1 and Y = 0, so we use xLiftDrag
 
- SEC                    \ Set xTorque = yForce2 - (G W)
- LDA xForce2Lo,Y        \             = yForce2 - (xTurn * 250 / 256)
+ SEC                    \ Set xTorque = yLiftDrag - (G W)
+ LDA xLiftDragLo,Y      \             = yLiftDrag - (xTurn * 250 / 256)
  SBC W
  STA xTorqueLo,X
- LDA xForce2Hi,Y
+ LDA xLiftDragHi,Y
  SBC G
  STA xTorqueHi,X
 
@@ -27945,11 +27967,11 @@ NEXT
 \ This routine sets the following, depending on the current position of each
 \ primary flight control:
 \
-\   xForce5 = zForce2 * elevatorPosition  (pitch)
+\   xControls = zLiftDrag * elevatorPosition  (pitch)
 \
-\   yForce5 = zForce2 * rudderPosition    (yaw)
+\   yControls = zLiftDrag * rudderPosition    (yaw)
 \
-\   zForce5 = zForce2 * aileronPosition   (roll)
+\   zControls = zLiftDrag * aileronPosition   (roll)
 \
 \ It also implements the "instant centre" feature for the aileron (roll) and
 \ the ground steering controls (the latter is controlled by using the rudder
@@ -28116,13 +28138,13 @@ NEXT
  STA R                  \ Set R = |A|
                         \       = |controlPosition|
 
- LDY zForce2Lo          \ Set (A Y) = zForce2
- LDA zForce2Hi
+ LDY zLiftDragLo        \ Set (A Y) = zLiftDrag
+ LDA zLiftDragHi
 
  JSR Multiply8x16-6     \ Store X in VV and set:
                         \
                         \   (G W V) = (A Y) * R
-                        \           = zForce2 * |controlPosition|
+                        \           = zLiftDrag * |controlPosition|
                         \
                         \ Also set A to the high byte of the result, so (A W V)
                         \ also contains the result
@@ -28137,13 +28159,13 @@ NEXT
  JSR Negate16Bit        \ contains the negated result, so we now have the
                         \ following:
                         \
-                        \   (A W V) = zForce2 * controlPosition
+                        \   (A W V) = zLiftDrag * controlPosition
 
 .fcon9
 
- STA xForce5Hi,X        \ Set xForce5 = (A W)
- LDA W                  \             = zForce2 * controlPosition
- STA xForce5Lo,X
+ STA xControlsHi,X      \ Set xControls = (A W)
+ LDA W                  \             = zLiftDrag * controlPosition
+ STA xControlsLo,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
@@ -28168,9 +28190,13 @@ NEXT
 \
 \ This part of the routine calculates the following:
 \
-\   [ dxTurn ]   [ xForce1Sc ]   [ xForce5Sc ]   [ yGravity ]   [   0    ]
-\   [ dyTurn ] = [ yForce1Sc ] + [ yForce5Sc ] + [     0    ] - [   0    ]
-\   [ dzTurn ]   [ zForce1Sc ]   [ zForce5Sc ]   [     0    ]   [ force3 ]
+\   [ dxTurn ]   [ xMomentsSc ]   [ xControlsSc ]
+\   [ dyTurn ] = [ yMomentsSc ] + [ yControlsSc ]
+\   [ dzTurn ]   [ zMomentsSc ]   [ zControlsSc ]
+\
+\                [  yGravity  ]   [      0      ]
+\              + [      0     ] - [      0      ]
+\                [      0     ]   [ zSlipMoment ]
 \
 \ Arguments:
 \
@@ -28189,17 +28215,17 @@ NEXT
 
 .turn1
 
- LDA xForce1ScLo,X      \ Set dxTurn = xForce1Sc + xForce5Sc
+ LDA xMomentsScLo,X     \ Set dxTurn = xMomentsSc + xControlsSc
  CLC                    \
- ADC xForce5ScLo,X      \ starting with the low bytes
+ ADC xControlsScLo,X    \ starting with the low bytes
  STA dxTurnLo,X
  
- LDA xForce1ScHi,X      \ And then the high bytes
- ADC xForce5ScHi,X
+ LDA xMomentsScHi,X     \ And then the high bytes
+ ADC xControlsScHi,X
  STA dxTurnHi,X
  
- LDA xForce1ScTop,X     \ And then the top bytes
- ADC xForce5ScTop,X
+ LDA xMomentsScTop,X    \ And then the top bytes
+ ADC xControlsScTop,X
  STA dxTurnTop,X
  
  DEX                    \ Decrement the loop counter to move to the next axis
@@ -28208,9 +28234,9 @@ NEXT
                         \ now have the following, where all values are 24-bit
                         \ numbers:
                         \
-                        \   dxTurn = xForce1Sc + xForce5Sc
-                        \   dyTurn = yForce1Sc + yForce5Sc
-                        \   dzTurn = zForce1Sc + zForce5Sc
+                        \   dxTurn = xMomentsSc + xControlsSc
+                        \   dyTurn = yMomentsSc + yControlsSc
+                        \   dzTurn = zMomentsSc + zControlsSc
 
  LDA #0                 \ Set S = 0, to use as the top byte of yGravity
  STA S
@@ -28241,17 +28267,17 @@ NEXT
  ADC S                  \
  STA dxTurnTop          \   dxTurn = dxTurn + yGravity
 
- SEC                    \ Set dzTurn = dzTurn - force3Sc
+ SEC                    \ Set dzTurn = dzTurn - zSlipMomentSc
  LDA dzTurnLo           \
- SBC force3ScLo         \ starting with the low bytes
+ SBC zSlipMomentScLo    \ starting with the low bytes
  STA dzTurnLo
 
  LDA dzTurnHi           \ And then the high bytes
- SBC force3ScHi
+ SBC zSlipMomentScHi
  STA dzTurnHi
 
  LDA dzTurnTop          \ And then the top bytes
- SBC force3ScTop
+ SBC zSlipMomentScTop
  STA dzTurnTop
 
 \ ******************************************************************************
@@ -28259,25 +28285,25 @@ NEXT
 \       Name: ApplyTurnAndThrust (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Calculate the (xAllForces, yAllForces, zAllForces) vector
+\    Summary: Calculate the (xAllLinear, yAllLinear, zAllLinear) vector
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part of the routine calculates the following:
 \
-\   xAllForces = -xForce2Sc / 256
+\   xAllLinear = -xLiftDragSc / 256
 \
-\   yAllForces = (force4Sc - yForce2Sc) / 256
+\   yAllLinear = (yFlapsLiftSc - yLiftDragSc) / 256
 \
-\   zAllForces = (234 zAllForcesLo)                        if zVelocityPHi >= 48
+\   zAllLinear = (234 zAllLinearLo)                        if zVelocityPHi >= 48
 \
-\                -zForce2Sc / 256                          if zVelocityPHi < 48
+\                -zLiftDragSc / 256                        if zVelocityPHi < 48
 \                                                          and engine is off
 \
 \                max(0, thrustScaled                       if zVelocityPHi < 48
 \                    - (max(0, zVelocityP) / 16))          and engine is on
 \                * ~yPlaneHi / 256
-\                - zForce2Sc / 256
+\                - zLiftDragSc / 256
 \
 \ where thrustScaled is the thrust in (thrustHi thrustLo), but:
 \
@@ -28290,23 +28316,23 @@ NEXT
 \
 \ ******************************************************************************
 
- SEC                    \ Set xAllForces = -xForce2Sc / 256
+ SEC                    \ Set xAllLinear = -xLiftDragSc / 256
  LDA #0                 \
- SBC xForce2ScHi        \ starting with the low bytes
- STA xAllForcesLo
+ SBC xLiftDragScHi      \ starting with the low bytes
+ STA xAllLinearLo
 
  LDA #0                 \ And then the high bytes
- SBC xForce2ScTop
- STA xAllForcesHi
+ SBC xLiftDragScTop
+ STA xAllLinearHi
 
- SEC                    \ Set yAllForces = (force4Sc - yForce2Sc) / 256
- LDA force4ScHi         \
- SBC yForce2ScHi        \ starting with the low bytes
- STA yAllForcesLo
+ SEC                    \ Set yAllLinear = (yFlapsLiftSc - yLiftDragSc) / 256
+ LDA yFlapsLiftScHi     \
+ SBC yLiftDragScHi      \ starting with the low bytes
+ STA yAllLinearLo
 
- LDA force4ScTop        \ And then the high bytes
- SBC yForce2ScTop
- STA yAllForcesHi
+ LDA yFlapsLiftScTop    \ And then the high bytes
+ SBC yLiftDragScTop
+ STA yAllLinearHi
 
  LDA zVelocityPHi       \ Set A to the high byte of the forward airspeed from
                         \ the perspective of the plane
@@ -28325,7 +28351,7 @@ NEXT
  CMP #48                \ If zVelocityPHi < 48, jump to turn4
  BCC turn4
 
- LDA #234               \ Set A = 234 and jump to turn10 to set zAllForcesHi to
+ LDA #234               \ Set A = 234 and jump to turn10 to set zAllLinearHi to
  BNE turn10             \ 234 and return from the subroutine (this BNE is
                         \ effectively a JMP as A is never zero)
 
@@ -28442,22 +28468,22 @@ NEXT
                         \
                         \ or (Y X) = 0 if the engine is off
 
- TXA                    \ Set zAllForces = (Y X) - zForce2Sc / 256
+ TXA                    \ Set zAllLinear = (Y X) - zLiftDragSc / 256
  SEC                    \
- SBC zForce2ScHi        \ starting with the low bytes
- STA zAllForcesLo
+ SBC zLiftDragScHi      \ starting with the low bytes
+ STA zAllLinearLo
 
  TYA                    \ And then the high bytes, so now we have the following
- SBC zForce2ScTop       \ when the engine is on:
+ SBC zLiftDragScTop     \ when the engine is on:
                         \
-                        \ zAllForces = max(0, thrustScaled
+                        \ zAllLinear = max(0, thrustScaled
                         \                     - (max(0, zVelocityP) / 16))
                         \              * ~yPlaneHi / 256
-                        \              - zForce2Sc / 256
+                        \              - zLiftDragSc / 256
 
 .turn10
 
- STA zAllForcesHi       \ Store the high byte of the result in zAllForcesHi
+ STA zAllLinearHi       \ Store the high byte of the result in zAllLinearHi
 
  RTS                    \ Return from the subroutine
 
@@ -29142,11 +29168,11 @@ NEXT
 \
 \                         * &02 = (zTurnHi zTurnLo)
 \
-\                         * &6A = (xForce5ScTop xForce5ScHi)
+\                         * &6A = (xControlsScTop xControlsScHi)
 \
-\                         * &6B = (yForce5ScTop yForce5ScHi)
+\                         * &6B = (yControlsScTop yControlsScHi)
 \
-\                         * &6C = (zForce5ScTop zForce5ScHi)
+\                         * &6C = (zControlsScTop zControlsScHi)
 \
 \                         * &EC = (zRotationHi zRotationLo)
 \
