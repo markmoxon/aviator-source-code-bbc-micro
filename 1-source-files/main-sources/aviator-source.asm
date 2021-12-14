@@ -462,7 +462,7 @@ ORG &0400
  SKIP 252               \ The low byte of the z-coordinate for the point with
                         \ ID X is at zPointLo,X
 
-.zAllLinearLo
+.zLinearLo
 
  SKIP 1                 \ Low byte of point 252 (z-coordinate)
                         \
@@ -507,7 +507,7 @@ ORG &0900
  SKIP 252               \ The low byte of the x-coordinate for the point with
                         \ ID X is at xPointLo,X
 
-.xAllLinearLo
+.xLinearLo
 
  SKIP 1                 \ Low byte of point 252 (x-coordinate)
                         \
@@ -540,7 +540,7 @@ ORG &0900
  SKIP 252               \ The low byte of the y-coordinate for the point with
                         \ ID X is at yPointLo,X
 
-.yAllLinearLo
+.yLinearLo
 
  SKIP 1                 \ Low byte of point 252 (y-coordinate)
                         \
@@ -573,7 +573,7 @@ ORG &0900
  SKIP 252               \ The high byte of the y-coordinate for the point with
                         \ ID X is at yPointHi,X
 
-.yAllLinearHi
+.yLinearHi
 
  SKIP 1                 \ High byte of point 252 (y-coordinate)
                         \
@@ -643,15 +643,15 @@ ORG &0900
                         \
                         \ Shown on indicator 1
 
-.xTorqueLo
+.xTemp3Lo
 
  SKIP 1
 
-.yTorqueLo
+.yTemp3Lo
 
  SKIP 1
 
-.zTorqueLo
+.zTemp3Lo
 
  SKIP 1
 
@@ -741,15 +741,15 @@ ORG &0900
                         \
                         \ Shown on indicator 1
 
-.xTorqueHi
+.xTemp3Hi
 
  SKIP 1
 
-.yTorqueHi
+.yTemp3Hi
 
  SKIP 1
 
-.zTorqueHi
+.zTemp3Hi
 
  SKIP 1
 
@@ -3459,107 +3459,124 @@ ORG CODE%
 
 .L0FA7
 
- LDA #0
+ LDA #0                 \ Set RR = 0
  STA RR
- STA SS
- LDA #7
+
+ STA SS                 \ Set SS = 0
+
+ LDA #7                 \ Set T = 0
  STA T
- LDA VV
+
+ LDA VV                 \ Set X = VV - UU + 1
  SEC
  SBC UU
  TAX
  INX
- LDA WW
+
+ LDA WW                 \ Set Y = WW - UU + 1
  SEC
  SBC UU
  TAY
  INY
- CPY #7
+
+ CPY #7                 \ If Y < 7, jump to L0FC6
  BCC L0FC6
 
- JMP L0FCA
+ JMP L0FCA              \ Y >= 7, so jump to L0FCA
 
 .L0FC6
 
- CPX #7
+ CPX #7                 \ If X < 7, jump to L0FE4
  BCC L0FE4
 
 .L0FCA
 
- LDA VV
+                        \ If we get here then Y >= 7, or Y < 7 and X >= 7
+
+ LDA VV                 \ Set A = VV - WW
  SEC
  SBC WW
- BEQ L0FDA
 
- BPL L0FDE
+ BEQ L0FDA              \ If A = 0, i.e. VV = WW, jump to L0FDA
 
- LDA Q
+ BPL L0FDE              \ If A > 0, i.e. VV > WW, jump to L0FDE
+
+ LDA Q                  \ If (Q P) < 0, jump to L0FE4
  BMI L0FE4
 
- JMP L0FE2
+ JMP L0FE2              \ (Q P) >= 0, so jump to L0FE2
 
 .L0FDA
 
- LDA Q
+ LDA Q                  \ If (Q P) < 0, jump to L0FE4
  BMI L0FE4
 
 .L0FDE
 
- LDA QQ
+ LDA QQ                 \ If (QQ PP) < 0, jump to L0FE4
  BMI L0FE4
 
 .L0FE2
 
- INC T
+                        \ We get here if:
+                        \
+                        \   * Y >= 7, or Y < 7 and X >= 7, and:
+                        \
+                        \   * VV = WW and (Q P) >= 0 and (QQ PP) >= 0, or
+                        \   * VV > WW and (QQ PP) >= 0, or
+                        \   * VV < WW and (Q P) >= 0
+
+ INC T                  \ Increment T to 1
 
 .L0FE4
 
- TYA
+ TYA                    \ If Y < 0, jump to L0FF0 to skip the decrement loop
  BMI L0FF0
 
- JMP L0FEC
+ JMP L0FEC              \ Y >= 0, so jump to L0FEC to decrement X and Y
 
 .L0FEA
 
- DEX
+ DEX                    \ Decrement X and Y
  DEY
 
 .L0FEC
 
- CPY T
+ CPY T                  \ While Y >= T, decrement X and Y
  BCS L0FEA
 
 .L0FF0
 
- TXA
+ TXA                    \ If X < 0, jump to L0FFC to skip the decrement loop
  BMI L0FFC
 
- JMP L0FF8
+ JMP L0FF8              \ X >= 0, so jump to L0FF8 to decrement X and Y
 
 .L0FF6
 
- DEX
+ DEX                    \ Decrement X and Y
  DEY
 
 .L0FF8
 
- CPX T
+ CPX T                  \ While X >= T, decrement X and Y
  BCS L0FF6
 
 .L0FFC
 
- TXA
+ TXA                    \ If X < 0, jump to L1017
  BMI L1017
 
 .L0FFF
 
- BNE L1006
- ASL PP
- JMP L1025
+ BNE L1006              \ If X > 0, jump to L1006
+
+ ASL PP                 \ X = 0, so shift bit 7 of PP into the C flag and jump
+ JMP L1025              \ to L1025
 
 .L1006
 
- LDA QQ
+ LDA QQ                 \ Set (SS QQ PP) = (SS QQ PP) << X
 
 .L1008
 
@@ -3569,17 +3586,19 @@ ORG CODE%
  DEX
  BNE L1008
 
- STA QQ
- ASL PP
+ STA QQ                 \ End left-shift
+
+ ASL PP                 \ Shift bit 7 of PP into the C flag and jump to L1025
  JMP L1025
 
 .L1017
 
- EOR #&FF
+ EOR #&FF               \ Set X = -A
  CLC
  ADC #1
  TAX
- LDA QQ
+
+ LDA QQ                 \ Set QQ = QQ >> X
 
 .L101F
 
@@ -3587,9 +3606,14 @@ ORG CODE%
  DEX
  BNE L101F
 
- STA QQ
+ STA QQ                 \ End right-shift, with the last bit 0 of QQ in the C
+                        \ flag
 
 .L1025
+
+                        \ The C flag contains the last bit that was shifted out
+                        \ of PP (if we did a left shift) or QQ (if we did a
+                        \ right shift)
 
  BCC L103B
 
@@ -3608,17 +3632,17 @@ ORG CODE%
 
 .L103B
 
- TYA
+ TYA                    \ If Y < 0, jump to L1056
  BMI L1056
 
- BNE L1045
+ BNE L1045              \ If Y > 0, jump to L1045
 
- ASL P
- JMP L1064
+ ASL P                  \ Y = 0, so shift bit 7 of P into the C flag and jump
+ JMP L1064              \ to L1064
 
 .L1045
 
- LDA Q
+ LDA Q                  \ Set (RR Q P) = (RR Q P) << Y
 
 .L1047
 
@@ -3628,17 +3652,19 @@ ORG CODE%
  DEY
  BNE L1047
 
- STA Q
- ASL P
+ STA Q                  \ End left-shift
+
+ ASL P                  \ Shift bit 7 of P into the C flag and jump to L1064
  JMP L1064
 
 .L1056
 
- EOR #&FF
+ EOR #&FF               \ Set Y = -A
  CLC
  ADC #1
  TAY
- LDA Q
+
+ LDA Q                  \ Set Q = Q >> Y
 
 .L105E
 
@@ -3646,9 +3672,14 @@ ORG CODE%
  DEY
  BNE L105E
 
- STA Q
+ STA Q                  \ End right-shift, with the last bit 0 of Q in the C
+                        \ flag
 
 .L1064
+
+                        \ The C flag contains the last bit that was shifted out
+                        \ of P (if we did a left shift) or Q (if we did a right
+                        \ shift)
 
  BCC L107A
 
@@ -3667,7 +3698,7 @@ ORG CODE%
 
 .L107A
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11868,7 +11899,7 @@ ORG CODE%
  LDX #152               \ Set X = 152 to use as the force factor for yFlapsLift
                         \ below
 
- LDY #%11001100         \ Set Y to a four-pixel block with pixels 2 and 3 in
+ LDY #%11001100         \ Set Y to a four-pixel block with pixels 1 and 2 in
                         \ white, to act as the centre of the flaps indicator
                         \ when turned on
 
@@ -23083,7 +23114,7 @@ NEXT
  EQUB &43, &3A, &41, &44, &43, &23, &34, &30
  EQUB &3A, &54, &41, &59
 
-.zAllLinearHi
+.zLinearHi
 
  EQUB &0D               \ High byte of point 252 (z-coordinate)
                         \
@@ -23162,7 +23193,7 @@ NEXT
  EQUB &3A, &53, &54, &41, &26, &37, &32, &0D
  EQUB &09, &CE, &1C, &20
 
-.xAllLinearHi
+.xLinearHi
 
  EQUB &20               \ High byte of point 252 (x-coordinate)
                         \
@@ -25586,14 +25617,18 @@ NEXT
 \   * Set gravity to the following vector, rotated to the plane's frame of
 \     reference using matrix 4:
 \
-\       (xGravity, yGravity, zGravity) = (0, -512, 0)
+\       [ xGravity ]             [   0  ]
+\       [ yGravity ] = matrix4 x [ -512 ]
+\       [ zGravity ]             [   0  ]
 \
 \   * If we are on the ground with the undercarriage down, and we are
 \     accelerating downwards, we push back up to simulate the springs in the
 \     undercarriage by setting the gravity vector to the following, again
 \     rotating it to the plane's frame of reference using matrix 4:
 \
-\       (xGravity, yGravity, zGravity) = (0, -512 - (dyVelocity / 2 + 1), 0)
+\       [ xGravity ]             [              0              ]
+\       [ yGravity ] = matrix4 x [ -512 - (dyVelocity / 2 + 1) ]
+\       [ zGravity ]             [              0              ]
 \
 \ ******************************************************************************
 
@@ -25711,7 +25746,11 @@ NEXT
 \
 \   * Rotate the plane's velocity vector in (xVelocity, yVelocity, zVelocity) to
 \     the plane's frame of reference using matrix 1, and store the result in
-\     (xVelocityP, yVelocityP, zVelocityP).
+\     (xVelocityP, yVelocityP, zVelocityP):
+\
+\       [ xVelocityP ]             [ xVelocity ]
+\       [ yVelocityP ] = matrix1 x [ yVelocity ]
+\       [ zVelocityP ]             [ zVelocity ]
 \
 \   * Call the ApplyAerodynamics routine to check for stalling:
 \
@@ -25740,21 +25779,19 @@ NEXT
 \
 \   * The same routine calculates various aerodynamic forces, as follows:
 \
-\       xMoments = (yVelocityP * 2 - (xTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
+\       [ xMoments ] = [ yVelocityP * 2 - xTurn * 250 / 256 ]
+\       [ yMoments ] = [ xVelocityP * 2 - yTurn * 250 / 256 ] * maxv * 
+\       [ zMoments ] = [            -zTurn * 2              ]       airDensity
 \
-\       yMoments = (xVelocityP * 2 - (yTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
-\
-\       zMoments = -zTurn * 2 * maxv * ~yPlaneHi * 2
-\
-\       xLiftDrag = xVelocityP * 2 * maxv * ~yPlaneHi * 8
-\
-\       yLiftDrag = yVelocityP * 2 * maxv * ~yPlaneHi * 8
-\
-\       zLiftDrag = zVelocityP * 2 * maxv * ~yPlaneHi * 2
+\       [ xLiftDrag ] = [ xVelocityP * 2 * 4 ]
+\       [ yLiftDrag ] = [ yVelocityP * 2 * 4 ] * maxv * airDensity
+\       [ zLiftDrag ] = [ zVelocityP * 2     ]
 \
 \       zSlipMoment = xLiftDrag
 \
 \     where:
+\
+\       airDensity = ~yPlaneHi * 2
 \
 \       maxv = max(|xVelocityP|, |yVelocityP|, |zVelocityP|)
 \
@@ -25782,10 +25819,10 @@ NEXT
 \
 \       scaledForce = unscaledForce * forceFactor * 2 ^ scaleFactor
 \
-\     where the forces are:
+\     where the 11 forces are:
 \
-\       * (xMoments, yMoments, zMoments)
 \       * (xLiftDrag, yLiftDrag, zLiftDrag)
+\       * (xMoments, yMoments, zMoments)
 \       * zSlipMoment
 \       * yFlapsLift
 \       * (xControls, yControls, zControls)
@@ -25979,23 +26016,29 @@ NEXT
 \       * Set the allLinear vector, depending on the turning moments and the
 \         forces from the engine:
 \
-\           xAllLinear = -xLiftDragSc / 256
+\         If zVelocityPHi >= 48 (so forward speed >= 500 mph), we calculate:
 \
-\           yAllLinear = (yFlapsLiftSc - yLiftDragSc) / 256
+\           [ xLinear ]   [       0      ]   [   xLiftDragSc   ]
+\           [ yLinear ] = [ yFlapsLiftSc ] - [   yLiftDragSc   ]
+\           [ zLinear ]   [       0      ]   [ (&EA zLinearLo) ]
 \
-\           zAllLinear =
+\         If zVelocityPHi < 48 (so forward speed < 500 mph), we calculate:
 \
-\               (234 zAllLinearLo)                         if zVelocityPHi >= 48
+\           [ xLinear ]   [       0      ]   [ xLiftDragSc ]   [    0    ]
+\           [ yLinear ] = [ yFlapsLiftSc ] - [ yLiftDragSc ] + [    0    ]
+\           [ zLinear ]   [       0      ]   [ zLiftDragSc ]   [ zEngine ]
 \
-\                -zLiftDragSc / 256                        if zVelocityPHi < 48
-\                                                          and engine is off
+\         where zEngine is 0 if the engine is off, or the following if the
+\         engine is on:
 \
-\                max(0, thrustScaled                       if zVelocityPHi < 48
-\                    - (max(0, zVelocityP) / 16))          and engine is on
-\                * ~yPlaneHi / 256
-\                - zLiftDragSc / 256
+\           zEngine = max(0, thrustScaled - (max(0, zVelocityP) / 16))
+\                     * airDensity / 512
 \
-\         where thrustScaled is the thrust in (thrustHi thrustLo), but:
+\         and:
+\
+\           airDensity = ~yPlaneHi * 2
+\
+\         and thrustScaled is the thrust in (thrustHi thrustLo), but:
 \
 \           * Doubled if thrust >= 1024
 \
@@ -26005,7 +26048,7 @@ NEXT
 \
 \   * Set the slip rate shown on the slip indicator as follows:
 \
-\       slipRate = -int(xAllLinear / 256)
+\       slipRate = -int(xLinear / 256)
 \
 \ ******************************************************************************
 
@@ -26014,12 +26057,12 @@ NEXT
  JSR ApplyTurnAndThrust \ Set the dxTurn and allLinear vectors, depending on
                         \ the turning moments and the forces from the engine
 
- LDA xAllLinearLo       \ Set the C flag to bit 7 of xAllLinearLo, flipped, to
+ LDA xLinearLo          \ Set the C flag to bit 7 of xLinearLo, flipped, to
  EOR #%10000000         \ round the slip rate in the following calculation to
  ASL A                  \ the nearest integer
 
- LDA #0                 \ Set slipRate = 0 - xAllLinearHi - (1 - C)
- SBC xAllLinearHi       \              = -int(xAllLinear / 256)
+ LDA #0                 \ Set slipRate = 0 - xLinearHi - (1 - C)
+ SBC xLinearHi          \              = -int(xLinear / 256)
  STA slipRate
 
 \ ******************************************************************************
@@ -26049,7 +26092,7 @@ NEXT
 \             to the side velocity step below.
 \
 \           * If the plane is travelling forwards at a speed of 10 or less, set
-\             zAllLinear = -256 and landingStatus = %01000000 and move to the
+\             zLinear = -256 and landingStatus = %01000000 and move to the
 \             side velocity step below.
 \
 \           * If the approach is good, the undercarriage is down and the brakes
@@ -26057,7 +26100,7 @@ NEXT
 \             below.
 \
 \           * Otherwise, set landingStatus = 0 and subtract the following from
-\             zAllLinearHi (from the least slowdown to the biggest slowdown):
+\             zLinearHi (from the least slowdown to the biggest slowdown):
 \
 \               * 7 if the approach is bad and:
 \                       undercarriage is down and brakes are off
@@ -26081,9 +26124,9 @@ NEXT
 \
 \               * Having a bad approach
 \
-\       * Calculate the effect of side velocity on xAllLinear:
+\       * Calculate the effect of side velocity on xLinear:
 \
-\           xAllLinear  = -xVelocityPLo * 128
+\           xLinear  = -xVelocityPLo * 128
 \
 \ ******************************************************************************
 
@@ -26243,21 +26286,21 @@ NEXT
  BMI fmod12             \ A = 248
 
  BNE fmod13             \ If the plane is moving forwards, jump to fmod13 to
-                        \ subtract A from zAllLinearHi
+                        \ subtract A from zLinearHi
 
                         \ If we get here then zVelocityPHi = 0
 
  LDX zVelocityPLo       \ if the plane is stationary (i.e. both zVelocityPLo and
- BEQ fmod14             \ zVelocityPHi = 0), jump to fmod14 to leave zAllLinear
+ BEQ fmod14             \ zVelocityPHi = 0), jump to fmod14 to leave zLinear
                         \ untouched and set landingStatus = 01000000
 
  CPX #11                \ If the plane is moving forwards at a speed of 11 or
- BCS fmod13             \ more, jump to fmod13 to subtract A from zAllLinearHi
+ BCS fmod13             \ more, jump to fmod13 to subtract A from zLinearHi
 
- LDA #0                 \ Set zAllLinear = -256
- STA zAllLinearLo
+ LDA #0                 \ Set zLinear = -256
+ STA zLinearLo
  LDA #&FF
- STA zAllLinearHi
+ STA zLinearHi
 
  BNE fmod14             \ Jump to fmod14 to set landingStatus = 01000000 (this
                         \ BNE is effectively a JMP as A is never zero)
@@ -26276,7 +26319,7 @@ NEXT
                         \
                         \   * The plane is travelling forwards at a speed of 10
                         \     or less, in which case we already moved on with
-                        \     zAllLinear = -256 and landingStatus = 01000000
+                        \     zLinear = -256 and landingStatus = 01000000
                         \
                         \   * The approach is good, the undercarriage is down,
                         \     the brakes are off, in which case we already moved
@@ -26297,13 +26340,13 @@ NEXT
                         \   * 7 if the approach is bad and:
                         \           undercarriage is down, brakes are off
                         \
-                        \ We now subtract the value of A from zAllLinearHi
+                        \ We now subtract the value of A from zLinearHi
 
- STA P                  \ Set zAllLinearHi = zAllLinearHi - A
+ STA P                  \ Set zLinearHi = zLinearHi - A
  SEC  
- LDA zAllLinearHi
+ LDA zLinearHi
  SBC P
- STA zAllLinearHi
+ STA zLinearHi
 
  JMP fmod15             \ Jump to fmod15 to set landingStatus = 0
 
@@ -26349,14 +26392,14 @@ NEXT
 
  TXA                    \ Set A = 0
 
- SEC                    \ Set xAllLinear = (0 0) - (Q V)
+ SEC                    \ Set xLinear = (0 0) - (Q V)
  SBC V                  \                = -xVelocityPLo * 128
- STA xAllLinearLo       \
+ STA xLinearLo          \
                         \ starting with the low bytes
 
  TXA                    \ And then the high bytes
  SBC Q
- STA xAllLinearHi
+ STA xLinearHi
 
 \ ******************************************************************************
 \
@@ -26371,10 +26414,14 @@ NEXT
 \
 \ This part does the following:
 \
-\   * Rotate (xAllLinear, yAllLinear, zAllLinear) from the plane's frame of
-\     reference to the outside world's frame of reference using matrix 2, then
-\     subtract 16 from yAllLinearHi and store the result in (dxVelocity,
-\     dyVelocity, dzVelocity).
+\   * Rotate (xLinear, yLinear, zLinear) from the plane's frame of reference to
+\     the outside world's frame of reference using matrix 2, then subtract 16
+\     from yLinearHi and store the result in (dxVelocity, dyVelocity,
+\     dzVelocity):
+\
+\       [ dxVelocity ]             [ xLinear ]   [   0  ]
+\       [ dyVelocity ] = matrix2 x [ yLinear ] - [ 4096 ]
+\       [ dzVelocity ]             [ zLinear ]   [   0  ]
 \
 \   * Call the AdjustVelocity routine to adjust the plane's velocity as follows:
 \
@@ -26389,7 +26436,11 @@ NEXT
 \       [ zTurn ]   [ zTurn ]   [ dzTurn ]
 \
 \   * Rotate (xTurn, yTurn, zTurn) using matrix 3, which rotates by the current
-\     roll angle, and store the result in (dxRotation, dyRotation, dzRotation).
+\     roll angle, and store the result in (dxRotation, dyRotation, dzRotation):
+\
+\       [ dxRotation ]             [ xTurn ]
+\       [ dyRotation ] = matrix3 x [ yTurn ]
+\       [ dzRotation ]             [ zTurn ]
 \
 \   * Call the AdjustRotation routine to move the plane as follows:
 \
@@ -26427,12 +26478,12 @@ NEXT
                         \ SetPointCoords
 
  JSR SetPointCoords     \ Calculate the coordinates of the allLinear vector in
-                        \ (xAllLinear, yAllLinear, zAllLinear)
+                        \ (xLinear, yLinear, zLinear)
 
- LDA yAllLinearHi       \ Set yAllLinearHi = yAllLinearHi - 16
+ LDA yLinearHi          \ Set yLinearHi = yLinearHi - 16
  SEC
  SBC #16
- STA yAllLinearHi
+ STA yLinearHi
 
  LDX #LO(dxVelocityLo)  \ Set X so the call to CopyPointToWork copies the
                         \ coordinates to (dxVelocity, dyVelocity, dzVelocity)
@@ -26440,7 +26491,7 @@ NEXT
  LDY #252               \ Set Y so the call to CopyPointToWork copies the
                         \ coordinates from the allLinear vector (in point 252)
 
- JSR CopyPointToWork    \ Copy (xAllLinear, yAllLinear, zAllLinear) to
+ JSR CopyPointToWork    \ Copy (xLinear, yLinear, zLinear) to
                         \ (dxVelocity, dyVelocity, dzVelocity)
 
  JSR AdjustVelocity     \ Adjust the plane's velocity as follows:
@@ -27275,21 +27326,19 @@ NEXT
 \
 \ This part calculates the following:
 \
-\   xMoments = (yVelocityP * 2 - (xTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
+\   [ xMoments ] = [ yVelocityP * 2 - xTurn * 250 / 256 ]
+\   [ yMoments ] = [ xVelocityP * 2 - yTurn * 250 / 256 ] * maxv * airDensity
+\   [ zMoments ] = [            -zTurn * 2              ]
 \
-\   yMoments = (xVelocityP * 2 - (yTurn * 250 / 256)) * maxv * ~yPlaneHi * 2
-\
-\   zMoments = -zTurn * 2 * maxv * ~yPlaneHi * 2
-\
-\   xLiftDrag = xVelocityP * 2 * maxv * ~yPlaneHi * 8
-\
-\   yLiftDrag = yVelocityP * 2 * maxv * ~yPlaneHi * 8
-\
-\   zLiftDrag = zVelocityP * 2 * maxv * ~yPlaneHi * 2
+\   [ xLiftDrag ] = [ xVelocityP * 2 * 4 ]
+\   [ yLiftDrag ] = [ yVelocityP * 2 * 4 ] * maxv * airDensity
+\   [ zLiftDrag ] = [ zVelocityP * 2     ]
 \
 \   zSlipMoment = xLiftDrag
 \
 \ where:
+\
+\   airDensity = ~yPlaneHi * 2
 \
 \   maxv = max(|xVelocityP|, |yVelocityP|, |zVelocityP|)
 \
@@ -27303,15 +27352,15 @@ NEXT
 \
 \ ******************************************************************************
 
- JSR ApplyTorque        \ Set the following:
+ JSR GetMoments         \ Set the following:
                         \
-                        \   xTorque = yLiftDrag - (xTurn * 250 / 256)
-                        \           = yVelocityP * 2 - (xTurn * 250 / 256)
+                        \   xTemp3 = yLiftDrag - (xTurn * 250 / 256)
+                        \          = yVelocityP * 2 - (xTurn * 250 / 256)
                         \
-                        \   yTorque = xLiftDrag - (yTurn * 250 / 256)
-                        \           = xVelocityP * 2 - (yTurn * 250 / 256)
+                        \   yTemp3 = xLiftDrag - (yTurn * 250 / 256)
+                        \          = xVelocityP * 2 - (yTurn * 250 / 256)
                         \
-                        \   zTorque = -zTurn * 2
+                        \   zTemp3 = -zTurn * 2
 
                         \ A reminder that we set the following in part 1:
                         \
@@ -27335,16 +27384,16 @@ NEXT
  BCS aero13
 
                         \ For X = 0 to 2, we now fetch the relevant axis of
-                        \ xTorque, which we set above to:
+                        \ xTemp3, which we set above to:
                         \
-                        \   xTorque = yVelocityP * 2 - (xTurn * 250 / 256)
+                        \   xTemp3 = yVelocityP * 2 - (xTurn * 250 / 256)
                         \
-                        \   yTorque = xVelocityP * 2 - (yTurn * 250 / 256)
+                        \   yTemp3 = xVelocityP * 2 - (yTurn * 250 / 256)
                         \
-                        \   zTorque = -zTurn * 2
+                        \   zTemp3 = -zTurn * 2
 
- LDY xTorqueLo,X        \ Set (A Y) = xTorque (or yTorque or zTorque)
- LDA xTorqueHi,X
+ LDY xTemp3Lo,X         \ Set (A Y) = xTemp3 (or yTemp3 or zTemp3)
+ LDA xTemp3Hi,X
 
  JMP aero14             \ Jump to aero14
 
@@ -27366,7 +27415,7 @@ NEXT
 
  STA J                  \ Set (J I) = (A Y)
  STY I                  \
-                        \           = xTorque               for X = 0 to 2
+                        \           = xTemp3                for X = 0 to 2
                         \
                         \             xVelocityP * 2        for X = 3 to 5
 
@@ -27380,7 +27429,7 @@ NEXT
                         \
                         \   (H G W) = (J I) * (S R)
                         \
-                        \        = xTorque        * max(|velocityP|) * ~yPlaneHi
+                        \        = xTemp3         * max(|velocityP|) * ~yPlaneHi
                         \
                         \          xVelocityP * 2 * max(|velocityP|) * ~yPlaneHi
 
@@ -27444,15 +27493,15 @@ NEXT
  BPL aero12             \ Loop back until we have set xMoments to zMoments and
                         \ xLiftDrag to zLiftDrag, so we now have:
                         \
-                        \   xMoments = xTorque * maxv * ~yPlaneHi * 2
+                        \   xMoments = xTemp3 * maxv * ~yPlaneHi * 2
                         \            = (yVelocityP * 2 - (xTurn * 250 / 256))
                         \               * maxv * ~yPlaneHi * 2
                         \
-                        \   yMoments = yTorque * maxv * ~yPlaneHi * 2
+                        \   yMoments = yTemp3 * maxv * ~yPlaneHi * 2
                         \            = (xVelocityP * 2 - (yTurn * 250 / 256))
                         \               * maxv * ~yPlaneHi * 2
                         \
-                        \   zMoments = zTorque * maxv * ~yPlaneHi * 2
+                        \   zMoments = zTemp3 * maxv * ~yPlaneHi * 2
                         \            = -zTurn * 2 * maxv * ~yPlaneHi * 2
                         \
                         \   xLiftDrag = xVelocityP * 2 * maxv * ~yPlaneHi * 8
@@ -27517,7 +27566,7 @@ NEXT
  BPL aero17             \ Loop back until we have shifted left by X + 1 places
 
  PLP                    \ Restore the processor flags, so this jumps to aero18
- BEQ aero18             \ if flapStatus is zero, i.e. the flaps are off
+ BEQ aero18             \ if flapsStatus is zero, i.e. the flaps are off
 
  SEC                    \ The flaps are on, so negate (G W)
  JSR Negate16Bit
@@ -27827,8 +27876,8 @@ NEXT
  STA G
 
  LDX Q                  \ If the original argument (Q P) was positive, the
- BPL ApplyTorque-1      \ result already has the correct sign, so return from
-                        \ the subroutine (as ApplyTorque-1 contains an RTS)
+ BPL GetMoments-1       \ result already has the correct sign, so return from
+                        \ the subroutine (as GetMoments-1 contains an RTS)
 
  LDA #0                 \ Otherwise we want to negate (G W V), so start with by
  SEC                    \ negating V
@@ -27875,28 +27924,32 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: ApplyTorque
+\       Name: GetMoments
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Calculate the torque due to the current pitch, roll and yaw rates
+\    Summary: Calculate the pitching, rolling and yawing moments due to the
+\             current pitch, roll and yaw rates
 \
 \ ------------------------------------------------------------------------------
 \
 \ This routine calculates:
 \
-\   xTorque = yLiftDrag - (xTurn * 250 / 256)
+\   xTemp3 = yLiftDrag - (xTurn * 250 / 256)
 \
-\   yTorque = xLiftDrag - (yTurn * 250 / 256)
+\   yTemp3 = xLiftDrag - (yTurn * 250 / 256)
 \
-\   zTorque = -zTurn * 2
+\   zTemp3 = -zTurn * 2
+\
+\ which contain the moments due to the plane's current movement. These then get
+\ scaled by altitude and put into (xMoments yMoments zMoments).
 \
 \ Other entry points:
 \
-\   ApplyTorque-1       Contains an RTS
+\   GetMoments-1        Contains an RTS
 \
 \ ******************************************************************************
 
-.ApplyTorque
+.GetMoments
 
  LDX #1                 \ Set a counter in X to work through the x- and y-axes
 
@@ -27924,33 +27977,33 @@ NEXT
                         \ (so it's 0 for the x-axis and 1 for the y-axis)
 
  EOR #1                 \ Set Y to the opposite axis number to X, so when we are
- TAY                    \ calculating xTorque in the following and X = 0, Y = 1
+ TAY                    \ calculating xTemp3 in the following and X = 0, Y = 1
                         \ so we use yLiftDrag, and when we are calculating
-                        \ yTorque, X = 1 and Y = 0, so we use xLiftDrag
+                        \ yTemp3, X = 1 and Y = 0, so we use xLiftDrag
 
- SEC                    \ Set xTorque = yLiftDrag - (G W)
- LDA xLiftDragLo,Y      \             = yLiftDrag - (xTurn * 250 / 256)
+ SEC                    \ Set xTemp3 = yLiftDrag - (G W)
+ LDA xLiftDragLo,Y      \            = yLiftDrag - (xTurn * 250 / 256)
  SBC W
- STA xTorqueLo,X
+ STA xTemp3Lo,X
  LDA xLiftDragHi,Y
  SBC G
- STA xTorqueHi,X
+ STA xTemp3Hi,X
 
  DEX                    \ Decrement the loop counter to move to the next axis
 
  BPL torq1              \ Loop back until we have processed both axes
 
- SEC                    \ Set (A zTorqueLo) = 0 - (zTurnHi zTurnLo)
+ SEC                    \ Set (A zTemp3Lo) = 0 - (zTurnHi zTurnLo)
  LDA #0                 \                   = -zTurn
  SBC zTurnLo            \
- STA zTorqueLo          \ starting with the high bytes
+ STA zTemp3Lo           \ starting with the high bytes
 
  LDA #0                 \ And then the low bytes
  SBC zTurnHi
 
- ASL zTorqueLo          \ Set (zTorqueHi zTorqueLo) = (A zTorqueLo) << 1
+ ASL zTemp3Lo           \ Set (zTemp3Hi zTemp3Lo) = (A zTemp3Lo) << 1
  ROL A                  \                           = -zTurn * 2
- STA zTorqueHi
+ STA zTemp3Hi
 
  RTS                    \ Return from the subroutine
 
@@ -28285,27 +28338,33 @@ NEXT
 \       Name: ApplyTurnAndThrust (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Calculate the (xAllLinear, yAllLinear, zAllLinear) vector
+\    Summary: Calculate the (xLinear, yLinear, zLinear) vector
 \
 \ ------------------------------------------------------------------------------
 \
-\ This part of the routine calculates the following:
+\ This part of the routine calculates the following.
 \
-\   xAllLinear = -xLiftDragSc / 256
+\ If zVelocityPHi >= 48 (so forward speed >= 500 mph), we calculate:
 \
-\   yAllLinear = (yFlapsLiftSc - yLiftDragSc) / 256
+\  [ xLinear ]   [       0      ]   [   xLiftDragSc   ]
+\  [ yLinear ] = [ yFlapsLiftSc ] - [   yLiftDragSc   ]
+\  [ zLinear ]   [       0      ]   [ (&EA zLinearLo) ]
 \
-\   zAllLinear = (234 zAllLinearLo)                        if zVelocityPHi >= 48
+\ If zVelocityPHi < 48 (so forward speed < 500 mph), we calculate:
 \
-\                -zLiftDragSc / 256                        if zVelocityPHi < 48
-\                                                          and engine is off
+\  [ xLinear ]   [       0      ]   [ xLiftDragSc ]   [    0    ]
+\  [ yLinear ] = [ yFlapsLiftSc ] - [ yLiftDragSc ] + [    0    ]
+\  [ zLinear ]   [       0      ]   [ zLiftDragSc ]   [ zEngine ]
 \
-\                max(0, thrustScaled                       if zVelocityPHi < 48
-\                    - (max(0, zVelocityP) / 16))          and engine is on
-\                * ~yPlaneHi / 256
-\                - zLiftDragSc / 256
+\ where zEngine is 0 if the engine is off, or the following if the engine is on:
 \
-\ where thrustScaled is the thrust in (thrustHi thrustLo), but:
+\  zEngine = max(0, thrustScaled - (max(0, zVelocityP) / 16)) * airDensity / 512
+\
+\ and:
+\
+\   airDensity = ~yPlaneHi * 2
+\
+\ and thrustScaled is the thrust in (thrustHi thrustLo), but:
 \
 \   * Doubled if thrust >= 1024
 \
@@ -28316,23 +28375,23 @@ NEXT
 \
 \ ******************************************************************************
 
- SEC                    \ Set xAllLinear = -xLiftDragSc / 256
+ SEC                    \ Set xLinear = -xLiftDragSc / 256
  LDA #0                 \
  SBC xLiftDragScHi      \ starting with the low bytes
- STA xAllLinearLo
+ STA xLinearLo
 
  LDA #0                 \ And then the high bytes
  SBC xLiftDragScTop
- STA xAllLinearHi
+ STA xLinearHi
 
- SEC                    \ Set yAllLinear = (yFlapsLiftSc - yLiftDragSc) / 256
+ SEC                    \ Set yLinear = (yFlapsLiftSc - yLiftDragSc) / 256
  LDA yFlapsLiftScHi     \
  SBC yLiftDragScHi      \ starting with the low bytes
- STA yAllLinearLo
+ STA yLinearLo
 
  LDA yFlapsLiftScTop    \ And then the high bytes
  SBC yLiftDragScTop
- STA yAllLinearHi
+ STA yLinearHi
 
  LDA zVelocityPHi       \ Set A to the high byte of the forward airspeed from
                         \ the perspective of the plane
@@ -28351,8 +28410,8 @@ NEXT
  CMP #48                \ If zVelocityPHi < 48, jump to turn4
  BCC turn4
 
- LDA #234               \ Set A = 234 and jump to turn10 to set zAllLinearHi to
- BNE turn10             \ 234 and return from the subroutine (this BNE is
+ LDA #&EA               \ Set A = &EA and jump to turn10 to set zLinearHi to
+ BNE turn10             \ &EA and return from the subroutine (this BNE is
                         \ effectively a JMP as A is never zero)
 
 .turn3
@@ -28468,22 +28527,22 @@ NEXT
                         \
                         \ or (Y X) = 0 if the engine is off
 
- TXA                    \ Set zAllLinear = (Y X) - zLiftDragSc / 256
+ TXA                    \ Set zLinear = (Y X) - zLiftDragSc / 256
  SEC                    \
  SBC zLiftDragScHi      \ starting with the low bytes
- STA zAllLinearLo
+ STA zLinearLo
 
  TYA                    \ And then the high bytes, so now we have the following
  SBC zLiftDragScTop     \ when the engine is on:
                         \
-                        \ zAllLinear = max(0, thrustScaled
-                        \                     - (max(0, zVelocityP) / 16))
-                        \              * ~yPlaneHi / 256
-                        \              - zLiftDragSc / 256
+                        \ zLinear = max(0, thrustScaled
+                        \                  - (max(0, zVelocityP) / 16))
+                        \           * ~yPlaneHi / 256
+                        \           - zLiftDragSc / 256
 
 .turn10
 
- STA zAllLinearHi       \ Store the high byte of the result in zAllLinearHi
+ STA zLinearHi          \ Store the high byte of the result in zLinearHi
 
  RTS                    \ Return from the subroutine
 
