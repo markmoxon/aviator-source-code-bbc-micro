@@ -2810,8 +2810,9 @@ ORG CODE%
  JSR L0E69              \ ??? Starts with JSR ScaleUp, does a calculation into
                         \ (Q P) and WW
 
- JSR L0FA7              \ ??? Converts UU, VV, (Q P) and (QQ PP) into screen
-                        \ coordinates in (SS QQ) and (RR Q)
+ JSR ScaleDown          \ Scale (Q P) and (QQ PP) down by the correct amounts in
+                        \ UU, VC and WW to give screen coordinates in (SS QQ)
+                        \ and (RR Q)
 
 \ ******************************************************************************
 \
@@ -3428,10 +3429,11 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L0FA7
+\       Name: ScaleDown
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Scale down the results of dividing numbers that were scaled up by
+\             the ScaleUp routine
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3457,7 +3459,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.L0FA7
+.ScaleDown
 
  LDA #0                 \ Set RR = 0
  STA RR
@@ -3479,17 +3481,17 @@ ORG CODE%
  TAY
  INY
 
- CPY #7                 \ If Y < 7, jump to L0FC6
- BCC L0FC6
+ CPY #7                 \ If Y < 7, jump to down1
+ BCC down1
 
- JMP L0FCA              \ Y >= 7, so jump to L0FCA
+ JMP down2              \ Y >= 7, so jump to down2
 
-.L0FC6
+.down1
 
- CPX #7                 \ If X < 7, jump to L0FE4
- BCC L0FE4
+ CPX #7                 \ If X < 7, jump to down6
+ BCC down6
 
-.L0FCA
+.down2
 
                         \ If we get here then Y >= 7, or Y < 7 and X >= 7
 
@@ -3497,26 +3499,26 @@ ORG CODE%
  SEC
  SBC WW
 
- BEQ L0FDA              \ If A = 0, i.e. VV = WW, jump to L0FDA
+ BEQ down3              \ If A = 0, i.e. VV = WW, jump to down3
 
- BPL L0FDE              \ If A > 0, i.e. VV > WW, jump to L0FDE
+ BPL down4              \ If A > 0, i.e. VV > WW, jump to down4
 
- LDA Q                  \ If (Q P) < 0, jump to L0FE4
- BMI L0FE4
+ LDA Q                  \ If (Q P) < 0, jump to down6
+ BMI down6
 
- JMP L0FE2              \ (Q P) >= 0, so jump to L0FE2
+ JMP down5              \ (Q P) >= 0, so jump to down5
 
-.L0FDA
+.down3
 
- LDA Q                  \ If (Q P) < 0, jump to L0FE4
- BMI L0FE4
+ LDA Q                  \ If (Q P) < 0, jump to down6
+ BMI down6
 
-.L0FDE
+.down4
 
- LDA QQ                 \ If (QQ PP) < 0, jump to L0FE4
- BMI L0FE4
+ LDA QQ                 \ If (QQ PP) < 0, jump to down6
+ BMI down6
 
-.L0FE2
+.down5
 
                         \ We get here if:
                         \
@@ -3528,70 +3530,68 @@ ORG CODE%
 
  INC T                  \ Increment T to 1
 
-.L0FE4
+.down6
 
- TYA                    \ If Y < 0, jump to L0FF0 to skip the decrement loop
- BMI L0FF0
+ TYA                    \ If Y < 0, jump to down9 to skip the decrement loop
+ BMI down9
 
- JMP L0FEC              \ Y >= 0, so jump to L0FEC to decrement X and Y
+ JMP down8              \ Y >= 0, so jump to down8 to decrement X and Y
 
-.L0FEA
+.down7
 
  DEX                    \ Decrement X and Y
  DEY
 
-.L0FEC
+.down8
 
  CPY T                  \ While Y >= T, decrement X and Y
- BCS L0FEA
+ BCS down7
 
-.L0FF0
+.down9
 
- TXA                    \ If X < 0, jump to L0FFC to skip the decrement loop
- BMI L0FFC
+ TXA                    \ If X < 0, jump to down12 to skip the decrement loop
+ BMI down12
 
- JMP L0FF8              \ X >= 0, so jump to L0FF8 to decrement X and Y
+ JMP down11             \ X >= 0, so jump to down11 to decrement X and Y
 
-.L0FF6
+.down10
 
  DEX                    \ Decrement X and Y
  DEY
 
-.L0FF8
+.down11
 
  CPX T                  \ While X >= T, decrement X and Y
- BCS L0FF6
+ BCS down10
 
-.L0FFC
+.down12
 
- TXA                    \ If X < 0, jump to L1017
- BMI L1017
+ TXA                    \ If X < 0, jump to down15
+ BMI down15
 
-.L0FFF
-
- BNE L1006              \ If X > 0, jump to L1006
+ BNE down13             \ If X > 0, jump to down13
 
  ASL PP                 \ X = 0, so shift bit 7 of PP into the C flag and jump
- JMP L1025              \ to L1025
+ JMP down17             \ to down17
 
-.L1006
+.down13
 
  LDA QQ                 \ Set (SS QQ PP) = (SS QQ PP) << X
 
-.L1008
+.down14
 
  ASL PP
  ROL A
  ROL SS
  DEX
- BNE L1008
+ BNE down14
 
  STA QQ                 \ End left-shift
 
- ASL PP                 \ Shift bit 7 of PP into the C flag and jump to L1025
- JMP L1025
+ ASL PP                 \ Shift bit 7 of PP into the C flag and jump to down17
+ JMP down17
 
-.L1017
+.down15
 
  EOR #&FF               \ Set X = -A
  CLC
@@ -3600,64 +3600,64 @@ ORG CODE%
 
  LDA QQ                 \ Set QQ = QQ >> X
 
-.L101F
+.down16
 
  LSR A
  DEX
- BNE L101F
+ BNE down16
 
  STA QQ                 \ End right-shift, with the last bit 0 of QQ in the C
                         \ flag
 
-.L1025
+.down17
 
                         \ The C flag contains the last bit that was shifted out
                         \ of PP (if we did a left shift) or QQ (if we did a
                         \ right shift)
 
- BCC L103B
+ BCC down18
 
  INC QQ
- BNE L103B
+ BNE down18
 
  INC SS
  LDA SS
  CMP #&40
- BCC L103B
+ BCC down18
 
  LDA #&3F
  STA SS
  LDA #&FF
  STA QQ
 
-.L103B
+.down18
 
- TYA                    \ If Y < 0, jump to L1056
- BMI L1056
+ TYA                    \ If Y < 0, jump to down21
+ BMI down21
 
- BNE L1045              \ If Y > 0, jump to L1045
+ BNE down19             \ If Y > 0, jump to down19
 
  ASL P                  \ Y = 0, so shift bit 7 of P into the C flag and jump
- JMP L1064              \ to L1064
+ JMP down23             \ to down23
 
-.L1045
+.down19
 
  LDA Q                  \ Set (RR Q P) = (RR Q P) << Y
 
-.L1047
+.down20
 
  ASL P
  ROL A
  ROL RR
  DEY
- BNE L1047
+ BNE down20
 
  STA Q                  \ End left-shift
 
- ASL P                  \ Shift bit 7 of P into the C flag and jump to L1064
- JMP L1064
+ ASL P                  \ Shift bit 7 of P into the C flag and jump to down23
+ JMP down23
 
-.L1056
+.down21
 
  EOR #&FF               \ Set Y = -A
  CLC
@@ -3666,37 +3666,37 @@ ORG CODE%
 
  LDA Q                  \ Set Q = Q >> Y
 
-.L105E
+.down22
 
  LSR A
  DEY
- BNE L105E
+ BNE down22
 
  STA Q                  \ End right-shift, with the last bit 0 of Q in the C
                         \ flag
 
-.L1064
+.down23
 
                         \ The C flag contains the last bit that was shifted out
                         \ of P (if we did a left shift) or Q (if we did a right
                         \ shift)
 
- BCC L107A
+ BCC down24
 
  INC Q
- BNE L107A
+ BNE down24
 
  INC RR
  LDA RR
  CMP #&40
- BCC L107A
+ BCC down24
 
  LDA #&3F
  STA RR
  LDA #&FF
  STA Q
 
-.L107A
+.down24
 
  RTS                    \ Return from the subroutine
 
