@@ -2793,8 +2793,10 @@ ORG CODE%
  LDY PP                 \ Set (X Y) = (QQ PP)
  LDX QQ                 \           = |xPoint|
 
- JSR L0E69              \ ??? Starts with JSR ScaleUp, does a calculation into
-                        \ (Q P) and WW
+ JSR DivideScaled       \ Set (Q P) = (X Y) divided by (TT S)
+                        \           = |xPoint| / |zPoint|
+                        \
+                        \ And set WW to the scale factor of the result
 
  LDA Q                  \ Set (QQ PP) = (Q P)
  STA QQ
@@ -2807,8 +2809,10 @@ ORG CODE%
  LDY RR                 \ Set (X Y) = (SS RR)
  LDX SS                 \           = |yPoint| * 2
 
- JSR L0E69              \ ??? Starts with JSR ScaleUp, does a calculation into
-                        \ (Q P) and WW
+ JSR DivideScaled       \ Set (Q P) = (X Y) divided by (TT S)
+                        \           = |yPoint| * 2 / |zPoint|
+                        \
+                        \ And set WW to the scale factor of the result
 
  JSR ScaleDown          \ Scale (Q P) and (QQ PP) down by the correct amounts in
                         \ UU, VC and WW to give screen coordinates in (SS QQ)
@@ -2970,12 +2974,20 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: L0E69
+\       Name: DivideScaled
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Divide a 16-bit number by a scaled 16-bit number
 \
 \ ------------------------------------------------------------------------------
+\
+\ This routine calculates:
+\
+\   (Q P) = (X Y) divided by (TT S)
+\
+\ where (X Y) is a positive 16-bit number and (TT S) is the entry in the
+\ (Lookup3900 Lookup4700) table for the dividend after being scaled by the
+\ ScaledUp routine.
 \
 \ Arguments:
 \
@@ -2988,15 +3000,15 @@ ORG CODE%
 \   R                   Contains %00010000 (which is set at the start of
 \                       ProjectPoint)
 \
-\   (TT S)              ??? A lookup from Lookup3900/Lookup4700
+\   (TT S)              The lookup from Lookup3900/Lookup4700 for the dividend
 \
 \ Returns:
 \
-\   (Q P)          
+\   (Q P)               (X Y) / Z
 \
 \ ******************************************************************************
 
-.L0E69
+.DivideScaled
 
  JSR ScaleUp            \ Set (A Y) = (X Y), scaled up until it doesn't fit into
                         \ 16 bits any more, and set WW to the minimum number of
@@ -3074,28 +3086,28 @@ ORG CODE%
 
  LDY #0                 \ Set Y = 0
 
- BCC L0EBB              \ If the above addition didn't overflow, skip the
+ BCC divs1              \ If the above addition didn't overflow, skip the
                         \ following instruction
 
  LDY #16                \ The above addition overflowed, so set Y = 16
 
-.L0EBB
+.divs1
 
  LDA shift4Left,X       \ Set A = (X << 4)
 
  ADC P                  \ Set (Y A) = (Y A) + P + J + S
 
- BCC L0EC3
+ BCC divs2
  INY
 
-.L0EC3
+.divs2
 
  ADC J
- BCC L0EC8
+ BCC divs3
 
  INY
 
-.L0EC8
+.divs3
 
  ADC S                  \ End here
 
@@ -3104,24 +3116,24 @@ ORG CODE%
  TYA
  ADC shift4Right,X
  ADC Q
- BCC L0EDB
+ BCC divs4
 
  CLC
  ADC TT
  SEC
- JMP L0EDD
+ JMP divs5
 
-.L0EDB
+.divs4
 
  ADC TT
 
-.L0EDD
+.divs5
 
  ROR A
  ROR P
  STA Q
  LDA I
- BEQ L0F16
+ BEQ divs7
 
  AND #&F0
  LDX TT
@@ -3136,7 +3148,7 @@ ORG CODE%
  LDA shift4Left,X
  ADC I
 
-.L0EFE
+.divs6
 
  LDA timesTable,Y
  ADC shift4Right,X
@@ -3144,20 +3156,20 @@ ORG CODE%
  CLC
  ADC P
  STA P
- BCC L0F16
+ BCC divs7
 
  INC Q
- BNE L0F16
+ BNE divs7
 
  LDA #&FF
  STA Q
  STA P
 
-.L0F16
+.divs7
 
  LDA K
  AND #&C0
- BEQ L0F47
+ BEQ divs10
 
  STA K
  CLC
@@ -3167,19 +3179,19 @@ ORG CODE%
  STA W
  LSR A
  BIT K
- BVS L0F2F
+ BVS divs8
 
  LDA #0
  BIT K
 
-.L0F2F
+.divs8
 
- BPL L0F34
+ BPL divs9
 
  CLC
  ADC W
 
-.L0F34
+.divs9
 
  TAY
  LDX Q
@@ -3192,12 +3204,12 @@ ORG CODE%
  SBC G
  STA P
 
- BCS L0F47              \ If the subtraction didn't underflow, skip the next
+ BCS divs10              \ If the subtraction didn't underflow, skip the next
                         \ instruction
 
  DEC Q                  \ Decrement the high byte
 
-.L0F47
+.divs10
 
  RTS                    \ Return from the subroutine
 
@@ -3407,14 +3419,14 @@ ORG CODE%
                         \ If we get here, then (X Y) = 0
 
  TSX                    \ We can only get here if we called this routine from
- INX                    \ the L0E69 routine, as the only other call of this
- INX                    \ routine is from ProjectPoint, when we know we are
- TXS                    \ calling it with a value of at least 1 in (X Y)
+ INX                    \ the DivideScaled routine, as the only other call of
+ INX                    \ this routine is from ProjectPoint, when we know we
+ TXS                    \ are calling it with a value of at least 1 in (X Y)
                         \
                         \ These instructions remove two bytes from the top of
                         \ the stack so the RTS below returns an extra level up
-                        \ the call chain, and as L0E69 itself must have been
-                        \ called from ProjectPoint, this returns us to
+                        \ the call chain, and as DivideScaled itself must have
+                        \ beencalled from ProjectPoint, this returns us to
                         \ ProjectPoint with the following results
 
  LDA #0                 \ Set (Q P) = 0
@@ -3429,57 +3441,62 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ScaleDown
+\       Name: ScaleDown (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Scale down the results of dividing numbers that were scaled up by
-\             the ScaleUp routine
+\    Summary: Scale down the results of divisions done using the ScaleUp and
+\             DivideScaled routines
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   UU                  Scale factor for z-coordinate from ScaleUp routine
+\   UU                  Scale factor for the z-coordinate from ScaleUp routine
 \
-\   VV                  Scale factor for x-coordinate from ScaleUp routine
+\   VV                  Scale factor for the x-coordinate from ScaleUp routine
 \
-\   WW                  Scale factor for y-coordinate from ScaleUp routine
+\   WW                  Scale factor for the y-coordinate from ScaleUp routine
 \
-\   (QQ PP)             Result from L0E69 routine for x-coordinate
+\   (QQ PP)             Result from DivideScaled routine for x-coordinate
 \
-\   (Q P)               Result from L0E69 routine for y-coordinate
+\   (Q P)               Result from DivideScaled routine for y-coordinate
 \
 \ Returns:
 \
-\   (SS QQ)             Screen x-coordinate of the 3D point projected onto the
-\                       screen
+\   (SS QQ)             The correctly scaled x-coordinate
 \
-\   (RR Q)              Screen y-coordinate of the 3D point projected onto the
-\                       screen
+\   (RR Q)              The correctly scaled y-coordinate
 \
 \ ******************************************************************************
 
 .ScaleDown
 
- LDA #0                 \ Set RR = 0
- STA RR
+ LDA #0                 \ Set RR = 0, to use as the high byte in the scaled
+ STA RR                 \ y-coordinate (RR Q P), where (RR Q) in the final
+                        \ result is the integer, and P is the fractional part
+                        \ (which we discard)
 
- STA SS                 \ Set SS = 0
+ STA SS                 \ Set SS = 0, to use as the high byte in the scaled
+                        \ x-coordinate (SS QQ PP), where (SS QQ) in the final
+                        \ result is the integer, and PP is the fractional part
+                        \ (which we discard)
 
  LDA #7                 \ Set T = 0
  STA T
 
  LDA VV                 \ Set X = VV - UU + 1
- SEC
- SBC UU
- TAX
- INX
+ SEC                    \
+ SBC UU                 \ so X is the imbalance between the x- and z-coordinates
+ TAX                    \ in terms of scale factors, and because the division
+ INX                    \ was x / z, this is the scale factor we need to apply
+                        \ to the x-coordinate, as 2^VV / 2^UU = 2^(VV - UU)
 
  LDA WW                 \ Set Y = WW - UU + 1
- SEC
- SBC UU
- TAY
- INY
+ SEC                    \
+ SBC UU                 \ so Y is the imbalance between the y- and z-coordinates
+ TAY                    \ in terms of scale factors, and because the division
+ INY                    \ was y / z, this is the scale factor we need to apply
+                        \ to the y-coordinate, as 2^WW / 2^UU = 2^(WW - UU)
 
  CPY #7                 \ If Y < 7, jump to down1
  BCC down1
@@ -3488,49 +3505,69 @@ ORG CODE%
 
 .down1
 
- CPX #7                 \ If X < 7, jump to down6
+ CPX #7                 \ If X < 7, jump to down6 to do the scaling with T = 0
  BCC down6
 
 .down2
 
-                        \ If we get here then Y >= 7, or Y < 7 and X >= 7
+                        \ If we get here then at least one of X and Y is >= 7
 
  LDA VV                 \ Set A = VV - WW
- SEC
- SBC WW
+ SEC                    \
+ SBC WW                 \ so A is the imbalance between the x- and y-coordinates
+                        \ in terms of scale factors
 
  BEQ down3              \ If A = 0, i.e. VV = WW, jump to down3
 
  BPL down4              \ If A > 0, i.e. VV > WW, jump to down4
 
- LDA Q                  \ If (Q P) < 0, jump to down6
- BMI down6
+                        \ At this point, VV < WW
+
+ LDA Q                  \ If (Q P) < 0, jump to down6 to do the scaling with
+ BMI down6              \ T = 0
 
  JMP down5              \ (Q P) >= 0, so jump to down5
 
 .down3
 
- LDA Q                  \ If (Q P) < 0, jump to down6
- BMI down6
+ LDA Q                  \ If (Q P) < 0, jump to down6 to do the scaling with
+ BMI down6              \ T = 0
 
 .down4
 
- LDA QQ                 \ If (QQ PP) < 0, jump to down6
- BMI down6
+ LDA QQ                 \ If (QQ PP) < 0, jump to down6 to do the scaling with
+ BMI down6              \ T = 0
 
 .down5
 
-                        \ We get here if:
+                        \ We get here if at least one of X and Y is >= 7, and
+                        \ any of the following are true:
                         \
-                        \   * Y >= 7, or Y < 7 and X >= 7, and:
+                        \   * VV = WW and (Q P) >= 0 and (QQ PP) >= 0
+                        \     i.e. x-scale = y-scale and x-coord >= 0 and
+                        \          y-coord >= 0
                         \
-                        \   * VV = WW and (Q P) >= 0 and (QQ PP) >= 0, or
-                        \   * VV > WW and (QQ PP) >= 0, or
+                        \   * VV > WW and (QQ PP) >= 0
+                        \     i.e. x-scale > y-scale and x-coord >= 0
+                        \
                         \   * VV < WW and (Q P) >= 0
+                        \     i.e. x-scale < y-scale and y-coord >= 0
 
- INC T                  \ Increment T to 1
+ INC T                  \ Increment T to 1, so we decrease X and Y by one less
+                        \ in the next part
+
+\ ******************************************************************************
+\
+\       Name: ScaleDown (Part 2 of 4)
+\       Type: Subroutine
+\   Category: Maths
+\    Summary: 
+\
+\ ******************************************************************************
 
 .down6
+
+                        \ If Y >= 0, we decrease X and Y by Y - T
 
  TYA                    \ If Y < 0, jump to down9 to skip the decrement loop
  BMI down9
@@ -3544,10 +3581,12 @@ ORG CODE%
 
 .down8
 
- CPY T                  \ While Y >= T, decrement X and Y
+ CPY T                  \ While Y >= T, loop back to decrement X and Y
  BCS down7
 
 .down9
+
+                        \ If X >= 0, we decrease X and Y by X - T
 
  TXA                    \ If X < 0, jump to down12 to skip the decrement loop
  BMI down12
@@ -3561,138 +3600,225 @@ ORG CODE%
 
 .down11
 
- CPX T                  \ While X >= T, decrement X and Y
+ CPX T                  \ While X >= T, loop back to decrement X and Y
  BCS down10
+
+\ ******************************************************************************
+\
+\       Name: ScaleDown (Part 3 of 4)
+\       Type: Subroutine
+\   Category: Maths
+\    Summary: Scale the x-coordinate
+\
+\ ******************************************************************************
 
 .down12
 
- TXA                    \ If X < 0, jump to down15
- BMI down15
+                        \ We now shift the x-coordinate in (SS QQ PP) by X
+                        \ places in the correct direction, discarding the
+                        \ fractional part in PP when we are done, but only after
+                        \ rounding (SS QQ) to the nearest integer
 
- BNE down13             \ If X > 0, jump to down13
+ TXA                    \ If X < 0, jump to down15 to shift the x-coordinate
+ BMI down15             \ right by X places, with A set to X
+
+ BNE down13             \ If X > 0, jump to down13 to shift the x-coordinate
+                        \ left by X places
 
  ASL PP                 \ X = 0, so shift bit 7 of PP into the C flag and jump
- JMP down17             \ to down17
+ JMP down17             \ to down17 to round the result to the nearest integer,
+                        \ without shifting the x-coordinate first
 
 .down13
 
- LDA QQ                 \ Set (SS QQ PP) = (SS QQ PP) << X
+                        \ We now shift (SS QQ PP) left by X places
+
+ LDA QQ                 \ Set (SS A PP) = (SS QQ PP)
 
 .down14
 
- ASL PP
+ ASL PP                 \ Set (SS A PP) = (SS A PP) << 1
  ROL A
  ROL SS
- DEX
- BNE down14
 
- STA QQ                 \ End left-shift
+ DEX                    \ Decrement the shift counter
 
- ASL PP                 \ Shift bit 7 of PP into the C flag and jump to down17
- JMP down17
+ BNE down14             \ Loop back until we have shifted left by X places
+
+ STA QQ                 \ Set (SS QQ PP) = (SS A PP)
+
+ ASL PP                 \ Shift bit 7 of PP into the C flag, so it contains bit
+                        \ 7 of the fractional part
+
+ JMP down17             \ Jump to down17 to round the result to the nearest
+                        \ integer
 
 .down15
 
- EOR #&FF               \ Set X = -A
- CLC
+                        \ If we get here then we want to shift the result right
+                        \ by the number of places in A, where A is negative
+
+ EOR #&FF               \ Set X = -A so we can use it as a shift counter for the
+ CLC                    \ number of places to shift
  ADC #1
  TAX
 
- LDA QQ                 \ Set QQ = QQ >> X
+                        \ We now shift (SS QQ PP) right by X places, and because
+                        \ SS = 0 and we are going to discard the fractional part
+                        \ in PP, we only actually need to shift QQ
+
+ LDA QQ                 \ Set A = QQ
 
 .down16
 
- LSR A
- DEX
- BNE down16
+ LSR A                  \ Set A = A >> 1
 
- STA QQ                 \ End right-shift, with the last bit 0 of QQ in the C
-                        \ flag
+ DEX                    \ Decrement the shift counter
+
+ BNE down16             \ Loop back until we have shifted right by X places
+
+ STA QQ                 \ Set QQ = A, so now we have shifted (SS QQ) right by
+                        \ X places, and the C flag is set to the last bit that
+                        \ we shifted out of QQ, which would be bit 7 of the
+                        \ fractional part
 
 .down17
 
-                        \ The C flag contains the last bit that was shifted out
-                        \ of PP (if we did a left shift) or QQ (if we did a
-                        \ right shift)
+                        \ We now round up the result, if bit 7 of the fractional
+                        \ part is set
 
+                        \ The C flag contains the next bit that would have been
+                        \ left-shifted out of PP into the result in (SS QQ), or
+                        \ right-shifted out of the result in (SS QQ), so if that
+                        \ bit is set, we need to round up the result
+
+ BCC down18             \ If the next bit is clear, then jump to down18 to move
+                        \ on to scaling the y-coordinate, as we do not need to
+                        \ round up the result
+
+ INC QQ                 \ Otherwise increment the low byte of the result in
+ BNE down18             \ (SS QQ) to round it up, and if we did that without
+                        \ overflowing, jump to down18 to move on to scaling the
+                        \ y-coordinate
+
+ INC SS                 \ If the increment overflowed the low byte, increment
+                        \ the high byte of the result in (SS QQ) to round it up
+
+ LDA SS                 \ If the high byte is < &40, jump to down18 to move on
+ CMP #&40               \ to scaling the y-coordinate
  BCC down18
 
- INC QQ
- BNE down18
-
- INC SS
- LDA SS
- CMP #&40
- BCC down18
-
- LDA #&3F
- STA SS
+ LDA #&3F               \ Otherwise set (SS QQ) = &3FFF as the highest value we
+ STA SS                 \ can return as the x-coordinate
  LDA #&FF
  STA QQ
 
+\ ******************************************************************************
+\
+\       Name: ScaleDown (Part 4 of 4)
+\       Type: Subroutine
+\   Category: Maths
+\    Summary: Scale the y-coordinate
+\
+\ ******************************************************************************
+
 .down18
 
- TYA                    \ If Y < 0, jump to down21
- BMI down21
+                        \ We now shift the y-coordinate in (RR Q P) by Y
+                        \ places in the correct direction, discarding the
+                        \ fractional part in P when we are done, but only after
+                        \ rounding (RR Q) to the nearest integer
 
- BNE down19             \ If Y > 0, jump to down19
+ TYA                    \ If Y < 0, jump to down21 to shift the y-coordinate
+ BMI down21             \ right by Y places, with A set to Y
+
+ BNE down19             \ If Y > 0, jump to down19 to shift the y-coordinate
+                        \ right by Y places
 
  ASL P                  \ Y = 0, so shift bit 7 of P into the C flag and jump
- JMP down23             \ to down23
+ JMP down23             \ to down23 to round the result to the nearest integer,
+                        \ without shifting the y-coordinate first
 
 .down19
 
- LDA Q                  \ Set (RR Q P) = (RR Q P) << Y
+                        \ We now shift (RR Q P) left by X places
+
+ LDA Q                  \ Set (RR A P) = (RR Q P)
 
 .down20
 
- ASL P
+ ASL P                  \ Set (RR A P) = (RR A P) << 1
  ROL A
  ROL RR
- DEY
- BNE down20
 
- STA Q                  \ End left-shift
+ DEY                    \ Decrement the shift counter
 
- ASL P                  \ Shift bit 7 of P into the C flag and jump to down23
- JMP down23
+ BNE down20             \ Loop back until we have shifted left by Y places
+
+ STA Q                  \ Set (RR Q P) = (RR A P)
+
+ ASL P                  \ Shift bit 7 of P into the C flag, so it contains bit
+                        \ 7 of the fractional part
+
+ JMP down23             \ Jump to down23 to round the result to the nearest
+                        \ integer
 
 .down21
 
- EOR #&FF               \ Set Y = -A
- CLC
+                        \ If we get here then we want to shift the result right
+                        \ by the number of places in A, where A is negative
+
+ EOR #&FF               \ Set Y = -A so we can use it as a shift counter for the
+ CLC                    \ number of places to shift
  ADC #1
  TAY
 
- LDA Q                  \ Set Q = Q >> Y
+                        \ We now shift (RR Q P) right by Y places, and because
+                        \ RR = 0 and we are going to discard the fractional part
+                        \ in P, we only actually need to shift Q
+
+ LDA Q                  \ Set A = Q
 
 .down22
 
- LSR A
- DEY
- BNE down22
+ LSR A                  \ Set A = A >> 1
 
- STA Q                  \ End right-shift, with the last bit 0 of Q in the C
-                        \ flag
+ DEY                    \ Decrement the shift counter
+
+ BNE down22             \ Loop back until we have shifted right by Y places
+
+ STA Q                  \ Set Q = A, so now we have shifted (RR Q) right by
+                        \ Y places, and the C flag is set to the last bit that
+                        \ we shifted out of Q, which would be bit 7 of the
+                        \ fractional part
 
 .down23
 
-                        \ The C flag contains the last bit that was shifted out
-                        \ of P (if we did a left shift) or Q (if we did a right
-                        \ shift)
+                        \ We now round up the result, if bit 7 of the fractional
+                        \ part is set
 
+                        \ The C flag contains the next bit that would have been
+                        \ left-shifted out of PP into the result in (RR Q), or
+                        \ right-shifted out of the result in (RR Q), so if that
+                        \ bit is set, we need to round up the result
+
+ BCC down24             \ If the next bit is clear, then jump to return from the
+                        \ subroutine, as we do not need to round up the result
+
+ INC Q                  \ Otherwise increment the low byte of the result in
+ BNE down24             \ (RR Q) to round it up, and if we did that without
+                        \ overflowing, jump to down24 to return from the
+                        \ subroutine as we now have our result
+
+ INC RR                 \ If the increment overflowed the low byte, increment
+                        \ the high byte of the result in (RR Q) to round it up
+
+ LDA RR                 \ If the high byte is < &40, jump to down24 to return
+ CMP #&40               \ from the subroutine as we now have our result
  BCC down24
 
- INC Q
- BNE down24
-
- INC RR
- LDA RR
- CMP #&40
- BCC down24
-
- LDA #&3F
- STA RR
+ LDA #&3F               \ Otherwise set (RR Q) = &3FFF as the highest value we
+ STA RR                 \ can return as the y-coordinate
  LDA #&FF
  STA Q
 
@@ -12516,8 +12642,10 @@ ORG CODE%
 
  STA alienSpeed         \ Set alienSpeed = 10
 
- LDA #242               \ Set the force factor for zLiftDrag = 242
- STA forceFactor+5
+ LDA #242               \ Set the force factor for zLiftDrag = 242, which is
+ STA forceFactor+5      \ quickly adjusted by +10 for the undercarriage being
+                        \ down and -200 for the flaps being off, giving a
+                        \ starting value of 52 when we are sitting on the runway
 
  LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
  STA ucStatus
@@ -25201,7 +25329,7 @@ NEXT
 
  EQUB 22                \ zLiftDrag is scaled as follows:
                         \
-                        \   * Default scaling is by 242
+                        \   * Default scaling is by 52
                         \     (undercarriage down, flaps off, engine off)
                         \
                         \   * Goes up by 10 if undercarriage is down
@@ -25213,7 +25341,10 @@ NEXT
                         \   * Goes up by 20 if engine is on
                         \   * Goes down by 20 if engine is switched off
                         \
-                        \ This value is set to 242 in ResetVariables
+                        \ This value is set to 242 in ResetVariables, which is
+                        \ quickly adjusted by +10 for the undercarriage being
+                        \ down and -200 for the flaps being off, giving a
+                        \ starting value of 52 when we are sitting on the runway
 
  EQUB 40                \ zSlipMoment is scaled by 40 / 32
 
