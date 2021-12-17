@@ -10,7 +10,7 @@
 \ in the documentation are entirely my fault
 \
 \ The terminology and notations used in this commentary are explained at
-\ https://www.bbcelite.com/about_site/terminology_used_in_this_commentary.html
+\ https://aviator.bbcelite.com/about_site/terminology_used_in_this_commentary
 \
 \ The deep dive articles referred to in this commentary can be found at
 \ https://aviator.bbcelite.com/deep_dives
@@ -279,7 +279,7 @@ ORG &0070
 
 \ ******************************************************************************
 \
-\       Name: Page 1 variables
+\       Name: Stack variables
 \       Type: Workspace
 \    Address: &0100 to &0175
 \   Category: Workspaces
@@ -359,9 +359,9 @@ ORG &0170
 
 \ ******************************************************************************
 \
-\       Name: Non-zero page variables (block 1)
+\       Name: Main variable workspace
 \       Type: Workspace
-\    Address: &0400 to &07FF
+\    Address: &0400 to &07FF and &0900 to &0CFF
 \   Category: Workspaces
 \    Summary: The main block of game variables
 \
@@ -489,16 +489,6 @@ ORG &0400
                         \
                         \ Used as temporary point storage when rotating points
                         \ in space
-
-\ ******************************************************************************
-\
-\       Name: Non-zero page variables (block 2)
-\       Type: Workspace
-\    Address: &0900 to &0CFF
-\   Category: Workspaces
-\    Summary: The main block of game variables
-\
-\ ******************************************************************************
 
 ORG &0900
 
@@ -2439,7 +2429,7 @@ ORG CODE%
 \
 \       Name: ProjectPoint (Part 1 of 3)
 \       Type: Subroutine
-\   Category: Maths
+\   Category: 3D geometry
 \    Summary: Project a point onto the screen (i.e. convert from 3D coordinates
 \             to screen coordinates)
 \
@@ -2753,7 +2743,7 @@ ORG CODE%
 \
 \       Name: ProjectPoint (Part 2 of 3)
 \       Type: Subroutine
-\   Category: Maths
+\   Category: 3D geometry
 \    Summary: Calculate the screen coordinates of the projected point
 \
 \ ******************************************************************************
@@ -2822,7 +2812,7 @@ ORG CODE%
 \
 \       Name: ProjectPoint (Part 3 of 3)
 \       Type: Subroutine
-\   Category: Maths
+\   Category: 3D geometry
 \    Summary: Move the projected coordinates to the centre of the screen and
 \             update the point's status byte
 \
@@ -3561,7 +3551,7 @@ ORG CODE%
 \       Name: ScaleDown (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: 
+\    Summary: Balance the scale factors for the x- and y-coordinates
 \
 \ ******************************************************************************
 
@@ -5039,7 +5029,7 @@ ORG CODE%
 \       Name: DrawCanopyLine (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: A subroutine that forms part of the line-drawing routine
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5144,7 +5134,7 @@ ORG CODE%
 \       Name: DrawCanopyLine (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Line drawing routine for a steep vertical slope
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5466,7 +5456,7 @@ ORG CODE%
 \       Name: DrawCanopyLine (Part 4 of 4)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: The end of the line-drawing loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6006,7 +5996,7 @@ ORG CODE%
 \       Name: ClipStartOfLine (Part 2 of 5)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Work out the deltas depending on the direction of slope
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6114,7 +6104,7 @@ ORG CODE%
 \       Name: ClipStartOfLine (Part 3 of 5)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Work out the deltas depending on the steepness of slope
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6204,7 +6194,7 @@ ORG CODE%
 \       Name: ClipStartOfLine (Part 4 of 5)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: 
+\    Summary: Calculate where to clip the line
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16025,7 +16015,7 @@ ORG CODE%
 
 .Lookup2E60
 
- EQUB %00001000
+ EQUB %00001000         \ Colour 1, right end of line
  EQUB %00001100
  EQUB %00001110
  EQUB %00001111
@@ -16040,7 +16030,7 @@ ORG CODE%
 
 .Lookup2E6A
 
- EQUB %00000001
+ EQUB %00000001         \ Colour 1, left end of line
  EQUB %00000011
  EQUB %00000111
  EQUB %00001111
@@ -16055,7 +16045,7 @@ ORG CODE%
 
 .Lookup2E74
 
- EQUB %10000000
+ EQUB %10000000         \ Colour 2, right end of line
  EQUB %11000000
  EQUB %11100000
  EQUB %11110000
@@ -16070,7 +16060,7 @@ ORG CODE%
 
 .Lookup2E7E
 
- EQUB %00010000
+ EQUB %00010000         \ Colour 2, left end of line
  EQUB %00110000
  EQUB %01110000
  EQUB %11110000
@@ -16085,7 +16075,7 @@ ORG CODE%
 
 .Lookup2E88
 
- EQUB %00001111
+ EQUB %00001111         \ Solid colour 1
  EQUB %00001111
  EQUB %00001111
  EQUB %00001111
@@ -16100,7 +16090,7 @@ ORG CODE%
 
 .Lookup2E92
 
- EQUB %11110000
+ EQUB %11110000         \ Solid colour 2
  EQUB %11110000
  EQUB %11110000
  EQUB %11110000
@@ -19962,7 +19952,7 @@ NEXT
 \       Name: Lookup3900
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: Division lookup table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22632,7 +22622,7 @@ NEXT
 \       Name: Lookup4700
 \       Type: Variable
 \   Category: Maths
-\    Summary: 
+\    Summary: Division lookup table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23585,7 +23575,7 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: AddTempToPoint (Part 1 of 2)
+\       Name: AddTempToPoint (Part 2 of 2)
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Check whether the vector addition overflowed and set the point's
