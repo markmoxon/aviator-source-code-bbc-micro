@@ -1992,7 +1992,7 @@ ORG CODE%
                         \ The following two calls to ClearRows clear the first
                         \ two character rows on-screen
 
- LDA #&58               \ Set (P Q) = &5800, so the call to ClearRows starts
+ LDA #&58               \ Set (Q P) = &5800, so the call to ClearRows starts
  STA Q                  \ clearing from the start of the first character row
  LDA #0                 \ (i.e. row 0)
  STA P
@@ -2008,7 +2008,7 @@ ORG CODE%
                         \ the first 32 character blocks (blocks 0 to 31) of the
                         \ top two character rows (rows 0 and 1)
 
- LDA #&58               \ Set (P Q) = &58FF, so the call to ClearRows starts
+ LDA #&58               \ Set (Q P) = &58FF, so the call to ClearRows starts
  STA Q                  \ clearingfrom character block 32 in the first character
  LDA #&FF               \ row on-screen
  STA P
@@ -2028,7 +2028,7 @@ ORG CODE%
                         \ 4-pixel-wide column on the left and right edges of the
                         \ screen
 
- LDA #&5A               \ Set (P Q) = &5A7F, so the call to ClearRows starts
+ LDA #&5A               \ Set (Q P) = &5A7F, so the call to ClearRows starts
  STA Q                  \ clearing from the start of the third character row
  LDA #&7F               \ (i.e. row 2)
  STA P
@@ -2044,7 +2044,7 @@ ORG CODE%
                         \ block (block 0) on all 18 rows, i.e. the first four
                         \ pixels
 
- LDA #&5B               \ Set (P Q) = &5BB7, so the call to ClearRows starts
+ LDA #&5B               \ Set (Q P) = &5BB7, so the call to ClearRows starts
  STA Q                  \ clearing from the start of the last character block
  LDA #&B7               \ on the third character row (i.e. row 2)
  STA P
@@ -2350,11 +2350,11 @@ ORG CODE%
 \ ------------------------------------------------------------------------------
 \
 \ This routine zeroes a block of Y bytes on R screen rows, starting from screen
-\ address (P Q) on the first row.
+\ address (Q P) on the first row.
 \
 \ A value of Y = 0 will zero 256 bytes.
 \
-\ In other words, (P Q) represents the top-left pixel to blank, Y represents
+\ In other words, (Q P) represents the top-left pixel to blank, Y represents
 \ the width of the area to blank (with a value of 8 per character block), and R
 \ contains the number of rows to blank.
 \
@@ -2363,7 +2363,7 @@ ORG CODE%
 \   Y                   The width of each character row to zero (in bytes),
 \                       0 indicates 256 bytes
 \
-\   (P Q)               The screen address to start zeroing from
+\   (Q P)               The screen address to start zeroing from
 \
 \   R                   The number of character rows to zero
 \
@@ -2383,14 +2383,14 @@ ORG CODE%
 
 .clrw2
 
- STA (P),Y              \ Zero the Y-th byte of the page at (P Q), which sets 4
+ STA (P),Y              \ Zero the Y-th byte of the page at (Q P), which sets 4
                         \ pixels to black
 
  DEY                    \ Decrement the byte pointer
 
- BNE clrw2              \ Loop back until we have zeroed (P Q) to (P Q) + Y
+ BNE clrw2              \ Loop back until we have zeroed (Q P) to (Q P) + Y
 
- LDA P                  \ Set (P Q) = (P Q) + 320
+ LDA P                  \ Set (Q P) = (Q P) + 320
  CLC                    \
  ADC #LO(320)           \ starting with the low bytes
  STA P
@@ -4544,7 +4544,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 1 of 4)
+\       Name: DrawCanopyLine (Part 1 of 7)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line in the canopy view
@@ -4611,7 +4611,7 @@ ORG CODE%
  ADC yLookupHi,Y        \         + Y-th byte of yLookupHi
  STA Q                  \       = HI(X * 8) + HI(screen address)
 
-                        \ So (P Q) is the screen address of the pixel row
+                        \ So (Q P) is the screen address of the pixel row
                         \ containing pixel (R, S), out by 8 bytes for each row
                         \ above or below the top of the dashboard
 
@@ -4620,7 +4620,29 @@ ORG CODE%
  BCC dlin1
 
  JMP dlin41             \ Otherwise U >= T and the line is a steep vertical
-                        \ slope, so jump down to part 3 to draw the line
+                        \ slope, so jump down to part 4 to draw the line
+
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 2 of 7)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Modify the line drawing routine for a shallow horizontal slope
+\
+\ ------------------------------------------------------------------------------
+\
+\ The code in this routine is modified by the ModifyDrawRoutine routine, and by
+\ the DrawCanopyLine routine itself.
+\
+\ The default code (i.e. the unmodified version in the source) is run when:
+\
+\   * Bit 7 of V is clear, so we step along the x-axis in a positive direction,
+\     i.e. to the right
+\
+\   * Bit 6 of V is set, so we step along the y-axis in a negative direction,
+\     i.e. down the screen
+\
+\ ******************************************************************************
 
 .dlin1
 
@@ -4630,8 +4652,10 @@ ORG CODE%
  BIT V                  \ If bit 7 of V is set, jump to dlin3 to step along the
  BMI dlin3              \ x-axis in a negative direction, i.e. to the left
 
-                        \ Bit 7 of V is clear, so we step along the x-axis in a
-                        \ positive direction, i.e. to the right
+                        \ If we get here then bit 7 of V is clear, so we step
+                        \ along the x-axis in a positive direction, i.e. to the
+                        \ right, which we implement by modifying the routine's
+                        \ code, setting it back to the default
  
  LDA #5                 \ Modify the following instruction at dlin20:
  STA dlin20+1           \
@@ -4651,37 +4675,44 @@ ORG CODE%
  STA dlin33+1           \
                         \   LDA Lookup2E60,X -> LDA Lookup2E60,X
                         \
-                        \ The LDA #&60 gets modified by the ModifyDrawRoutine
-                        \ routine as follows:
+                        \ Note that this is a two-layer modification, as the
+                        \ LDA #LO(Lookup2E60) instruction gets modified by the
+                        \ ModifyDrawRoutine routine as follows:
                         \
-                        \   * &60 when colourLogic = %01000000
+                        \   * LO(Lookup2E60) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 1
                         \     i.e. LDA Lookup2E60,X
                         \
-                        \   * &74 when colourLogic = %01000000
+                        \   * LO(Lookup2E74) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 2
                         \     i.e. LDA Lookup2E74,X
                         \
-                        \   * &88 when colourLogic = %00000000
+                        \   * LO(Lookup2E88) when colourLogic = %00000000
                         \          and colourCycle = %00001111
                         \     so the bit pattern lookup is always %00001111
                         \     i.e. LDA Lookup2E88,X
                         \
-                        \   * &92 when colourLogic = %00000000
+                        \   * LO(Lookup2E92) when colourLogic = %00000000
                         \          and colourCycle = %11110000
                         \     so the bit pattern lookup is always %11110000
                         \     i.e. LDA Lookup2E92,X
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour cycle
 
  LDA #39                \ Set I = 39
  STA I
 
- BNE dlin5              \ Junp to dlin5 (this BNE is effectively a JMP as A is
-                        \ never zero)
+ BNE dlin5              \ Jump to dlin5 to skip the code modifications for the
+                        \ other value of bit 7 (this BNE is effectively a JMP as
+                        \ A is never zero)
 
 .dlin3
 
-                        \ Bit 7 of V is set, so we step along the x-axis in a
-                        \ negative direction, i.e. to the left
+                        \ If we get here then bit 7 of V is set, so we step
+                        \ along the x-axis in a negative direction, i.e. to the
+                        \ left, which we implement by modifying the routine's
+                        \ code
 
  LDA #&24               \ Modify the following instruction at dlin20:
  STA dlin20+1           \
@@ -4697,26 +4728,30 @@ ORG CODE%
  LDA #LO(Lookup2E6A)    \
  STA dlin33+1           \   LDA Lookup2E60,X -> LDA Lookup2E6A,X
                         \
-                        \ The LDA #&6A gets modified by the ModifyDrawRoutine
-                        \ routine as follows:
-                        \
-                        \   * &6A when colourLogic = %01000000
+                        \ Note that this is a two-layer modification, as the
+                        \ LDA #LO(Lookup2E6A) instruction gets modified by the
+                        \ ModifyDrawRoutine routine as follows:
+
+                        \   * LO(Lookup2E6A) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 1
                         \     i.e. LDA Lookup2E6A,X
                         \
-                        \   * &7E when colourLogic = %01000000
+                        \   * LO(Lookup2E7E) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 2
                         \     i.e. LDA Lookup2E7E,X
                         \
-                        \   * &88 when colourLogic = %00000000
+                        \   * LO(Lookup2E88) when colourLogic = %00000000
                         \          and colourCycle = %00001111
                         \     so the bit pattern lookup is always %00001111
                         \     i.e. LDA Lookup2E88,X
                         \
-                        \   * &92 when colourLogic = %00000000
+                        \   * LO(Lookup2E92) when colourLogic = %00000000
                         \          and colourCycle = %11110000
                         \     so the bit pattern lookup is always %11110000
                         \     i.e. LDA Lookup2E92,X
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour cycle
 
  LDA #0                 \ Set I = 0
  STA I
@@ -4726,8 +4761,10 @@ ORG CODE%
  BIT V                  \ If bit 6 of V is set, jump to dlin6 to step along the
  BVS dlin6              \ y-axis in a negative direction, i.e. down the screen
 
-                        \ Bit 6 of V is clear, so we step along the y-axis in a
-                        \ positive direction, i.e. up the screen
+                        \ If we get here then bit 6 of V is clear, so we step
+                        \ along the y-axis in a positive direction, i.e. up the
+                        \ screen, which we implement by modifying the routine's
+                        \ code
 
  LDA #&98               \ Modify the following instruction at dlin35:
  STA dlin35             \
@@ -4750,12 +4787,15 @@ ORG CODE%
  SBC G
  STA J
 
- JMP dlin7
+ JMP dlin7              \ Jump to dlin7 to skip the code modifications for the
+                        \ other value of bit 6
 
 .dlin6
 
-                        \ Bit 6 of V is set, so we step along the y-axis in a
-                        \ negative direction, i.e. down the screen
+                        \ If we get here then bit 6 of V is set, so we step
+                        \ along the y-axis in a negative direction, i.e. down
+                        \ the screen, which we implement by modifying the
+                        \ routine's code, setting it back to the default
 
  LDA #&C8               \ Modify the following instruction at dlin35:
  STA dlin35             \
@@ -4786,7 +4826,48 @@ ORG CODE%
  SBC G
  STA J
 
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 3 of 7)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Draw a line as a shallow horizontal slope
+\
+\ ******************************************************************************
+
 .dlin7
+
+                        \ By the time we get here, the code has been modified to
+                        \ work with the step directions given in bits 6 and 7 of
+                        \ V, as well as the current colour cycle
+                        \
+                        \ To keep things simple, we will only document the
+                        \ the default code, which is for a shallow horizontal
+                        \ slope with the following:
+                        \
+                        \   * Bit 7 of V is clear, so we step along the x-axis
+                        \     in a positive direction, i.e. to the right
+                        \
+                        \   * Bit 6 of V is set, so we step along the y-axis in
+                        \     a negative direction, i.e. down the screen
+                        \
+                        \   * The current colour cycle is drawing in colour 1,
+                        \     using the pixel bitmaps at Lookup2E60
+                        \
+                        \ By this point, we also have the following variables
+                        \ set:
+                        \
+                        \   * (Q P) is the screen address of the pixel row
+                        \     containing pixel (R, S), out by 8 bytes for each
+                        \     row above or below the top of the dashboard
+                        \
+                        \   * I = 39
+                        \
+                        \   * J = 160 - G
+                        \
+                        \ The last two have different values with different line
+                        \ directions, but these are the values for the default
+                        \ case that we're considering here
 
  LDA #&9F               \ Set Y = 159 - S
  SEC
@@ -4930,11 +5011,13 @@ ORG CODE%
 
 .dlin22
 
- STA SS
+ STA SS                 \ Set A = SS
 
 .dlin23
 
- LDA Lookup2E60,X       \ Gets modified by the ModifyDrawRoutine routine:
+ LDA Lookup2E60,X       \ Fetch the X-th pixel byte from Lookup2E60
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * LDA Lookup2E60,X when colourLogic = %10000000
                         \
@@ -4948,33 +5031,37 @@ ORG CODE%
 
 .dlin24
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+ ORA (P),Y              \ Or the pixel byte with the current screen contents
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * ORA (P),Y when colourLogic = %01000000
                         \
                         \   * AND (P),Y when colourLogic = %00000000
 
- STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
 .dlin25
 
- LDA P
- CLC
- ADC #8
+ LDA P                  \ Set (Q P) = (Q P) + 8
+ CLC                    \
+ ADC #8                 \ starting with the low bytes
  STA P
- BCC dlin26
 
- INC Q
+ BCC dlin26             \ And then the high bytes, so (Q P) now points to the
+ INC Q                  \ next character block to the right
 
 .dlin26
 
- INC QQ
- LDA QQ
+ INC QQ                 \ Increment QQ
+
+ LDA QQ                 \ If QQ <> I, jump back to dlin12 to ???
  CMP I
  BNE dlin12
 
- JMP dlin65
+ JMP dlin65             \ Otherwise QQ = I, so jump to dlin65 to process the
+                        \ clipped part of the line, if applicable
 
 .dlin27
 
@@ -5002,7 +5089,7 @@ ORG CODE%
                         \
                         \   * AND (P),Y when colourLogic = %00000000
 
- STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
 .dlin30
@@ -5022,30 +5109,54 @@ ORG CODE%
  CMP I
  BNE dlin12
 
- JMP dlin65
+ JMP dlin65             \ Jump to dlin65 to process the clipped part of the
+                        \ line, if applicable
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 2 of 4)
+\       Name: DrawCanopyLine (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: A subroutine that forms part of the line-drawing routine
+\    Summary: Draw the correct pixel row in the current character block for this
+\             part of the line
 \
 \ ------------------------------------------------------------------------------
 \
 \ The code in this routine is modified by the ModifyDrawRoutine, and by the
 \ DrawCanopyLine routine itself.
 \
+\ The default code (i.e. the unmodified version in the source) is run when:
+\
+\   * The current colour cycle is drawing in colour 1, using the pixel bitmaps
+\     at Lookup2E60
+\
+\   * Bit 6 of V is set, so we step along the y-axis in a negative direction,
+\     i.e. down the screen
+\
 \ ******************************************************************************
 
 .dlin32
+
+                        \ This routine moves us down to the next character row
+                        \ (though it may be modified to move up a row for lines
+                        \ that are being drawn in that direction)
+                        \
+                        \ We call this subroutine with:
+                        \
+                        \   * A = 
+                        \   * X = 
+                        \   * The C flag is always set
+                        \
+                        \ and return the result in the C flag ???
 
  ADC RR                 \ Set SS = A + RR + C
  STA SS
 
 .dlin33
 
- LDA Lookup2E60,X       \ Gets modified by the DrawCanopyLine routine, which in
+ LDA Lookup2E60,X       \ Fetch the X-th pixel byte from Lookup2E60
+                        \
+                        \ Gets modified by the DrawCanopyLine routine, which in
                         \ turn gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * Lookup2E60 when colourLogic = %01000000
@@ -5059,18 +5170,23 @@ ORG CODE%
                         \                 and colourCycle = %11110000
 .dlin34
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+ ORA (P),Y              \ Or the pixel byte with the current screen contents
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * ORA (P),Y when colourLogic = %01000000
                         \
                         \   * AND (P),Y when colourLogic = %00000000
 
- STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
 .dlin35
 
- INY                    \ Gets modified by the DrawCanopyLine routine:
+ INY                    \ Increment Y to point to the next screen byte, i.e. the
+                        \ offset of the next row in the character block
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * INY when bit 6 of V is set
                         \
@@ -5078,71 +5194,99 @@ ORG CODE%
 
 .dlin36
 
- TYA                    \ Gets modified by the DrawCanopyLine routine:
+ TYA                    \ Set A to the offset of the next row in the character
+                        \ block
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * TYA when bit 6 of V is set
                         \
                         \   * DEY when bit 6 of V is clear
 
- AND #7
- BNE dlin39
+ AND #7                 \ If A mod 7 <> 0 then we haven't reached the end of the
+ BNE dlin39             \ 8-row character block, so jump to dlin39 to skip the
+                        \ following
 
- LDA P
+                        \ Otherwise we have reached the last row of the
+                        \ character block, so we now add &138 to (Q P) to move
+                        \ to the address of the start of the character block
+                        \ in the row below (as each character row in mode 5
+                        \ contains &140 bytes, so this is &140 - 8 to cater for
+                        \ the block we just finished)
+
+ LDA P                  \ We start by adding &38 to the low byte in P
  CLC
 
 .dlin37
 
- ADC #&38               \ Gets modified by the DrawCanopyLine routine:
+ ADC #&38               \ Add &38 to the low byte
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * ADC #&38 when bit 6 of V is set
                         \
                         \   * ADC #&E8 when bit 6 of V is clear
 
- STA P
- LDA Q
+ STA P                  \ Store the updated low byte in P
+
+ LDA Q                  \ Then add the high bytes
 
 .dlin38
 
- ADC #1                 \ Gets modified by the DrawCanopyLine routine:
+ ADC #1                 \ Add &1 to the high byte
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * ADC #1 when bit 6 of V is set
                         \
                         \   * ADC #&FE when bit 6 of V is clear
 
- STA Q
+ STA Q                  \ Which we store in Q, so now we have:
+                        \
+                        \   (Q P) = (Q P) + &138
+                        \
+                        \ so (Q P) is the address of the start of the character
+                        \ block in the row below
 
 .dlin39
 
- LDA SS
- CPY J
- CLC
- BEQ dlin40
+ LDA SS                 \ Set A = SS
 
- RTS
+ CPY J                  \ If the current pixel row in Y = J, jump to dlin40
+ CLC                    \ with the C flag clear
+ BEQ dlin40             
+
+ RTS                    \ Return from the subroutine with the C flag clear
 
 .dlin40
 
- TSX                    \ Remove two bytes from the top of the stack
- INX
- INX
+ TSX                    \ Remove two bytes from the top of the stack, so the
+ INX                    \ next RTS returns us to caller of the DrawCanopyLine
+ INX                    \ routine rather than the caller of dlin32
  TXS
 
- JMP dlin65
+ JMP dlin65             \ Jump to dlin65 to process the clipped part of the
+                        \ line, if applicable
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 3 of 4)
+\       Name: DrawCanopyLine (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: Line drawing routine for a steep vertical slope
+\    Summary: Modify the line drawing routine for a steep vertical slope
 \
 \ ------------------------------------------------------------------------------
 \
 \ The code in this routine is modified by the ModifyDrawRoutine routine, and by
 \ the DrawCanopyLine routine itself.
 \
-\ The default code (i.e. the unmodified version in the source) is run when bit 6
-\ of V is clear (y-axis up) and bit 7 is set (x-axis left).
+\ The default code (i.e. the unmodified version in the source) is run when:
+\
+\   * Bit 7 of V is clear, so we step along the x-axis in a positive direction,
+\     i.e. to the right
+\
+\   * Bit 6 of V is clear, so we step along the y-axis in a positive direction,
+\     i.e. up the screen
 \
 \ ******************************************************************************
 
@@ -5150,8 +5294,13 @@ ORG CODE%
 
                         \ If we get here then the line is a steep vertical slope
 
- BIT V                  \ If bit 6 of V is set, jump to dlin42
- BVS dlin42
+ BIT V                  \ If bit 6 of V is set, jump to dlin42 to step along the
+ BVS dlin42             \ y-axis in a negative direction, i.e. down the screen
+
+                        \ If we get here then bit 6 of V is clear, so we step
+                        \ along the y-axis in a positive direction, i.e. up the
+                        \ screen, which we implement by modifying the routine's
+                        \ code
 
  LDA #&98               \ Modify the following instruction at dlin53:
  STA dlin53             \
@@ -5177,11 +5326,19 @@ ORG CODE%
                         \
                         \ i.e. set it back to the default
 
- LDA #7
+ LDA #7                 \ Set J = 7
  STA J
- BNE dlin43
+
+ BNE dlin43             \ Jump to dlin43 to skip the code modifications for the
+                        \ other value of bit 6 (this BNE is effectively a JMP as
+                        \ A is never zero)
 
 .dlin42
+
+                        \ If we get here then bit 6 of V is set, so we step
+                        \ along the y-axis in a negative direction, i.e. down
+                        \ the screen, which we implement by modifying the
+                        \ routine's code, setting it back to the default
 
  LDA #&C8               \ Modify the following instruction at dlin53:
  STA dlin53             \
@@ -5199,13 +5356,18 @@ ORG CODE%
  STA dlin56+1           \
                         \   ADC #&FE -> ADC #1
 
- LDA #&A0
+ LDA #160               \ Set J = 160
  STA J
 
 .dlin43
 
- BIT V                  \ If bit 7 of V is set, jump to dlin44
- BMI dlin44
+ BIT V                  \ If bit 7 of V is set, jump to dlin44 to step along the
+ BMI dlin44             \ x-axis in a negative direction, i.e. to the left
+
+                        \ If we get here then bit 7 of V is clear, so we step
+                        \ along the x-axis in a positive direction, i.e. to the
+                        \ right, which we implement by modifying the routine's
+                        \ code, setting it back to the default
 
  LDA #&1D               \ Modify the following instruction at dlin52:
  STA dlin52+1           \
@@ -5213,36 +5375,84 @@ ORG CODE%
                         \
                         \ i.e. set it back to the default
 
- LDA W
+ LDA W                  \ Set I = W + 1
  CLC
  ADC #1
  STA I
- JMP dlin45
+
+ JMP dlin45             \ Jump to dlin45 to skip the code modifications for the
+                        \ other value of bit 7
 
 .dlin44
+
+                        \ If we get here then bit 7 of V is set, so we step
+                        \ along the x-axis in a negative direction, i.e. to the
+                        \ left, which we implement by modifying the routine's
+                        \ code
 
  LDA #&3F               \ Modify the following instruction at dlin52:
  STA dlin52+1           \
                         \   BCS dlin57 -> BCS dlin61
 
- LDA W
+ LDA W                  \ Set I = W - 1
  SEC
  SBC #1
  STA I
 
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 6 of 7)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Draw a line as a steep vertical slope
+\
+\ ******************************************************************************
+
 .dlin45
+
+                        \ By the time we get here, the code has been modified to
+                        \ work with the step directions given in bits 6 and 7 of
+                        \ V
+                        \
+                        \ To keep things simple, we will only document the
+                        \ the default code, which is for a steep vertical slope
+                        \ with the following:
+                        \
+                        \   * Bit 7 of V is clear, so we step along the x-axis
+                        \     in a positive direction, i.e. to the right
+                        \
+                        \   * Bit 6 of V is clear, so we step along the y-axis
+                        \     in a positive direction, i.e. up the screen
+                        \
+                        \ By this point, we also have the following variables
+                        \ set:
+                        \
+                        \   * (Q P) is the screen address of the pixel row
+                        \     containing pixel (R, S), out by 8 bytes for each
+                        \     row above or below the top of the dashboard
+                        \
+                        \   * I = W + 1
+                        \
+                        \   * J = 7
+                        \
+                        \ The last two have different values with different line
+                        \ directions, but these are the values for the default
+                        \ case that we're considering here
 
  LDA #&9F
  SEC
  SBC S
  TAY
+
  LDA #&FF
  SEC
  SBC U
  STA RR
+
  CLC
  ADC #1
  STA SS
+
  LDA V
  AND #3
  BEQ dlin46
@@ -5304,7 +5514,7 @@ ORG CODE%
                         \
                         \   * AND (P),Y when colourLogic = %00000000
 
- STA (P),Y              \ Update the Y-th byte of (P Q) with the result, which
+ STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
 
  LDA SS
@@ -5366,7 +5576,8 @@ ORG CODE%
  CLC
  BNE dlin50
 
- JMP dlin65
+ JMP dlin65             \ Jump to dlin65 to process the clipped part of the
+                        \ line, if applicable
 
 .dlin57
 
@@ -5409,7 +5620,9 @@ ORG CODE%
  CLC
  BNE dlin53
 
- BEQ dlin65
+ BEQ dlin65             \ Jump to dlin65 to process the clipped part of the
+                        \ line, if applicable (this BEQ is effectively a JMP
+                        \ as we just passed through a BNE)
 
 .dlin61
 
@@ -5453,53 +5666,76 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 4 of 4)
+\       Name: DrawCanopyLine (Part 7 of 7)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: The end of the line-drawing loop
-\
-\ ------------------------------------------------------------------------------
-\
-\ 
+\    Summary: If the line was clipped, draw a line from the clipped coordinates
+\             to the edge of the screen
 \
 \ ******************************************************************************
 
 .dlin65
 
- LDA V
+ LDA V                  \ Set A = V >> 1, setting the C flag to bit 0 of V
  LSR A
- BCS dlin66
 
- RTS
+ BCS dlin66             \ If bit 0 if V is set, which means the line has been
+                        \ clipped by the ClipStartOfLine routine, jump to dlin66
+
+ RTS                    \ Otherwise bit 0 of V is clear and the line has not been
+                        \ clipped, so we return from the subroutine
 
 .dlin66
 
- ASL A
- EOR #&C0
+ ASL A                  \ Shift A left so it contains V again
+
+ EOR #%11000000         \ Flip bits 6 and 7 of V and store it
  STA V
- LDA xTemp1Lo
- STA R
+
+ LDA xTemp1Lo           \ Set (R, S) = (xTemp1Lo, yTemp1Lo), which we set to the
+ STA R                  \ coordinate of the clipped line in ClipStartOfLine
  LDA yTemp1Lo
  STA S
- LDA #4
- BIT V
- BMI dlin67
 
- LDA #&9B
+ LDA #4                 \ Set A = 4, to use as the value of W if bit 7 of V is
+                        \ set (i.e. when we step along the x-axis in a negative
+                        \ direction, to the left)
+
+ BIT V                  \ If bit 7 of V is set, jump to dlin67 to skip the next
+ BMI dlin67             \ instruction
+
+ LDA #155               \ Set A = 155, to use as the value of W if bit 7 of V is
+                        \ clear (i.e. when we step along the x-axis in a 
+                        \ positive direction, to the right)
+
 
 .dlin67
 
- STA W
- LDA #0
- BVS dlin68
+ STA W                  \ Set W to the value in A (4 or 155), so W contains the
+                        \ x-coordinate for the edge of the screen in the step
+                        \ direction (i.e. 4 if we are stepping left, 155 if we
+                        \ are stepping right)
 
- LDA #&97
+ LDA #0                 \ Set A = 0, to use as the value of W if bit 6 of V is
+                        \ set (i.e. when we step along the y-axis in a negative
+                        \ direction, down the screen)
+
+ BVS dlin68             \ If bit 6 of V is set, jump to dlin68 to skip the next
+                        \ instruction
+
+ LDA #151               \ Set A = 151, to use as the value of W if bit 6 of V is
+                        \ clear (i.e. when we step along the y-axis in a
+                        \ positive direction, up the screen)
 
 .dlin68
 
- STA G
+ STA G                  \ Set G to the value in A (0 or 151), so G contains the
+                        \ y-coordinate for the edge of the screen in the step
+                        \ direction (i.e. 0 if we are stepping down, 151 if we
+                        \ are stepping up)
 
- JMP DrawCanopyLine
+ JMP DrawCanopyLine     \ Jump back to DrawCanopyLine to draw the line from
+                        \ (xTemp1Lo, yTemp1Lo) to the edge of the screen
 
 \ ******************************************************************************
 \
@@ -5900,6 +6136,10 @@ ORG CODE%
 \                       fit on-screen
 \
 \   V                   Bit 0 is set to indicate the line has been clipped
+\
+\   xTemp1Lo            If the line has been clipped, contains a copy of R
+\
+\   yTemp1Lo            If the line has been clipped, contains a copy of S
 \
 \ ******************************************************************************
 
@@ -10989,7 +11229,7 @@ ORG CODE%
  ADC xLookupHi,X        \         + X-th byte of xLookupHi
  STA Q                  \       = HI(screen address) + HI(X * 8)
 
-                        \ So (P Q) is the screen address of the pixel row
+                        \ So (Q P) is the screen address of the pixel row
                         \ containing pixel (I, J), out by 8 bytes for each row
                         \ above or below the top of the dashboard
 
@@ -11011,7 +11251,7 @@ ORG CODE%
  LDA RR,X               \ Fetch the X-th byte of RR, which is a pixel byte with
                         \ the X-th pixel set to white
 
- ORA (P),Y              \ OR it with (P Q) + Y, which is the screen address of
+ ORA (P),Y              \ OR it with (Q P) + Y, which is the screen address of
                         \ the pixel row containing (I, J)
                         \
                         \ This will keep all pixels the same except the X-th
@@ -11029,7 +11269,7 @@ ORG CODE%
  EOR #%11111111         \ Invert all the bits, so A is now a pixel byte that is
                         \ all white except for the X-th pixel, which is black
 
- AND (P),Y              \ AND it with (P Q) + Y, which is the screen address of
+ AND (P),Y              \ AND it with (Q P) + Y, which is the screen address of
                         \ pixel (I, J)
                         \
                         \ This will keep all pixels the same except the X-th
@@ -11038,7 +11278,7 @@ ORG CODE%
 
 .dvec13
 
- STA (P),Y              \ Store the byte in A in sceen memory at (P Q) + Y,
+ STA (P),Y              \ Store the byte in A in sceen memory at (Q P) + Y,
                         \ which sets all four pixels to the pixel pattern in A,
                         \ which either draws or erases the pixel at (I, J)
 
@@ -12145,7 +12385,7 @@ ORG CODE%
 
 .fire2
 
- JSR ResetObjectCoords  \ Set the object coordinates for object Y to (0, 0, 0)
+ JSR SetObjectToOrigin  \ Set the object coordinates for object Y to (0, 0, 0)
 
  JSR AddPointToObject   \ Add the vector in point 96 to the object coordinates,
                         \ so this sets the location of the object to that of
@@ -12457,7 +12697,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: ResetObjectCoords
+\       Name: SetObjectToOrigin
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Set an object's coordinates to (0, 0, 0)
@@ -12470,7 +12710,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.ResetObjectCoords
+.SetObjectToOrigin
 
  LDA #0                 \ Zero the object's x-coordinate
  STA xObjectLo,Y
@@ -12737,7 +12977,7 @@ ORG CODE%
                         \ a new one, as xPointLo is off-radar
 
  LDY #33                \ Reset object 33's coordinates (the flying alien) to
- JSR ResetObjectCoords  \ (0, 0, 0)
+ JSR SetObjectToOrigin  \ (0, 0, 0)
 
  RTS                    \ Return from the subroutine
 
@@ -12805,6 +13045,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Start the main loop by processing gunfire and bullets
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -12896,15 +13137,15 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Reset object statuses and related points
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
 .main3
 
                         \ We now want to zero the 40 bytes in objectStatus, so
-                        \ that all objects are marked as unprocessed, and are
-                        \ ready to be processed in this iteration of the main
-                        \ loop
+                        \ that all objects are marked as unprocessed, ready to be
+                        \ processed again in this iteration of the main loop
 
  LDX #19                \ We do this as two blocks of 20 bytes, so set a counter
                         \ in X to use in the loop below
@@ -12932,6 +13173,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Make the sound of firing, if appropriate
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -12956,6 +13198,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Check whether aliens have invaded Acornsville
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -12974,6 +13217,7 @@ ORG CODE%
 \   Category: Main loop
 \    Summary: Update lines, check flying skills, increment main loop counter,
 \             update the radar
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13026,6 +13270,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Check whether any aliens have been hit
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13097,6 +13342,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Process the terminate key
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13124,6 +13370,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: If we fire the guns on the runway, enable the Theme
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13162,6 +13409,7 @@ ORG CODE%
 \   Category: Main loop
 \    Summary: Fill up the tank if the engine is switched off, and process the
 \             volume keys
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13183,6 +13431,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Award points for a successful landing
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13206,6 +13455,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Process engine start and stop
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13259,6 +13509,7 @@ ORG CODE%
 \   Category: Main loop
 \    Summary: Spend at least 9 centiseconds processing lines from the
 \             linesToHide list
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13293,6 +13544,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Process more lines and update the view out of the canopy
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13309,6 +13561,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Handle the score display
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -13357,6 +13610,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Main loop
 \    Summary: Update the status of any new line points
+\  Deep dive: Program flow of the main game loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16007,10 +16261,6 @@ ORG CODE%
 \   Category: Drawing lines
 \    Summary: Pixel bytes for drawing canopy lines
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
 .Lookup2E60
@@ -16202,7 +16452,7 @@ ORG CODE%
 
 .FillCanopyRows
 
- STY Q                  \ Set (P Q) = (Y X), so (P Q) is now the screen address
+ STY Q                  \ Set (Q P) = (Y X), so (Q P) is now the screen address
  STX P                  \ we want to start filling from
 
  STA S                  \ Store the value we want to store into S
@@ -16215,32 +16465,32 @@ ORG CODE%
 
 .fcrw2
 
- STA (P),Y              \ Set the Y-th byte of (P Q) to A, which sets 4 pixels
+ STA (P),Y              \ Set the Y-th byte of (Q P) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
  BNE fcrw2              \ Loop back until we have set 256 bytes, starting at
-                        \ (P Q), to the value in A
+                        \ (Q P), to the value in A
 
  LDY #47                \ Set a byte counter in Y for 47 bytes
 
- INC Q                  \ Set (P Q) = (P Q) + 256
+ INC Q                  \ Set (Q P) = (Q P) + 256
                         \
                         \ so it points to the next byte to fill after the 256
                         \ bytes we just did
 
 .fcrw3
 
- STA (P),Y              \ Set the Y-th byte of (P Q) to A, which sets 4 pixels
+ STA (P),Y              \ Set the Y-th byte of (Q P) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
  BPL fcrw3              \ Loop back until we have set 47 bytes, starting at
-                        \ (P Q), to the value in A
+                        \ (Q P), to the value in A
 
- LDA P                  \ Set (P Q) = (P Q) + 64
+ LDA P                  \ Set (Q P) = (Q P) + 64
  CLC                    \
  ADC #64                \ starting with the low bytes
  STA P
@@ -16249,9 +16499,9 @@ ORG CODE%
                         \ instruction
 
  INC Q                  \ The above addition overflowed, so increment the high
-                        \ byte of (P Q) to point to the next page in memory
+                        \ byte of (Q P) to point to the next page in memory
 
-                        \ So now (P Q) is 320 greater than at the start, so it
+                        \ So now (Q P) is 320 greater than at the start, so it
                         \ points to the next character row in screen memory
 
 .fcrw4
@@ -22578,10 +22828,6 @@ NEXT
 \    Summary: Read the joystick axes and fire button and update the aileron,
 \             elevator and fire key values accordingly
 \
-\ ------------------------------------------------------------------------------
-\
-\ 
-\
 \ ******************************************************************************
 
 .ReadJoystick
@@ -26200,7 +26446,7 @@ NEXT
 \
 \   * If we are on the ground, then:
 \
-\       * Apply ground steering to zTurn if the rudder is used and forward speed
+\       * Apply ground steering to yTurn if the rudder is used and forward speed
 \         is >= 20.
 \
 \       * If the undercarriage is up, prevent the plane from pitching forward
@@ -29432,7 +29678,7 @@ NEXT
 \
 \       Name: ScaleByAltitude
 \       Type: Subroutine
-\   Category: Maths
+\   Category: Flight model
 \    Summary: Multiply the high byte of the plane's altitude by a 16-bit number
 \
 \ ------------------------------------------------------------------------------
