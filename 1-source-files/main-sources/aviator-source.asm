@@ -4544,7 +4544,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 1 of 7)
+\       Name: DrawCanopyLine (Part 1 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line in the canopy view
@@ -4580,8 +4580,6 @@ ORG CODE%
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
-\
-\                       Also bits 0 and 1 are involved
 \
 \   W                   Max/min x-coordinate for the end of the line
 \
@@ -4624,7 +4622,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 2 of 7)
+\       Name: DrawCanopyLine (Part 2 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Modify the line drawing routine for a shallow horizontal slope
@@ -4671,31 +4669,31 @@ ORG CODE%
 
 .dlin2
 
- LDA #LO(Lookup2E60)    \ Modify the following instruction at dlin33:
+ LDA #LO(colour1L2R)    \ Modify the following instruction at dlin33:
  STA dlin33+1           \
-                        \   LDA Lookup2E60,X -> LDA Lookup2E60,X
+                        \   LDA colour1L2R,X -> LDA colour1L2R,X
                         \
                         \ Note that this is a two-layer modification, as the
-                        \ LDA #LO(Lookup2E60) instruction gets modified by the
+                        \ LDA #LO(colour1L2R) instruction gets modified by the
                         \ ModifyDrawRoutine routine as follows:
                         \
-                        \   * LO(Lookup2E60) when colourLogic = %01000000
+                        \   * LO(colour1L2R) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 1
-                        \     i.e. LDA Lookup2E60,X
+                        \     i.e. LDA colour1L2R,X
                         \
-                        \   * LO(Lookup2E74) when colourLogic = %01000000
+                        \   * LO(colour2L2R) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 2
-                        \     i.e. LDA Lookup2E74,X
+                        \     i.e. LDA colour2L2R,X
                         \
-                        \   * LO(Lookup2E88) when colourLogic = %00000000
-                        \          and colourCycle = %00001111
+                        \   * LO(colour1Row) when colourLogic = %00000000
+                        \                     and colourCycle = %00001111
                         \     so the bit pattern lookup is always %00001111
-                        \     i.e. LDA Lookup2E88,X
+                        \     i.e. LDA colour1Row,X
                         \
-                        \   * LO(Lookup2E92) when colourLogic = %00000000
-                        \          and colourCycle = %11110000
+                        \   * LO(colour2Row) when colourLogic = %00000000
+                        \                     and colourCycle = %11110000
                         \     so the bit pattern lookup is always %11110000
-                        \     i.e. LDA Lookup2E92,X
+                        \     i.e. LDA colour2Row,X
                         \
                         \ In other words, this instruction has already been
                         \ modified to implement the current colour cycle
@@ -4725,30 +4723,30 @@ ORG CODE%
 .dlin4
 
                         \ Modify the following instruction at dlin33:
- LDA #LO(Lookup2E6A)    \
- STA dlin33+1           \   LDA Lookup2E60,X -> LDA Lookup2E6A,X
+ LDA #LO(colour1R2L)    \
+ STA dlin33+1           \   LDA colour1L2R,X -> LDA colour1R2L,X
                         \
                         \ Note that this is a two-layer modification, as the
-                        \ LDA #LO(Lookup2E6A) instruction gets modified by the
+                        \ LDA #LO(colour1R2L) instruction gets modified by the
                         \ ModifyDrawRoutine routine as follows:
 
-                        \   * LO(Lookup2E6A) when colourLogic = %01000000
+                        \   * LO(colour1R2L) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 1
-                        \     i.e. LDA Lookup2E6A,X
+                        \     i.e. LDA colour1R2L,X
                         \
-                        \   * LO(Lookup2E7E) when colourLogic = %01000000
+                        \   * LO(colour2R2L) when colourLogic = %01000000
                         \     so the bit pattern lookup table uses colour 2
-                        \     i.e. LDA Lookup2E7E,X
+                        \     i.e. LDA colour2R2L,X
                         \
-                        \   * LO(Lookup2E88) when colourLogic = %00000000
-                        \          and colourCycle = %00001111
+                        \   * LO(colour1Row) when colourLogic = %00000000
+                        \                     and colourCycle = %00001111
                         \     so the bit pattern lookup is always %00001111
-                        \     i.e. LDA Lookup2E88,X
+                        \     i.e. LDA colour1Row,X
                         \
-                        \   * LO(Lookup2E92) when colourLogic = %00000000
-                        \          and colourCycle = %11110000
+                        \   * LO(colour2Row) when colourLogic = %00000000
+                        \                     and colourCycle = %11110000
                         \     so the bit pattern lookup is always %11110000
-                        \     i.e. LDA Lookup2E92,X
+                        \     i.e. LDA colour2Row,X
                         \
                         \ In other words, this instruction has already been
                         \ modified to implement the current colour cycle
@@ -4828,7 +4826,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 3 of 7)
+\       Name: DrawCanopyLine (Part 3 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line as a shallow horizontal slope
@@ -4852,7 +4850,7 @@ ORG CODE%
                         \     a negative direction, i.e. down the screen
                         \
                         \   * The current colour cycle is drawing in colour 1,
-                        \     using the pixel bitmaps at Lookup2E60
+                        \     using the pixel bitmaps at colour1L2R
                         \
                         \ By this point, we also have the following variables
                         \ set:
@@ -4869,7 +4867,7 @@ ORG CODE%
                         \ directions, but these are the values for the default
                         \ case that we're considering here
 
- LDA #&9F               \ Set Y = 159 - S
+ LDA #159               \ Set Y = 159 - S
  SEC
  SBC S
  TAY
@@ -4879,8 +4877,8 @@ ORG CODE%
  SBC T
  STA RR
 
- CLC                    \ Set SS = RR = 255 - T + 1
- ADC #1
+ CLC                    \ Set SS = RR
+ ADC #1                 \        = 255 - T + 1
  STA SS
 
  LDA V                  \ If bits 0 and 1 of V are both clear, jump to dlin8
@@ -4906,6 +4904,7 @@ ORG CODE%
  STA QQ                 \ pixel (R, S), as each character block is 4 pixels wide
 
  LDA SS
+
  BIT V
  BMI dlin10
 
@@ -5009,35 +5008,69 @@ ORG CODE%
                         \
                         \   * BNE dlin30 when bit 7 of V is set
 
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 4 of 9)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Draw a part of the line, working down the screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ The code in this routine is modified by the ModifyDrawRoutine, and by the
+\ DrawCanopyLine routine itself.
+\
+\ The default code (i.e. the unmodified version in the source) is run when:
+\
+\   * The current colour cycle is drawing in colour 1, using the pixel bitmaps
+\     at colour1L2R and OR logic for updating the screen
+\
+\ ******************************************************************************
+
 .dlin22
 
- STA SS                 \ Set A = SS
+                        \ This routine draws a part of a line (one pixel row,
+                        \ i.e. a byte) and moves us down to the next pixel row
+                        \
+                        \ We call this subroutine with:
+                        \
+                        \   * A = ???
+                        \
+                        \   * X = the index of the pixel byte at colour1L2R
+
+ STA SS                 \ Set SS = A
 
 .dlin23
 
- LDA Lookup2E60,X       \ Fetch the X-th pixel byte from Lookup2E60
+ LDA colour1L2R,X       \ Fetch the X-th pixel byte from colour1L2R
                         \
                         \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * LDA Lookup2E60,X when colourLogic = %10000000
+                        \   * LDA colour1L2R,X when colourLogic = %10000000
                         \
-                        \   * LDA Lookup2E74,X when colourLogic = %01000000
+                        \   * LDA colour2L2R,X when colourLogic = %01000000
                         \
-                        \   * LDA Lookup2E88,X when colourLogic = %00000000
+                        \   * LDA colour1Row,X when colourLogic = %00000000
                         \                       and colourCycle = %00001111
                         \
-                        \   * LDA Lookup2E92,X when colourLogic = %00000000
+                        \   * LDA colour2Row,X when colourLogic = %00000000
                         \                       and colourCycle = %11110000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour cycle
 
 .dlin24
 
- ORA (P),Y              \ Or the pixel byte with the current screen contents
+ ORA (P),Y              \ OR the pixel byte with the current screen contents
                         \
                         \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * ORA (P),Y when colourLogic = %01000000
                         \
                         \   * AND (P),Y when colourLogic = %00000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
  STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -5063,62 +5096,12 @@ ORG CODE%
  JMP dlin65             \ Otherwise QQ = I, so jump to dlin65 to process the
                         \ clipped part of the line, if applicable
 
-.dlin27
-
- STA SS
-
-.dlin28
-
- LDA Lookup2E6A,X       \ Gets modified by the ModifyDrawRoutine routine:
-                        \
-                        \   * LDA Lookup2E6A,X when colourLogic = %10000000
-                        \
-                        \   * LDA Lookup2E7E,X when colourLogic = %01000000
-                        \
-                        \   * LDA Lookup2E88,X when colourLogic = %00000000
-                        \                       and colourCycle = %00001111
-                        \
-                        \   * LDA Lookup2E92,X when colourLogic = %00000000
-                        \                       and colourCycle = %11110000
-
-.dlin29
-
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
-                        \
-                        \   * ORA (P),Y when colourLogic = %01000000
-                        \
-                        \   * AND (P),Y when colourLogic = %00000000
-
- STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
-                        \ sets 4 pixels to the pixel pattern in A
-
-.dlin30
-
- LDA P
- SEC
- SBC #8
- STA P
- BCS dlin31
-
- DEC Q
-
-.dlin31
-
- DEC QQ
- LDA QQ
- CMP I
- BNE dlin12
-
- JMP dlin65             \ Jump to dlin65 to process the clipped part of the
-                        \ line, if applicable
-
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 4 of 7)
+\       Name: DrawCanopyLine (Part 5 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
-\    Summary: Draw the correct pixel row in the current character block for this
-\             part of the line
+\    Summary: Draw a part of the line, working up the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5128,7 +5111,95 @@ ORG CODE%
 \ The default code (i.e. the unmodified version in the source) is run when:
 \
 \   * The current colour cycle is drawing in colour 1, using the pixel bitmaps
-\     at Lookup2E60
+\     at colour1L2R and OR logic for updating the screen
+\
+\ ******************************************************************************
+
+.dlin27
+
+                        \ This routine draws a part of a line (one pixel row,
+                        \ i.e. a byte) and moves us up to the previous pixel row
+                        \
+                        \ We call this subroutine with:
+                        \
+                        \   * A = ???
+                        \
+                        \   * X = the index of the pixel byte at colour1R2L
+
+ STA SS                 \ Set SS = A
+
+.dlin28
+
+ LDA colour1R2L,X       \ Fetch the X-th pixel byte from colour1R2L
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * LDA colour1R2L,X when colourLogic = %10000000
+                        \
+                        \   * LDA colour2R2L,X when colourLogic = %01000000
+                        \
+                        \   * LDA colour1Row,X when colourLogic = %00000000
+                        \                       and colourCycle = %00001111
+                        \
+                        \   * LDA colour2Row,X when colourLogic = %00000000
+                        \                       and colourCycle = %11110000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour cycle
+
+.dlin29
+
+ ORA (P),Y              \ OR the pixel byte with the current screen contents
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
+                        \
+                        \   * ORA (P),Y when colourLogic = %01000000
+                        \
+                        \   * AND (P),Y when colourLogic = %00000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
+
+ STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
+                        \ sets 4 pixels to the pixel pattern in A
+
+.dlin30
+
+ LDA P                  \ Set (Q P) = (Q P) - 8
+ SEC                    \
+ SBC #8                 \ starting with the low bytes
+ STA P
+
+ BCS dlin31             \ And then the high bytes, so (Q P) now points to the
+ DEC Q                  \ previous character block to the left
+
+.dlin31
+
+ DEC QQ                 \ Decrement QQ
+
+ LDA QQ                 \ If QQ <> I, jump back to dlin12 to ???
+ CMP I
+ BNE dlin12
+
+ JMP dlin65             \ Otherwise QQ = I, so jump to dlin65 to process the
+                        \ clipped part of the line, if applicable
+
+\ ******************************************************************************
+\
+\       Name: DrawCanopyLine (Part 6 of 9)
+\       Type: Subroutine
+\   Category: Drawing lines
+\    Summary: Draw a part of the line, working along the screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ The code in this routine is modified by the ModifyDrawRoutine, and by the
+\ DrawCanopyLine routine itself.
+\
+\ The default code (i.e. the unmodified version in the source) is run when:
+\
+\   * The current colour cycle is drawing in colour 1, using the pixel bitmaps
+\     at colour1L2R and OR logic for updating the screen
 \
 \   * Bit 6 of V is set, so we step along the y-axis in a negative direction,
 \     i.e. down the screen
@@ -5137,14 +5208,17 @@ ORG CODE%
 
 .dlin32
 
-                        \ This routine moves us down to the next character row
-                        \ (though it may be modified to move up a row for lines
-                        \ that are being drawn in that direction)
+                        \ This routine draws a part of a line (one pixel row,
+                        \ i.e. a byte) and moves us down to the next character
+                        \ row (though it may be modified to move up a row for
+                        \ lines that are being drawn in that direction)
                         \
                         \ We call this subroutine with:
                         \
-                        \   * A = 
-                        \   * X = 
+                        \   * A = ???
+                        \
+                        \   * X = the index of the pixel byte at colour1L2R
+                        \
                         \   * The C flag is always set
                         \
                         \ and return the result in the C flag ???
@@ -5154,29 +5228,36 @@ ORG CODE%
 
 .dlin33
 
- LDA Lookup2E60,X       \ Fetch the X-th pixel byte from Lookup2E60
+ LDA colour1L2R,X       \ Fetch the X-th pixel byte from colour1L2R
                         \
                         \ Gets modified by the DrawCanopyLine routine, which in
                         \ turn gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * Lookup2E60 when colourLogic = %01000000
+                        \   * colour1L2R when colourLogic = %01000000
                         \
-                        \   * Lookup2E74 when colourLogic = %01000000
+                        \   * colour2L2R when colourLogic = %01000000
                         \
-                        \   * Lookup2E88 when colourLogic = %00000000
+                        \   * colour1Row when colourLogic = %00000000
                         \                 and colourCycle = %00001111
                         \
-                        \   * Lookup2E92 when colourLogic = %00000000
+                        \   * colour2Row when colourLogic = %00000000
                         \                 and colourCycle = %11110000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour cycle
+
 .dlin34
 
- ORA (P),Y              \ Or the pixel byte with the current screen contents
+ ORA (P),Y              \ OR the pixel byte with the current screen contents
                         \
                         \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * ORA (P),Y when colourLogic = %01000000
                         \
                         \   * AND (P),Y when colourLogic = %00000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
  STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
                         \ sets 4 pixels to the pixel pattern in A
@@ -5270,7 +5351,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 5 of 7)
+\       Name: DrawCanopyLine (Part 7 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Modify the line drawing routine for a steep vertical slope
@@ -5401,7 +5482,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 6 of 7)
+\       Name: DrawCanopyLine (Part 8 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line as a steep vertical slope
@@ -5439,63 +5520,79 @@ ORG CODE%
                         \ directions, but these are the values for the default
                         \ case that we're considering here
 
- LDA #&9F
+ LDA #159               \ Set Y = 159 - S
  SEC
  SBC S
  TAY
 
- LDA #&FF
+ LDA #255               \ Set RR = 255 - U
  SEC
  SBC U
  STA RR
 
- CLC
- ADC #1
+ CLC                    \ Set SS = RR + 1
+ ADC #1                 \        = 255 - U + 1
  STA SS
 
- LDA V
- AND #3
+ LDA V                  \ If bits 0 and 1 of V are both clear, jump to dlin46
+ AND #%00000011
  BEQ dlin46
 
- LDA T
+ LDA T                  \ If T < 2, jump to dlin46
  CMP #2
  BCC dlin46
 
- LDA #&FF
+ LDA #255               \ Set SS = 255
  STA SS
 
 .dlin46
 
- LDA R
- AND #3
+ LDA R                  \ Set X = bits 0 and 1 of R, so X is the pixel number
+ AND #%00000011         \ in the character row for pixel (R, S)
  TAX
 
 .dlin47
 
- LDA #8                 \ Gets modified by the ModifyDrawRoutine routine:
+ LDA #%00001000         \ Set A to a pixel byte with pixel 0 set to colour 1
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * LDA #8 when colourLogic = %10000000
                         \
                         \   * LDA #&80 when colourLogic = %01000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour logic
 
- CPX #0
- BEQ dlin49
+ CPX #0                 \ If X = 0, then the pixel number for point (R, S) is 0,
+ BEQ dlin49             \ so skip the following loop as the pixel is already in
+                        \ the right place
 
+                        \ Otherwise we right-shift A by X places to move the
+                        \ pixel to the right place
 .dlin48
 
- LSR A
- DEX
- BNE dlin48
+ LSR A                  \ Shift A to the right by one place
+ 
+ DEX                    \ Decrement the shift counter
+
+ BNE dlin48             \ Loop back until we have shifted A right by X places,
+                        \ so the pixel is now in the right place for point
+                        \ (R, S) within this pixel row
 
 .dlin49
 
- STA H
+ STA H                  \ Store the pixel byte in H
+
  CLC
  LDX R
 
 .dlin50
 
- LDA H                  \ Gets modified by the ModifyDrawRoutine routine:
+ LDA H                  \ Set A to the pixel byte for point (R, S) within this
+                        \ pixel row
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * LDA H when colourLogic = %01000000
                         \                           or %10000000
@@ -5505,19 +5602,29 @@ ORG CODE%
                         \
                         \   * LDA #%11110000 when colourLogic = %00000000
                         \                     and colourCycle = %11110000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current colour cycle
 
 .dlin51
 
- ORA (P),Y              \ Gets modified by the ModifyDrawRoutine routine:
+ ORA (P),Y              \ OR the pixel byte with the current screen contents
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * ORA (P),Y when colourLogic = %01000000
                         \
                         \   * AND (P),Y when colourLogic = %00000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
  STA (P),Y              \ Update the Y-th byte of (Q P) with the result, which
-                        \ sets 4 pixels to the pixel pattern in A
+                        \ sets 4 pixels to the pixel pattern in A, so this sets
+                        \ the pixel at screen coordinate (R, S) to the current
+                        \ colour
 
- LDA SS
+ LDA SS                 \ Set A = SS + T
  ADC T
 
 .dlin52
@@ -5528,7 +5635,7 @@ ORG CODE%
                         \
                         \   * BCC dlin61 when bit 7 of V is set
 
- STA SS
+ STA SS                 \ Set SS = A
 
 .dlin53
 
@@ -5572,6 +5679,7 @@ ORG CODE%
                         \   * ADC #1 when bit 6 of V is set
 
  STA Q
+
  CPY J
  CLC
  BNE dlin50
@@ -5583,7 +5691,9 @@ ORG CODE%
 
  ADC RR
  STA SS
+
  INX
+
  LDA H
  LSR A
 
@@ -5595,10 +5705,9 @@ ORG CODE%
                         \
                         \   * CMP #8 when colourLogic = %01000000
 
-
- LDA P
- CLC
- ADC #8
+ LDA P                  \ Set (Q P) = (Q P) + 8
+ CLC                    \
+ ADC #8                 \ starting with the low bytes
  STA P
 
 .dlin59
@@ -5609,13 +5718,13 @@ ORG CODE%
                         \
                         \   * LDA #&80 when colourLogic = %01000000
 
- BCC dlin60
-
- INC Q
+ BCC dlin60             \ And then the high bytes, so (Q P) now points to the
+ INC Q                  \ next character block to the right
 
 .dlin60
 
  STA H
+
  CPX I
  CLC
  BNE dlin53
@@ -5628,7 +5737,9 @@ ORG CODE%
 
  ADC RR
  STA SS
+
  DEX
+
  LDA H
  ASL A
 
@@ -5640,9 +5751,9 @@ ORG CODE%
                         \
                         \   * CMP #0 when colourLogic = %01000000
 
- LDA P
- SEC
- SBC #8
+ LDA P                  \ Set (Q P) = (Q P) - 8
+ SEC                    \
+ SBC #8                 \ starting with the low bytes
  STA P
 
 .dlin63
@@ -5653,24 +5764,30 @@ ORG CODE%
                         \
                         \   * LDA #16 when colourLogic = %01000000
 
- BCS dlin64
-
- DEC Q
+ BCS dlin64             \ And then the high bytes, so (Q P) now points to the
+ DEC Q                  \ previous character block to the left
 
 .dlin64
 
  STA H
+
  CPX I
  CLC
  BNE dlin53
 
 \ ******************************************************************************
 \
-\       Name: DrawCanopyLine (Part 7 of 7)
+\       Name: DrawCanopyLine (Part 9 of 9)
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: If the line was clipped, draw a line from the clipped coordinates
 \             to the edge of the screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ If the line has been clipped, this part reverses the line's direction in V and
+\ switches the start point at (R, S) to the other end of the line, before
+\ jumping to the start of the line-drawing routine to draw the reversed line.
 \
 \ ******************************************************************************
 
@@ -5682,19 +5799,19 @@ ORG CODE%
  BCS dlin66             \ If bit 0 if V is set, which means the line has been
                         \ clipped by the ClipStartOfLine routine, jump to dlin66
 
- RTS                    \ Otherwise bit 0 of V is clear and the line has not been
-                        \ clipped, so we return from the subroutine
+ RTS                    \ Otherwise bit 0 of V is clear and the line has not
+                        \ been clipped, so we return from the subroutine
 
 .dlin66
 
  ASL A                  \ Shift A left so it contains V again
 
- EOR #%11000000         \ Flip bits 6 and 7 of V and store it
- STA V
+ EOR #%11000000         \ Flip bits 6 and 7 of V to reverse the dirction of the
+ STA V                  \ line
 
  LDA xTemp1Lo           \ Set (R, S) = (xTemp1Lo, yTemp1Lo), which we set to the
- STA R                  \ coordinate of the clipped line in ClipStartOfLine
- LDA yTemp1Lo
+ STA R                  \ start coordinate of the clipped line in the
+ LDA yTemp1Lo           \ ClipStartOfLine routine
  STA S
 
  LDA #4                 \ Set A = 4, to use as the value of W if bit 7 of V is
@@ -5734,8 +5851,8 @@ ORG CODE%
                         \ direction (i.e. 0 if we are stepping down, 151 if we
                         \ are stepping up)
 
- JMP DrawCanopyLine     \ Jump back to DrawCanopyLine to draw the line from
-                        \ (xTemp1Lo, yTemp1Lo) to the edge of the screen
+ JMP DrawCanopyLine     \ Jump up to DrawCanopyLine to draw the reversed line
+                        \ from (xTemp1Lo, yTemp1Lo) to the edge of the screen
 
 \ ******************************************************************************
 \
@@ -5758,10 +5875,13 @@ ORG CODE%
 \   * Modify the drawing logic in DrawCanopyLine to AND
 \
 \   * Modify DrawCanopyLine so it fetches bit patterns from:
-\       * Lookup2E88 if colourCycle = %00001111
-\       * Lookup2E92 if colourCycle = %11110000
+\
+\       * colour1Row if colourCycle = %00001111
+\
+\       * colour2Row if colourCycle = %11110000
+\
 \     In other words, the bit pattern it fetches is always the same as the value
-\     of colourCycle, as Lookup2E88 contains %00001111 and Lookup2E92 contains
+\     of colourCycle, as colour1Row contains %00001111 and colour2Row contains
 \     %11110000
 \
 \   * Modify DrawCanopyLine (part 3) so it pokes the value of colourCycle as a
@@ -5771,8 +5891,8 @@ ORG CODE%
 \
 \   * Modify the drawing logic in DrawCanopyLine to OR (the default)
 \
-\   * Modify DrawCanopyLine so it fetches bit patterns from Lookup2E74 and
-\     Lookup2E7E (colour 2) instead of Lookup2E60 and Lookup2E6A (colour 1)
+\   * Modify DrawCanopyLine so it fetches bit patterns from colour2L2R and
+\     colour2R2L (colour 2) instead of colour1L2R and colour1R2L (colour 1)
 \
 \ If colourLogic = %10000000 (draw lines in colour 1):
 \
@@ -5805,28 +5925,28 @@ ORG CODE%
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
  BMI modd1              \ jump down to modd1
 
- LDA #LO(Lookup2E88)    \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
+ LDA #LO(colour1Row)    \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
                         \ A to &88 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
                         \   LDA #&60 : STA dlin33+1 -> LDA #&88 : STA dlin33+1
-                        \   LDA Lookup2E60,X        -> LDA Lookup2E88,X
+                        \   LDA colour1L2R,X        -> LDA colour1Row,X
                         \   LDA #&6A : STA dlin33+1 -> LDA #&88 : STA dlin33+1
-                        \   LDA Lookup2E6A,X        -> LDA Lookup2E88,X
+                        \   LDA colour1R2L,X        -> LDA colour1Row,X
 
  BNE modd2              \ Jump down to modd2 (this BNE is effectively a JMP as
                         \ A is never zero)
 
 .modd1
 
- LDA #LO(Lookup2E92)    \ Bit 7 of colourCycle is set, i.e. %11110000, so set
+ LDA #LO(colour2Row)    \ Bit 7 of colourCycle is set, i.e. %11110000, so set
                         \ A to &92 so the DrawCanopyLine (part 1) instructions
                         \ below are modified to the following:
                         \
                         \   LDA #&60 : STA dlin33+1 -> LDA #&92 : STA dlin33+1
-                        \   LDA Lookup2E60,X        -> LDA Lookup2E92,X
+                        \   LDA colour1L2R,X        -> LDA colour2Row,X
                         \   LDA #&6A : STA dlin33+1 -> LDA #&92 : STA dlin33+1
-                        \   LDA Lookup2E6A,X        -> LDA Lookup2E92,X
+                        \   LDA colour1R2L,X        -> LDA colour2Row,X
 
 .modd2
 
@@ -5834,9 +5954,9 @@ ORG CODE%
                         \ (part 1) where aa is the value of A:
                         \
  STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&aa : STA dlin33+1
- STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2Eaa,X
+ STA dlin23+1           \   LDA colour1L2R,X        -> LDA Lookup2Eaa,X
  STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&aa : STA dlin33+1
- STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2Eaa,X
+ STA dlin28+1           \   LDA colour1R2L,X        -> LDA Lookup2Eaa,X
 
  LDA colourCycle        \ Modify the following instruction in DrawCanopyLine
  STA dlin50+1           \ (part 2):
@@ -5874,12 +5994,12 @@ ORG CODE%
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
- LDA #LO(Lookup2E74)    \
+ LDA #LO(colour2L2R)    \
  STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&74 : STA dlin33+1
- STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E74,X
- LDA #LO(Lookup2E7E)    \
+ STA dlin23+1           \   LDA colour1L2R,X        -> LDA colour2L2R,X
+ LDA #LO(colour2R2L)    \
  STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&74 : STA dlin33+1
- STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E7E,X
+ STA dlin28+1           \   LDA colour1R2L,X        -> LDA colour2R2L,X
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 2):
@@ -5903,12 +6023,12 @@ ORG CODE%
 
                         \ Modify the following instructions in DrawCanopyLine
                         \ (part 1):
- LDA #LO(Lookup2E60)    \
+ LDA #LO(colour1L2R)    \
  STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&60 : STA dlin33+1
- STA dlin23+1           \   LDA Lookup2E60,X        -> LDA Lookup2E60,X
- LDA #LO(Lookup2E6A)    \
+ STA dlin23+1           \   LDA colour1L2R,X        -> LDA colour1L2R,X
+ LDA #LO(colour1R2L)    \
  STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&6A : STA dlin33+1
- STA dlin28+1           \   LDA Lookup2E6A,X        -> LDA Lookup2E6A,X
+ STA dlin28+1           \   LDA colour1R2L,X        -> LDA colour1R2L,X
                         \
                         \ i.e. set them back to the default
 
@@ -6738,9 +6858,9 @@ ORG CODE%
  ORA V                  \ the line has been clipped
  STA V
 
- LDA R                  \ Copy the (R, S) pixel coordinate into
- STA xTemp1Lo           \ (xTemp1Lo, yTemp1Lo)
- LDA S
+ LDA R                  \ Copy the clipped (R, S) pixel coordinate into
+ STA xTemp1Lo           \ (xTemp1Lo, yTemp1Lo) so we can access it in the
+ LDA S                  \ DrawCanopyLone routine
  STA yTemp1Lo
 
  RTS                    \ Return from the subroutine
@@ -16256,16 +16376,16 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: Lookup2E60
+\       Name: colour1L2R
 \       Type: Variable
 \   Category: Drawing lines
-\    Summary: Pixel bytes for drawing canopy lines
+\    Summary: Pixel bytes for drawing canopy lines left to right in colour 1
 \
 \ ******************************************************************************
 
-.Lookup2E60
+.colour1L2R
 
- EQUB %00001000         \ Colour 1, right end of line
+ EQUB %00001000         \ Colour 1, drawing a line left to right
  EQUB %00001100
  EQUB %00001110
  EQUB %00001111
@@ -16278,9 +16398,18 @@ ORG CODE%
  EQUB %00000011
  EQUB %00000001
 
-.Lookup2E6A
+\ ******************************************************************************
+\
+\       Name: colour1R2L
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Pixel bytes for drawing canopy lines right to left in colour 1
+\
+\ ******************************************************************************
 
- EQUB %00000001         \ Colour 1, left end of line
+.colour1R2L
+
+ EQUB %00000001         \ Colour 1, drawing a line right to left
  EQUB %00000011
  EQUB %00000111
  EQUB %00001111
@@ -16293,9 +16422,18 @@ ORG CODE%
  EQUB %00001100
  EQUB %00001000
 
-.Lookup2E74
+\ ******************************************************************************
+\
+\       Name: colour2L2R
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Pixel bytes for drawing canopy lines left to right in colour 2
+\
+\ ******************************************************************************
 
- EQUB %10000000         \ Colour 2, right end of line
+.colour2L2R
+
+ EQUB %10000000         \ Colour 2, drawing a line left to right
  EQUB %11000000
  EQUB %11100000
  EQUB %11110000
@@ -16308,9 +16446,18 @@ ORG CODE%
  EQUB %00110000
  EQUB %00010000
 
-.Lookup2E7E
+\ ******************************************************************************
+\
+\       Name: colour2R2L
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Pixel bytes for drawing canopy lines right to left in colour 2
+\
+\ ******************************************************************************
 
- EQUB %00010000         \ Colour 2, left end of line
+.colour2R2L
+
+ EQUB %00010000         \ Colour 2, drawing a line right to left
  EQUB %00110000
  EQUB %01110000
  EQUB %11110000
@@ -16323,7 +16470,16 @@ ORG CODE%
  EQUB %11000000
  EQUB %10000000
 
-.Lookup2E88
+\ ******************************************************************************
+\
+\       Name: colour1Row
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Pixel bytes for erasing canopy lines in colour 1
+\
+\ ******************************************************************************
+
+.colour1Row
 
  EQUB %00001111         \ Solid colour 1
  EQUB %00001111
@@ -16338,7 +16494,16 @@ ORG CODE%
  EQUB %00001111
  EQUB %00001111
 
-.Lookup2E92
+\ ******************************************************************************
+\
+\       Name: colour2Row
+\       Type: Variable
+\   Category: Drawing lines
+\    Summary: Pixel bytes for erasing canopy lines in colour 2
+\
+\ ******************************************************************************
+
+.colour2Row
 
  EQUB %11110000         \ Solid colour 2
  EQUB %11110000
