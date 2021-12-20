@@ -1333,7 +1333,8 @@ ORG &0900
 
 .matrixAxis
 
- SKIP 1                 \ The axis to be processed by the matrix routines
+ SKIP 1                 \ The axis to be processed by the matrix routines,
+                        \ specifically those that populate the matrices
                         \
                         \   * 0 = x-axis
                         \
@@ -1573,10 +1574,17 @@ ORG &0900
  SKIP 1                 \ The high byte of the 16-bit temporary variable in
                         \ (zTemp1Hi zTemp1Lo)
 
-.TC
+.alien
 
- SKIP 1                 \ Temporary storage, used as a flag when updating the
-                        \ radar, and as a loop counter in the visibility checks
+ SKIP 0                 \ Temporary storage, used as a flag to indicate the
+                        \ alien when updating the radar (shares a memory
+                        \ location with the objCount variable)
+
+.objCount
+
+ SKIP 1                 \ Temporary storage, used as a loop counter in the
+                        \ object group visibility checks (shares a memory
+                        \ location with the alien variable)
 
 .themeStatus
 
@@ -2990,15 +2998,16 @@ ORG CODE%
 \   R                   Contains %00010000 (which is set at the start of
 \                       ProjectPoint)
 \
-\   (TT S)              The lookup from divisionHi/divisionLo for the high byte
-\                       of the scaled up denominator (i.e. the number we are
-\                       dividing by)
+\   (TT S)              The lookup from (divisionHi divisionLo) for the high
+\                       byte of the scaled up denominator (i.e. the number we
+\                       are dividing by)
 \
 \   K                   The low byte of the scaled up denominator
 \
 \ Returns:
 \
-\   (Q P)               (X Y) / Z
+\   (Q P)               (X Y) divided by the denominator used to look up the
+\                       value of (TT S)
 \
 \ ******************************************************************************
 
@@ -3059,8 +3068,7 @@ ORG CODE%
                         \ division table, while the second is the dividend,
                         \ scaled up
 
-                        \ Does the following calculate (Q P) = (TT S) * (1 J I)
-                        \ ???
+                        \ We now calculate (Q P) = (TT S) * (1 J I) ???
 
  LDA timesTable,X       \ Set A = %SSSS * %JJJJ
 
@@ -3082,43 +3090,49 @@ ORG CODE%
  ADC timesTable,Y
  TAX
 
- LDY #0                 \ Set Y = 0
+ LDY #0                 \ Set Y = 0, to use as the high byte of (Y A)
 
  BCC divs1              \ If the above addition didn't overflow, skip the
                         \ following instruction
 
- LDY #16                \ The above addition overflowed, so set Y = 16
+ LDY #16                \ The above addition overflowed, so set Y = 16 to use as
+                        \ the high byte of (Y A), where Y = %00010000
 
 .divs1
 
  LDA shift4Left,X       \ Set A = (X << 4)
 
- ADC P                  \ Set (Y A) = (Y A) + P + J + S
+ ADC P                  \ Set (Y A) = (Y A) + P
+                        \
+                        \ starting with the low bytes
 
- BCC divs2              \ If the above addition didn't overflow, skip the
-                        \ following instruction
-
- INY                    \ Increment the high byte
+ BCC divs2              \ And then the high bytes
+ INY
 
 .divs2
 
- ADC J
- BCC divs3
-
+ ADC J                  \ Set (Y A) = (Y A) + J
+                        \
+                        \ starting with the low bytes
+                        
+ BCC divs3              \ And then the high bytes
  INY
 
 .divs3
 
- ADC S                  \ End here
+ ADC S                  \ Set (Y A) = (Y A) + S
+                        \
+                        \ just doing the low bytes
 
  STA P                  \ Set (A P) = (Y A)
  TYA
 
- ADC shift4Right,X
+ ADC shift4Right,X      \ Set A = A + X << 4 + Q
  ADC Q
- BCC divs4
 
- CLC
+ BCC divs4              \ If the addition didn't overflow, jump to divs4
+
+ CLC                    \ Set A = A + TT
  ADC TT
 
  SEC                    \ Set the C flag to feed into bit 7 of (A P) when we
@@ -3128,7 +3142,9 @@ ORG CODE%
 
 .divs4
 
- ADC TT
+ ADC TT                 \ Set A = A + TT
+                        \
+                        \ and set the C flag to the carry
 
 .divs5
 
@@ -3137,71 +3153,85 @@ ORG CODE%
 
  STA Q                  \ Set (Q P) = (A P)
 
- LDA I                  \ If I = 0, jump to divs7
- BEQ divs7
+ LDA I                  \ Set A = I = %IIIIiiii
 
- AND #&F0
- LDX TT
- ORA shift4Right,X
- TAY
- AND #&F0
- ORA lowNibble,X
+ BEQ divs6              \ If I = 0, jump to divs6
+
+ AND #%11110000         \ Set A = %IIII0000
+
+ LDX TT                 \ Set X = %TTTTtttt
+
+ ORA shift4Right,X      \ Set A = %IIII0000 OR %0000TTTT
+                        \       = %IIIITTTT
+
+ TAY                    \ Set Y = %IIIITTTT
+
+ AND #%11110000         \ Set X = %IIII0000 OR %0000tttt
+ ORA lowNibble,X        \       = %IIIItttt
  TAX
- LDA timesTable,X
- TAX
- CLC
+
+ LDA timesTable,X       \ Set X = %IIII * %tttt
+ TAX                    \       = %XXXXxxxx
+
+ CLC                    \ Set the C flag from adding %xxxx0000 + %IIIIiiii
  LDA shift4Left,X
  ADC I
 
-.divs6
+ LDA timesTable,Y       \ Set A = %IIII * %TTTT + %XXXX + C
+ ADC shift4Right,X      \       = %IIII * %TTTT + (%IIII * %tttt) >> 4 + C
 
- LDA timesTable,Y
- ADC shift4Right,X
- ROR A
- CLC
- ADC P
- STA P
- BCC divs7
+ ROR A                  \ Set A = A >> 1
 
- INC Q
- BNE divs7
+ CLC                    \ Set (Q P) = (Q P) + A
+ ADC P                  \
+ STA P                  \ starting with the low bytes
+ BCC divs6
 
- LDA #&FF
+ INC Q                  \ And then the high bytes
+ BNE divs6
+
+ LDA #&FF               \ Set (Q P) = &FFFF
  STA Q
  STA P
 
-.divs7
+.divs6
 
- LDA K
- AND #&C0
- BEQ divs10
+ LDA K                  \ If bits 6 and 7 of K are clear, jump to divs9 to
+ AND #%11000000         \ return from the subroutine
+ BEQ divs9
 
- STA K
- CLC
+ STA K                  \ Clear bits 0 to 5 of K
+
+ CLC                    \ Set W = TT >> 1 + 1
  LDA TT
  ADC #1
  ROR A
  STA W
- LSR A
- BIT K
- BVS divs8
 
- LDA #0
- BIT K
+ LSR A                  \ Set A = W >> 1
+
+ BIT K                  \ If bit 6 of K is set, jump to divs7
+ BVS divs7
+
+ LDA #0                 \ Bit 6 of K is clear, so set A = 0
+
+ BIT K                  \ Set the flags for K again
+
+.divs7
+
+ BPL divs8              \ If bit 7 of K is clear, jump to divs8
+
+ CLC                    \ Bit 7 of K is set, so set A = A + W
+ ADC W
 
 .divs8
 
- BPL divs9
+ TAY                    \ Set Y = A
 
- CLC
- ADC W
-
-.divs9
-
- TAY
- LDX Q
+ LDX Q                  \ Set X = Q
 
  JSR Multiply8x8        \ Set (A V) = X * Y
+                        \           = A * Q
 
  STA G                  \ Set (Q P) = (Q P) - A
  LDA P                  \
@@ -3209,12 +3239,12 @@ ORG CODE%
  SBC G
  STA P
 
- BCS divs10              \ If the subtraction didn't underflow, skip the next
+ BCS divs9              \ If the subtraction didn't underflow, skip the next
                         \ instruction
 
  DEC Q                  \ Decrement the high byte
 
-.divs10
+.divs9
 
  RTS                    \ Return from the subroutine
 
@@ -10862,7 +10892,7 @@ ORG CODE%
                         \   * X = 3: Altimeter large hand   A =   0 to 104
                         \   * X = 4: Vertical speed         A = -40 to  40
                         \   * X = 5: Turn                   A = -19 to  19
-                        \   * X = 6: Slip                   A =  ?? to  ??
+                        \   * X = 6: Slip                   A = ??? to ???
 
  CLC                    \ Set A = A + the X-th byte of indicatorBase
  ADC indicatorBase,X    \
@@ -10875,7 +10905,7 @@ ORG CODE%
                         \   * Altimeter large hand    +0    A =  0 to 104
                         \   * Vertical speed         +67    A = 27 to 107
                         \   * Turn                   +53    A = 34 to  72
-                        \   * Slip                  +106    A = ?? to  ??
+                        \   * Slip                  +106    A = ??? to ???
 
  CMP indicatorMin,X     \ If A >= the X-th byte of indicatorMin, jump to dinh1
  BCS dinh1              \ to skip the following
@@ -12610,7 +12640,8 @@ ORG CODE%
                         \ If we get here then the undercarriage is up
 
  SEC                    \ Set A = A - 10
- SBC #10
+ SBC #10                \
+                        \ so having the undercarriage up reduces drag
 
  LDX #5                 \ Set X = 5 to store in yLandingGear below, as the
                         \ vertical distance between the cockpit and the bottom
@@ -12632,7 +12663,8 @@ ORG CODE%
                         \ return from the subroutine ???
 
  CLC                    \ Set A = A + 10
- ADC #10
+ ADC #10                \
+                        \ so having the undercarriage down increases drag
 
  LDX #10                \ Set X = 10 to store in in yLandingGear below, as the
                         \ vertical distance between the cockpit and the bottom
@@ -12646,7 +12678,8 @@ ORG CODE%
 
  STA forceFactor+5      \ Store A in the force factor for zLiftDrag, so it is
                         \ incremented by 10 when the undercarriage is down, and
-                        \ reduced by 10 when the undercarriage is up
+                        \ reduced by 10 when the undercarriage is up, i.e.
+                        \ having the undercarriage down increases drag
 
  STX yLandingGear       \ Store X in yLandingGear, so the vertical distance
                         \ between the cockpit and the bottom of the plane is 5
@@ -12694,7 +12727,8 @@ ORG CODE%
                         \ If we get here then the flaps are off
 
  SEC                    \ Set A = A - 200
- SBC #200
+ SBC #200               \
+                        \ so having the flaps off reduces drag
 
  LDX #0                 \ Set X = 0 to use as the force factor for yFlapsLift
                         \ below
@@ -12711,7 +12745,8 @@ ORG CODE%
                         \ If we get here then the flaps are on
 
  CLC                    \ Set A = A + 200
- ADC #200
+ ADC #200               \
+                        \ so having the flaps on increases drag
 
  LDX #152               \ Set X = 152 to use as the force factor for yFlapsLift
                         \ below
@@ -12724,10 +12759,12 @@ ORG CODE%
 
  STA forceFactor+5      \ Store A in the force factor for zLiftDrag, so it is
                         \ incremented by 200 when the flaps are on, and reduced
-                        \ by 200 when the flaps are off
+                        \ by 200 when the flaps are off, i.e. having the flaps
+                        \ on increases drag
 
- STX forceFactor+7      \ Store X in the force factor for yFlapsLift (0 if flaps
-                        \ are off, 152 if they are on)
+ STX forceFactor+7      \ Store X in the force factor for yFlapsLift, so it is 0
+                        \ if the flaps are off and 152 if they are on, i.e.
+                        \ having the flaps on increases the vertical lift
 
  TYA                    \ Set A to the pixel pattern in Y
 
@@ -12799,7 +12836,11 @@ ORG CODE%
  LDA #9                 \ Set the matrix number so the call to SetPointCoords
  STA matrixNumber       \ uses matrix 2 in the calculation, so it rotates the
                         \ point from the plane's frame of reference to the
-                        \ outside world's frame of reference
+                        \ outside world's frame of reference (so we spawn the
+                        \ bullets using coordinates that are relative to the
+                        \ plane, but calculate them in the following as
+                        \ world-relative coordinates, so they are then
+                        \ independent of the plane's future movement)
 
  STA firingStatus       \ Set firingStatus = 9, which is a non-zero value, to
                         \ indicate that there are bullets are in the air (the
@@ -13258,23 +13299,24 @@ ORG CODE%
  TXA                    \ Set X = 0 to use as a counter for zeroing 256 bytes in
                         \ the rset1 loop
 
- STA alienSlot          \ Set alienSlot = 0
+ STA alienSlot          \ Set alienSlot = 0 to clear out the first alien slot
+                        \ (we clear out the other three slots below)
 
  STA forceFactor+7      \ Set the force factor for yFlapsLift = 0
 
- STA hitTimer           \ Set hitTimer = 0
+ STA hitTimer           \ Set hitTimer = 0 to cancel any alien explosions
 
  STA randomNumbers      \ Set randomNumbers = 0 to reset the pointer for the
                         \ list of random numbers
 
- STA scoreLo            \ Set scoreLo = 0
-
- STA scoreHi            \ Set scoreHi = 0
+ STA scoreLo            \ Set (scoreHi scoreLo) = 0 to resen the current score
+ STA scoreHi
 
 .rset1
 
                         \ This loop zeroes the whole page at pointStatus, which
-                        \ also zeroes objectStatus
+                        \ zeroes both pointStatus and objectStatus, resetting
+                        \ all the point and object statuses
 
  STA pointStatus,X      \ Zero the X-th byte of pointStatus
 
@@ -13283,14 +13325,15 @@ ORG CODE%
  BNE rset1              \ Loop back until we have zeroed the whole page
 
                         \ We now zero all the workspace variables from xTurnLo
-                        \ to yPlaneHi
+                        \ to yPlaneHi, so their default values are all zero
+                        \ unless they are explicitly set below
 
  LDX #255               \ Set X = 255 to use as a counter for zeroing 255 bytes
                         \ in the rset2 loop
 
  STA relatedPoints      \ Set relatedPoints = 0 to reset the relatedPoints list
 
- STA mainLoopCounter    \ Set mainLoopCounter = 0
+ STA mainLoopCounter    \ Set mainLoopCounter = 0 to reset the main loop counter
 
 .rset2
 
@@ -13301,11 +13344,11 @@ ORG CODE%
  BNE rset2              \ Loop back until we have zeroed from xTurnLo to
                         \ yPlaneHi
 
-                        \ We now zero the 8 bytes at alienState to reset the
+                        \ We now zero the eight bytes at alienState to reset the
                         \ state of the aliens
 
- LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
-                        \ the rset3 loop
+ LDX #7                 \ Set X = 7 to use as a counter for zeroing eight bytes
+                        \ in the following loop
 
 .rset3
 
@@ -13316,52 +13359,52 @@ ORG CODE%
  BPL rset3              \ Loop back until we have zeroed alienState to
                         \ alienState+7
 
- LDA #&48               \ Set zPlaneHi = &48
+ LDA #&48               \ Set (zPlaneHi zPlaneLo) = &485C
  STA zPlaneHi
-
- LDA #&5C               \ Set zPlaneLo = &5C, so (zPlaneHi zPlaneLo) = &485C
+ LDA #&5C
  STA zPlaneLo
 
- LDA #&C6               \ Set xPlaneHi = &C6
+ LDA #&C6               \ Set (xPlaneHi xPlaneLo) = &C6E5
  STA xPlaneHi
-
- LDA #&E5               \ Set xPlaneLo = &E5, so (xPlaneHi xPlaneLo) = &C6E5
+ LDA #&E5
  STA xPlaneLo
 
- LDA #&0A               \ Set yPlaneLo = &0A, so (yPlaneHi yPlaneLo) = &000A
+ LDA #&0A               \ Set (yPlaneHi yPlaneLo) = &000A
  STA yPlaneLo
 
- STA alienSpeed         \ Set alienSpeed = 10
+ STA alienSpeed         \ Set alienSpeed = 10, the movement speed for the first
+                        \ wave of aliens
 
  LDA #242               \ Set the force factor for zLiftDrag = 242, which is
  STA forceFactor+5      \ quickly adjusted by +10 for the undercarriage being
                         \ down and -200 for the flaps being off, giving a
                         \ starting value of 52 when we are sitting on the runway
 
- LDA #1                 \ Set ucStatus = 1 (undercarriage is down)
+ LDA #1                 \ Set ucStatus = 1, so the undercarriage is down
  STA ucStatus
 
- STA brakesStatus       \ Set brakesStatus = 1 (brakes on)
+ STA brakesStatus       \ Set brakesStatus = 1, so the brakes are on
 
- STA landingStatus      \ Set landingStatus = 1 (do all landing tasks)
+ STA landingStatus      \ Set landingStatus = 1, so we do all landing tasks
 
  JSR IndicatorU         \ Update the undercarriage indicator
 
- LDA #1                 \ Set onGround = 1 (on the ground)
+ LDA #1                 \ Set onGround = 1, so we start on the ground
  STA onGround
 
- LDA #47                \ Set lineBuffer2Count = 47
+ LDA #47                \ Set lineBuffer2Count = 47, so line buffer 2 is empty
  STA lineBuffer2Count
 
- LDA #255               \ Set themeStatus = 255 (Theme disabled)
+ LDA #255               \ Set themeStatus = 255, so the Theme is disabled
  STA themeStatus
 
- STA lineBuffer1Count   \ Set lineBuffer1Count = 255
+ STA lineBuffer1Count   \ Set lineBuffer1Count = 255, so line buffer 1 is empty
 
-                        \ We now zero the 8 bytes at alienObjectId
+                        \ We now zero the eight bytes at alienObjectId, so no
+                        \ objects are associated with any aliens
 
- LDX #7                 \ Set X = 7 to use as a counter for zeroing 8 bytes in
-                        \ the rset4 loop
+ LDX #7                 \ Set X = 7 to use as a counter for zeroing eight bytes
+                        \ in the following loop
 
  STX xRotationHi        \ Set xRotationHi = 7, so the plane tilts backwards by
                         \ 7/256 = 9.84 degrees when its wheels are on the ground
@@ -13375,11 +13418,12 @@ ORG CODE%
  BPL rset4              \ Loop back until we have zeroed all 8 alienObjectId
                         \ bytes
 
-                        \ We now zero alienSlot+1 to alienSlot+3 (we already
-                        \ zeroed alienSlot above)
+                        \ We now zero alienSlot+1 to alienSlot+3 to clear out
+                        \ the rest of the alien slots (we already zeroed
+                        \ alienSlot above)
 
- LDX #2                 \ Set X = 2 to use as a counter for zeroing 3 bytes in
-                        \ the rset5 loop
+ LDX #2                 \ Set X = 2 to use as a counter for zeroing three bytes
+                        \ in the following loop
 
 .rset5
 
@@ -13394,7 +13438,7 @@ ORG CODE%
  LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
 
- LDA #65                \ Set fuelLevel = 65, which indicates a full tank
+ LDA #65                \ Set fuelLevel = 65, to indicate a full tank
  STA fuelLevel
 
                         \ We now drain the fuel tank one point at a time,
@@ -13428,8 +13472,8 @@ ORG CODE%
  LDA #80                \ Set xPointLo = 80, so we don't draw a new alien on the
  STA xPointLo           \ radar (as this coordinate is off the radar)
 
- LDA #1                 \ Set TC = 1, so we remove the alien from the radar
- STA TC                 \ rather than the runway when we call DrawRadarBlip
+ LDA #1                 \ Set alien = 1, so we remove the alien from the radar
+ STA alien              \ rather than the runway when we call DrawRadarBlip
 
  STA xPointHi           \ Set xPointHi = 1, so the value in xPointLo is treated
                         \ as positive
@@ -14887,8 +14931,10 @@ ORG CODE%
  STA GG                 \ Store the point ID in GG so its coordinates get
                         \ calculated in the call to SetObjPointCoords
 
- LDA #0                 \ Set matrixAxis = 0
- STA matrixAxis
+ LDA #0                 \ Set matrixAxis = 0 (this has no effect, as this value
+ STA matrixAxis         \ is only used when setting the matrices, so this is
+                        \ presumably left over from a version of the code that
+                        \ supported multiple sets of matrices)
                         
  STA matrixNumber       \ Set the matrix number so the call to SetObjPointCoords
                         \ uses matrix 1 in the calculation, which will rotate
@@ -14918,8 +14964,10 @@ ORG CODE%
 
  STA GG                 \ Store the point ID in GG
 
- LDA #0                 \ Set matrixAxis = 0
- STA matrixAxis
+ LDA #0                 \ Set matrixAxis = 0 (this has no effect, as this value
+ STA matrixAxis         \ is only used when setting the matrices, so this is
+                        \ presumably left over from a version of the code that
+                        \ supported multiple sets of matrices)
 
  STA matrixNumber       \ Set the matrix number so the call to SetObjPointCoords
                         \ uses matrix 1 in the calculation, which will rotate
@@ -15170,8 +15218,9 @@ ORG CODE%
                         \ If we get here then the object ID is 6, 7, 8 or 9, so
                         \ this is an object group (e.g. a tree)
 
- LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
- STA TC                 \ we work through all 8 objects in this object group
+ LDA #8                 \ Set objCount = 8 to act as a counter in the loop
+ STA objCount           \ below, so we work through all 8 objects in this object
+                        \ group
 
 .objc2
 
@@ -15228,8 +15277,9 @@ ORG CODE%
                         \ all eight aliens to the current wave, so jump to
                         \ objc8 to return from the subroutine
 
- LDA #8                 \ Set TC = 8 to act as a counter in the loop below, so
- STA TC                 \ we work through all eight aliens in this group
+ LDA #8                 \ Set objCount = 8 to act as a counter in the loop
+ STA objCount           \ below, so we work through all eight aliens in this
+                        \ group
 
                         \ As we loop through the following, alienSlot gets
                         \ incremented so we work our way through all the aliens
@@ -15485,7 +15535,8 @@ ORG CODE%
                         \ This object is part of an object group, so now we move
                         \ onto the next object in the group
 
- DEC TC                 \ Decrement the loop counter
+ DEC objCount           \ Decrement the loop counter to move on to the next
+                        \ object in the group
 
  BEQ objc12             \ If we have processed all 8 items in the group, jump
                         \ to objc12 to return from the subroutine
@@ -15513,7 +15564,8 @@ ORG CODE%
  AND #7
  STA alienSlot
 
- DEC TC                 \ Decrement the loop counter
+ DEC objCount           \ Decrement the loop counter to move on to the next
+                        \ alien in the group
 
  BEQ objc12             \ If we have processed all 8 items in the group, jump
                         \ to objc12 to return from the subroutine
@@ -16008,16 +16060,19 @@ ORG CODE%
 
 .phor2
 
-                        \ We get here if in xRotation:
+                        \ We get here if one of the following is true:
                         \
-                        \   * Bit 7 set, bit 6 set
-                        \   * Bit 7 clear, bit 6 clear
+                        \   * Bit 7 of zRotationHi is clear and bit 6 is clear
+                        \   * Bit 7 of zRotationHi is set and bit 6 is set
                         \
-                        \ i.e. if bit 6 and 7 match
+                        \ either of which means the plane is the correct way up
 
- LDA #40                \ Set A = 40 and jump to phor5 to set this as the
- BNE phor5              \ point's z-coordinate (this BNE is effectively a JMP
-                        \ as A is never zero)
+ LDA #40                \ Set A = 40 to set as point's z-coordinate, so we
+                        \ draw the horizon in front of the plane (which is the
+                        \ direction we are looking)
+
+ BNE phor5              \ Jump to phor5 to set this as the point's z-coordinate
+                        \ (this BNE is effectively a JMP as A is never zero)
 
 .phor3
 
@@ -16026,14 +16081,16 @@ ORG CODE%
 
 .phor4
 
-                        \ We get here if in xRotation:
+                        \ We get here if one of the following is true:
                         \
-                        \   * Bit 7 clear, bit 6 set
-                        \   * Bit 7 set, bit 6 clear
+                        \   * Bit 7 of zRotationHi is clear and bit 6 is set
+                        \   * Bit 7 of zRotationHi is set and bit 6 is clear
                         \
-                        \ i.e. if bit 6 and 7 differ
+                        \ either of which means the plane is upside down
 
- LDA #216               \ Set A = -40 to use as the point's z-coordinate
+ LDA #216               \ Set A = -40 to use as the point's z-coordinate, so
+                        \ we draw the horizon behind the plane (which is the
+                        \ direction we are looking)
 
 .phor5
 
@@ -16094,15 +16151,16 @@ ORG CODE%
  LDX #0                 \ Set X = 0 act as an offset in the loop below, so we
                         \ iterate through the x, y and z axes
 
- STX TC                 \ Set TC = 0, to indicate that we should draw the runway
-                        \ for when we fall through into DrawRadarBlip below
+ STX alien              \ Set alien = 0, to indicate that we should draw the
+                        \ runway for when we fall through into DrawRadarBlip
+                        \ below
 
  CPY #33                \ If Y = 33, skip the following two instructions
  BNE upbl1
 
- LDA #1                 \ Y = 33, which is the alien, so set TC = 1, to indicate
- STA TC                 \ that we should draw the alien for when we fall through
-                        \ into DrawRadarBlip below
+ LDA #1                 \ Y = 33, which is the alien, so set alien = 1, to
+ STA alien              \ indicate that we should draw the alien for when we
+                        \ fall through into DrawRadarBlip below
 
                         \ We now loop through the x-, y- and z-axes to do the
                         \ following, where the object is either the runway or
@@ -16248,7 +16306,7 @@ ORG CODE%
 \
 \   zPointHi            The sign of the y-coordinate in bit 7
 \
-\   TC                  The blip to update on the radar:
+\   alien               The blip to update on the radar:
 \
 \                         * 0 = update the runway
 \
@@ -16258,8 +16316,8 @@ ORG CODE%
 
 .DrawRadarBlip
 
- LDX TC                 \ Set X = TC to point to the blip to update on the radar
-                        \ (0 for the runway, 1 for the alien)
+ LDX alien              \ Set X = alien to point to the blip to update on the
+                        \ radar (0 for the runway, 1 for the alien)
 
  LDA xRadarBuffer,X     \ Set I = the X-th byte of xRadarBuffer, which contains
  STA I                  \ the x-coordinate of the current line or dot on the
@@ -16281,9 +16339,9 @@ ORG CODE%
  JSR DrawVectorLine     \ Erase a line from (I, J) as a vector (T, U) with
                         \ direction V
 
- LDX TC                 \ If TC is non-zero then we just erased a dot from the
- BNE drbl1              \ radar, so jump to drbl1 as we don't need to redraw the
-                        \ cross at the centre of the radar
+ LDX alien              \ If alien is non-zero then we just erased a dot from
+ BNE drbl1              \ the radar, so jump to drbl1 as we don't need to redraw
+                        \ the cross at the centre of the radar
                         
                         \ If we get here then we just erased a line from the
                         \ radar, which may have corrupted the cross in the
@@ -20577,7 +20635,8 @@ ORG CODE%
  BNE seng1
 
  CLC                    \ Set A = A + 20
- ADC #20
+ ADC #20                \
+                        \ so having the engine off increases drag
 
  BNE seng2              \ Jump to seng2 (this BNE is effectively a JMP as A is
                         \ never zero)
@@ -20585,11 +20644,15 @@ ORG CODE%
 .seng1
 
  SEC                    \ Set A = A - 20
- SBC #20
+ SBC #20                \
+                        \ so having the engine on decreases drag
 
 .seng2
 
- STA forceFactor+5      \ Update the force factor for zLiftDrag
+ STA forceFactor+5      \ Update the force factor for zLiftDrag, so it is
+                        \ incremented by 20 when the engine is off, and reduced
+                        \ by 20 when the engine is on, i.e. having the engine
+                        \ off increases drag
 
 .seng3
 
@@ -20712,14 +20775,8 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ This table contains the high byte, while bits 3 to 7 of divisionLo contain the
-\ low byte.
-\
-\ FOR I%, 0, 255
-\
-\  EQUB HI(INT(65535 - (256x - x^2 + 0.0035*x^3 + 0.00001*x^4 - ...)))
-\
-\ NEXT
+\ This table contains the high byte of the division lookup table, while bits 3
+\ to 7 of divisionLo contain the low byte.
 \
 \ ******************************************************************************
 
@@ -23380,14 +23437,9 @@ NEXT
 \
 \ i.e. if divisionLo,X = n, then X fits into n + 1 binary digits
 \
-\ Bits 3 to 7 contain the low byte of a lookup, with bits 0 to 2 zeroed, and the
-\ high byte coming from divisionHi
+\ Bits 3 to 7 contain the low byte of the division lookup, with bits 0 to 2
+\ zeroed, and the high byte coming from divisionHi.
 \
-\ FOR I%, 0, 255
-\
-\  EQUB LO(INT(65535 - (256x - x^2 + 0.0035*x^3 + 0.00001*x^4 - ...)))
-\
-\ NEXT
 \
 \ ******************************************************************************
 
@@ -26866,7 +26918,7 @@ NEXT
 \       Name: ApplyFlightModel (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Calculate the dxTurn, allLinear and slipRate variables
+\    Summary: Calculate the dxTurn and xLinear vectors, and the slipRate
 \  Deep dive: The flight model
 \
 \ ------------------------------------------------------------------------------
@@ -26885,7 +26937,7 @@ NEXT
 \                    + [      0     ] - [      0      ]
 \                      [      0     ]   [ zSlipMoment ]
 \
-\       * Set the allLinear vector, depending on the turning moments and the
+\       * Set the xLinear vector, depending on the turning moments and the
 \         forces from the engine:
 \
 \         If zVelocityPHi >= 48 (so forward speed >= 500 mph), we calculate:
@@ -26926,7 +26978,7 @@ NEXT
 
 .fmod3
 
- JSR ApplyTurnAndThrust \ Set the dxTurn and allLinear vectors, depending on
+ JSR ApplyTurnAndThrust \ Set the dxTurn and xLinear vectors, depending on
                         \ the turning moments and the forces from the engine
 
  LDA xLinearLo          \ Set the C flag to bit 7 of xLinearLo, flipped, to
@@ -27345,11 +27397,11 @@ NEXT
                         \ point from the plane's frame of reference to the
                         \ outside world's frame of reference
 
- LDA #252               \ Set GG to the ID of the allLinear vector (which is
+ LDA #252               \ Set GG to the ID of the xLinear vector (which is
  STA GG                 \ stored in point 252), to pass to the call to
                         \ SetPointCoords
 
- JSR SetPointCoords     \ Calculate the coordinates of the allLinear vector in
+ JSR SetPointCoords     \ Calculate the coordinates of the xLinear vector in
                         \ (xLinear, yLinear, zLinear)
 
  LDA yLinearHi          \ Set yLinearHi = yLinearHi - 16
@@ -27361,7 +27413,7 @@ NEXT
                         \ coordinates to (dxVelocity, dyVelocity, dzVelocity)
 
  LDY #252               \ Set Y so the call to CopyPointToWork copies the
-                        \ coordinates from the allLinear vector (in point 252)
+                        \ coordinates from the xLinear vector (in point 252)
 
  JSR CopyPointToWork    \ Copy (xLinear, yLinear, zLinear) to
                         \ (dxVelocity, dyVelocity, dzVelocity)
