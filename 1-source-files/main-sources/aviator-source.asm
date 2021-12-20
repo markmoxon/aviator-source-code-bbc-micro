@@ -2768,10 +2768,10 @@ ORG CODE%
                         \ 16 bits any more, and set WW to the minimum number of
                         \ bits in the original number
 
- TAX                    \ Set (TT S) = the A-th entry from Lookup3900/Lookup4700
- LDA Lookup3900,X       \ (is this a logarithm? or a division table?)
- STA TT
- LDA Lookup4700,X
+ TAX                    \ Set (TT S) = the A-th entry from the division table
+ LDA divisionHi,X       \ with bits 0 to 2 cleared (as they contain unrelated
+ STA TT                 \ data)
+ LDA divisionLo,X
  AND #%11111000
  STA S
 
@@ -2976,13 +2976,13 @@ ORG CODE%
 \   (Q P) = (X Y) divided by (TT S)
 \
 \ where (X Y) is a positive 16-bit number and (TT S) is the entry in the
-\ (Lookup3900 Lookup4700) table for the dividend after being scaled by the
+\ (divisionHi divisionLo) table for the denominator after being scaled by the
 \ ScaledUp routine.
 \
 \ Arguments:
 \
-\   (X Y)               A positive 16-bit number containing a coordinate
-\                       magnitude
+\   (X Y)               A positive 16-bit number containing a number to be
+\                       divided (the dividend)
 \
 \   Z flag              Set according to the high byte in X (i.e. the routine is
 \                       called after setting register X)
@@ -2990,7 +2990,11 @@ ORG CODE%
 \   R                   Contains %00010000 (which is set at the start of
 \                       ProjectPoint)
 \
-\   (TT S)              The lookup from Lookup3900/Lookup4700 for the dividend
+\   (TT S)              The lookup from divisionHi/divisionLo for the high byte
+\                       of the scaled up denominator (i.e. the number we are
+\                       dividing by)
+\
+\   K                   The low byte of the scaled up denominator
 \
 \ Returns:
 \
@@ -3048,8 +3052,12 @@ ORG CODE%
                         \ the routine:
                         \
                         \   (TT S) = (%TTTTtttt %SSSSssss)
-                        \   (J I)  = (%JJJJjjjj %IIIIiiii) and contains the
-                        \            original argument (A Y)
+                        \
+                        \   (J I)  = (%JJJJjjjj %IIIIiiii)
+                        \
+                        \ The first one is the denominator's lookup from the
+                        \ division table, while the second is the dividend,
+                        \ scaled up
 
                         \ Does the following calculate (Q P) = (TT S) * (1 J I)
                         \ ???
@@ -3087,8 +3095,10 @@ ORG CODE%
 
  ADC P                  \ Set (Y A) = (Y A) + P + J + S
 
- BCC divs2
- INY
+ BCC divs2              \ If the above addition didn't overflow, skip the
+                        \ following instruction
+
+ INY                    \ Increment the high byte
 
 .divs2
 
@@ -3101,17 +3111,20 @@ ORG CODE%
 
  ADC S                  \ End here
 
- STA P
-
+ STA P                  \ Set (A P) = (Y A)
  TYA
+
  ADC shift4Right,X
  ADC Q
  BCC divs4
 
  CLC
  ADC TT
- SEC
- JMP divs5
+
+ SEC                    \ Set the C flag to feed into bit 7 of (A P) when we
+                        \ shift it right
+
+ JMP divs5              \ Skip the following instruction
 
 .divs4
 
@@ -3119,10 +3132,12 @@ ORG CODE%
 
 .divs5
 
- ROR A
+ ROR A                  \ Set (A P) = (A P) >> 1
  ROR P
- STA Q
- LDA I
+
+ STA Q                  \ Set (Q P) = (A P)
+
+ LDA I                  \ If I = 0, jump to divs7
  BEQ divs7
 
  AND #&F0
@@ -3248,7 +3263,7 @@ ORG CODE%
 
  BEQ scup4              \ If the high byte in X = 0, jump down to scup4
 
- LDA Lookup4700,X       \ Set A = int(log2(X))
+ LDA divisionLo,X       \ Set A = int(log2(X))
  AND #%00000111         \
                         \ so we know X fits into a minimum of A + 1 binary
                         \ digits
@@ -3336,7 +3351,7 @@ ORG CODE%
  CPY #0                 \ If the low byte in Y = 0, jump down to scup8
  BEQ scup8
 
- LDA Lookup4700,Y       \ Set WW = int(log2(Y))
+ LDA divisionLo,Y       \ Set WW = int(log2(Y))
  AND #%00000111         \
  STA WW                 \ so we know Y fits into a minimum of WW + 1 binary
                         \ digits
@@ -20690,17 +20705,15 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup3900
+\       Name: divisionHi
 \       Type: Variable
 \   Category: Maths
 \    Summary: Division lookup table
 \
 \ ------------------------------------------------------------------------------
 \
-\ Is this a log table for multiplication?
-\
-\ This table contains the high byte, while bits 3 to 7 of Lookup4700 contain the
-\ low byte
+\ This table contains the high byte, while bits 3 to 7 of divisionLo contain the
+\ low byte.
 \
 \ FOR I%, 0, 255
 \
@@ -20710,7 +20723,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.Lookup3900
+.divisionHi
 
  EQUB &FF, &FE, &FD, &FC, &FB, &FA, &F9, &F8
  EQUB &F7, &F6, &F5, &F4, &F3, &F2, &F1, &F0
@@ -23356,18 +23369,19 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: Lookup4700
+\       Name: divisionLo
 \       Type: Variable
 \   Category: Maths
 \    Summary: Division lookup table
 \
 \ ------------------------------------------------------------------------------
 \
-\ Bits 0 to 2 of Lookup4700,X contain int(log2(X))
-\ i.e. if Lookup4700,X = n, then X fits into n + 1 binary digits
+\ Bits 0 to 2 of divisionLo,X contain int(log2(X))
+\
+\ i.e. if divisionLo,X = n, then X fits into n + 1 binary digits
 \
 \ Bits 3 to 7 contain the low byte of a lookup, with bits 0 to 2 zeroed, and the
-\ high byte coming from Lookup3900 (is this a logarithm table?)
+\ high byte coming from divisionHi
 \
 \ FOR I%, 0, 255
 \
@@ -23377,7 +23391,7 @@ NEXT
 \
 \ ******************************************************************************
 
-.Lookup4700
+.divisionLo
 
  EQUB %00000000         \ Index   0 = 00000 ( 0) and 000 (0)
  EQUB %00000000         \ Index   1 = 00000 ( 0) and 000 (0)
