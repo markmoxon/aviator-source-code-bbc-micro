@@ -4585,6 +4585,10 @@ ORG CODE%
 \
 \   G                   Max/min y-coordinate for the end of the line
 \
+\   xTemp1Lo            The x-coordinate of the start of the line, if clipped
+\
+\   yTemp1Lo            The y-coordinate of the start of the line, if clipped
+\
 \ ******************************************************************************
 
 .DrawCanopyLine
@@ -4698,8 +4702,8 @@ ORG CODE%
                         \ In other words, this instruction has already been
                         \ modified to implement the current colour cycle
 
- LDA #39                \ Set I = 39
- STA I
+ LDA #39                \ Set I = 39, the number of the last character block
+ STA I                  \ on the row
 
  BNE dlin5              \ Jump to dlin5 to skip the code modifications for the
                         \ other value of bit 7 (this BNE is effectively a JMP as
@@ -4751,8 +4755,8 @@ ORG CODE%
                         \ In other words, this instruction has already been
                         \ modified to implement the current colour cycle
 
- LDA #0                 \ Set I = 0
- STA I
+ LDA #0                 \ Set I = 0, the number of the first character block
+ STA I                  \ on the row
 
 .dlin5
 
@@ -4781,9 +4785,10 @@ ORG CODE%
                         \   ADC #1 -> ADC #&FE
 
  LDA #158               \ Set J = 158 - G
- SEC
- SBC G
- STA J
+ SEC                    \
+ SBC G                  \ So J contains the y-coordinate of the end of the line,
+ STA J                  \ flipped to match screen memory (so higher values of
+                        \ the y-coordinate are lower down the screen)
 
  JMP dlin7              \ Jump to dlin7 to skip the code modifications for the
                         \ other value of bit 6
@@ -4820,9 +4825,10 @@ ORG CODE%
                         \ i.e. set it back to the default
 
  LDA #160               \ Set J = 160 - G
- SEC
- SBC G
- STA J
+ SEC                    \
+ SBC G                  \ So J contains the y-coordinate of the end of the line,
+ STA J                  \ flipped to match screen memory (so higher values of
+                        \ the y-coordinate are lower down the screen)
 
 \ ******************************************************************************
 \
@@ -4859,35 +4865,43 @@ ORG CODE%
                         \     containing pixel (R, S), out by 8 bytes for each
                         \     row above or below the top of the dashboard
                         \
-                        \   * I = 39
+                        \   * I = 39, the number of the last character block on
+                        \     a screen row, heading left to right
                         \
-                        \   * J = 160 - G
+                        \   * J = 160 - G, the y-coordinate of the end of the
+                        \     line, flipped around so it increases as we go down
+                        \     the screen
                         \
                         \ The last two have different values with different line
                         \ directions, but these are the values for the default
                         \ case that we're considering here
 
  LDA #159               \ Set Y = 159 - S
- SEC
- SBC S
- TAY
+ SEC                    \
+ SBC S                  \ This gets added to the screen address in (Q P) that we
+ TAY                    \ set above, to give the screen address of the starting
+                        \ point at coordinate (R, S)
 
  LDA #255               \ Set RR = 255 - T
- SEC
+ SEC                    \        = 255 - |x-delta|
  SBC T
  STA RR
 
  CLC                    \ Set SS = RR
  ADC #1                 \        = 255 - T + 1
- STA SS
+ STA SS                 \
+                        \ This is the starting value for the slope error
 
- LDA V                  \ If bits 0 and 1 of V are both clear, jump to dlin8
- AND #%00000011
- BEQ dlin8
+ LDA V                  \ If bits 0 and 1 of V are both clear, then this is not
+ AND #%00000011         \ the horizon line or a clipped line, so jump to dlin8
+ BEQ dlin8              \ to skip the following
 
- LDA U                  \ If U < 2, jump to dlin8
+ LDA U                  \ If U < 2, jump to dlin8 to skip the following
  CMP #2
  BCC dlin8
+
+                        \ If we get here thenU >= 2, and this is either the
+                        \ horizon line or the line has been clipped
 
  LDA #255               \ Set SS = 255
  STA SS
@@ -4895,118 +4909,68 @@ ORG CODE%
 .dlin8
 
  LDA R                  \ Set X = bits 0 and 1 of R, so X is the pixel number
- AND #%00000011         \ in the character row for pixel (R, S)
- TAX
+ AND #%00000011         \ in the character row for pixel (R, S), in the range
+ TAX                    \ 0 to 3
+
+                        \ We are going to use QQ to keep track of the current
+                        \ character block number as we work our way along the
+                        \ line, drawing as we go, so we need to initialise it to
+                        \ the character block number of the starting point in
+                        \ (R, S)
 
  LDA R                  \ Set QQ = R / 4
  LSR A                  \
  LSR A                  \ so QQ is the number of the character block containing
  STA QQ                 \ pixel (R, S), as each character block is 4 pixels wide
 
- LDA SS
+ LDA SS                 \ Set A = SS, so it contains the current slope error
 
- BIT V
- BMI dlin10
+ BIT V                  \ If bit 7 of V is set, then we are stepping along the
+ BMI dlin10             \ x-axis in a negative direction, i.e. to the left, so
+                        \ jump to dlin10
 
- CPX #1
+ CPX #1                 \ If X < 1 (i.e. X = 0), jump to dlin13
  BCC dlin13
 
- BNE dlin9
+ BNE dlin9              \ If X <> 1 (i.e. X = 2 or 3), jump to dlin9
 
- CLC
- BCC dlin14
+ CLC                    \ If we get here then X = 1, so clear the C flag and
+ BCC dlin14             \ jump to dlin14 (this BCC is effectively a JMP as we
+                        \ know the C flag is clear)
 
 .dlin9
+                        \ If we get here then X = 2 or 3
 
- CPX #3
+ CPX #3                 \ If X < 3 (i.e. X = 2), jump to dlin16
  BCC dlin16
 
- CLC
- BCC dlin18
+ CLC                    \ If we get here then X = 3, so clear the C flag and
+ BCC dlin18             \ jump to dlin18 (this BCC is effectively a JMP as we
+                        \ know the C flag is clear)
 
 .dlin10
 
- CPX #1
+                        \ If we get here then bit 7 of V is set, so we are
+                        \ stepping along the x-axis in a negative direction,
+                        \ i.e. to the left
+
+ CPX #1                 \ If X < 1 (i.e. X = 0), jump to dlin18
  BCC dlin18
 
- BNE dlin11
+ BNE dlin11             \ If X <> 1 (i.e. X = 2 or 3), jump to dlin11
 
- CLC
- BCC dlin16
+ CLC                    \ If we get here then X = 1, so clear the C flag and
+ BCC dlin16             \ jump to dlin16 (this BCC is effectively a JMP as we
+                        \ know the C flag is clear)
 
 .dlin11
 
- CPX #3
+ CPX #3                 \ If X < 3 (i.e. X = 2), jump to dlin14
  BCC dlin14
 
- CLC
- BCC dlin13
-
-.dlin12
-
- CLC
- LDA SS
-
-.dlin13
-
- LDX #0
- ADC U
- BCC dlin15
-
- JSR dlin32
-
-.dlin14
-
- LDX #3
-
-.dlin15
-
- INX
- ADC U
- BCC dlin17
-
- JSR dlin32
-
-.dlin16
-
- LDX #6
-
-.dlin17
-
- INX
- ADC U
- BCC dlin19
-
- JSR dlin32
-
-.dlin18
-
- LDX #8
-
-.dlin19
-
- INX
- ADC U
-
-.dlin20
-
- BCC dlin22             \ If the addition did not overflow, jump to dlin22
-                        \
-                        \ Gets modified by the DrawCanopyLine routine:
-                        \
-                        \   * BCC dlin22 when bit 7 of V is clear
-                        \
-                        \   * BCC dlin27 when bit 7 of V is set
-
- JSR dlin32             \ If the addition overflowed, call dlin32
-
-.dlin21
-
- BNE dlin25             \ Gets modified by the DrawCanopyLine routine:
-                        \
-                        \   * BNE dlin25 when bit 7 of V is clear
-                        \
-                        \   * BNE dlin30 when bit 7 of V is set
+ CLC                    \ If we get here then X = 3, so clear the C flag and
+ BCC dlin13             \ jump to dlin13 (this BCC is effectively a JMP as we
+                        \ know the C flag is clear)
 
 \ ******************************************************************************
 \
@@ -5027,18 +4991,185 @@ ORG CODE%
 \
 \ ******************************************************************************
 
+.dlin12
+
+                        \ This forms the start of a loop that works its way
+                        \ along the line. We only jump to this part from the end
+                        \ of the loop, which is joined at different points from
+                        \ part 3 above
+                        \
+                        \ The loop is joined with A already set to SS, which
+                        \ keeps track of the slope error as we step along the
+                        \ x-axis one pixel at a time
+                        \
+                        \ So SS keeps track of the y-axis position by adding
+                        \ the y-delta in U, and when adding U to A overflows
+                        \ because the slope error has reached a whole number
+                        \ (i.e. 256), we move down to the next a pixel row
+                        \
+                        \ The following commentary assumes we are moving along
+                        \ the x-axis from left to right, and down the screen.
+                        \ The code is modified in-place for drawing in the
+                        \ other directions, which is note in the commentary
+                        \
+                        \ In the following, X is used to store the offset of the
+                        \ pixel byte we are going to draw, from the colour1L2R
+                        \ table (this is modified to cater for different colour
+                        \ cycles, but for simplicity we just consider the case
+                        \ of drawing from left to right in colour 1)
+
+ CLC                    \ Clear the C flag to reset the carry for the additions
+                        \ below
+
+ LDA SS                 \ Set A = SS, so it contains the current slope error
+
+.dlin13
+
+ LDX #0                 \ Set X = 0 to point to pixel 0, which is the pixel
+                        \ byte 1000 when drawing from left to right
+
+ ADC U                  \ Set A = A + U, to add the y-delta to the slope error
+
+ BCC dlin15             \ If the addition didn't overflow, jump to dlin15 to
+                        \ increment X to move to the second pixel along,
+                        \ which is the pixel byte 1100 when drawing from left
+                        \ to right
+
+ JSR dlin32             \ Otherwise the slope error just overflowed, so we need
+                        \ to move down a pixel row, so call dlin32 to draw the
+                        \ pixel byte pointed to by X and move down to the next
+                        \ character row
+
+.dlin14
+
+                        \ If we get here then we either just draw the first
+                        \ pixel in the pixel byte, i.e. 1000, and moved up or
+                        \ down a pixel row, or we just jumped here from part 3
+                        \
+                        \ In both cases, we want to start drawing the next pixel
+                        \ byte from the second pixel along, i.e. 0100
+
+ LDX #3                 \ Set X = 3 so the next instruction increments X to 4,
+                        \ which is the pixel byte 0100 when drawing from left
+                        \ to right
+
+.dlin15
+
+ INX                    \ Increment X to set the next pixel in the pixel byte
+                        \ (i.e. step through the colour1L2R table)
+
+ ADC U                  \ Set A = A + U, to add the y-delta to the slope error
+
+ BCC dlin17             \ If the addition didn't overflow, jump to dlin17 to
+                        \ increment X to move to the third pixel along,
+                        \ which is the pixel byte 1110 when drawing from left
+                        \ to right
+
+ JSR dlin32             \ Otherwise the slope error just overflowed, so we need
+                        \ to move down a pixel row, so call dlin32 to draw the
+                        \ pixel byte pointed to by X and move down to the next
+                        \ character row
+
+.dlin16
+
+                        \ If we get here then we either just draw the second
+                        \ pixel in the pixel byte, i.e. 0100 or 1100, and moved
+                        \ down a pixel row, or we just jumped here from part 3
+                        \
+                        \ In both cases, we want to start drawing the next pixel
+                        \ byte from the second pixel along, i.e. 0010
+
+ LDX #6                 \ Set X = 6 so the next instruction increments X to 7,
+                        \ which is the pixel byte 0010 when drawing from left
+                        \ to right
+
+.dlin17
+
+ INX                    \ Increment X to set the next pixel in the pixel byte
+                        \ (i.e. step through the colour1L2R table)
+
+ ADC U                  \ Set A = A + U, to add the y-delta to the slope error
+
+ BCC dlin19             \ If the addition didn't overflow, jump to dlin19 to
+                        \ increment X to move to the fourth pixel along,
+                        \ which is the pixel byte 1111 when drawing from left
+                        \ to right
+
+ JSR dlin32             \ Otherwise the slope error just overflowed, so we need
+                        \ to move down a pixel row, so call dlin32 to draw the
+                        \ pixel byte pointed to by X and move down to the next
+                        \ character row
+
+.dlin18
+
+                        \ If we get here then we either just draw the third
+                        \ pixel in the pixel byte, i.e. 0010 or 0110 or 1110,
+                        \ and moved down a pixel row, or we just jumped here
+                        \ from part 3
+                        \
+                        \ In both cases, we want to start drawing the next pixel
+                        \ byte from the second pixel along, i.e. 0001
+
+ LDX #8                 \ Set X = 8 so the next instruction increments X to 9,
+                        \ which is the pixel byte 0001 when drawing from left
+                        \ to right
+
+.dlin19
+
+ INX                    \ Increment X to set the next pixel in the pixel byte
+                        \ (i.e. step through the colour1L2R table)
+
+ ADC U                  \ Set A = A + U, to add the y-delta to the slope error
+
+.dlin20
+
+ BCC dlin22             \ If the addition didn't overflow, jump to dlin22 to
+                        \ draw the pixel byte but without going down a row, as
+                        \ we have reached the end of the pixel byte and need to
+                        \ draw it before moving on the next pixel byte to the
+                        \ right
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * BCC dlin22 when bit 7 of V is clear
+                        \
+                        \   * BCC dlin27 when bit 7 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
+
+ JSR dlin32             \ Otherwise the slope error just overflowed, so we need
+                        \ to move down a pixel row, so call dlin32 to draw the
+                        \ pixel byte pointed to by X and move down to the next
+                        \ character row
+
+.dlin21
+
+ BNE dlin25             \ Jump to dlin25 to move on to the next character block,
+                        \ as we just moved down a pixel row after drawing the
+                        \ fourth pixel in the pixel byte, so we need to move on
+                        \ to the next pixel byte along
+                        \
+                        \ The dlin32 routine ends with a BEQ just before the RTS
+                        \ so this BNE is effectively a JMP, as we had to pass
+                        \ through the BEQ in dlin32 to return from the above call
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
+                        \
+                        \   * BNE dlin25 when bit 7 of V is clear
+                        \
+                        \   * BNE dlin30 when bit 7 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
+
 .dlin22
 
-                        \ This routine draws a part of a line (one pixel row,
-                        \ i.e. a byte) and moves us down to the next pixel row
-                        \
-                        \ We call this subroutine with:
-                        \
-                        \   * A = ???
-                        \
-                        \   * X = the index of the pixel byte at colour1L2R
+                        \ If we get here then we need to draw the current pixel
+                        \ byte as pointed to by X, and then move to the next
+                        \ character block along, without going down a row
 
- STA SS                 \ Set SS = A
+ STA SS                 \ Set SS = A to store the updated slope error in SS
 
 .dlin23
 
@@ -5087,14 +5218,17 @@ ORG CODE%
 
 .dlin26
 
- INC QQ                 \ Increment QQ
+ INC QQ                 \ Increment QQ, which contains the current character
+                        \ block number
 
- LDA QQ                 \ If QQ <> I, jump back to dlin12 to ???
- CMP I
- BNE dlin12
+ LDA QQ                 \ If QQ <> I, then we haven't yet reached the right edge
+ CMP I                  \ edge of the screen (whose character block number we
+ BNE dlin12             \ set in I in part 2), so jump back to dlin12 to keep
+                        \ drawing the line
 
- JMP dlin65             \ Otherwise QQ = I, so jump to dlin65 to process the
-                        \ clipped part of the line, if applicable
+ JMP dlin65             \ Otherwise we have reached the edge of the screen, so
+                        \ jump to dlin65 to process the clipped part of the
+                        \ line, if applicable
 
 \ ******************************************************************************
 \
@@ -5122,7 +5256,7 @@ ORG CODE%
                         \
                         \ We call this subroutine with:
                         \
-                        \   * A = ???
+                        \   * A = the current slope error
                         \
                         \   * X = the index of the pixel byte at colour1R2L
 
@@ -5175,14 +5309,17 @@ ORG CODE%
 
 .dlin31
 
- DEC QQ                 \ Decrement QQ
+ DEC QQ                 \ Decrement QQ, which contains the current character
+                        \ block number
 
- LDA QQ                 \ If QQ <> I, jump back to dlin12 to ???
- CMP I
- BNE dlin12
+ LDA QQ                 \ If QQ <> I, then we haven't yet reached the right edge
+ CMP I                  \ edge of the screen (whose character block number we
+ BNE dlin12             \ set in I in part 2), so jump back to dlin12 to keep
+                        \ drawing the line
 
- JMP dlin65             \ Otherwise QQ = I, so jump to dlin65 to process the
-                        \ clipped part of the line, if applicable
+ JMP dlin65             \ Otherwise we have reached the edge of the screen, so
+                        \ jump to dlin65 to process the clipped part of the
+                        \ line, if applicable
 
 \ ******************************************************************************
 \
@@ -5215,16 +5352,16 @@ ORG CODE%
                         \
                         \ We call this subroutine with:
                         \
-                        \   * A = ???
+                        \   * A = the current slope error
                         \
                         \   * X = the index of the pixel byte at colour1L2R
                         \
                         \   * The C flag is always set
-                        \
-                        \ and return the result in the C flag ???
 
  ADC RR                 \ Set SS = A + RR + C
- STA SS
+ STA SS                 \        = slope error + (255 - |x-delta|) + 1
+                        \        = slope error + 256 - |x-delta|
+                        \        = slope error - |x-delta| ???
 
 .dlin33
 
@@ -5272,6 +5409,9 @@ ORG CODE%
                         \   * INY when bit 6 of V is set
                         \
                         \   * TYA when bit 6 of V is clear
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
 .dlin36
 
@@ -5283,6 +5423,9 @@ ORG CODE%
                         \   * TYA when bit 6 of V is set
                         \
                         \   * DEY when bit 6 of V is clear
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
  AND #7                 \ If A mod 7 <> 0 then we haven't reached the end of the
  BNE dlin39             \ 8-row character block, so jump to dlin39 to skip the
@@ -5307,6 +5450,9 @@ ORG CODE%
                         \   * ADC #&38 when bit 6 of V is set
                         \
                         \   * ADC #&E8 when bit 6 of V is clear
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
  STA P                  \ Store the updated low byte in P
 
@@ -5321,6 +5467,9 @@ ORG CODE%
                         \   * ADC #1 when bit 6 of V is set
                         \
                         \   * ADC #&FE when bit 6 of V is clear
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
  STA Q                  \ Which we store in Q, so now we have:
                         \
@@ -5331,11 +5480,12 @@ ORG CODE%
 
 .dlin39
 
- LDA SS                 \ Set A = SS
+ LDA SS                 \ Set A = SS, so it contains the current slope error
 
- CPY J                  \ If the current pixel row in Y = J, jump to dlin40
- CLC                    \ with the C flag clear
- BEQ dlin40             
+ CPY J                  \ If the current y-coordinate in Y = J, then we have
+ CLC                    \ reached the y-coordinate of the end of the line (which
+ BEQ dlin40             \ we set in part 2), so jump to dlin40 to stop drawing
+                        \ the line and move on to the clipped part of the line
 
  RTS                    \ Return from the subroutine with the C flag clear
 
@@ -5343,8 +5493,9 @@ ORG CODE%
 
  TSX                    \ Remove two bytes from the top of the stack, so the
  INX                    \ next RTS returns us to caller of the DrawCanopyLine
- INX                    \ routine rather than the caller of dlin32
- TXS
+ INX                    \ routine rather than the caller of dlin32 (so this
+ TXS                    \ effectively breaks out of the current line-drawing
+                        \ loop)
 
  JMP dlin65             \ Jump to dlin65 to process the clipped part of the
                         \ line, if applicable
@@ -5408,7 +5559,10 @@ ORG CODE%
                         \ i.e. set it back to the default
 
  LDA #7                 \ Set J = 7
- STA J
+ STA J                  \
+                        \ So J contains the y-coordinate of the bottom of the screen,
+                        \ flipped to match screen memory (so higher values of
+                        \ the y-coordinate are lower down the screen)
 
  BNE dlin43             \ Jump to dlin43 to skip the code modifications for the
                         \ other value of bit 6 (this BNE is effectively a JMP as
@@ -5438,7 +5592,10 @@ ORG CODE%
                         \   ADC #&FE -> ADC #1
 
  LDA #160               \ Set J = 160
- STA J
+ STA J                  \
+                        \ So J contains the y-coordinate of the end of the line,
+                        \ flipped to match screen memory (so higher values of
+                        \ the y-coordinate are lower down the screen)
 
 .dlin43
 
@@ -5512,27 +5669,30 @@ ORG CODE%
                         \     containing pixel (R, S), out by 8 bytes for each
                         \     row above or below the top of the dashboard
                         \
-                        \   * I = W + 1
+                        \   * I = W + 1, the x-coordinate for the end of the
+                        \     line + 1
                         \
-                        \   * J = 7
+                        \   * J = 7, the y-coordinate of the end of the line
                         \
                         \ The last two have different values with different line
                         \ directions, but these are the values for the default
                         \ case that we're considering here
 
  LDA #159               \ Set Y = 159 - S
- SEC
- SBC S
- TAY
+ SEC                    \
+ SBC S                  \ This gets added to the screen address in (Q P) that we
+ TAY                    \ set above, to give the screen address of the starting
+                        \ point at coordinate (R, S)
 
  LDA #255               \ Set RR = 255 - U
- SEC
+ SEC                    \        = 255 - |y-delta|
  SBC U
  STA RR
 
  CLC                    \ Set SS = RR + 1
  ADC #1                 \        = 255 - U + 1
- STA SS
+ STA SS                 \
+                        \ This is the starting value for the slope error
 
  LDA V                  \ If bits 0 and 1 of V are both clear, jump to dlin46
  AND #%00000011
@@ -5542,7 +5702,7 @@ ORG CODE%
  CMP #2
  BCC dlin46
 
- LDA #255               \ Set SS = 255
+ LDA #255               \ Set SS = 255 for the starting slope error
  STA SS
 
 .dlin46
@@ -5582,10 +5742,13 @@ ORG CODE%
 
 .dlin49
 
- STA H                  \ Store the pixel byte in H
+ STA H                  \ Store the pixel byte in H, which contains a single
+                        \ pixel in the correct colour in position X
 
- CLC
- LDX R
+ CLC                    \ Clear the C flag for the addition below
+
+ LDX R                  \ Set X = R, so it contains the x-coordinate of the
+                        \ start of the line
 
 .dlin50
 
@@ -5625,85 +5788,155 @@ ORG CODE%
                         \ colour
 
  LDA SS                 \ Set A = SS + T
- ADC T
+ ADC T                  \       = slope error + |x-delta|
+                        \
+                        \ so this updates the slope error as we move up one
+                        \ the screen one pixel at a time
 
 .dlin52
 
- BCS dlin57             \ Gets modified by the DrawCanopyLine routine:
+ BCS dlin57             \ If the above addition overflowed, then the slope error
+                        \ just overflowed, so jump to dlin57 to move along the
+                        \ x-axis
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * BCC dlin57 when bit 7 of V is clear
                         \
                         \   * BCC dlin61 when bit 7 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
- STA SS                 \ Set SS = A
+ STA SS                 \ Set SS = A to store the updated slope error in SS
 
 .dlin53
 
- TYA                    \ Gets modified by the DrawCanopyLine routine:
+ TYA                    \ Store the current y-coordinate in A
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * TYA when bit 6 of V is clear
                         \
                         \   * INY when bit 6 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
 .dlin54
 
- DEY                    \ Gets modified by the DrawCanopyLine routine:
+ DEY                    \ Decrement Y to move up a pixel row
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * DEY when bit 6 of V is clear
                         \
                         \   * TYA when bit 6 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
- AND #7
- BNE dlin50
+ AND #7                 \ If A mod 7 <> 0 then we haven't reached the top of the
+ BNE dlin50             \ 8-row character block, so loop back to dlin50 to draw
+                        \ the next row
 
- LDA P
+                        \ Otherwise we have reached the top row of the character
+                        \ block, so we now subtract &138 from (Q P) to move to
+                        \ the address of the bottom of the character block in
+                        \ the row above (as each character row in mode 5
+                        \ contains &140 bytes, so this is &140 - 8 to cater for
+                        \ the block we just finished)
+                        \
+                        \ Subtracting &138 is the same as adding &FEC8, so
+                        \ that's what we do now
+
+ LDA P                  \ We start by adding &C8 to the low byte in P
  CLC
 
 .dlin55
 
- ADC #&C8               \ Gets modified by the DrawCanopyLine routine:
+ ADC #&C8               \ Add &C8 to the low byte
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * ADC #&C8 when bit 6 of V is clear
                         \
                         \   * ADC #&38 when bit 6 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
- STA P
- LDA Q
+ STA P                  \ Store the updated low byte in P
+
+ LDA Q                  \ Then add the high bytes
 
 .dlin56
 
- ADC #&FE               \ Gets modified by the DrawCanopyLine routine:
+ ADC #&FE               \ Add &FE to the high byte
+                        \
+                        \ Gets modified by the DrawCanopyLine routine:
                         \
                         \   * ADC #&FE when bit 6 of V is clear
                         \
                         \   * ADC #1 when bit 6 of V is set
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing direction
 
- STA Q
+ STA Q                  \ Which we store in Q, so now we have:
+                        \
+                        \   (Q P) = (Q P) + &FEC8
+                        \         = (Q P) - &138
+                        \
+                        \ so (Q P) is the address of the end of the character
+                        \ block in the row above
 
- CPY J
- CLC
- BNE dlin50
+ CPY J                  \ If the current y-coordinate in Y <> J, then we have
+ CLC                    \ not yet reached the y-coordinate of the end of the
+ BNE dlin50             \ line (which we set in part 7), so loop back to dlin50
+                        \ to keep drawing the line
 
- JMP dlin65             \ Jump to dlin65 to process the clipped part of the
-                        \ line, if applicable
+ JMP dlin65             \ Otherwise we have reached the y-coordinate of the end
+                        \ of the line, so jump to dlin65 to process the clipped
+                        \ part of the line, if applicable
 
 .dlin57
 
- ADC RR
- STA SS
+                        \ If we get here then the slope error just overflowed,
+                        \ and we are drawing up the screen (bit 7 of V is clear)
+                        \
+                        \ We reached with a BCS, so we know the C flag is set
+                        \
+                        \ We now need to move the line along the x-axis to the
+                        \ right by 1 pixel, which we do by shifting the single
+                        \ pixel in H to the right, and if it falls off the right
+                        \ end, adjusting the screen address in (Q P) to point to
+                        \ the next character block along
 
- INX
+ ADC RR                 \ Set SS = A + RR + C
+ STA SS                 \        = slope error + 255 - |y-delta| + 1
+                        \        = slope error + 256 - |y-delta|
+                        \        = slope error - |y-delta| ???
 
- LDA H
- LSR A
+ INX                    \ Increment X to move along the x-axis to the right
+
+ LDA H                  \ Set A to the single pixel byte in H and shift it right
+ LSR A                  \ to move the pixel along by one place
 
 .dlin58
 
- CMP #0                 \ Gets modified by the ModifyDrawRoutine routine:
- BNE dlin60             \
+ CMP #0                 \ If the pixel byte is non-zero, then the pixel hasn't
+ BNE dlin60             \ fallen off the end, so jump to dlin60 to skip the
+                        \ following
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
+                        \
                         \   * CMP #0 when colourLogic = %10000000
                         \
                         \   * CMP #8 when colourLogic = %01000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
  LDA P                  \ Set (Q P) = (Q P) + 8
  CLC                    \
@@ -5712,44 +5945,74 @@ ORG CODE%
 
 .dlin59
 
- LDA #8                 \ Gets modified by the ModifyDrawRoutine routine:
+ LDA #%00001000         \ Set A to a pixel byte with the leftmost pixel set, so
+                        \ we can use this as our new single pixel byte in H
+                        \ below (so shifting across by one character block only
+                        \ moves the single pixel right by one pixel)
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * LDA #8 when colourLogic = %10000000
                         \
                         \   * LDA #&80 when colourLogic = %01000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
- BCC dlin60             \ And then the high bytes, so (Q P) now points to the
+ BCC dlin60             \ And now add the high bytes, so (Q P) now points to the
  INC Q                  \ next character block to the right
 
 .dlin60
 
- STA H
+ STA H                  \ Store the updated one-pixel byte in H
 
- CPX I
- CLC
- BNE dlin53
+ CPX I                  \ If the current x-coordinate in X <> I, then we have
+ CLC                    \ not yet reached the x-coordinate of the end of the
+ BNE dlin53             \ line (which we set in part 7), so loop back to dlin53
+                        \ to keep drawing the line
 
- BEQ dlin65             \ Jump to dlin65 to process the clipped part of the
-                        \ line, if applicable (this BEQ is effectively a JMP
-                        \ as we just passed through a BNE)
+ BEQ dlin65             \ Otherwise we have reached the x-coordinate of the end
+                        \ of the line, so jump to dlin65 to process the clipped
+                        \ part of the line, if applicable (this BEQ is
+                        \ effectively a JMP as we just passed through a BNE)
 
 .dlin61
 
- ADC RR
- STA SS
+                        \ If we get here then the slope error just overflowed,
+                        \ and we are drawing down the screen (bit 7 of V is set)
+                        \
+                        \ We reached with a BCS, so we know the C flag is set
+                        \
+                        \ We now need to move the line along the x-axis to the
+                        \ left by 1 pixel, which we do by shifting the single
+                        \ pixel in H to the left, and if it falls off the left
+                        \ end, adjusting the screen address in (Q P) to point to
+                        \ the previous character block
 
- DEX
+ ADC RR                 \ Set SS = A + RR + C
+ STA SS                 \        = slope error + 255 - |y-delta| + 1
+                        \        = slope error + 256 - |y-delta|
+                        \        = slope error - |y-delta| ???
 
- LDA H
- ASL A
+ DEX                    \ Decrement X to move along the x-axis to the left
+
+ LDA H                  \ Set A to the single pixel byte in H and shift it left
+ ASL A                  \ to move the pixel along by one place
 
 .dlin62
 
- CMP #16                \ Gets modified by the ModifyDrawRoutine routine:
- BNE dlin64             \
+ CMP #16                \ If the pixel byte is non-zero, then the pixel hasn't
+ BNE dlin64             \ fallen off the end, so jump to dlin64 to skip the
+                        \ following
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
+                        \
                         \   * CMP #16 when colourLogic = %10000000
                         \
                         \   * CMP #0 when colourLogic = %01000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
  LDA P                  \ Set (Q P) = (Q P) - 8
  SEC                    \
@@ -5758,22 +6021,35 @@ ORG CODE%
 
 .dlin63
 
- LDA #1                 \ Gets modified by the ModifyDrawRoutine routine:
+ LDA #%00000001         \ Set A to a pixel byte with the rightmost pixel set, so
+                        \ we can use this as our new single pixel byte in H
+                        \ below (so shifting across by one character block only
+                        \ moves the single pixel left by one pixel)
+                        \
+                        \ Gets modified by the ModifyDrawRoutine routine:
                         \
                         \   * LDA #1 when colourLogic = %10000000
                         \
                         \   * LDA #16 when colourLogic = %01000000
+                        \
+                        \ In other words, this instruction has already been
+                        \ modified to implement the current drawing logic
 
- BCS dlin64             \ And then the high bytes, so (Q P) now points to the
- DEC Q                  \ previous character block to the left
+ BCS dlin64             \ And now subtract the high bytes, so (Q P) now points
+ DEC Q                  \ to the previous character block to the left
 
 .dlin64
 
- STA H
+ STA H                  \ Store the updated one-pixel byte in H
 
- CPX I
- CLC
- BNE dlin53
+ CPX I                  \ If the current x-coordinate in X <> I, then we have
+ CLC                    \ not yet reached the x-coordinate of the end of the
+ BNE dlin53             \ line (which we set in part 7), so loop back to dlin53
+                        \ to keep drawing the line
+
+                        \ Otherwise we have reached the x-coordinate of the end
+                        \ of the line, so fall through into dlin65 to process
+                        \ the clipped part of the line, if applicable
 
 \ ******************************************************************************
 \
@@ -6860,7 +7136,7 @@ ORG CODE%
 
  LDA R                  \ Copy the clipped (R, S) pixel coordinate into
  STA xTemp1Lo           \ (xTemp1Lo, yTemp1Lo) so we can access it in the
- LDA S                  \ DrawCanopyLone routine
+ LDA S                  \ DrawCanopyLine routine
  STA yTemp1Lo
 
  RTS                    \ Return from the subroutine
@@ -6994,7 +7270,8 @@ ORG CODE%
  LDA lineBufferR,X      \ Set R to the start x-coordinate from lineBufferR
  STA R
 
- STA xTemp1Lo           \ ???
+ STA xTemp1Lo           \ Set the x-coordinate of (R, S) = (xTemp1Lo, yTemp1Lo)
+                        \ so we can access it in the DrawCanopyLine routine
 
  LDA lineBufferW,X      \ Set W to the max/min x-coordinate from lineBufferW
  STA W
@@ -7002,7 +7279,8 @@ ORG CODE%
  LDA lineBufferS,X      \ Set S to the start y-coordinate from lineBufferS
  STA S
 
- STA yTemp1Lo           \ ???
+ STA yTemp1Lo           \ Set the y-coordinate of (R, S) = (xTemp1Lo, yTemp1Lo)
+                        \ so we can access it in the DrawCanopyLine routine
 
  LDA lineBufferG,X      \ Set G to max/min y-coordinate from lineBufferG
  STA G
