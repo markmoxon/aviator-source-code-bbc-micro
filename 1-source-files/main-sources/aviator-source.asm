@@ -5152,7 +5152,8 @@ ORG CODE%
                         \
                         \ The dlin32 routine ends with a BEQ just before the RTS
                         \ so this BNE is effectively a JMP, as we had to pass
-                        \ through the BEQ in dlin32 to return from the above call
+                        \ through the BEQ in dlin32 to return from the above
+                        \ call
                         \
                         \ Gets modified by the DrawCanopyLine routine:
                         \
@@ -5560,9 +5561,9 @@ ORG CODE%
 
  LDA #7                 \ Set J = 7
  STA J                  \
-                        \ So J contains the y-coordinate of the bottom of the screen,
-                        \ flipped to match screen memory (so higher values of
-                        \ the y-coordinate are lower down the screen)
+                        \ So J contains the y-coordinate of the bottom of the
+                        \ screen, flipped to match screen memory (so higher
+                        \ values of the y-coordinate are lower down the screen)
 
  BNE dlin43             \ Jump to dlin43 to skip the code modifications for the
                         \ other value of bit 6 (this BNE is effectively a JMP as
@@ -5925,15 +5926,15 @@ ORG CODE%
 
 .dlin58
 
- CMP #0                 \ If the pixel byte is non-zero, then the pixel hasn't
+ CMP #%00000000         \ If the pixel byte is non-zero, then the pixel hasn't
  BNE dlin60             \ fallen off the end, so jump to dlin60 to skip the
                         \ following
                         \
                         \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * CMP #0 when colourLogic = %10000000
+                        \   * CMP #%00000000 when colourLogic = %10000000
                         \
-                        \   * CMP #8 when colourLogic = %01000000
+                        \   * CMP #%00001000 when colourLogic = %01000000
                         \
                         \ In other words, this instruction has already been
                         \ modified to implement the current drawing logic
@@ -6001,15 +6002,15 @@ ORG CODE%
 
 .dlin62
 
- CMP #16                \ If the pixel byte is non-zero, then the pixel hasn't
- BNE dlin64             \ fallen off the end, so jump to dlin64 to skip the
-                        \ following
+ CMP #%00010000         \ If the pixel byte is not %00010000, then the pixel
+ BNE dlin64             \ hasn't fallen off the end, so jump to dlin64 to skip
+                        \ the following
                         \
                         \ Gets modified by the ModifyDrawRoutine routine:
                         \
-                        \   * CMP #16 when colourLogic = %10000000
+                        \   * CMP #%00010000 when colourLogic = %10000000
                         \
-                        \   * CMP #0 when colourLogic = %01000000
+                        \   * CMP #%00000000 when colourLogic = %01000000
                         \
                         \ In other words, this instruction has already been
                         \ modified to implement the current drawing logic
@@ -6188,13 +6189,23 @@ ORG CODE%
 
  LDA #&31               \ Set A to the opcode for the AND (P),Y instruction
 
- STA dlin24             \ Modify the following instructions in
- STA dlin29             \ DrawCanopyLine (part 1):
+ STA dlin24             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 4):
                         \
                         \   ORA (P),Y -> AND (P),Y
 
- STA dlin34             \ Modify the following instructions in
- STA dlin51             \ DrawCanopyLine (part 2):
+ STA dlin29             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 5):
+                        \
+                        \   ORA (P),Y -> AND (P),Y
+
+ STA dlin34             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 6):
+                        \
+                        \   ORA (P),Y -> AND (P),Y
+
+ STA dlin51             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 8):
                         \
                         \   ORA (P),Y -> AND (P),Y
 
@@ -6202,12 +6213,12 @@ ORG CODE%
  BMI modd1              \ jump down to modd1
 
  LDA #LO(colour1Row)    \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
-                        \ A to &88 so the DrawCanopyLine (part 1) instructions
-                        \ below are modified to the following:
+                        \ A to LO(colour1Row) so the instructions below are
+                        \ modified to the following:
                         \
-                        \   LDA #&60 : STA dlin33+1 -> LDA #&88 : STA dlin33+1
+                        \   LDA #LO(colour1L2R)     -> LDA #LO(colour1Row)
                         \   LDA colour1L2R,X        -> LDA colour1Row,X
-                        \   LDA #&6A : STA dlin33+1 -> LDA #&88 : STA dlin33+1
+                        \   LDA #LO(colour1R2L)     -> LDA #LO(colour1Row)
                         \   LDA colour1R2L,X        -> LDA colour1Row,X
 
  BNE modd2              \ Jump down to modd2 (this BNE is effectively a JMP as
@@ -6216,23 +6227,35 @@ ORG CODE%
 .modd1
 
  LDA #LO(colour2Row)    \ Bit 7 of colourCycle is set, i.e. %11110000, so set
-                        \ A to &92 so the DrawCanopyLine (part 1) instructions
-                        \ below are modified to the following:
+                        \ A to LO(colour2Row) so the instructions below are
+                        \ modified to the following:
                         \
-                        \   LDA #&60 : STA dlin33+1 -> LDA #&92 : STA dlin33+1
+                        \   LDA #LO(colour1L2R)     -> LDA #LO(colour2Row)
                         \   LDA colour1L2R,X        -> LDA colour2Row,X
-                        \   LDA #&6A : STA dlin33+1 -> LDA #&92 : STA dlin33+1
+                        \   LDA #LO(colour1R2L)     -> LDA #LO(colour2Row)
                         \   LDA colour1R2L,X        -> LDA colour2Row,X
 
 .modd2
 
-                        \ Modify the following instructions in DrawCanopyLine
-                        \ (part 1) where aa is the value of A:
+                        \ Modify the following instruction in DrawCanopyLine
+                        \ (part 2) where LO(colourA) is the value of A:
                         \
- STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&aa : STA dlin33+1
- STA dlin23+1           \   LDA colour1L2R,X        -> LDA Lookup2Eaa,X
- STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&aa : STA dlin33+1
- STA dlin28+1           \   LDA colour1R2L,X        -> LDA Lookup2Eaa,X
+ STA dlin2+1            \   LDA #LO(colour1L2R)     -> LDA #LO(colourA)
+
+                        \ Modify the following instruction in DrawCanopyLine
+                        \ (part 4) where colourA is the value of A:
+                        \
+ STA dlin23+1           \   LDA colour1L2R,X        -> LDA colourA,X
+
+                        \ Modify the following instruction in DrawCanopyLine
+                        \ (part 2) where LO(colourA) is the value of A:
+                        \
+ STA dlin4+1            \   LDA #LO(colour1R2L)     -> LDA #LO(colourA)
+
+                        \ Modify the following instruction in DrawCanopyLine
+                        \ (part 5) where colourA is the value of A:
+                        \
+ STA dlin28+1           \   LDA colour1R2L,X        -> LDA colourA,X
 
  LDA colourCycle        \ Modify the following instruction in DrawCanopyLine
  STA dlin50+1           \ (part 2):
@@ -6249,15 +6272,29 @@ ORG CODE%
 
  LDA #&11               \ Set A to the opcode for the ORA (P),Y instruction
 
- STA dlin24             \ Modify the screen-poking instructions in
- STA dlin29             \ DrawCanopyLine (part 2):
+ STA dlin24             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 4):
                         \
                         \   ORA (P),Y -> ORA (P),Y
                         \
                         \ i.e. set them back to the default
 
- STA dlin34             \ Modify the screen-poking instructions in
- STA dlin51             \ DrawCanopyLine (part 1):
+ STA dlin29             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 5):
+                        \
+                        \   ORA (P),Y -> ORA (P),Y
+                        \
+                        \ i.e. set them back to the default
+
+ STA dlin34             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 6):
+                        \
+                        \   ORA (P),Y -> ORA (P),Y
+                        \
+                        \ i.e. set them back to the default
+
+ STA dlin51             \ Modify the following instruction in DrawCanopyLine
+                        \ (part 8):
                         \
                         \   ORA (P),Y -> ORA (P),Y
                         \
@@ -6269,26 +6306,29 @@ ORG CODE%
                         \ If we get here then colourLogic is %01000000
 
                         \ Modify the following instructions in DrawCanopyLine
-                        \ (part 1):
+                        \ (parts 2 and 4):
  LDA #LO(colour2L2R)    \
- STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&74 : STA dlin33+1
+ STA dlin2+1            \   LDA #LO(colour1L2R)     -> LDA #LO(colour2L2R)
  STA dlin23+1           \   LDA colour1L2R,X        -> LDA colour2L2R,X
+
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (parts 2 and 5):
  LDA #LO(colour2R2L)    \
- STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&74 : STA dlin33+1
+ STA dlin4+1            \   LDA #LO(colour1R2L)     -> LDA #LO(colour2R2L)
  STA dlin28+1           \   LDA colour1R2L,X        -> LDA colour2R2L,X
 
                         \ Modify the following instructions in DrawCanopyLine
-                        \ (part 2):
- LDA #&80               \
- STA dlin47+1           \   LDA #8 -> LDA #&80
- LDA #8                 \
- STA dlin58+1           \   CMP #0 -> CMP #8
- LDA #&80               \
- STA dlin59+1           \   LDA #8 -> LDA #&80
- LDA #0                 \
- STA dlin62+1           \   CMP #16 -> CMP #0
- LDA #16                \
- STA dlin63+1           \   LDA #1 -> LDA #16
+                        \ (part 8):
+ LDA #%10000000         \
+ STA dlin47+1           \   LDA #%00001000 -> LDA #%10000000
+ LDA #%00001000         \
+ STA dlin58+1           \   CMP #%00000000 -> CMP #%00001000
+ LDA #%10000000         \
+ STA dlin59+1           \   LDA #%00001000 -> LDA #%10000000
+ LDA #00000000          \
+ STA dlin62+1           \   CMP #%00010000 -> CMP #%00000000
+ LDA #%00010000         \
+ STA dlin63+1           \   LDA #%00000001 -> LDA #%00010000
 
  BNE modd5              \ Jump down to modd5 (this BNE is effectively a JMP as
                         \ A is never zero)
@@ -6298,28 +6338,33 @@ ORG CODE%
                         \ If we get here then colourLogic is %10000000
 
                         \ Modify the following instructions in DrawCanopyLine
-                        \ (part 1):
+                        \ (parts 2 and 4):
  LDA #LO(colour1L2R)    \
- STA dlin2+1            \   LDA #&60 : STA dlin33+1 -> LDA #&60 : STA dlin33+1
+ STA dlin2+1            \   LDA #LO(colour1L2R)     -> LDA #LO(colour1L2R)
  STA dlin23+1           \   LDA colour1L2R,X        -> LDA colour1L2R,X
+                        \
+                        \ i.e. set them back to the default
+
+                        \ Modify the following instructions in DrawCanopyLine
+                        \ (parts 2 and 5):
  LDA #LO(colour1R2L)    \
- STA dlin4+1            \   LDA #&6A : STA dlin33+1 -> LDA #&6A : STA dlin33+1
+ STA dlin4+1            \   LDA #LO(colour1R2L)     -> LDA #LO(colour1R2L)
  STA dlin28+1           \   LDA colour1R2L,X        -> LDA colour1R2L,X
                         \
                         \ i.e. set them back to the default
 
                         \ Modify the following instructions in DrawCanopyLine
-                        \ (part 2):
- LDA #8                 \
- STA dlin47+1           \   LDA #8 -> LDA #8
- LDA #0                 \
- STA dlin58+1           \   CMP #0 -> CMP #0
- LDA #8                 \
- STA dlin59+1           \   LDA #8 -> LDA #8
- LDA #16                \
- STA dlin62+1           \   CMP #16 -> CMP #16
- LDA #1                 \
- STA dlin63+1           \   LDA #1 -> LDA #1
+                        \ (part 8):
+ LDA #%00001000         \
+ STA dlin47+1           \   LDA #%00001000 -> LDA #%00001000
+ LDA #%00000000         \
+ STA dlin58+1           \   CMP #%00000000 -> CMP #%00000000
+ LDA #%00001000         \
+ STA dlin59+1           \   LDA #%00001000 -> LDA #%00001000
+ LDA #%00010000         \
+ STA dlin62+1           \   CMP #%00010000 -> CMP #%00010000
+ LDA #%00000001         \
+ STA dlin63+1           \   LDA #%00000001 -> LDA #%00000001
                         \
                         \ i.e. set them back to the default
 
@@ -9609,7 +9654,7 @@ ORG CODE%
 \
 \       Name: CopyTempToPoint
 \       Type: Subroutine
-\   Category: 3D geometry
+\   Category: Utility routines
 \    Summary: Set a specified point to (xTemp1, yTemp1, zTemp1)
 \
 \ ------------------------------------------------------------------------------
@@ -10518,12 +10563,12 @@ ORG CODE%
                         \ If we get here then the indicator number in X is 9
 
  LDX #1                 \ Set X = 1 so the current value of the indicator gets
-                        \ stored in joyYCoord+1 in DrawIndicatorBar
+                        \ stored in yJoyCoord+1 in DrawIndicatorBar
 
  LDA #128               \ Set S = 128, to denote that when we fall through into
- STA S                  \ DrawIndicatorBar below, JC is the y-coordinate, so
-                        \ we draw the indicator's vertical bar from point
-                        \ (H + W, JC)
+ STA S                  \ DrawIndicatorBar below, joyCoord is the y-coordinate,
+                        \ so we draw the indicator's vertical bar from point
+                        \ (H + W, joyCoord)
 
  LDA #80                \ Set W = 80 to use as the centre y-coordinate for the
  STA W                  \ rudder indicator (i.e. the centre bar)
@@ -10605,7 +10650,7 @@ ORG CODE%
  JSR ScaleSigned        \ Scale the value in A down by a factor of 16, retaining
                         \ the sign and being sensitive to small values
  
- STA joyXCoord          \ Store the scaled value of A in joyXCoord, so we can
+ STA xJoyCoord          \ Store the scaled value of A in xJoyCoord, so we can
                         \ pass it to DrawJoystickCross below to draw the new
                         \ cross, but also so we can erase this cross when we
                         \ need to update the indicator in the future
@@ -10626,7 +10671,7 @@ ORG CODE%
                         \ corresponds to moving the stick down, which should be
                         \ shown lower down the indicator
 
- STA joyYCoord          \ Store the scaled value of A in joyYCoord, so we can
+ STA yJoyCoord          \ Store the scaled value of A in yJoyCoord, so we can
                         \ pass it to DrawJoystickCross below to draw the new
                         \ cross, but also so we can erase this cross when we
                         \ need to update the indicator in the future
@@ -10656,9 +10701,9 @@ ORG CODE%
                         \ If we get here then the indicator number in X is 11
 
  LDA #128               \ Set S = 128, to denote that when we fall through into
- STA S                  \ DrawIndicatorBar below, JC is the y-coordinate, so
-                        \ we draw the indicator's vertical bar from point
-                        \ (H + W, JC)
+ STA S                  \ DrawIndicatorBar below, joyCoord is the y-coordinate,
+                        \ so we draw the indicator's vertical bar from point
+                        \ (H + W, joyCoord)
 
  LDA #125               \ Set W = 125 to use as the centre y-coordinate for the
  STA W                  \ thrust indicator (i.e. the left end of the bar, as we
@@ -10701,7 +10746,7 @@ ORG CODE%
                         \ the indicator in DrawIndicatorBar
 
  LDX #3                 \ Set X = 3 so the current value of the indicator gets
-                        \ stored in joyYCoord+3 in DrawIndicatorBar
+                        \ stored in yJoyCoord+3 in DrawIndicatorBar
 
  LDY #243               \ Set Y = 243 to use as the y-coordinate of the top of
                         \ the vertical bar
@@ -10728,14 +10773,14 @@ ORG CODE%
 \
 \   S                   Defines the starting coordinate for the line:
 \
-\                         * 0 = (JC, H + W)
+\                         * 0 = (joyCoord, H + W)
 \
-\                         * 128 = (H + W, JC)
+\                         * 128 = (H + W, joyCoord)
 \
 \                       As all the vertical bar indicators are horizontal in
 \                       Aviator, only the second option is used
 \
-\   X                   The offset from joyYCoord where we store the indicator
+\   X                   The offset from yJoyCoord where we store the indicator
 \                       value, so it can be erased when the bar needs to move:
 \
 \                         * 1 = rudder indicator (indicator 9)
@@ -10755,13 +10800,14 @@ ORG CODE%
  LDA #1                 \ Set T = 1, so the line is 1 pixel wide
  STA T
 
- STY JC                 \ Set JC = Y, the y-coordinate of the top of the bar
+ STY joyCoord           \ Set joyCoord = Y, the y-coordinate of the top of the
+                        \ bar
 
- LDA joyYCoord,X        \ Set G = the X-th byte of joyYCoord, which contains the
+ LDA yJoyCoord,X        \ Set G = the X-th byte of yJoyCoord, which contains the
  STA G                  \ x-coordinate of the current bar, so we can erase it
 
- LDA H                  \ Store H in the X-th byte of joyYCoord, so the next
- STA joyYCoord,X        \ time we call this routine, we can use this to erase
+ LDA H                  \ Store H in the X-th byte of yJoyCoord, so the next
+ STA yJoyCoord,X        \ time we call this routine, we can use this to erase
                         \ the bar we are about to draw
 
  JSR EraseOrthoLine     \ Erase the current vertical bar at x-coordinate G
@@ -11034,9 +11080,9 @@ ORG CODE%
 \
 \                         * 128 = Erase (using EOR logic)
 \
-\   joyXCoord           The current joystick x-coordinate
+\   xJoyCoord           The current joystick x-coordinate
 \
-\   joyYCoord           The current joystick y-coordinate
+\   yJoyCoord           The current joystick y-coordinate
 \
 \ ******************************************************************************
 
@@ -11047,19 +11093,20 @@ ORG CODE%
                         \ First we draw the 3-pixel horizontal line right from
                         \ (79 + x, 216 + y)
 
- LDA joyYCoord          \ Set H = joyYCoord
+ LDA yJoyCoord          \ Set H = yJoyCoord
  STA H
 
- LDA joyXCoord          \ Set JC = joyXCoord + 79
+ LDA xJoyCoord          \ Set joyCoord = xJoyCoord + 79
  CLC                    \
  ADC #79                \ to get the x-coordinate of the left end of the
- STA JC                 \ horizontal line at 79 + x
+ STA joyCoord           \ horizontal line at 79 + x
 
  LDA #216               \ Set W = 216, the y-coordinate of the centre point, so
  STA W                  \ we draw the line from a y-coordinate of 216 + y
 
- LDA #0                 \ Set S = 0, to denote that JC is the x-coordinate, so
- STA S                  \ we draw the line from point (JC, H + W)
+ LDA #0                 \ Set S = 0, to denote that joyCoord is the
+ STA S                  \ x-coordinate, so we draw the line from point
+                        \ (joyCoord, H + W)
 
  LDA #3                 \ Set T = 3, so we draw a horizontal 3-pixel line
  STA T
@@ -11074,19 +11121,20 @@ ORG CODE%
                         \ Now we draw the 5-pixel vertical line down from
                         \ (80 + x, 214 + y)
 
- LDA joyXCoord          \ Set H = joyXCoord
+ LDA xJoyCoord          \ Set H = xJoyCoord
  STA H
 
- LDA joyYCoord          \ Set JC = joyYCoord + 214
+ LDA yJoyCoord          \ Set joyCoord = yJoyCoord + 214
  CLC                    \
  ADC #214               \ to get the y-coordinate of the top end of the vertical
- STA JC                 \ line at 214 + y
+ STA joyCoord           \ line at 214 + y
 
  LDA #80                \ Set W = 80, the x-coordinate of the centre point, so
  STA W                  \ we draw the line from an x-coordinate of 80 + x
 
- LDA #128               \ Set S = 128, to denote that JC is the y-coordinate,
- STA S                  \ so we draw the line from point (H + W, JC)
+ LDA #128               \ Set S = 128, to denote that joyCoord is the
+ STA S                  \ y-coordinate, so we draw the line from point
+                        \ (H + W, joyCoord)
 
  LDA #1                 \ Set T = 1, so the line is 1 pixel wide
  STA T
@@ -11864,15 +11912,15 @@ ORG CODE%
 \
 \   S                   Defines the starting coordinate for the line:
 \
-\                         * 0 = (JC, H + W)
+\                         * 0 = (joyCoord, H + W)
 \
-\                         * 128 = (H + W, JC)
+\                         * 128 = (H + W, joyCoord)
 \
 \   H + W               Coordinate of the start of the line (it doesn't matter
 \                       how this value is split between H and W as only the sum
 \                       is used)
 \
-\   JC                  Coordinate of the start of the line
+\   joyCoord            Coordinate of the start of the line
 \
 \   T                   Horizontal width/length of line
 \
@@ -11916,10 +11964,10 @@ ORG CODE%
 
  STA J                  \ Set J = A
 
- LDA JC                 \ Set I = JC
+ LDA joyCoord           \ Set I = joyCoord
  STA I
 
-                        \ We now have (I, J) = (JC, A + W)
+                        \ We now have (I, J) = (joyCoord, A + W)
 
  JMP dort3              \ Jump down to dort3
 
@@ -11927,10 +11975,10 @@ ORG CODE%
 
  STA I                  \ Set I = A
 
- LDA JC                 \ Set J = JC
+ LDA joyCoord           \ Set J = joyCoord
  STA J
 
-                        \ We now have (I, J) = (A + W, JC)
+                        \ We now have (I, J) = (A + W, joyCoord)
 
 .dort3
 
@@ -13542,8 +13590,8 @@ ORG CODE%
 .main3
 
                         \ We now want to zero the 40 bytes in objectStatus, so
-                        \ that all objects are marked as unprocessed, ready to be
-                        \ processed again in this iteration of the main loop
+                        \ that all objects are marked as unprocessed, ready to
+                        \ be processed again in this iteration of the main loop
 
  LDX #19                \ We do this as two blocks of 20 bytes, so set a counter
                         \ in X to use in the loop below
@@ -26308,14 +26356,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: joyYCoord
+\       Name: yJoyCoord
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: Temporary storage
 \
 \ ******************************************************************************
 
-.joyYCoord
+.yJoyCoord
 
  EQUB 0                 \ Temporary storage, typically used for storing
                         \ y-coordinates when drawing indicators
@@ -26326,14 +26374,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: joyXCoord
+\       Name: xJoyCoord
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: Temporary storage
 \
 \ ******************************************************************************
 
-.joyXCoord
+.xJoyCoord
 
  EQUB 0                 \ Temporary storage, typically used for storing
                         \ x-coordinates when drawing indicators
@@ -26381,14 +26429,14 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: JC
+\       Name: joyCoord
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: Temporary storage
 \
 \ ******************************************************************************
 
-.JC
+.joyCoord
 
  EQUB &23               \ Temporary storage, typically used to store coordinates
                         \ when drawing the crosses on the joystick position
