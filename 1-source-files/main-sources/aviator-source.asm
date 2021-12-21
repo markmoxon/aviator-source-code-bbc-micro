@@ -504,7 +504,7 @@ ORG &0400
 
  SKIP 1                 \ Low byte of point 252 (z-coordinate)
                         \
-                        \ Point 252 is used to store the aum of all the forces
+                        \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (zLinearHi zLinearLo)
@@ -549,7 +549,7 @@ ORG &0900
 
  SKIP 1                 \ Low byte of point 252 (x-coordinate)
                         \
-                        \ Point 252 is used to store the aum of all the forces
+                        \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (xLinearHi xLinearLo)
@@ -592,7 +592,7 @@ ORG &0900
 
  SKIP 1                 \ Low byte of point 252 (y-coordinate)
                         \
-                        \ Point 252 is used to store the aum of all the forces
+                        \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (yLinearHi yLinearLo)
@@ -635,7 +635,7 @@ ORG &0900
 
  SKIP 1                 \ High byte of point 252 (y-coordinate)
                         \
-                        \ Point 252 is used to store the aum of all the forces
+                        \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (yLinearHi yLinearLo)
@@ -1459,7 +1459,7 @@ ORG &0900
                         \ of the outside world (high byte)
                         \
                         \ Stored as a 24-bit value (xVelocityTop xVelocityHi
-                        \ xVelocityHi)
+                        \ xVelocityLo)
 
 .yVelocityHi
 
@@ -1483,8 +1483,8 @@ ORG &0900
                         \
                         \ Shown on indicator 4
                         \
-                        \ Stored as a 24-bit value (yVelocityTop xyVelocityHi
-                        \ xyVelocityHi)
+                        \ Stored as a 24-bit value (yVelocityTop yVelocityHi
+                        \ yVelocityLo)
 
 .zVelocityHi
 
@@ -1492,7 +1492,7 @@ ORG &0900
                         \ of the outside world (high byte)
                         \
                         \ Stored as a 24-bit value (zVelocityTop zVelocityHi
-                        \ zVelocityHi)
+                        \ zVelocityLo)
 
 .xVelocityLo
 
@@ -1500,7 +1500,7 @@ ORG &0900
                         \ of the outside world (low byte)
                         \
                         \ Stored as a 24-bit value (xVelocityTop xVelocityHi
-                        \ xVelocityHi)
+                        \ xVelocityLo)
 
 .yVelocityLo
 
@@ -1524,8 +1524,8 @@ ORG &0900
                         \
                         \ Shown on indicator 4
                         \
-                        \ Stored as a 24-bit value (yVelocityTop xyVelocityHi
-                        \ xyVelocityHi)
+                        \ Stored as a 24-bit value (yVelocityTop yVelocityHi
+                        \ yVelocityLo)
 
 .zVelocityLo
 
@@ -1533,7 +1533,7 @@ ORG &0900
                         \ of the outside world (low byte)
                         \
                         \ Stored as a 24-bit value (zVelocityTop zVelocityHi
-                        \ zVelocityHi)
+                        \ zVelocityLo)
 
  SKIP 1                 \ This byte appears to be unused
 
@@ -1606,7 +1606,7 @@ ORG &0900
                         \ of the outside world (top byte)
                         \
                         \ Stored as a 24-bit value (xVelocityTop xVelocityHi
-                        \ xVelocityHi)
+                        \ xVelocityLo)
 
 .yVelocityTop
 
@@ -1630,8 +1630,8 @@ ORG &0900
                         \
                         \ Shown on indicator 4
                         \
-                        \ Stored as a 24-bit value (yVelocityTop xyVelocityHi
-                        \ xyVelocityHi)
+                        \ Stored as a 24-bit value (yVelocityTop yVelocityHi
+                        \ yVelocityLo)
 
 .zVelocityTop
 
@@ -1639,7 +1639,7 @@ ORG &0900
                         \ of the outside world (top byte)
                         \
                         \ Stored as a 24-bit value (zVelocityTop zVelocityHi
-                        \ zVelocityHi)
+                        \ zVelocityLo)
 
 .slipRate
 
@@ -12761,15 +12761,15 @@ ORG CODE%
                         \ So we set a counter in X to count down through these
                         \ index values, from 2 to 1 to 0
 
-.pkey1
+.umod1
 
  CLC                    \ Clear the C flag for the addition below
 
  LDA keyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
                         \ if a key is being pressed, or 0 if no key is pressed
 
- BEQ pkey4              \ If A = 0 then neither key in this key pair is being
-                        \ pressed, so jump down to pkey4
+ BEQ umod4              \ If A = 0 then neither key in this key pair is being
+                        \ pressed, so jump down to umod4
 
  ADC axisKeyUsage,X     \ Add the low value to the corresponding variable for
  STA axisKeyUsage,X     \ this key pair in axisKeyUsage, so we increment the
@@ -12791,13 +12791,13 @@ ORG CODE%
                         \ according to the key press
 
  LDY axisChangeRate,X   \ If this key pair's axisChangeRate value is already
- BEQ pkey2              \ zero, skip the following instruction
+ BEQ umod2              \ zero, skip the following instruction
 
  DEC axisChangeRate,X   \ Decrement this key pair's axisChangeRate value
 
-.pkey2
+.umod2
 
- BNE pkey3              \ If this key pair's axisChangeRate value is non-zero,
+ BNE umod3              \ If this key pair's axisChangeRate value is non-zero,
                         \ skip the following
 
                         \ If we get here, then this key pair's axisChangeRate
@@ -12811,28 +12811,28 @@ ORG CODE%
  ADC #3
 
  BIT P                  \ If P is positive (so we are increasing the relevant
- BPL pkey3              \ axis value), skip the following instruction
+ BPL umod3              \ axis value), skip the following instruction
 
  ADC #250               \ P is negative (so we are decreasing the relevant
                         \ axis value), so set A = A - 6, giving a net change of
                         \ setting A = A - 3
 
-.pkey3
+.umod3
 
  TAY                    \ If the adjusted axis value is positive, jump down to
- BPL pkey5              \ pkey5 to check the maximum allowed value
+ BPL umod5              \ umod5 to check the maximum allowed value
 
                         \ If we get here then the adjusted axis value is
                         \ negative, so now we check against the minimum allowed
                         \ value
 
  CMP #140               \ If A >= -116, the value is within limits, so jump to
- BCS pkey6              \ pkey6 to store it
+ BCS umod6              \ umod6 to store it
 
  LDA #140               \ Set A = -116 as the minimum allowed value for the axis
- BNE pkey6              \ value and jump to pkey6 to store it
+ BNE umod6              \ value and jump to umod6 to store it
 
-.pkey4
+.umod4
 
                         \ If we get here then neither key was pressed from this
                         \ key pair
@@ -12841,22 +12841,22 @@ ORG CODE%
  STA axisChangeRate,X   \ so the rate of change goes back to 1 until we fully
                         \ engage the control once again
 
- BNE pkey7              \ Jump down to pkey7 to move on to the next key pair
+ BNE umod7              \ Jump down to umod7 to move on to the next key pair
                         \ (this BNE is effectively a JMP as A is never zero)
 
-.pkey5
+.umod5
 
                         \ If we get here then the adjusted axis value is
                         \ positive, so now we check against the maximum allowed
                         \ value
 
  CMP #119               \ If A < 119, the value is within limits, so jump to
- BCC pkey6              \ pkey6 to store it
+ BCC umod6              \ umod6 to store it
 
  LDA #118               \ Set A = 118 as the maximum allowed value for the axis
                         \ value
 
-.pkey6
+.umod6
 
  STA elevatorPosition,X \ Store the adjusted axis value in the relevant axis
                         \ variable:
@@ -12865,11 +12865,11 @@ ORG CODE%
                         \   * rudderPosition if this is the rudder key pair
                         \   * elevatorPosition if this is the elevator key pair
 
-.pkey7
+.umod7
 
  DEX                    \ Decrement the key pair index
 
- BPL pkey1              \ Loop back to process the next key pair until we have
+ BPL umod1              \ Loop back to process the next key pair until we have
                         \ done all three axes of movement (aileron roll, rudder
                         \ yaw and elevator pitch)
 
@@ -12891,8 +12891,8 @@ ORG CODE%
 
  LDA keyLoggerLow+3     \ Fetch the low value for the throttle key
 
- BEQ pkey11             \ If A = 0 then neither key in this key pair is being
-                        \ pressed, so jump down to pkey11 to skip the throttle
+ BEQ umod11             \ If A = 0 then neither key in this key pair is being
+                        \ pressed, so jump down to umod11 to skip the throttle
                         \ calculations below
 
                         \ We now want to add the key logger value to the current
@@ -12909,30 +12909,30 @@ ORG CODE%
  ADC thrustHi           \ updated thrust value
  TAY
 
- BMI pkey8              \ If the result is negative, jump to pkey8 to set both X
+ BMI umod8              \ If the result is negative, jump to umod8 to set both X
                         \ and Y to zero, so the minimum thrust value is zero
 
  CPY #5                 \ If the high byte in Y < 5, then the result is within
- BCC pkey10             \ bounds, so jump to pkey10 to store the new thrust
+ BCC umod10             \ bounds, so jump to umod10 to store the new thrust
                         \ value
 
- LDY #5                 \ Set Y = 5 and jump to pkey9 to set X to 0, so the
- BNE pkey9              \ maximum thrust value is (5 0), or 1280 (this BNE is
+ LDY #5                 \ Set Y = 5 and jump to umod9 to set X to 0, so the
+ BNE umod9              \ maximum thrust value is (5 0), or 1280 (this BNE is
                         \ effectively a JMP, as Y is never zero)
 
-.pkey8
+.umod8
 
  LDY #0                 \ If we get here then the new thrust in (Y X) turned out
                         \ to be negative, so we set Y = 0 and then X = 0 to zero
                         \ the thrust
 
-.pkey9
+.umod9
 
  LDX #0                 \ Zero the low byte of the new thrust as we are either
                         \ at the maxiumum value of (5 0) or the minimum value of
                         \ (0 0)
 
-.pkey10
+.umod10
 
  STX thrustLo           \ Store the thrust value in (thrustHi thrustLo) to the
  STY thrustHi           \ updated thrust value in (Y X)
@@ -12949,47 +12949,47 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.pkey11
+.umod11
 
  LDX #4                 \ Process the undercarriage or brake keys, if pressed
  JSR ProcessOtherKeys
 
- BEQ pkey13             \ If neither are being pressed, jump to pkey13 to check
+ BEQ umod13             \ If neither are being pressed, jump to umod13 to check
                         \ for the next set of key presses
 
- BMI pkey12             \ If the brake key is being pressed, then the returned
-                        \ value is 128, so jump to pkey12
+ BMI umod12             \ If the brake key is being pressed, then the returned
+                        \ value is 128, so jump to umod12
 
  JSR IndicatorU         \ The undercarriage key is being pressed, so update the
                         \ undercarriage indicator
 
- JMP pkey13             \ Jump to pkey13 to check for the next set of key
+ JMP umod13             \ Jump to umod13 to check for the next set of key
                         \ presses
 
-.pkey12
+.umod12
 
  JSR IndicatorB         \ The brake key is being pressed, so update the brakes
                         \ indicator
 
-.pkey13
+.umod13
 
  LDX #5                 \ Process the flaps or fire keys, if pressed
  JSR ProcessOtherKeys
 
- BEQ pkey15             \ If neither are being pressed, jump to pkey15 to check
+ BEQ umod15             \ If neither are being pressed, jump to umod15 to check
                         \ for the next set of key presses
 
 
- BMI pkey14             \ If the fire key is being pressed, then the returned
-                        \ value is 128, so jump to pkey14
+ BMI umod14             \ If the fire key is being pressed, then the returned
+                        \ value is 128, so jump to umod14
 
  JSR IndicatorF         \ The flaps key is being pressed, so update the flaps
                         \ indicator
 
- JMP pkey15             \ Jump to pkey15 to check for the next set of key
+ JMP umod15             \ Jump to umod15 to check for the next set of key
                         \ presses
 
-.pkey14
+.umod14
 
  JSR FireGuns           \ The fire key is being pressed, so call FireGuns
 
@@ -13002,14 +13002,14 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.pkey15
+.umod15
 
  LDY #2                 \ We now set up the matrices, starting with the
                         \ projected rotation angles, which we populate one axis
                         \ at a time, so set a counter in Y to work through the
                         \ three axes
 
-.pkey16
+.umod16
 
  STY matrixAxis         \ Set matrixAxis to the current axis in Y, to pass to
                         \ ProjectAxisAngle
@@ -13022,7 +13022,7 @@ ORG CODE%
 
  DEY                    \ Decrement the axis counter in Y
 
- BPL pkey16             \ Loop back until we have processed all three axes
+ BPL umod16             \ Loop back until we have processed all three axes
 
  LDA #0                 \ Set matrixNumber = 0 to pass to SetMatrices, so we
  STA matrixNumber       \ set the values for matrices 1 to 4
@@ -13179,8 +13179,9 @@ ORG CODE%
                         \ If we get here then the undercarriage is down
 
  LDY onGround           \ If onGround is non-zero, then we are on the ground, so
- BNE indu4              \ jump to indu4 to set the undercarriage to up and
-                        \ return from the subroutine
+ BNE indu4              \ jump to indu4 to set the undercarriage to up (because
+                        \ once we have landed with the undercarriage up, we can't
+                        \ put it down again)
 
  CLC                    \ Set A = A + 10
  ADC #10                \
@@ -13223,8 +13224,10 @@ ORG CODE%
 
 .indu4
 
- LDA #0                 \ Set ucStatus = 0 to set the undercarriage to up
- STA ucStatus
+ LDA #0                 \ Set ucStatus = 0 to set the undercarriage to up,
+ STA ucStatus           \ because once we have landed with the undercarriage up,
+                        \ the belly of the plane is on the ground and we can't
+                        \ put the undercarriage down again
 
  RTS                    \ Return from the subroutine
 
@@ -15027,6 +15030,22 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Process an unprocessed line from the linesToHide list
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine is called from the main loop, but only when there are fewer than
+\ 35 related points, and only if there is enough time (the routine is called in
+\ batches of three, until we have spent 9 centiseconds processing the lines to
+\ hide list).
+\
+\ It pulls a line ID from the end of the linesToHide list, and checks the line's
+\ visibility. If it is visible, then it moves the line to the linesToShow list
+\ so it gets shown on-screen, but if it is not visible, it sticks the line on
+\ the end of the linesToHide list and moves on to the next. In this way the game
+\ is constantly checking hidden lines to see if they are visible, so when we fly
+\ near enough to a line that it should be shown, this is the routine that shows
+\ it. (And, if that line is part of an object, then other lines in the object
+\ will also be shown, via the related points list.)
 \
 \ ******************************************************************************
 
@@ -23270,36 +23289,36 @@ NEXT
 \ Object ID  7 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
 \ Object ID  8 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
 \ Object ID  9 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
-\ Object ID 10 has coordinate ( 19791,  3367, 23086 )
-\ Object ID 11 has coordinate ( 20568,  1824, 21107 )
+\ Object ID 10 has coordinate ( 19791,  3367, 23086 ) - Unused
+\ Object ID 11 has coordinate ( 20568,  1824, 21107 ) - Unused
 \ Object ID 12 has coordinate (     0,     0,     0 ) - Dynamic, bullets
 \ Object ID 13 has coordinate (     0,     0,     0 ) - Dynamic, bullets
 \ Object ID 14 has coordinate (     0,     0,     0 ) - Dynamic, bullets
 \ Object ID 15 has coordinate (     0,     0,     0 ) - Dynamic, bullets
-\ Object ID 16 has coordinate ( 36590,     0, 60070 ) - Alien spawning site
-\ Object ID 17 has coordinate ( 60074,     0, 54610 ) - Alien spawning site
-\ Object ID 18 has coordinate (  2184,     0, 25941 ) - Alien spawning site
-\ Object ID 19 has coordinate (  9557,     0, 59801 ) - Alien spawning site
-\ Object ID 20 has coordinate ( 22391,     0, 58709 ) - Alien spawning site
-\ Object ID 21 has coordinate (  4915,     0, 43964 ) - Alien spawning site
-\ Object ID 22 has coordinate ( 34679,     0, 38230 ) - Alien spawning site
-\ Object ID 23 has coordinate ( 58163,     0, 39321 ) - Alien spawning site
-\ Object ID 24 has coordinate ( 34406,     0, 19960 ) - Alien spawning site
-\ Object ID 25 has coordinate ( 55432,     0,  1911 ) - Alien spawning site
-\ Object ID 26 has coordinate ( 60894,     0, 16657 ) - Alien spawning site
-\ Object ID 27 has coordinate ( 18022,     0, 11469 ) - Alien spawning site
-\ Object ID 28 has coordinate ( 34406,     0,  1365 ) - Alien spawning site
-\ Object ID 29 has coordinate ( 46421,     0, 29764 ) - Alien spawning site
+\ Object ID 16 has coordinate ( 36590,     0, 60070 ) - Field/alien spawning
+\ Object ID 17 has coordinate ( 60074,     0, 54610 ) - Field/alien spawning
+\ Object ID 18 has coordinate (  2184,     0, 25941 ) - Field/alien spawning
+\ Object ID 19 has coordinate (  9557,     0, 59801 ) - Field/alien spawning
+\ Object ID 20 has coordinate ( 22391,     0, 58709 ) - Field/alien spawning
+\ Object ID 21 has coordinate (  4915,     0, 43964 ) - Field/alien spawning
+\ Object ID 22 has coordinate ( 34679,     0, 38230 ) - Field/alien spawning
+\ Object ID 23 has coordinate ( 58163,     0, 39321 ) - Field/alien spawning
+\ Object ID 24 has coordinate ( 34406,     0, 19960 ) - Field/alien spawning
+\ Object ID 25 has coordinate ( 55432,     0,  1911 ) - Field/alien spawning
+\ Object ID 26 has coordinate ( 60894,     0, 16657 ) - Field/alien spawning
+\ Object ID 27 has coordinate ( 18022,     0, 11469 ) - Field/alien spawning
+\ Object ID 28 has coordinate ( 34406,     0,  1365 ) - Field/alien spawning
+\ Object ID 29 has coordinate ( 46421,     0, 29764 ) - Field/alien spawning
 \ Object ID 30 has coordinate (     0,     0,     0 ) - Dynamic, dormant alien
 \ Object ID 31 has coordinate (     0,     0,     0 ) - Dynamic, feeding alien
 \ Object ID 32 has coordinate (     0,     0,     0 ) - Dynamic, feeding alien
 \ Object ID 33 has coordinate (     0,     0,     0 ) - Dynamic, attacking alien
 \ Object ID 34 has coordinate (  1088,     0,   832 ) - Acornsville
-\ Object ID 35 has coordinate ( 16675, 14371, 16672 )
-\ Object ID 36 has coordinate (  8243,  3380, 14880 )
-\ Object ID 37 has coordinate ( 21297,  1850, 19488 )
-\ Object ID 38 has coordinate ( 18746, 30282, 21280 )
-\ Object ID 39 has coordinate ( 23106,  6733, 21024 )
+\ Object ID 35 has coordinate ( 16675, 14371, 16672 ) - Unused
+\ Object ID 36 has coordinate (  8243,  3380, 14880 ) - Unused
+\ Object ID 37 has coordinate ( 21297,  1850, 19488 ) - Unused
+\ Object ID 38 has coordinate ( 18746, 30282, 21280 ) - Unused
+\ Object ID 39 has coordinate ( 23106,  6733, 21024 ) - Unused
 \
 \ ******************************************************************************
 
@@ -24563,7 +24582,7 @@ NEXT
 
  EQUB &0D               \ High byte of point 252 (z-coordinate)
                         \
-                        \ Point 252 is used to store the aum of all the forces
+                        \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (zLinearHi zLinearLo)
@@ -24652,7 +24671,7 @@ NEXT
 
  EQUB &20               \ High byte of point 252 (x-coordinate)
                         \
-                        \ Point 252 is used to store the aum of all the forces
+                        \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (xLinearHi xLinearLo)
@@ -27758,7 +27777,7 @@ NEXT
 
  LDX zVelocityPLo       \ if the plane is stationary (i.e. both zVelocityPLo and
  BEQ fmod14             \ zVelocityPHi = 0), jump to fmod14 to leave zLinear
-                        \ untouched and set landingStatus = 01000000
+                        \ untouched and set landingStatus = %01000000
 
  CPX #11                \ If the plane is moving forwards at a speed of 11 or
  BCS fmod13             \ more, jump to fmod13 to subtract A from zLinearHi
@@ -27768,7 +27787,7 @@ NEXT
  LDA #&FF
  STA zLinearHi
 
- BNE fmod14             \ Jump to fmod14 to set landingStatus = 01000000 (this
+ BNE fmod14             \ Jump to fmod14 to set landingStatus = %01000000 (this
                         \ BNE is effectively a JMP as A is never zero)
 
 .fmod12
@@ -27781,11 +27800,11 @@ NEXT
                         \ true:
                         \
                         \   * The plane is stationary, in which case we already
-                        \     moved on with landingStatus = 01000000
+                        \     moved on with landingStatus = %01000000
                         \
                         \   * The plane is travelling forwards at a speed of 10
                         \     or less, in which case we already moved on with
-                        \     zLinear = -256 and landingStatus = 01000000
+                        \     zLinear = -256 and landingStatus = %01000000
                         \
                         \   * The approach is good, the undercarriage is down,
                         \     the brakes are off, in which case we already moved
