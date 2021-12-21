@@ -678,7 +678,7 @@ ORG &0900
  SKIP 1                 \ Turn rate around the y-axis (high byte)
                         \
                         \ Stored as 35 * the turn rate in 180 degrees per minute
-                        \ 
+                        \
                         \ Shown on indicator 5
                         \
                         \ Stored as a 24-bit value (yTurnTop yTurnHi yTurnLo)
@@ -1039,6 +1039,7 @@ ORG &0900
                         \ y-axis (low byte)
                         \
                         \ Stored as a 16-bit value (yMomentsHi yMomentsLo)
+
 .zMomentsLo
 
  SKIP 1                 \ Angular force due to airflow over the plane in the
@@ -1214,6 +1215,7 @@ ORG &0900
                         \
                         \ Stored as a 24-bit value (xLiftDragScTop xLiftDragScHi
                         \ xLiftDragScLo)
+
 .yLiftDragScHi
 
  SKIP 1                 \ Scaled linear force due to side forces in the y-axis
@@ -1499,6 +1501,7 @@ ORG &0900
                         \
                         \ Stored as a 24-bit value (xVelocityTop xVelocityHi
                         \ xVelocityHi)
+
 .yVelocityLo
 
  SKIP 1                 \ Plane velocity in the y-axis from the perspective
@@ -2200,7 +2203,7 @@ ORG &0900
                         \   * Non-zero = undercarriage is down
                         \
                         \ Set to 1 (undercarriage is down) in ResetVariables
-             
+
 .flapsStatus
 
  SKIP 1                 \ Flaps status
@@ -2895,7 +2898,7 @@ ORG CODE%
 
  STY S                  \ Store the width of each character row in S
 
-.clrw1
+.crow1
 
  LDA #0                 \ We are about to zero a block of memory, so set A = 0
                         \ so we can use it as our overwrite value
@@ -2903,14 +2906,14 @@ ORG CODE%
  LDY S                  \ Fetch the width of each character row, which we stored
                         \ in S above
 
-.clrw2
+.crow2
 
  STA (P),Y              \ Zero the Y-th byte of the page at (Q P), which sets 4
                         \ pixels to black
 
  DEY                    \ Decrement the byte pointer
 
- BNE clrw2              \ Loop back until we have zeroed (Q P) to (Q P) + Y
+ BNE crow2              \ Loop back until we have zeroed (Q P) to (Q P) + Y
 
  LDA P                  \ Set (Q P) = (Q P) + 320
  CLC                    \
@@ -2923,7 +2926,7 @@ ORG CODE%
 
  DEC R                  \ Decrement the row counter in R
 
- BNE clrw1              \ Loop back until we have zeroed R rows
+ BNE crow1              \ Loop back until we have zeroed R rows
 
  RTS                    \ Return from the subroutine
 
@@ -3582,7 +3585,9 @@ ORG CODE%
                         \ division table, while the second is the dividend,
                         \ scaled up
 
-                        \ We now calculate (Q P) = (TT S) * (1 J I) ???
+                        \ We now calculate (Q P) = (TT S) * (1 J I)
+                        \
+                        \ (I am unsure about the following)
 
  LDA timesTable,X       \ Set A = %SSSS * %JJJJ
 
@@ -3628,7 +3633,7 @@ ORG CODE%
  ADC J                  \ Set (Y A) = (Y A) + J
                         \
                         \ starting with the low bytes
-                        
+
  BCC divs3              \ And then the high bytes
  INY
 
@@ -3910,7 +3915,7 @@ ORG CODE%
 .scup5
 
                         \ If we get here, then (X Y) fits into 4 + 1 digits or
-                        \ more, i.e. it fits into 5 digits or more, so 
+                        \ more, i.e. it fits into 5 digits or more, so
                         \ (X Y) = (0 Y)
                         \
                         \ Also, (A Y) = (Y 0), which effectively does the first
@@ -4399,7 +4404,7 @@ ORG CODE%
 .DrawClippedHorizon
 
  LDA #%00000010         \ For the horizon, set bit 1 of A to use as the starting
- BNE dcln1              \ value for the line direction in V (so bit 1 of V gets
+ BNE draw1              \ value for the line direction in V (so bit 1 of V gets
                         \ set)
 
 .DrawClippedLine
@@ -4407,7 +4412,7 @@ ORG CODE%
  LDA #0                 \ Set A = 0 to use as the starting value for the line
                         \ direction in V
 
-.dcln1
+.draw1
 
  STA V                  \ Set V = A to set the starting value for the line
                         \ direction in V (we will set bits 6 and 7 later)
@@ -4460,8 +4465,8 @@ ORG CODE%
                         \
                         \ so (I T) is the line's x-delta
 
- BPL dcln2              \ If the high byte in I is positive, then so is (I T),
-                        \ so jump to dcln2 to skip the following, as the x-delta
+ BPL draw2              \ If the high byte in I is positive, then so is (I T),
+                        \ so jump to draw2 to skip the following, as the x-delta
                         \ is positive
 
                         \ Otherwise the x-delta is negative, so we need to set
@@ -4481,7 +4486,7 @@ ORG CODE%
  SBC I                  \
  STA I                  \ so now (I T) is positive, and contains |x-delta|
 
-.dcln2
+.draw2
 
  LDA yPointLo,Y         \ Set (H G) = the Y-th entry from (yPointHi yPointLo)
  STA G                  \
@@ -4507,8 +4512,8 @@ ORG CODE%
                         \
                         \ so (J U) is the line's y-delta
 
- BPL dcln3              \ If the high byte in J is positive, then so is (J U),
-                        \ so jump to dcln3 to skip the following, as the y-delta
+ BPL draw3              \ If the high byte in J is positive, then so is (J U),
+                        \ so jump to draw3 to skip the following, as the y-delta
                         \ is positive
 
                         \ Otherwise the y-delta is negative, so we need to set
@@ -4537,7 +4542,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.dcln3
+.draw3
 
  LDA #0                 \ The next step is to work out where the line's
                         \ coordinates lie in relation to the visible screen,
@@ -4557,7 +4562,7 @@ ORG CODE%
  LDX S                  \ Set (Y X) = (SS S)
  LDY SS                 \           = the y-coordinate of the line's start point
 
- BEQ dcln4              \ If the high byte in Y is zero, jump to dcln4
+ BEQ draw4              \ If the high byte in Y is zero, jump to draw4
 
  PHP                    \ Set X = 0, but without affecting the processor flags,
  LDX #0                 \ which will still be set according to the value of the
@@ -4565,15 +4570,15 @@ ORG CODE%
 
  CLC                    \ Clear the C flag
 
- BMI dcln5              \ If the high byte in Y is negative, jump to dcln5
+ BMI draw5              \ If the high byte in Y is negative, jump to draw5
 
  DEX                    \ Decrement X from 0 to 255
 
-.dcln4
+.draw4
 
  SEC                    \ Set the C flag
 
-.dcln5
+.draw5
 
                         \ By this point we have the following, depending on the
                         \ value of the high byte of the start point's
@@ -4592,7 +4597,7 @@ ORG CODE%
                         \ that we gave to X above:
                         \
                         \   * If SS < 0, X = 0 and 0 < 152, so C = 0
-                        \   * If SS = 0, X = S, so if S < 152, C = 0 
+                        \   * If SS = 0, X = S, so if S < 152, C = 0
                         \                          if S >= 152, C = 1
                         \   * If SS > 0, X = 255 and 255 >= 152, so C = 1
 
@@ -4641,17 +4646,17 @@ ORG CODE%
  LDX R                  \ Set (Y X) = (RR R)
  LDY RR                 \           = the x-coordinate of the line's start point
 
- BEQ dcln6              \ If the high byte in Y is zero, jump to dcln6
+ BEQ draw6              \ If the high byte in Y is zero, jump to draw6
 
  PHP                    \ Set X = 0, but without affecting the processor flags,
  LDX #0                 \ which will still be set according to the value of the
  PLP                    \ high byte in Y
 
- BMI dcln6              \ If the high byte in Y is negative, jump to dcln6
+ BMI draw6              \ If the high byte in Y is negative, jump to draw6
 
  DEX                    \ Decrement X from 0 to 255
 
-.dcln6
+.draw6
 
                         \ By this point we have the following, depending on the
                         \ value of the high byte of the start point's
@@ -4762,19 +4767,19 @@ ORG CODE%
  LDX G                  \ Set (Y X) to the end point's y-coordinate in (H G)
  LDY H
 
- BEQ dcln7              \ This section sets the following:
+ BEQ draw7              \ This section sets the following:
  PHP                    \
  LDX #0                 \   * If H < 0, C = 0 and X = 0
  PLP                    \   * If H = 0, C = 1 and X = G
  CLC                    \   * If H > 0, C = 1 and X = 255
- BMI dcln8
+ BMI draw8
  DEX
 
-.dcln7
+.draw7
 
  SEC                    \ See above
 
-.dcln8
+.draw8
 
  ROR A                  \ This section sets bits 6 and 7, which will become
  CPX #152               \ bits 4 and 5 of the final result:
@@ -4787,14 +4792,14 @@ ORG CODE%
  LDX W                  \ Set (Y X) to the end point's x-coordinate in (QQ W)
  LDY QQ
 
- BEQ dcln9              \ This section sets the following:
+ BEQ draw9              \ This section sets the following:
  PHP                    \
  LDX #0                 \   * If QQ < 0, X = 0
  PLP                    \   * If QQ = 0, X = W
- BMI dcln9              \   * If QQ > 0, X = 255
+ BMI draw9              \   * If QQ > 0, X = 255
  DEX
 
-.dcln9
+.draw9
 
  CPX #4                 \ This section sets bits 6 and 7:
  ROR A                  \
@@ -4802,7 +4807,7 @@ ORG CODE%
  ROR A                  \   Off right of screen         0         1
  EOR #%01000000         \   On-screen                   0         0
                         \   Off left of screen          1         0
- 
+
  STA UU                 \ Store A in UU
                         \
                         \ So UU contains the clipping requirements for the end
@@ -4842,7 +4847,7 @@ ORG CODE%
  LDY M                  \ Set Y to the point ID for the line's end point
 
  LDA zPointHi,Y         \ If the z-coordinate for the line's end point is
- BPL dcln10             \ positive, then it's in front of us, so jump to dcln10
+ BPL draw10             \ positive, then it's in front of us, so jump to draw10
 
  LDA V                  \ The end point is behind us, so flip bits 6 and 7 in V
  EOR #%11000000         \ to reverse the line direction in both axes
@@ -4853,24 +4858,24 @@ ORG CODE%
                         \ check whether we can use the start point
 
  LDA TT                 \ If TT is zero then the start point is on-screen, so
- BEQ dcln15             \ jump to dcln15 to use the current values of (R, S) as
+ BEQ draw15             \ jump to draw15 to use the current values of (R, S) as
                         \ our pixel coordinate, which works because RR and SS
                         \ have to be zero for the start point to be on-screen,
                         \ so (RR R) = (0 R) = R and (SS S) = (0 S) = S, so we
                         \ can just use the low bytes as the two coordinates,
                         \ i.e. (R, S)
 
- BNE dcln12             \ TT is non-zero, so the start point is off-screen, so
-                        \ jump to dcln12 to clip the start of the line so it
+ BNE draw12             \ TT is non-zero, so the start point is off-screen, so
+                        \ jump to draw12 to clip the start of the line so it
                         \ fits on-screen (this BNE is effectively a JMP as A is
                         \ never zero)
 
-.dcln10
+.draw10
 
                         \ If we get here then the end point is in front of us
 
  LDA zPointHi,X         \ If the z-coordinate for the line's start point is
- BPL dcln11             \ positive, which is in front of us, jump to dcln11
+ BPL draw11             \ positive, which is in front of us, jump to draw11
 
  JSR SwapLinePoints     \ The start point is behind us and the end point is in
                         \ front of us, so copy the end point's coordinates and
@@ -4878,30 +4883,30 @@ ORG CODE%
                         \ start point is now in front of us
 
  LDA TT                 \ If TT is zero then the start point is on-screen, so
- BEQ dcln15             \ jump to dcln15
+ BEQ draw15             \ jump to draw15
 
- BNE dcln12             \ TT is non-zero, so the start point is off-screen, so
-                        \ jump to dcln12 to clip the start of the line (this BNE
+ BNE draw12             \ TT is non-zero, so the start point is off-screen, so
+                        \ jump to draw12 to clip the start of the line (this BNE
                         \ is effectively a JMP as A is never zero)
 
-.dcln11
+.draw11
 
                         \ If we get here then both the start and end points are
                         \ in front of us
 
  LDA TT                 \ If TT is non-zero then the start point is off-screen,
- BNE dcln14             \ so jump to dcln14 to potentially clip from the end of
+ BNE draw14             \ so jump to draw14 to potentially clip from the end of
                         \ the line (i.e. if the end point is off-screen)
 
  LDA UU                 \ If UU is non-zero then the end point is off-screen, so
- BNE dcln15             \ jump to dcln13 via dcln15 to clip from the end of the
+ BNE draw15             \ jump to draw13 via draw15 to clip from the end of the
                         \ line
 
- BEQ dcln21             \ Both TT and UU are zero, so both points are on-screen
+ BEQ draw21             \ Both TT and UU are zero, so both points are on-screen
                         \ and we don't need to do any clipping, so jump to
-                        \ dcln21
+                        \ draw21
 
-.dcln12
+.draw12
 
                         \ If we get here then the one point is off-screen but
                         \ in front of us, and the other point is behind us and
@@ -4913,10 +4918,10 @@ ORG CODE%
                         \ on-screen, so we can use it as our vector line's
                         \ starting point
 
- JMP dcln15             \ We now have an on-screen pixel coordinate in (R, S),
-                        \ so jump to dcln15 to move on to the next stage
+ JMP draw15             \ We now have an on-screen pixel coordinate in (R, S),
+                        \ so jump to draw15 to move on to the next stage
 
-.dcln13
+.draw13
 
                         \ If we get here then both the start and end points are
                         \ off-screen, but they are both in front of us, so we
@@ -4925,16 +4930,16 @@ ORG CODE%
  JSR ClipBestEndOfLine  \ Clip the line at either the start or end point,
                         \ whichever is best, so that it fits on-screen
 
- JMP dcln15             \ We now have an on-screen pixel coordinate in (R, S),
-                        \ so jump to dcln15 to move on to the next stage
+ JMP draw15             \ We now have an on-screen pixel coordinate in (R, S),
+                        \ so jump to draw15 to move on to the next stage
 
-.dcln14
+.draw14
 
                         \ If we get here then both the start and end points are
                         \ in front of us and the start point is off-screen
 
  LDA UU                 \ If UU is non-zero then the end point is also
- BNE dcln13             \ off-screen, so jump to dcln13 to clip both ends of the
+ BNE draw13             \ off-screen, so jump to draw13 to clip both ends of the
                         \ line
 
                         \ If we get here then the start point is off-screen but
@@ -4959,36 +4964,36 @@ ORG CODE%
 \
 \ ******************************************************************************
 
-.dcln15
+.draw15
 
  LDA #4                 \ If bit 7 of V is set, so the direction of the x-delta
  BIT V                  \ is to the left, set A = 4
- BMI dcln16
+ BMI draw16
 
  LDA #155               \ Otherwise the direction of the x-delta is to the
                         \ right, so set A = 155
 
-.dcln16
+.draw16
 
  STA W                  \ Set W = 4 or 155, depending on the direction of the
                         \ x-delta, so W is the value of the x-coordinate at the
                         \ edge of the screen in the direction given in V
 
  LDA #0                 \ If bit 6 of V is set, so the direction of the y-delta
- BVS dcln17             \ is down, set A = 0
+ BVS draw17             \ is down, set A = 0
 
  LDA #151               \ Otherwise the direction of the y-delta is up, so set
                         \ A = 151
 
-.dcln17
+.draw17
 
  STA G                  \ Set G = 0 or 151, depending on the direction of the
                         \ y-delta, so W is the value of the y-coordinate at the
                         \ edge of the screen in the direction given in V
 
- JMP dcln19             \ Jump to dcln19
+ JMP draw19             \ Jump to draw19
 
-.dcln18
+.draw18
 
  LSR I                  \ Right-shift (I T)
  ROR T
@@ -4996,7 +5001,7 @@ ORG CODE%
  LSR J                  \ Right-shift (J U)
  ROR U
 
-.dcln19
+.draw19
 
                         \ Back in part 1 we set the following values:
                         \
@@ -5007,30 +5012,30 @@ ORG CODE%
                         \ shifting them until they fit into one byte each
 
  LDA I                  \ If the high bytes of either of the line delta's is
- ORA J                  \ non-zero, loop up to dcln18 to right-shift both deltas
- BNE dcln18
+ ORA J                  \ non-zero, loop up to draw18 to right-shift both deltas
+ BNE draw18
 
                         \ We now have the following:
                         \
                         \   * T = |x-delta|
                         \   * U = |y-delta|
 
- LDA #255               \ If T <> 255, jump to dcln20
+ LDA #255               \ If T <> 255, jump to draw20
  CMP T
- BNE dcln20
+ BNE draw20
 
  LSR T                  \ T = 255, which is too big to use as our line delta, so
  LSR U                  \ divide both T and U by 2
 
-.dcln20
+.draw20
 
- CMP U                  \ If U <> 255, jump to dcln21
- BNE dcln21
+ CMP U                  \ If U <> 255, jump to draw21
+ BNE draw21
 
  LSR T                  \ U = 255, which is too big to use as our line delta, so
  LSR U                  \ divide both T and U by 2
 
-.dcln21
+.draw21
 
  INC T                  \ Increment T to give us our final |x-delta|, so it is
                         \ at least 1
@@ -5048,35 +5053,35 @@ ORG CODE%
 \ ******************************************************************************
 
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
- BMI dcln23             \ jump down to dcln23 to add a line to buffer 1
+ BMI draw23             \ jump down to draw23 to add a line to buffer 1
 
  LDX lineBuffer2Count   \ If lineBuffer2Count <> 95, line buffer 2 is not full,
- CPX #95                \ so jump down to dcln22 to add a new line to the buffer
- BNE dcln22
+ CPX #95                \ so jump down to draw22 to add a new line to the buffer
+ BNE draw22
 
  RTS                    \ Return from the subroutine
 
-.dcln22
+.draw22
 
  INX                    \ Increment the value in lineBuffer2Count as we are
  STX lineBuffer2Count   \ about to add a new line to line buffer 2
 
- JMP dcln25             \ Jump down to dcln25 to buffer the line and draw it
+ JMP draw25             \ Jump down to draw25 to buffer the line and draw it
 
-.dcln23
+.draw23
 
  LDX lineBuffer1Count   \ If lineBuffer1Count <> 47, line buffer 1 is not full,
- CPX #47                \ so jump down to dcln24 to add a new line to the buffer
- BNE dcln24
+ CPX #47                \ so jump down to draw24 to add a new line to the buffer
+ BNE draw24
 
  RTS                    \ Return from the subroutine
 
-.dcln24
+.draw24
 
  INX                    \ Increment the value in lineBuffer1Count as we are
  STX lineBuffer1Count   \ about to add a new line to line buffer 1
 
-.dcln25
+.draw25
 
  LDA R                  \ Save the start x-coordinate in lineBufferR
  STA lineBufferR,X
@@ -5217,7 +5222,7 @@ ORG CODE%
                         \ along the x-axis in a positive direction, i.e. to the
                         \ right, which we implement by modifying the routine's
                         \ code, setting it back to the default
- 
+
  LDA #5                 \ Modify the following instruction at dlin20:
  STA dlin20+1           \
                         \   BCC dlin22 -> BCC dlin22
@@ -5921,7 +5926,7 @@ ORG CODE%
  ADC RR                 \ Set SS = A + RR + C
  STA SS                 \        = slope error + (255 - |x-delta|) + 1
                         \        = slope error + 256 - |x-delta|
-                        \        = slope error - |x-delta| ???
+                        \        = slope error - |x-delta|
 
 .dlin33
 
@@ -6290,10 +6295,11 @@ ORG CODE%
 
                         \ Otherwise we right-shift A by X places to move the
                         \ pixel to the right place
+
 .dlin48
 
  LSR A                  \ Shift A to the right by one place
- 
+
  DEX                    \ Decrement the shift counter
 
  BNE dlin48             \ Loop back until we have shifted A right by X places,
@@ -6476,7 +6482,7 @@ ORG CODE%
  ADC RR                 \ Set SS = A + RR + C
  STA SS                 \        = slope error + 255 - |y-delta| + 1
                         \        = slope error + 256 - |y-delta|
-                        \        = slope error - |y-delta| ???
+                        \        = slope error - |y-delta|
 
  INX                    \ Increment X to move along the x-axis to the right
 
@@ -6552,7 +6558,7 @@ ORG CODE%
  ADC RR                 \ Set SS = A + RR + C
  STA SS                 \        = slope error + 255 - |y-delta| + 1
                         \        = slope error + 256 - |y-delta|
-                        \        = slope error - |y-delta| ???
+                        \        = slope error - |y-delta|
 
  DEX                    \ Decrement X to move along the x-axis to the left
 
@@ -6658,7 +6664,7 @@ ORG CODE%
  BMI dlin67             \ instruction
 
  LDA #155               \ Set A = 155, to use as the value of W if bit 7 of V is
-                        \ clear (i.e. when we step along the x-axis in a 
+                        \ clear (i.e. when we step along the x-axis in a
                         \ positive direction, to the right)
 
 
@@ -7107,12 +7113,12 @@ ORG CODE%
 \   (J U)               The line's |y-delta|
 \
 \   TT                  The clipping requirements for the start point
-\                        
+\
 \                                                     Bit 4     Bit 5
 \                           Off top of screen           0         1
 \                           On-screen                   0         0
 \                           Off bottom of screen        1         0
-\                        
+\
 \                                                     Bit 6     Bit 7
 \                           Off right of screen         0         1
 \                           On-screen                   0         0
@@ -7450,7 +7456,7 @@ ORG CODE%
 \ 1. Double (Q P) and (PP N) until Q >= UU
 \ If Q = UU and P < TT, repeat until P >= TT
 \ i.e. repeat until (Q P) >= (UU TT)
-\ 
+\
 \ 2. Halve (Q P K) and (PP N VV) until Q < UU
 \ i.e. repeat until (Q P K) < (UU TT H)
 \
@@ -8279,10 +8285,10 @@ ORG CODE%
 
  LDY matrixAxis         \ Set Y to the axis once again
 
- BIT K                  \ If bit 6 of K is set, jump to setm2
- BVS setm2
+ BIT K                  \ If bit 6 of K is set, jump to axis2
+ BVS axis2
 
- BMI setm1              \ If bit 7 of K is set, jump to setm1
+ BMI axis1              \ If bit 7 of K is set, jump to axis1
 
                         \ If we get here then K has:
                         \
@@ -8303,9 +8309,9 @@ ORG CODE%
  AND #%11111110         \ with bit 0 clear (positive)
  STA mx1Lo,Y
 
- JMP setm4              \ Jump to setm4 to return from the subroutine
+ JMP axis4              \ Jump to axis4 to return from the subroutine
 
-.setm1
+.axis1
 
                         \ If we get here then K has:
                         \
@@ -8322,18 +8328,18 @@ ORG CODE%
 
  LDA S                  \ Set (mx1Hi mx1Lo) = -(S R)
  STA mx1Hi,Y            \
- LDA R                  \ 
+ LDA R                  \
  ORA #1                 \ with bit 0 set (negative)
  STA mx1Lo,Y
 
- BNE setm4              \ Jump to setm4 to return from the subroutine (this BNE
+ BNE axis4              \ Jump to axis4 to return from the subroutine (this BNE
                         \ is effectively a JMP as A is never zero)
 
-.setm2
+.axis2
 
                         \ If we get here then K has bit 6 set
 
- BMI setm3              \ If bit 7 of K is set, jump to setm3
+ BMI axis3              \ If bit 7 of K is set, jump to axis3
 
                         \ If we get here then K has:
                         \
@@ -8354,10 +8360,10 @@ ORG CODE%
  ORA #1
  STA mx1Lo,Y
 
- BNE setm4              \ Jump to setm4 to return from the subroutine (this BNE
+ BNE axis4              \ Jump to axis4 to return from the subroutine (this BNE
                         \ is effectively a JMP as A is never zero)
 
-.setm3
+.axis3
 
                         \ If we get here then K has:
                         \
@@ -8378,7 +8384,7 @@ ORG CODE%
  AND #%11111110
  STA mx1Lo,Y
 
-.setm4
+.axis4
 
  RTS                    \ Return from the subroutine
 
@@ -8517,7 +8523,7 @@ ORG CODE%
 
  LDA shift4Left,Y       \ Set A = V << 4
                         \       = %vvvv0000
- 
+
  ORA shift4Right,X      \ Set Y = A OR (S >> 4)
  TAY                    \       = %vvvv0000 OR %0000SSSS
                         \       = %vvvvSSSS
@@ -8568,8 +8574,8 @@ ORG CODE%
                         \          = V * (S R) >> 4
                         \          = V * (S R) / 16
 
- BIT K                  \ If bit 7 of K is clear, jump to msrv2 to skip the
- BPL msrv2              \ following and apply the correct sign to the result
+ BIT K                  \ If bit 7 of K is clear, jump to mulp2 to skip the
+ BPL mulp2              \ following and apply the correct sign to the result
 
  LDX R                  \ Set X = R = %RRRRrrrr
 
@@ -8587,24 +8593,24 @@ ORG CODE%
                         \       = %vvvv * %RRRRrrrr
                         \       = V * R
 
- BCC msrv1              \ If the addition didn't overflow, i.e. V * R < 256,
-                        \ jump to msrv1 to skip the following
+ BCC mulp1              \ If the addition didn't overflow, i.e. V * R < 256,
+                        \ jump to mulp1 to skip the following
 
  INC W                  \ Set (G W) = (G W) + 1
- BNE msrv1              \
+ BNE mulp1              \
  INC G                  \ to round the result up, as the low bytes of the
                         \ multiplication produced a carry
 
-.msrv1
+.mulp1
 
  ASL A                  \ Set (G W A) = (G W A) * 2
  ROL W                  \
  ROL G                  \ so the result is doubled when bit 7 of K is set
 
-.msrv2
+.mulp2
 
  LDA V                  \ If V is positive, skip the following
- BPL msrv3
+ BPL mulp3
 
  LDA #0                 \ V is negative, so we now negate (G W) by subtracting
  SEC                    \ it from 0, first the low byte and then the high byte
@@ -8614,7 +8620,7 @@ ORG CODE%
  SBC G
  STA G
 
-.msrv3
+.mulp3
 
  RTS                    \ Return from the subroutine
 
@@ -8676,7 +8682,7 @@ ORG CODE%
 
  LDA shift4Right,Y      \ Set UU (and A) to Y >> 4, to extract the scale factor
  STA UU                 \ from bits 4 to 7 of the zObjectPoint entry
- 
+
  CMP #9                 \ If the scale factor in A >= 9, set bit 7 of K so the
  ROR K                  \ result of the call to Multiply4x16 below is doubled,
                         \ i.e. (G W) is doubled. This gives us an extra factor
@@ -9196,7 +9202,7 @@ ORG CODE%
                         \ the sign in K
 
  LDA #0                 \ Negate the (S R) to get the correct result,
- SEC                    \ 
+ SEC                    \
  SBC R                  \   (S R) = 0 - (S R)
  AND #%11111110         \
  ORA K                  \ while also setting the sign in bit 0 to the opposite
@@ -9384,7 +9390,7 @@ ORG CODE%
  STA matrix4Lo+8,Y
  LDA mx1Hi,X
  STA matrix4Hi+8,Y
- 
+
  LDA mx2Lo,X            \ Set m7 in matrix 4 = mx2
  STA matrix4Lo+7,Y
  LDA mx2Hi,X
@@ -9396,7 +9402,7 @@ ORG CODE%
                         \   * Set m2 in matrix 4 = m2 in matrix 1 =  mx2 * mz2
                         \   * Set m4 in matrix 4 = m4 in matrix 1 =  mx1 * mz1
                         \   * Set m5 in matrix 4 = m5 in matrix 1 = -mx2 * mz1
-                        
+
  LDY #5                 \ Set a loop counter in Y to count through 5, 4, 2, 1
 
 .smat1
@@ -9724,7 +9730,7 @@ ORG CODE%
  LDA mx1Hi,X            \ Set (S R) = the matrix entry to read
  STA S
 
- JMP smen2              \ Jump down to smen2 to do the calculation 
+ JMP smen2              \ Jump down to smen2 to do the calculation
 
 .SetMatrixEntry3
 
@@ -10121,7 +10127,7 @@ ORG CODE%
  LDA matrix1Hi,Y        \ Set S = P-th entry of matrix1Hi
  STA S
 
- BNE pcrd4              
+ BNE pcrd4
 
  LDA matrix1Lo,Y        \ If the P-th entry of matrix1Lo is < 5, jump to pcrd5
  CMP #5                 \ to move on to the next loop
@@ -10555,7 +10561,7 @@ ORG CODE%
                         \     = S * 104 / 256
                         \
                         \ and T contains the overspill from the result
-                        
+
  STA U                  \ Set U = S * 104 / 256
 
  LDA T                  \ Set (U A) = (U altitudeMinutes) + (0 T)
@@ -10591,7 +10597,7 @@ ORG CODE%
  ROR A
  LSR U
  ROR A
- 
+
                         \ So by now, A is in the range 0 to 254 - here's why:
                         \
                         \ The maximum altitude that the altimeter can show is
@@ -10823,8 +10829,8 @@ ORG CODE%
 \ ------------------------------------------------------------------------------
 \
 \ This section takes the turn rate around the y-axis (i.e. the yaw rate) from
-\ (yTurnTop yTurnHi) and reduces it to the range -19 to +19, before passing it to
-\ the DrawIndicatorHand to update the bottom part of the slip-and-turn
+\ (yTurnTop yTurnHi) and reduces it to the range -19 to +19, before passing it
+\ to the DrawIndicatorHand to update the bottom part of the slip-and-turn
 \ indicator.
 \
 \ ******************************************************************************
@@ -11204,11 +11210,11 @@ ORG CODE%
                         \ joystick
 
  SEC                    \ Set the C flag so the following call to ScaleSigned
-                        \ divides the joystick x-position by 16 
+                        \ divides the joystick x-position by 16
 
  JSR ScaleSigned        \ Scale the value in A down by a factor of 16, retaining
                         \ the sign and being sensitive to small values
- 
+
  STA xJoyCoord          \ Store the scaled value of A in xJoyCoord, so we can
                         \ pass it to DrawJoystickCross below to draw the new
                         \ cross, but also so we can erase this cross when we
@@ -11413,12 +11419,12 @@ ORG CODE%
                         \ This adds the relevant indicator's base value from the
                         \ indicatorBase table to give the following:
                         \
-                        \   * Compass                 +0    A =  0 to  73
-                        \   * Airspeed               +48    A = 57 to 122
-                        \   * Altimeter small hand    +0    A =  0 to 254
-                        \   * Altimeter large hand    +0    A =  0 to 104
-                        \   * Vertical speed         +67    A = 27 to 107
-                        \   * Turn                   +53    A = 34 to  72
+                        \   * Compass                 +0    A =   0 to  73
+                        \   * Airspeed               +48    A =  57 to 122
+                        \   * Altimeter small hand    +0    A =   0 to 254
+                        \   * Altimeter large hand    +0    A =   0 to 104
+                        \   * Vertical speed         +67    A =  27 to 107
+                        \   * Turn                   +53    A =  34 to  72
                         \   * Slip                  +106    A = ??? to ???
 
  CMP indicatorMin,X     \ If A >= the X-th byte of indicatorMin, jump to dinh1
@@ -11884,7 +11890,7 @@ ORG CODE%
 
                         \ We now cap the y-delta, which has the effect of
                         \ blunting the points of our diamond
-                        
+
  CMP yDeltaMax,X        \ If A < yDeltaMax for this indicator, jump to dhvc7 to
  BCC dhvc7              \ skip the following instruction
 
@@ -13174,7 +13180,7 @@ ORG CODE%
 
  LDY onGround           \ If onGround is non-zero, then we are on the ground, so
  BNE indu4              \ jump to indu4 to set the undercarriage to up and
-                        \ return from the subroutine ???
+                        \ return from the subroutine
 
  CLC                    \ Set A = A + 10
  ADC #10                \
@@ -13234,7 +13240,7 @@ ORG CODE%
 .IndicatorF
 
  LDA forceFactor+5      \ Set A to the force factor for zLiftDrag
- 
+
  LDY flapsStatus        \ If flapsStatus is non-zero then the flaps are on, so
  BNE indf1              \ jump to indf1
 
@@ -13344,7 +13350,7 @@ ORG CODE%
  LDA #&FC
  STA yPointLo+95
 
- LDA #228               \ Set GG to point ID 228, to pass to the call to 
+ LDA #228               \ Set GG to point ID 228, to pass to the call to
  STA GG                 \ SetPointCoords
 
  LDA #9                 \ Set the matrix number so the call to SetPointCoords
@@ -13378,7 +13384,7 @@ ORG CODE%
  CPX #232               \ Loop back until we have copied (xTemp1, yTemp1,
  BNE fire1              \ zTemp1) into points 229, 230 and 231
 
- LDA #95                \ Set GG to point ID 95, to pass to the call to 
+ LDA #95                \ Set GG to point ID 95, to pass to the call to
  STA GG                 \ SetPointCoords
 
  JSR SetPointCoords     \ Calculate the coordinates for point 95
@@ -13603,31 +13609,31 @@ ORG CODE%
  LDA #5                 \ Set V = 5 to act as an offset as we work our way
  STA V                  \ through the six keys in keyTable1
 
-.sckt1
+.klog1
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
  LDX keyTable1,Y        \ Scan the keyboard to see if the Y-th key in keyTable1
  JSR ScanKeyboard       \ is being pressed
 
- BNE sckt2              \ If the key is not being pressed, jump down to sckt2 to
+ BNE klog2              \ If the key is not being pressed, jump down to klog2 to
                         \ check the Y-th key in keyTable1
 
  LDX V                  \ Set X = the offset of the key we are processing
- 
+
  LDY keyTable1Lo,X      \ Fetch the key logger value for this key press into
  LDA keyTable1Hi,X      \ (A Y)
- 
- JMP sckt4              \ Jump down to sckt4 to store (A Y) in the key logger
 
-.sckt2
+ JMP klog4              \ Jump down to klog4 to store (A Y) in the key logger
+
+.klog2
 
  LDY V                  \ Set Y = the offset of the key we are processing
 
  LDX keyTable2,Y        \ Scan the keyboard to see if the Y-th key in keyTable2
  JSR ScanKeyboard       \ is being pressed
 
- BNE sckt3              \ If the key is not being pressed, jump down to sckt3 to
+ BNE klog3              \ If the key is not being pressed, jump down to klog3 to
                         \ store 0 in the key logger
 
  LDX V                  \ Set X = the offset of the key we are processing
@@ -13635,9 +13641,9 @@ ORG CODE%
  LDY keyTable2Lo,X      \ Fetch the key logger value for this key press into
  LDA keyTable2Hi,X      \ (A Y)
 
- JMP sckt4              \ Jump down to sckt4 to store (A Y) in the key logger
+ JMP klog4              \ Jump down to klog4 to store (A Y) in the key logger
 
-.sckt3
+.klog3
 
  LDA #0                 \ Set A = 0
 
@@ -13645,7 +13651,7 @@ ORG CODE%
 
  TAY                    \ Set Y = 0, so the key logger value in (A Y) is 0
 
-.sckt4
+.klog4
 
  STA keyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
                         \ in the X-th byte of keyLoggerHigh
@@ -13656,7 +13662,7 @@ ORG CODE%
  DEC V                  \ Decrement the offset to point to the next key to
                         \ process
 
- BPL sckt1              \ Loop back until we have processed all six key pairs
+ BPL klog1              \ Loop back until we have processed all six key pairs
 
  RTS                    \ Return from the subroutine
 
@@ -14784,8 +14790,8 @@ ORG CODE%
 
 .ProcessLinesToShow
 
- LDA linesToShowEnd     \ If the linesToShow list is empty, jump to plns5 to
- BEQ plns5              \ clear down the relatedPoints list, as there are no
+ LDA linesToShowEnd     \ If the linesToShow list is empty, jump to show5 to
+ BEQ show5              \ clear down the relatedPoints list, as there are no
                         \ visible lines at all
 
  LDA #255               \ Set linesToShowPointer = 255, to use as a pointer
@@ -14795,7 +14801,7 @@ ORG CODE%
  LDA #0                 \ Set lineCounter = 0, to use as a line counter as we
  STA lineCounter        \ loop through the linesToShow list
 
-.plns1
+.show1
 
  LDX lineCounter        \ Set lineId to the ID of the next line in the
  LDY linesToShow,X      \ linesToShow list
@@ -14840,8 +14846,8 @@ ORG CODE%
                         \
                         \ so A is in the form %00xx0000
 
- BEQ plns2              \ If both bits 4 and 5 are clear in the above, jump to
-                        \ plns2 to keep the line in the linesToShow list
+ BEQ show2              \ If both bits 4 and 5 are clear in the above, jump to
+                        \ show2 to keep the line in the linesToShow list
 
  LSR A                  \ Shift bits 4 and 5 down into bits 2 and 3 and store
  LSR A                  \ the result in T, so:
@@ -14863,7 +14869,7 @@ ORG CODE%
                         \ bit 2 we get the following (the numbers on the right
                         \ show the calculation in progress):
                         \
-                        \   A =     bit 2 of end point     
+                        \   A =     bit 2 of end point
                         \       EOR bit 2 of start point   <- 0 if bits are same
                         \       EOR 1                      <- 1 if bits are same
                         \       AND bit 2 of T             <- 1 if set
@@ -14895,7 +14901,7 @@ ORG CODE%
                         \   * xPoint in both points has the same sign
                         \   * |xPoint| >= |zPoint| for both points
 
- BNE plns3              \ If A is non-zero, then this means that at least one of
+ BNE show3              \ If A is non-zero, then this means that at least one of
                         \ the above is true for this line. Let's see what that
                         \ means. If both of the following are true:
                         \
@@ -14947,10 +14953,10 @@ ORG CODE%
                         \ it isn't visible
                         \
                         \ So if A is non-zero, this means that the line is not
-                        \ visible so we jump to plns3 to add this line to the
+                        \ visible so we jump to show3 to add this line to the
                         \ linesToHide list
 
-.plns2
+.show2
 
                         \ If we get here then we want to keep this line in the
                         \ linesToShow list
@@ -14962,12 +14968,12 @@ ORG CODE%
  LDA lineId             \ creating
  STA linesToShow,X
 
- JMP plns4              \ Jump to plns4 to move on to the next line
+ JMP show4              \ Jump to show4 to move on to the next line
 
-.plns3
+.show3
 
  LDA lineId             \ If the line Id is 0 then it's the horizon, so jump up
- BEQ plns2              \ to plns2 add it to the linesToShow list, as we don't
+ BEQ show2              \ to show2 add it to the linesToShow list, as we don't
                         \ want to hide the horizon
 
  INC linesToHideEnd     \ Increment linesToHideEnd to point to the next free
@@ -14976,24 +14982,24 @@ ORG CODE%
  LDX linesToHideEnd     \ Add the line ID in A to the end of the linesToHide
  STA linesToHide,X      \ list
 
-.plns4
+.show4
 
  INC lineCounter        \ Increment the loop counter to point to the next line
                         \ in the linesToShow list
 
  LDA lineCounter        \ Loop back to process the next line from linesToShow
  CMP linesToShowEnd     \ until we have worked our way to the end
- BCC plns1
+ BCC show1
 
  LDA linesToShowPointer \ Set linesToShowEnd = linesToShowPointer + 1
  ADC #0                 \
  STA linesToShowEnd     \ so it points to the index of the first empty entry in
                         \ the newly processed linesToShow list
 
-.plns5
+.show5
 
- LDX relatedPoints      \ If the relatedPoints list is empty, jump to plns7 to
- BEQ plns7              \ return from the subroutine
+ LDX relatedPoints      \ If the relatedPoints list is empty, jump to show7 to
+ BEQ show7              \ return from the subroutine
 
                         \ Otherwise we now reset the point status bytes for all
                         \ the points mentioned in the relatedPoints list, so
@@ -15002,16 +15008,16 @@ ORG CODE%
 
  LDA #0                 \ Set A = 0 to use for resetting the status bytes
 
-.plns6
+.show6
 
  LDY relatedPoints,X    \ Zero the status byte for the X-th entry in the list
  STA pointStatus,Y
 
  DEX                    \ Decrement the loop counter
 
- BNE plns6              \ Loop back until we have reset all the 
+ BNE show6              \ Loop back until we have reset all the
 
-.plns7
+.show7
 
  RTS                    \ Return from the subroutine
 
@@ -15281,7 +15287,7 @@ ORG CODE%
  STA objectAnchorPoint  \ Store the new point's ID as the object's anchor point,
                         \ so it contains the ID of the last point before the
                         \ object ID at the end of the linked list of points
- 
+
  TAY                    \ Copy the new point's ID into Y so we can use it as an
                         \ an index into pointStatus
 
@@ -15449,13 +15455,13 @@ ORG CODE%
  STA matrixAxis         \ is only used when setting the matrices, so this is
                         \ presumably left over from a version of the code that
                         \ supported multiple sets of matrices)
-                        
+
  STA matrixNumber       \ Set the matrix number so the call to SetObjPointCoords
                         \ uses matrix 1 in the calculation, which will rotate
                         \ the point by the plane's pitch, roll and yaw angles,
                         \ transforming it from the outside world's frame of
                         \ reference to the plane's frame of reference
- 
+
  JSR SetObjPointCoords  \ Calculate the coordinates for this object point
 
  LDA showLine           \ If showLine is non-zero, then the point is not
@@ -15601,7 +15607,7 @@ ORG CODE%
 \
 \   GG                  For bullets only (12, 13, 14 or 15), the point ID for
 \                       the bullet's anchor point
-\                       
+\
 \ Returns:
 \
 \   objectStatus        The object's status byte: bits 6 and 7 affected
@@ -16670,7 +16676,7 @@ ORG CODE%
                         \ below
 
  CPY #33                \ If Y = 33, skip the following two instructions
- BNE upbl1
+ BNE blip1
 
  LDA #1                 \ Y = 33, which is the alien, so set alien = 1, to
  STA alien              \ indicate that we should draw the alien for when we
@@ -16697,7 +16703,8 @@ ORG CODE%
                         \ use 0 rather than the non-existent xObjectTop
                         \
                         \ The loop comments are for the xTemp2 iteration
-.upbl1
+
+.blip1
 
  LDA xObjectHi,Y        \ Set (xTemp2Hi xTemp2Lo) to the following:
  SEC                    \
@@ -16717,7 +16724,7 @@ ORG CODE%
  INX                    \ Increment X to move on to the next axis
 
  CPX #3                 \ Loop back until we have done all 3 axes
- BNE upbl1
+ BNE blip1
 
                         \ We now want to calculate the coordinates for this
                         \ vector when rotated correctly, so we first set up
@@ -16772,7 +16779,7 @@ ORG CODE%
  LDX #3                 \ We now want to shift the point values right by 3
                         \ places, so set a shift counter in X
 
-.upbl2
+.blip2
 
  LSR R                  \ Set (R xPointLo) = (R xPointLo) >> 1
  ROR xPointLo           \                  = xPoint / 2
@@ -16782,7 +16789,7 @@ ORG CODE%
 
  DEX                    \ Decrement the shift counter
 
- BPL upbl2              \ Loop back until we have shifted right three times
+ BPL blip2              \ Loop back until we have shifted right three times
 
                         \ Because mode 5 pixels are twice as wide as they are
                         \ high, we need to halve the x-coordinate one more time
@@ -16856,7 +16863,7 @@ ORG CODE%
  LDX alien              \ If alien is non-zero then we just erased a dot from
  BNE drbl1              \ the radar, so jump to drbl1 as we don't need to redraw
                         \ the cross at the centre of the radar
-                        
+
                         \ If we get here then we just erased a line from the
                         \ radar, which may have corrupted the cross in the
                         \ centre, so we redraw it
@@ -17535,20 +17542,20 @@ ORG CODE%
 
  STA S                  \ Store the value we want to store into S
 
-.fcrw1
+.fill1
 
  LDY #0                 \ Set a byte counter in Y
 
  LDA S                  \ Fetch the value of A that we stored in S above
 
-.fcrw2
+.fill2
 
  STA (P),Y              \ Set the Y-th byte of (Q P) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
- BNE fcrw2              \ Loop back until we have set 256 bytes, starting at
+ BNE fill2              \ Loop back until we have set 256 bytes, starting at
                         \ (Q P), to the value in A
 
  LDY #47                \ Set a byte counter in Y for 47 bytes
@@ -17558,14 +17565,14 @@ ORG CODE%
                         \ so it points to the next byte to fill after the 256
                         \ bytes we just did
 
-.fcrw3
+.fill3
 
  STA (P),Y              \ Set the Y-th byte of (Q P) to A, which sets 4 pixels
                         \ to the pixel pattern in S
 
  DEY                    \ Decrement the byte counter
 
- BPL fcrw3              \ Loop back until we have set 47 bytes, starting at
+ BPL fill3              \ Loop back until we have set 47 bytes, starting at
                         \ (Q P), to the value in A
 
  LDA P                  \ Set (Q P) = (Q P) + 64
@@ -17573,7 +17580,7 @@ ORG CODE%
  ADC #64                \ starting with the low bytes
  STA P
 
- BCC fcrw4              \ If the above addition didn't overflow, skip the next
+ BCC fill4              \ If the above addition didn't overflow, skip the next
                         \ instruction
 
  INC Q                  \ The above addition overflowed, so increment the high
@@ -17582,11 +17589,11 @@ ORG CODE%
                         \ So now (Q P) is 320 greater than at the start, so it
                         \ points to the next character row in screen memory
 
-.fcrw4
+.fill4
 
  DEC R                  \ Decrement the row counter in R
 
- BNE fcrw1              \ Loop back until we have updated R rows
+ BNE fill1              \ Loop back until we have updated R rows
 
  RTS                    \ Return from the subroutine
 
@@ -17616,24 +17623,24 @@ ORG CODE%
 
  STA T                  \ Set T as the counter for the outer loop
 
-.delp1
+.dely1
 
  STA U                  \ Set U as the counter for the middle loop
 
-.delp2
+.dely2
 
  STA V                  \ Set V as the counter for the inner loop
 
-.delp3
+.dely3
 
  DEC V                  \ Loop around for A iterations in the inner loop
- BNE delp3
+ BNE dely3
 
  DEC U                  \ Loop around for A iterations in the middle loop
- BNE delp2
+ BNE dely2
 
  DEC T                  \ Loop around for A iterations in the outer loop
- BNE delp1
+ BNE dely1
 
  RTS                    \ Return from the subroutine
 
@@ -17742,15 +17749,15 @@ ORG CODE%
 .SpawnAlien
 
  LDX themeStatus        \ If bit 7 of themeStatus is set, then the Theme is not
- BMI upth3              \ enabled, so jump to upth3 to return from the
+ BMI spaw3              \ enabled, so jump to spaw3 to return from the
                         \ subroutine
 
- BEQ upth3              \ If themeStatus is zero, then we have already spawned
+ BEQ spaw3              \ If themeStatus is zero, then we have already spawned
                         \ all eight aliens in this wave, so return from the
                         \ subroutine
 
  LDA onGround           \ If onGround is non-zero, then we are on the ground, so
- BNE upth3              \ jump to upth3 to return from the subroutine
+ BNE spaw3              \ jump to spaw3 to return from the subroutine
 
                         \ If we get here, themeStatus is in the range 1 to 8 and
                         \ we are not on the ground, so the Theme has started but
@@ -17775,7 +17782,7 @@ ORG CODE%
  AND #15                \ Reduce the random number to the range 0 to 15
 
  CMP #14                \ If the random number is >= 14 (12.5% chance), jump to
- BCS upth3              \ upth3 to return from the subroutine
+ BCS spaw3              \ spaw3 to return from the subroutine
 
  ORA #16                \ Increase the random number to the range 16 to 29, to
                         \ give us a potential object ID
@@ -17792,12 +17799,12 @@ ORG CODE%
                         \ wave, as we start spawning at ID 8 and work our way
                         \ down to 1)
 
-.upth1
+.spaw1
 
  DEX                    \ Decrement the loop counter
 
- CPX themeStatus        \ If X <> themeStatus, jump to upth2 to check this
- BNE upth2              \ alien's object ID
+ CPX themeStatus        \ If X <> themeStatus, jump to spaw2 to check this
+ BNE spaw2              \ alien's object ID
 
  STA alienObjectId,X    \ Otherwise we have run through all the other aliens in
                         \ this wave and none of them are using this object ID,
@@ -17805,10 +17812,10 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
-.upth2
+.spaw2
 
  CMP alienObjectId,X    \ If the object ID for the X-th alien does not match our
- BNE upth1              \ random number, then jump back to upth1 to move on to
+ BNE spaw1              \ random number, then jump back to spaw1 to move on to
                         \ the next alien
 
  INC themeStatus        \ Otherwise we've found an alien that is already using
@@ -17818,7 +17825,7 @@ ORG CODE%
                         \ (so we can have another go at spawning an alien on the
                         \ next call to SpawnAlien)
 
-.upth3
+.spaw3
 
  RTS                    \ Return from the subroutine
 
@@ -18016,7 +18023,7 @@ ORG CODE%
 
  LDA alienObjectId,X    \ If the object ID of the alien in slot 33 is positive,
  BPL upal15             \ then we already have an alien moving towards the town,
-                        \ so jump to upal15 to skip the 
+                        \ so jump to upal15 to skip the
 
  STA alienSlot-30,Y     \ Clear out slot 33 by setting it to a negative number
                         \ (we know A is negative because we just passed through
@@ -18679,7 +18686,7 @@ ORG CODE%
 \
 \   * z-coordinate = (zObjectHi zObjectLo) + (5 Q)
 \
-\ where Q is 
+\ where Q is
 
 \ This is called STIP in the original source code.
 \
@@ -18716,7 +18723,7 @@ ORG CODE%
                         \
                         \   * (I W) = (zObjectHi zObjectLo) + (5 Q)
                         \
-                        \ note that 
+                        \ note that
 
 .weak1
 
@@ -19436,7 +19443,7 @@ ORG CODE%
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
 
-                        \ For each axis in turn, we 
+                        \ For each axis in turn, we
 
 .prun17
 
@@ -19523,6 +19530,7 @@ ORG CODE%
                         \ dashes in the middle of the runway by starting at
                         \ point 5, and moving up the middle line in steps of
                         \ 1/16 of the distance between points 5 and 21
+
 .prun20
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
@@ -20013,7 +20021,7 @@ ORG CODE%
 
 .DrawFuelPixel
 
- STX N                  \ Store the drawing mode in N 
+ STX N                  \ Store the drawing mode in N
 
  CLC                    \ Set J = A + 184
  ADC #184               \
@@ -20134,24 +20142,24 @@ ORG CODE%
 .RetractFlapsIfFast
 
  CMP #14                \ First we check the high byte of the current airspeed
- BCC rflp1              \ in A to see if it is less than 14, at which point the
+ BCC flap1              \ in A to see if it is less than 14, at which point the
                         \ airspeed is:
                         \
                         \   (14 0) * 100 / 2368 = 3584 * 100 / 2368 = 151
                         \
                         \ So if the airspeed is less than 151mph, we jump to
-                        \ rflp1 to return from the subroutine without changing
+                        \ flap1 to return from the subroutine without changing
                         \ the flaps
 
- LDA flapsStatus        \ If the flaps are already retracted, jump to rflp1 to
- BEQ rflp1              \ return from the subroutine without changing anything
+ LDA flapsStatus        \ If the flaps are already retracted, jump to flap1 to
+ BEQ flap1              \ return from the subroutine without changing anything
 
  LDA #0                 \ The speed is at least 151 mph and the flaps are on,
  STA flapsStatus        \ so we retract them by setting flapsStatus to 0
 
  JSR IndicatorF         \ Update the flaps indicator
 
-.rflp1
+.flap1
 
  RTS                    \ Return from the subroutine
 
@@ -25027,7 +25035,7 @@ NEXT
  LDY #2                 \ We now work through the three axes (z, y, x), so set
                         \ Y = 2 to act as an axis counter, going 2, 1, 0
 
-.brtn1
+.town1
 
  TYA                    \ Set X = Q + Y
  CLC                    \
@@ -25043,22 +25051,22 @@ NEXT
  SBC skillZoneHi,X      \ from the skill zone coordinate to the plane, along
                         \ axis Y
 
- BMI brtn2              \ If (A P) is negative, jump to brtn2 to clear the C
+ BMI town2              \ If (A P) is negative, jump to town2 to clear the C
                         \ flag
 
  LSR A                  \ Set (A P) = (A P) / 4
  ROR P                  \
  LSR A                  \ If the high byte in A is non-zero, then the original A
- BNE brtn2              \ must be less than %10000000000 (1024), so jump to
- ROR P                  \ brtn2 to clear the C flag
+ BNE town2              \ must be less than %10000000000 (1024), so jump to
+ ROR P                  \ town2 to clear the C flag
 
  LDA P                  \ If the low byte in P >= the margin for this skill zone
- CMP skillZoneSize,X    \ in this axis, jump to brtn2 to clear the C flag
- BCS brtn2
+ CMP skillZoneSize,X    \ in this axis, jump to town2 to clear the C flag
+ BCS town2
 
  DEY                    \ Decrement the axis counter to point to the next axis
 
- BPL brtn1              \ Loop back until we have checked all three axes
+ BPL town1              \ Loop back until we have checked all three axes
 
                         \ If we get here, then:
                         \
@@ -25078,7 +25086,7 @@ NEXT
 
  RTS                    \ Return from the subroutine
 
-.brtn2
+.town2
 
  CLC                    \ Clear the C flag to indicate we are currently flying
                         \ outside this skill zone
@@ -25138,19 +25146,19 @@ NEXT
  ADC scoreHi            \ in scoreHi
  STA scoreHi
 
- BCS upsc1              \ If the addition overflowed (so the high byte is
-                        \ greater than &99), jump to upsc1 to return from the
+ BCS scor1              \ If the addition overflowed (so the high byte is
+                        \ greater than &99), jump to scor1 to return from the
                         \ subroutine
 
- CPX #&99               \ If X is not &99, jump to upsc1 to return from the
- BNE upsc1              \ subroutine (in practice, this routine is only ever
+ CPX #&99               \ If X is not &99, jump to scor1 to return from the
+ BNE scor1              \ subroutine (in practice, this routine is only ever
                         \ called with X = 0, so we should never get here)
 
  LDA #0                 \ If we get here then X = &99 and the addition of the
  STA scoreLo            \ high bytes overflowed, so reset the score to zero
  STA scoreHi
 
-.upsc1
+.scor1
 
  CLD                    \ Clear the D flag to switch arithmetic back to normal
 
@@ -25168,26 +25176,26 @@ NEXT
 .UpdateHighScore
 
  LDA scoreHi            \ If scoreHi < highScoreHi then we have not achieved a
- CMP highScoreHi        \ high score, so jump to uphs3 to return from the
- BCC uphs3              \ subroutine
+ CMP highScoreHi        \ high score, so jump to high3 to return from the
+ BCC high3              \ subroutine
 
- BNE uphs1              \ If the high byte of the score and high score are not
+ BNE high1              \ If the high byte of the score and high score are not
                         \ equal, then we know scoreHi > highScoreHi, so jump to
-                        \ uphs1 to update the high score
+                        \ high1 to update the high score
 
  LDA scoreLo            \ If we get here then scoreHi = highScoreHi, so now we
  CMP highScoreLo        \ check the low bytes. If ScoreHLo < highScoreLo then we
- BCC uphs3              \ have not achieved a high score, so jump to uphs3 to
+ BCC high3              \ have not achieved a high score, so jump to high3 to
                         \ return from the subroutine
 
-.uphs1
+.high1
 
  LDA scoreLo            \ (scoreHi scoreLo) > (highScoreHi highScoreLo), so this
  STA highScoreLo        \ is a new high score, so update the 16-bit high score
  LDA scoreHi            \ to the new score
  STA highScoreHi
 
-.uphs3
+.high3
 
  RTS                    \ Return from the subroutine
 
@@ -25292,7 +25300,7 @@ NEXT
  STY T                  \ Set Y to the offset of the character that's just after
                         \ the end of the string to print
 
-.prins1
+.prin1
 
  LDA scoreText,X        \ Print the X-th character from scoreText
  JSR OSWRCH
@@ -25300,7 +25308,7 @@ NEXT
  INX                    \ Increment X to point to the next character
 
  CPX T                  \ Loop back to print the next character until we have
- BNE prins1             \ printed all of them
+ BNE prin1              \ printed all of them
 
  RTS                    \ Return from the subroutine
 
@@ -25593,7 +25601,7 @@ NEXT
  SBC #8                 \ distanceFromHit, which increases the chance of
                         \ turbulence (as turbulence only kicks in when
                         \ distanceFromHit < 16)
- 
+
  BPL expl7              \ If the subtraction reduced A to below zero, set A = 0
  LDA #0                 \ to store in distanceFromHit
 
@@ -25789,7 +25797,7 @@ NEXT
  LDA #0                 \ Turn off the engine sound
  JSR ToggleEngineSound
 
- JSR UpdateHighScore    \ If this is a high score, update the high score 
+ JSR UpdateHighScore    \ If this is a high score, update the high score
 
  JSR DisplayScore       \ Print the scores on-screen
 
@@ -26297,7 +26305,7 @@ NEXT
  EQUB &00, &00
 
  EQUB &10, &00          \ Sound #1: Engine amplitude (SOUND &10, -5, 3, 255)
- EQUB &FB, &FF          \ 
+ EQUB &FB, &FF          \
  EQUB &03, &00          \ Second parameter (soundData+10) gets changed in the
  EQUB &FF, &00          \ ProcessVolumeKeys routine to alter the volume
 
@@ -26328,7 +26336,7 @@ NEXT
 
  EQUB &11, &00          \ Sound #7: Engine pitch (SOUND &11, 1, 255, 255)
  EQUB &01, &00          \
- EQUB &FF, &00          \ Uses sound envelope 1 
+ EQUB &FF, &00          \ Uses sound envelope 1
  EQUB &FF, &00          \
                         \ The fifth byte (soundData+60) is the low byte of the
                         \ sound's pitch and gets changed in various places
@@ -26627,7 +26635,7 @@ NEXT
  EQUB &F3, &FF
  EQUB &06, &00
  EQUB &03, &00
- 
+
 \ ******************************************************************************
 \
 \       Name: forceFactor
@@ -26817,7 +26825,7 @@ NEXT
                         \ we can erase it again (this value matches the value of
                         \ H passed to DrawVectorLine)
 
- EQUB 88                \ Start y-coordinate for indicator 7 (horizon) ???
+ EQUB 88                \ Start y-coordinate for indicator 7 (horizon)
 
 \ ******************************************************************************
 \
@@ -26967,7 +26975,7 @@ NEXT
 
  EQUB 0                 \ Temporary storage, typically used for storing
                         \ y-coordinates when drawing indicators
- 
+
  EQUB 0                 \ The y-coordinate of the top of the current vertical
                         \ bar for indicator 9 (rudder), so we can erase it when
                         \ required
@@ -27238,7 +27246,7 @@ NEXT
 \   * The same routine calculates various aerodynamic forces, as follows:
 \
 \       [ xMoments ] = [ yVelocityP * 2 - xTurn * 250 / 256 ]
-\       [ yMoments ] = [ xVelocityP * 2 - yTurn * 250 / 256 ] * maxv * 
+\       [ yMoments ] = [ xVelocityP * 2 - yTurn * 250 / 256 ] * maxv *
 \       [ zMoments ] = [            -zTurn * 2              ]       airDensity
 \
 \       [ xLiftDrag ] = [ xVelocityP * 2 * 4 ]
@@ -27324,7 +27332,7 @@ NEXT
  LDY #255               \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point 255
 
- STY GG                 \ Set GG to point ID 255, to pass to the call to 
+ STY GG                 \ Set GG to point ID 255, to pass to the call to
                         \ SetPointCoords
 
  JSR CopyWorkToPoint    \ Copy the coordinates from (xVelocity, yVelocity,
@@ -27788,7 +27796,7 @@ NEXT
                         \   * 248 if the plane is going backwards
                         \
                         \   * 11 if the approach is good and:
-                        \           either undercarriage is up 
+                        \           either undercarriage is up
                         \           or undercarriage is down, brakes are on
                         \
                         \   * 50 if the approach is bad and:
@@ -27801,7 +27809,7 @@ NEXT
                         \ We now subtract the value of A from zLinearHi
 
  STA P                  \ Set zLinearHi = zLinearHi - A
- SEC  
+ SEC
  LDA zLinearHi
  SBC P
  STA zLinearHi
@@ -27840,7 +27848,7 @@ NEXT
  LDA xVelocityPHi       \ Set Q = P with the the sign bit from xVelocityPHi
  AND #%10000000         \       = xVelocityPLo / 2 with the correct sign
  ORA P
- STA Q                  
+ STA Q
                         \ If xVelocityPLo is %vvvvvvvv and the sign bit of
                         \ xVelocityPHi is %s, then this sets
                         \
@@ -27973,7 +27981,7 @@ NEXT
  LDY #254               \ Set Y so the call to CopyWorkToPoint copies the
                         \ coordinates to point 254
 
- STY GG                 \ Set GG to point ID 254, to pass to the call to 
+ STY GG                 \ Set GG to point ID 254, to pass to the call to
                         \ SetPointCoords
 
  JSR CopyWorkToPoint    \ Copy the coordinates from (xTurn, yTurn, zTurn)
@@ -28161,17 +28169,17 @@ NEXT
  CLC                    \
  ADC xTurnLo,X          \ starting with the low bytes
  STA xTurnLo,X
- 
+
  LDA dxTurnHi,X         \ And then the high bytes
  ADC xTurnHi,X
  STA xTurnHi,X
- 
+
  LDA dxTurnTop,X        \ And then the top bytes
  ADC xTurnTop,X
  STA xTurnTop,X
- 
+
  DEX                    \ Decrement the loop counter to move to the next axis
- 
+
  BPL atur1              \ Loop back until we have processed all three axes
 
  RTS                    \ Return from the subroutine
@@ -28304,7 +28312,7 @@ NEXT
                         \ effectively adding xVelocityTop, but keeping track of
                         \ the fractional tally in xPlaneBot
                         \
-                        \ Fiknally, to support negative velocities, we extend 
+                        \ Fiknally, to support negative velocities, we extend
                         \ xVelocity with new high and top bytes, set to 0 or &FF
                         \ depending on the the sign of xVelocity, so that's:
                         \
@@ -28347,7 +28355,7 @@ NEXT
  STA xPlaneTop,X        \ so we now have the result we want:
                         \
                         \   (xPlaneTop xPlaneHi xPlaneLo xPlaneBot) +=
-                        \                              (xVelocityTop xVelocityHi)
+                        \                             (xVelocityTop xVelocityHi)
 
  LDA xRotationLo,X      \ Set xRotation = xRotation + dxRotation
  CLC                    \
@@ -28929,7 +28937,7 @@ NEXT
 
 .aero16
 
- ASL W                  \ Set (H A W) = (H A W) << 1 
+ ASL W                  \ Set (H A W) = (H A W) << 1
  ROL A
  ROL H
 
@@ -28946,7 +28954,7 @@ NEXT
  LDA H
  STA xMomentsHi,X
 
- DEX                    \ Decrement the loop counter to move onto the next 
+ DEX                    \ Decrement the loop counter to move onto the next
 
  BPL aero12             \ Loop back until we have set xMoments to zMoments and
                         \ xLiftDrag to zLiftDrag, so we now have:
@@ -29015,7 +29023,7 @@ NEXT
 
 .aero17
 
- ASL A                  \ Set (G W A) = (G W A) << 1 
+ ASL A                  \ Set (G W A) = (G W A) << 1
  ROL W
  ROL G
 
@@ -29144,7 +29152,7 @@ NEXT
                         \ 24-bit result, flipped, so it contains:
                         \
                         \   |A Y| * R / 512
-                        
+
 .scal3
 
  CMP #8                 \ If A < 8, jump to scal4 to skip the next three
@@ -29565,7 +29573,7 @@ NEXT
 .fcon3
 
                         \ If we get here then a key is being pressed for this
-                        \ control and A contains the control's current position 
+                        \ control and A contains the control's current position
 
  CPX #1                 \ If the axis in X < 1, then an elevator key is being
  BCC fcon7              \ pressed, so jump to fcon7 to leave the contol's
@@ -29730,17 +29738,17 @@ NEXT
  CLC                    \
  ADC xControlsScLo,X    \ starting with the low bytes
  STA dxTurnLo,X
- 
+
  LDA xMomentsScHi,X     \ And then the high bytes
  ADC xControlsScHi,X
  STA dxTurnHi,X
- 
+
  LDA xMomentsScTop,X    \ And then the top bytes
  ADC xControlsScTop,X
  STA dxTurnTop,X
- 
+
  DEX                    \ Decrement the loop counter to move to the next axis
- 
+
  BPL turn1              \ Loop back until we have added all three axes, so we
                         \ now have the following, where all values are 24-bit
                         \ numbers:
@@ -29924,7 +29932,7 @@ NEXT
  BCC turn6              \ two instructions
 
  ASL A                  \ Set (R A) = (R A) << 1
- ROL R                  \   
+ ROL R                  \
                         \ so we double the value of (R A) if the thrust is >=
                         \ (4 0), i.e. >= 1024
 
@@ -29938,7 +29946,7 @@ NEXT
  BCC turn7              \ the following
 
  ASL A                  \ Set (R A) = (R A) << 1
- ROL R                  \   
+ ROL R                  \
                         \ so we double the value of (R A) again if zVelocityPHi
                         \ is 2 or 3, which means zVelocity is in the range (2 0)
                         \ to (3 255), or 512 to 1023
@@ -30396,7 +30404,7 @@ NEXT
  LDA yVelocityHi        \ Set A = (yVelocityTop yVelocityHi) / 2
  ROR A                  \       = yVelocity / 2
                         \
-                        \ by shifting the low byte right by one place and 
+                        \ by shifting the low byte right by one place and
                         \ shifting the C flag into the top bit
 
  STA R                  \ Set R = A
@@ -30896,7 +30904,7 @@ ORG &5E00
                         \ Note that the &5800-&5BFF block gets copied again in
                         \ the DrawCanopy routine, so it ends up at &0D00-&10FF
 
-.entr1    
+.entr1
 
  LDA &5800,Y            \ Copy the Y-th byte of &5800 to the Y-th byte of &0400
  STA &0400,Y
