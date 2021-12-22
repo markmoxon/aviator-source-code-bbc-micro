@@ -15,6 +15,3 @@
 *.PDF    diff=astextplain
 *.rtf    diff=astextplain
 *.RTF    diff=astextplain
-
-# Disable Github's syntax colouring, as it isn't great for BBC Micro 6502 code
-*.asm    linguist-language=Text
