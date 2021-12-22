@@ -2,9 +2,9 @@
 
 ![Screenshot of Aviator on the BBC Micro](https://aviator.bbcelite.com/images/github/Aviator.png)
 
-This repository contains source code for Aviator on the BBC Micro.
+This repository contains source code for the Aviator on the BBC Micro, with every single line documented and (for the most part) explained.
 
-I am slowly adding commentary to the code. Check out the [main source file](1-source-files/main-sources/aviator-source.asm) to see how I'm getting on, as well as the work-in-progress collection of [deep dives](https://aviator.bbcelite.com/deep_dives/). It might take some time... it's complicated stuff!
+It is a companion to the [aviator.bbcelite.com website](https://aviator.bbcelite.com).
 
 See the [introduction](#introduction) for more information.
 
@@ -31,9 +31,17 @@ See the [introduction](#introduction) for more information.
 
 ## Introduction
 
-This repository contains source code for Aviator on the BBC Micro.
+This repository contains source code for Aviator on the BBC Micro, with every single line documented and (for the most part) explained..
 
 You can build the fully functioning game from this source. One release is currently supported: the version from the Complete BBC Micro Games Archive at bbcmicro.co.uk.
+
+It is a companion to the [aviator.bbcelite.com website](https://aviator.bbcelite.com) website, which contains all the code from this repository, but laid out in a much more human-friendly fashion.
+
+* If you want to browse the source and read about how Aviator works under the hood, you will probably find [the website](https://aviator.bbcelite.com) is a better place to start than this repository.
+
+* If you would rather explore the source code in your favourite IDE, then the [annotated source](1-source-files/main-sources/aviator-source.asm) is what you're looking for. It contains the exact same content as the website, so you won't be missing out (the website is generated from the source files, so they are guaranteed to be identical). You might also like to read the section on [Browsing the source in an IDE](#browsing-the-source-in-an-ide) for some tips.
+
+* If you want to build Aviator from the source on a modern computer, to produce a working game disc that can be loaded into a BBC Micro or an emulator, then you want the section on [Building Aviator from the source](#building-aviator-from-the-source).
 
 My hope is that this repository will be useful for those who want to learn more about Aviator and what makes it tick. It is provided on an educational and non-profit basis, with the aim of helping people appreciate the magic of Geoff Crammond's first simulator, which was ground-breaking and deeply impressive for its time.
 
@@ -55,7 +63,7 @@ The reason for this is that my commentary is intertwined with the original Aviat
 
 Under GitHub's rules, you have the right to read and fork this repository... but that's it. No other use is permitted, I'm afraid.
 
-My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation. I do hope, though, that it will remain viable.
+My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation.  I do hope, though, that along with the various other disassemblies and commentaries of Acornsoft's games for the BBC Micro, it will remain viable.
 
 ## Browsing the source in an IDE
 
