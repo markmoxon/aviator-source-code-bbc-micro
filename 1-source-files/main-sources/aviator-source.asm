@@ -3496,6 +3496,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ The commentary in this routine is a work in progress.
+\
 \ This routine calculates:
 \
 \   (Q P) = (X Y) divided by (TT S)
@@ -4002,6 +4004,8 @@ ORG CODE%
 \             DivideScaled routines
 \
 \ ------------------------------------------------------------------------------
+\
+\ The commentary in this routine is a work in progress.
 \
 \ Arguments:
 \
@@ -5114,6 +5118,8 @@ ORG CODE%
 \    Summary: Draw a line in the canopy view
 \
 \ ------------------------------------------------------------------------------
+\
+\ The commentary in this routine is a work in progress.
 \
 \ The code in this routine is modified by the ModifyDrawRoutine routine, and by
 \ the DrawCanopyLine routine itself.
@@ -7101,6 +7107,8 @@ ORG CODE%
 \    Summary: Check whether the line is completely off-screen
 \
 \ ------------------------------------------------------------------------------
+\
+\ The commentary in this routine is a work in progress.
 \
 \ Arguments:
 \
@@ -12309,6 +12317,8 @@ ORG CODE%
 \
 \ ------------------------------------------------------------------------------
 \
+\ The commentary in this routine is a work in progress.
+\
 \ matrix4Lo, matrix4Lo+2, matrix4Lo+3, matrix4Lo+4 are only used to provide
 \ signs in bit 0:
 \   Negative if bit 0 is set, positive if clear
@@ -13180,8 +13190,8 @@ ORG CODE%
 
  LDY onGround           \ If onGround is non-zero, then we are on the ground, so
  BNE indu4              \ jump to indu4 to set the undercarriage to up (because
-                        \ once we have landed with the undercarriage up, we can't
-                        \ put it down again)
+                        \ once we have landed with the undercarriage up, we
+                        \ can't put it down again)
 
  CLC                    \ Set A = A + 10
  ADC #10                \
