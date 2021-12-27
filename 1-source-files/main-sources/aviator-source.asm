@@ -24682,6 +24682,15 @@ NEXT
  EQUB &3A, &53, &54, &41, &26, &37, &32, &0D
  EQUB &09, &CE, &1C, &20
 
+\ ******************************************************************************
+\
+\       Name: xLinearHi
+\       Type: Variable
+\   Category: 3D geometry
+\    Summary: High byte of point 252 (x-coordinate)
+\
+\ ******************************************************************************
+
 .xLinearHi
 
  EQUB &20               \ High byte of point 252 (x-coordinate)
@@ -24690,6 +24699,15 @@ NEXT
                         \ on the plane when calculating the flight model
                         \
                         \ Stored as a 16-bit value (xLinearHi xLinearLo)
+
+\ ******************************************************************************
+\
+\       Name: xGravityHi
+\       Type: Variable
+\   Category: 3D geometry
+\    Summary: High byte of point 253 (x-coordinate)
+\
+\ ******************************************************************************
 
 .xGravityHi
 
@@ -24700,6 +24718,15 @@ NEXT
                         \
                         \ Stored as a 16-bit value (xGravityHi xGravityLo)
 
+\ ******************************************************************************
+\
+\       Name: xTempPoint1Hi
+\       Type: Variable
+\   Category: 3D geometry
+\    Summary: High byte of point 254 (x-coordinate)
+\
+\ ******************************************************************************
+
 .xTempPoint1Hi
 
  EQUB &20               \ High byte of point 254 (x-coordinate)
@@ -24708,6 +24735,15 @@ NEXT
                         \ in space
                         \
                         \ Stored as a 16-bit value (xTempPoint1Hi xTempPoint1Lo)
+
+\ ******************************************************************************
+\
+\       Name: xTempPoint2Hi
+\       Type: Variable
+\   Category: 3D geometry
+\    Summary: High byte of point 255 (x-coordinate)
+\
+\ ******************************************************************************
 
 .xTempPoint2Hi
 
