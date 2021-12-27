@@ -3485,8 +3485,6 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
- EQUB &20, &48, &0F     \ These bytes appear to be unused
-
 \ ******************************************************************************
 \
 \       Name: DivideScaled
@@ -3529,6 +3527,11 @@ ORG CODE%
 \                       value of (TT S)
 \
 \ ******************************************************************************
+
+ JSR ScaleUp            \ This instruction appears to be an unused duplicate of
+                        \ the first instruction of DivideScaled, so perhaps this
+                        \ is a remnant of an unused entry point DivideScaled-3,
+                        \ which would run ScaleUp twice?
 
 .DivideScaled
 
@@ -10257,7 +10260,9 @@ ORG CODE%
 
  RTS                    \ Return from the subroutine
 
- EQUB &00, &49, &60     \ These bytes appear to be unused
+ EQUB &00, &49, &60     \ These bytes appear to be unused, and simply repeat the
+                        \ last three bytes from above (i.e. the last two bytes
+                        \ of STA zPointHi,X and the RTS instruction)
 
 \ ******************************************************************************
 \
@@ -14586,7 +14591,7 @@ ORG CODE%
 \
 \ ******************************************************************************
 
- JSR ProcessLinesToShow \ Process a line from the linesToShow list
+ JSR ProcessLinesToShow \ Process the lines in the linesToShow list
 
  JSR DrawCanopyView     \ Update the main view out of the canopy
 
@@ -15626,7 +15631,7 @@ ORG CODE%
 \       Name: SetObjectCoords (Part 1 of 11)
 \       Type: Subroutine
 \   Category: 3D geometry
-\    Summary: Calculate the coordinates for an object's points
+\    Summary: Calculate the coordinates for an object's location
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22568,7 +22573,7 @@ NEXT
  EQUB &15               \ The score for a small feeding alien (150 points)
  EQUB &25               \ The score for the smallest feeding alien (250 points)
 
- EQUB &00
+ EQUB &00               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -23295,10 +23300,10 @@ NEXT
 \ Object ID  3 has coordinate ( 17885,     0, 25395 ) - Lake/river
 \ Object ID  4 has coordinate ( 21299,     0, 49152 ) - Lake/river
 \ Object ID  5 has coordinate ( 36591,     0, 49425 ) - Lake/river
-\ Object ID  6 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
-\ Object ID  7 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
-\ Object ID  8 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
-\ Object ID  9 has coordinate (     0,     0,     0 ) - Dynamic, tree/hill
+\ Object ID  6 has coordinate (     0,     0,     0 ) - Group, type 1 trees
+\ Object ID  7 has coordinate (     0,     0,     0 ) - Group, type 2 trees
+\ Object ID  8 has coordinate (     0,     0,     0 ) - Group, type 1 hills
+\ Object ID  9 has coordinate (     0,     0,     0 ) - Group, type 2 hills
 \ Object ID 10 has coordinate ( 19791,  3367, 23086 ) - Unused
 \ Object ID 11 has coordinate ( 20568,  1824, 21107 ) - Unused
 \ Object ID 12 has coordinate (     0,     0,     0 ) - Dynamic, bullets
