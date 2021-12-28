@@ -7935,7 +7935,7 @@ ORG CODE%
 \ argument (J I) has the sign in bit 7 of the high byte, and the other argument
 \ (S R) has the sign in bit 0 of the low byte. It calculates:
 \
-\   (H G) = (J I) * (S R) / 256
+\   (H G) = (J I) * (S R) >> 16
 \
 \ The result in (H G) has the sign in bit 7 of the high byte.
 \
@@ -7952,9 +7952,9 @@ ORG CODE%
 \
 \   K                   Optionally negate (J I):
 \
-\                         * 0 = calculate (J I) * (S R)
+\                         * 0 = calculate (J I) * (S R) >> 16
 \
-\                         * 128 = calculate -(J I) * (S R)
+\                         * 128 = calculate -(J I) * (S R) >> 16
 \
 \                       In practice, this routine is always called with K = 0
 \
@@ -7996,12 +7996,12 @@ ORG CODE%
 
 .mmix2
 
- JSR Multiply16x16      \ Calculate (H A) = (S R) * (J I) / 256
+ JSR Multiply16x16      \ Calculate (H A) = (S R) * (J I) >> 16
                         \
                         \ and set the C flag if we need to increment H
 
  STA G                  \ Set (H G) = (H A)
-                        \           = (S R) * (J I) / 256
+                        \           = (S R) * (J I) >> 16
 
  BCC mmix3              \ Increment the top byte in H if required
  INC H
@@ -8427,7 +8427,7 @@ ORG CODE%
 \
 \ Returns:
 \
-\   (A Y)               (cos(X) * W / 256) + sin(X)
+\   (A Y)               sin(X W)
 \
 \   (X W)               Unchanged
 \
@@ -8509,7 +8509,9 @@ ORG CODE%
 \ This routine multiplies a 4-bit number by a 16-bit number, using the lookup
 \ table at timesTable for fast results. It does the following calculation:
 \
-\   (G W) = V * (S R)
+\   (G W) = V * (S R) >> 8
+\
+\ If bit 7 of K is set, the routine returns double this amount.
 \
 \ Arguments:
 \
@@ -8518,11 +8520,11 @@ ORG CODE%
 \   V                   A 4-bit number (0 to 15), can be positive or negative
 \                       (i.e. bit 7 contains the sign, bits 0-3 the magnitude)
 \
-\   K                   Determines whether to multiply the result by 2:
+\   K                   Bit 7 determines whether to multiply the result by 2:
 \
-\                         * If K = 0, calculate (G W) = V * (S R) / 16
+\                         * If bit 7 of K = 0, calculate (G W) = V * (S R) >> 8
 \
-\                         * If K = 1, calculate (G W) = V * (S R) / 8
+\                         * If bit 7 of K = 1, calculate (G W) = V * (S R) >> 7
 \
 \ ******************************************************************************
 
@@ -8827,9 +8829,9 @@ ORG CODE%
 
  JSR Multiply4x16       \ Call Multiply4x16 to calculate:
                         \
-                        \   (G W) = V * (S R) / 16      if bit 7 of K = 0
+                        \   (G W) = V * (S R) >> 8       if bit 7 of K = 0
                         \
-                        \   (G W) = V * (S R) / 8       if bit 7 of K = 1
+                        \   (G W) = V * (S R) >> 7       if bit 7 of K = 1
                         \
                         \ K is only set to 1 if the scale factor is 9, in which
                         \ case we effectively do one of the factors of 2 at this
@@ -9445,8 +9447,8 @@ ORG CODE%
  LDA my2Hi,X
  STA S
 
- JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
-                        \           = -(mx2 * mz1 * my2) / 256
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) >> 16
+                        \           = -(mx2 * mz1 * my2) >> 16
 
  LDY matrixNumber       \ Set Y = 0
 
@@ -9475,8 +9477,8 @@ ORG CODE%
  LDA my1Hi,X
  STA S
 
- JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
-                        \           = -(mx2 * mz1 * my1) / 256
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) >> 16
+                        \           = -(mx2 * mz1 * my1) >> 16
 
  LDY matrixNumber       \ Set Y = 0
 
@@ -9514,8 +9516,8 @@ ORG CODE%
  LDA my2Hi,X
  STA S
 
- JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
-                        \           = mz1 * -my2 / 256
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) >> 16
+                        \           = mz1 * -my2 >> 16
 
  LDY matrixNumber       \ Set Y = 0
 
@@ -9535,8 +9537,8 @@ ORG CODE%
  EOR #1                 \           = my2
  STA R
 
- JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
-                        \           = mx2 * mz2 * my2 / 256
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) >> 16
+                        \           = mx2 * mz2 * my2 >> 16
 
  LDY matrixNumber       \ Set Y = 0
 
@@ -9566,8 +9568,8 @@ ORG CODE%
  LDA my1Hi,X
  STA J
 
- JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
-                        \           = my1 * mx2 * mz2 / 256
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) >> 16
+                        \           = my1 * mx2 * mz2 >> 16
 
  LDY matrixNumber       \ Set Y = 0
 
@@ -9668,7 +9670,7 @@ ORG CODE%
 \ If mRead is the matrix entry in X (from mx1 to mz2) and mWrite is the matrix
 \ entry in Y (from m0 to m8), then it calculates the following:
 \
-\   mWrite = (J I) * mRead / 256
+\   mWrite = (J I) * mRead >> 16
 \
 \ Arguments:
 \
@@ -9712,7 +9714,7 @@ ORG CODE%
 \
 \ Returns:
 \
-\   mWrite              (J I) * mRead / 256
+\   mWrite              (J I) * mRead >> 16
 \
 \   (S R)               The value of mRead
 \
@@ -9720,9 +9722,9 @@ ORG CODE%
 \
 \ Other entry points:
 \
-\   SetMatrixEntry2     Set mWrite = (S R) * mRead / 256 and (J I) = mRead
+\   SetMatrixEntry2     Set mWrite = (S R) * mRead >> 16 and (J I) = mRead
 \
-\   SetMatrixEntry3     Set mWrite = (J I) * -mRead / 256 and (S R) = -mRead
+\   SetMatrixEntry3     Set mWrite = (J I) * -mRead >> 16 and (S R) = -mRead
 \
 \ ******************************************************************************
 
@@ -9775,7 +9777,7 @@ ORG CODE%
  ADC matrixNumber       \ This sets N = Y when matrixNumber = 0, which is the
  STA N                  \ only value that this routine is called with
 
- JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) / 256
+ JSR Multiply16x16Bit0  \ Set (H G) = (J I) * (S R) >> 16
 
  LDY N                  \ Fetch the index of the matrix entry to write that we
                         \ stored in N above
@@ -9792,23 +9794,27 @@ ORG CODE%
 \       Name: Multiply16x16
 \       Type: Subroutine
 \   Category: Maths
-\    Summary: Multiply two positive 16-bit numbers
+\    Summary: Multiply two unsigned 16-bit numbers
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine multiplies two positive 16-bit numbers (i.e. bit 7 of the high
-\ byte is 0 in both arguments):
+\ This routine multiplies two unsigned 16-bit numbers:
 \
-\   (H A) = (J I) * (S R) / 256
+\   (H A) = (J I) * (S R) >> 16
 \
 \ The fractional part of the result is in W, so this is the full result, though
 \ in practice W is ignored:
 \
-\   (H A W) = (J I) * (S R)
+\   (H A W) = (J I) * (S R) >> 8
 \
 \ The fractional part is rounded up or down, to the nearest integer, by adding
 \ 128 at mult1. This part of the code is modified by the ApplyAerodynamics
 \ routine to toggle this rounding behaviour.
+\
+\ If the C flag is set on return, then the result in H needs to be incremented,
+\ so technically the result is:
+\
+\   (H+C A) = (J I) * (S R) >> 16
 \
 \ The multiplication is done using the following algorithm:
 \
@@ -9831,9 +9837,9 @@ ORG CODE%
 \
 \ Arguments:
 \
-\   (S R)               A positive 16-bit number
+\   (S R)               An unsigned 16-bit number
 \
-\   (J I)               A positive 16-bit number
+\   (J I)               An unsigned 16-bit number
 \
 \ Returns:
 \
@@ -9953,7 +9959,7 @@ ORG CODE%
 \ This routine multiplies two 16-bit numbers, both of which have their signs in
 \ bit 0 of the low byte. It calculates:
 \
-\   (H G) = (J I) * (S R) / 256
+\   (H G) = (J I) * (S R) >> 16
 \
 \ The result in (H G) has the sign in bit 0 of the low byte.
 \
@@ -9979,7 +9985,7 @@ ORG CODE%
  AND #%00000001
  STA K
 
- JSR Multiply16x16      \ Calculate (H A) = (S R) * (J I) / 256
+ JSR Multiply16x16      \ Calculate (H A) = (S R) * (J I) >> 16
                         \
                         \ and set the C flag if we need to increment H
 
@@ -9987,7 +9993,7 @@ ORG CODE%
  ORA K                  \ (H A) has the correct sign of the multiplication
 
  STA G                  \ Set (H G) = (H A)
-                        \           = (S R) * (J I) / 256
+                        \           = (S R) * (J I) >> 16
 
  BCC mbit1              \ Increment the top byte in H if required
  INC H
@@ -10168,7 +10174,7 @@ ORG CODE%
 
  JSR Multiply16x16Mix   \ Call Multiply16x16Mix to calculate:
                         \
-                        \   (H G) = (J I) * (S R) / 256
+                        \   (H G) = (J I) * (S R) >> 16
 
  LDX Q                  \ Restore the value of X
 
@@ -28963,7 +28969,7 @@ NEXT
 
  JSR Multiply16x16Mix   \ Call Multiply16x16Mix to calculate:
                         \
-                        \   (H G W) = (J I) * (S R)
+                        \   (H G W) = (J I) * (S R) / 256
                         \
                         \        = xTemp3         * max(|velocityP|) * ~yPlaneHi
                         \
