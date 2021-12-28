@@ -2,7 +2,7 @@
 
 ![Screenshot of Aviator on the BBC Micro](https://aviator.bbcelite.com/images/github/Aviator.png)
 
-This repository contains source code for the Aviator on the BBC Micro, with every single line documented and (for the most part) explained.
+This repository contains source code for Aviator on the BBC Micro, with every single line documented and (for the most part) explained.
 
 It is a companion to the [aviator.bbcelite.com website](https://aviator.bbcelite.com).
 
