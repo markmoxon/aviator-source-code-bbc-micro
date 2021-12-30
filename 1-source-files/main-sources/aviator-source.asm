@@ -8643,7 +8643,8 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinate for a point within an object
-\  Deep dive: Rotating and translating points in 3D space
+\  Deep dive: 3D objects
+\             Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8883,7 +8884,8 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Apply the correct scale factor to the matrix multiplication
-\  Deep dive: Rotating and translating points in 3D space
+\  Deep dive: 3D objects
+\             Rotating and translating points in 3D space
 \
 \ ******************************************************************************
 
@@ -10008,7 +10010,8 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinates for a point
-\  Deep dive: Rotating and translating points in 3D space
+\  Deep dive: Lines and points
+\             Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14559,6 +14562,7 @@ ORG CODE%
 \    Summary: Spend at least 9 centiseconds processing lines from the
 \             linesToHide list
 \  Deep dive: Program flow of the main game loop
+\             Scheduling tasks in the main loop
 \
 \ ******************************************************************************
 
@@ -14723,6 +14727,7 @@ ORG CODE%
 \   Category: Visibility
 \    Summary: Update the linesToShow list, moving any lines that aren't visible
 \             into the linesToHide list
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -14809,6 +14814,7 @@ ORG CODE%
 \   Category: Visibility
 \    Summary: Process the linesToShow list, projecting all the lines onto the
 \             screen and moving any that aren't visible to the linesToHide list
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15051,6 +15057,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Process an unprocessed line from the linesToHide list
+\  Deep dive: Visibility checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15105,6 +15112,7 @@ ORG CODE%
 \   Category: Visibility
 \    Summary: Process a line, working out its visibility and adding it to the
 \             linesToShow or linesToHide list
+\  Deep dive: Visibility checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15167,6 +15175,7 @@ ORG CODE%
 \   Category: Visibility
 \    Summary: Process a line, rotating and transforming it to the correct
 \             coordinates and calculating its visibility
+\  Deep dive: Visibility checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15234,6 +15243,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Process runway lines
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15254,6 +15264,7 @@ ORG CODE%
 \   Category: Visibility
 \    Summary: If a line is part of a multi-point object, extract the other
 \             points in the line so we can check them all
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15363,6 +15374,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Process bullet lines
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15398,6 +15410,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate the object's coordinates and visibility
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15465,6 +15478,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check the visibility of all the object's points on the stack
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15546,6 +15560,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Check distance and z-coordinates and return the final result
+\  Deep dive: Visibility checks
 \
 \ ******************************************************************************
 
@@ -15638,6 +15653,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Calculate the coordinates for an object's location
+\  Deep dive: 3D objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15709,6 +15725,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Pre-process the bullets (objects 12, 13, 14 or 15)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -15744,6 +15761,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Logic for checking which objects to pre-process
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -15772,6 +15790,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Pre-process the object groups (objects 6, 7, 8 or 9)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -15804,6 +15823,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Logic for checking which objects to pre-process
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -15827,6 +15847,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Pre-process dormant aliens (object group 30)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -15878,6 +15899,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Pre-process feeding and flying aliens (objects 31, 32 and 33)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -15914,6 +15936,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Process the object
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -16063,6 +16086,7 @@ ORG CODE%
 \   Category: 3D geometry
 \    Summary: Process the next object in the group, if applicable, or return
 \             from the subroutine if not
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -16110,6 +16134,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Process the next dormant alien (object group 30)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -16139,6 +16164,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: 3D geometry
 \    Summary: Update the object status and return from the subroutine
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -16162,6 +16188,7 @@ ORG CODE%
 \   Category: Visibility
 \    Summary: Check whether an object is within the visible distance for that
 \             object, along just one axis
+\  Deep dive: Visibility checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16581,6 +16608,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate coordinates for the horizon's start and end points
+\  Deep dive: Visibility checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17876,6 +17904,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: Update the aliens so they progress through their feeding or attack
 \             cycles
+\  Deep dive: Scheduling tasks in the main loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18106,6 +18135,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: The Theme
 \    Summary: When an alien reaches the next feeding stage, double its size
+\  Deep dive: Scheduling tasks in the main loop
 \
 \ ******************************************************************************
 
@@ -19081,6 +19111,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Visibility
 \    Summary: Calculate coordinates and visibility for a runway line
+\  Deep dive: Visibility checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19974,6 +20005,7 @@ ORG CODE%
 \   Category: Flight model
 \    Summary: Fill up the fuel tank by 1/65th of a full tank every four
 \             iterations of the main loop
+\  Deep dive: Scheduling tasks in the main loop
 \
 \ ******************************************************************************
 
@@ -20015,6 +20047,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Dashboard
 \    Summary: Update the fuel gauge every 16 iterations of the main loop
+\  Deep dive: Scheduling tasks in the main loop
 \
 \ ******************************************************************************
 
@@ -20210,6 +20243,8 @@ ORG CODE%
 \   Category: 3D geometry
 \    Summary: Scaled x-coordinates of the points that make up objects, relative
 \             to the object's anchor point
+\  Deep dive: 3D objects
+\             Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20457,6 +20492,8 @@ ORG CODE%
 \   Category: 3D geometry
 \    Summary: Scaled y-coordinates of the points that make up objects, relative
 \             to the object's anchor point
+\  Deep dive: 3D objects
+\             Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20690,6 +20727,8 @@ ORG CODE%
 \   Category: 3D geometry
 \    Summary: Scaled z-coordinates of the points that make up objects, relative
 \             to the object's anchor point
+\  Deep dive: 3D objects
+\             Rotating and translating points in 3D space
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21416,6 +21455,7 @@ NEXT
 \       Type: Variable
 \   Category: Visibility
 \    Summary: The furthest distance at which each line is visible
+\  Deep dive: Lines and points
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21661,46 +21701,46 @@ NEXT
 
 .maxObjDistance
 
- EQUB 108               \ Object ID  0
- EQUB 125               \ Object ID  1
- EQUB 125               \ Object ID  2
- EQUB 125               \ Object ID  3
- EQUB 125               \ Object ID  4
- EQUB 125               \ Object ID  5
- EQUB  40               \ Object ID  6
- EQUB  40               \ Object ID  7
- EQUB 110               \ Object ID  8
- EQUB 110               \ Object ID  9
- EQUB  58               \ Object ID 10
- EQUB  66               \ Object ID 11
- EQUB  30               \ Object ID 12
- EQUB  30               \ Object ID 13
- EQUB  30               \ Object ID 14
- EQUB  30               \ Object ID 15
- EQUB 125               \ Object ID 16
- EQUB 125               \ Object ID 17
- EQUB 125               \ Object ID 18
- EQUB 125               \ Object ID 19
- EQUB 125               \ Object ID 20
- EQUB 125               \ Object ID 21
- EQUB 125               \ Object ID 22
- EQUB 125               \ Object ID 23
- EQUB 125               \ Object ID 24
- EQUB 125               \ Object ID 25
- EQUB 125               \ Object ID 26
- EQUB 125               \ Object ID 27
- EQUB 125               \ Object ID 28
- EQUB 125               \ Object ID 29
- EQUB  25               \ Object ID 30
- EQUB  90               \ Object ID 31
- EQUB  90               \ Object ID 32
- EQUB  90               \ Object ID 33
- EQUB 125               \ Object ID 34
- EQUB  58               \ Object ID 35
- EQUB  66               \ Object ID 36
- EQUB  78               \ Object ID 37
- EQUB  69               \ Object ID 38
- EQUB  32               \ Object ID 39
+ EQUB 108               \ Object  0
+ EQUB 125               \ Object  1
+ EQUB 125               \ Object  2
+ EQUB 125               \ Object  3
+ EQUB 125               \ Object  4
+ EQUB 125               \ Object  5
+ EQUB  40               \ Object  6
+ EQUB  40               \ Object  7
+ EQUB 110               \ Object  8
+ EQUB 110               \ Object  9
+ EQUB  58               \ Object 10
+ EQUB  66               \ Object 11
+ EQUB  30               \ Object 12
+ EQUB  30               \ Object 13
+ EQUB  30               \ Object 14
+ EQUB  30               \ Object 15
+ EQUB 125               \ Object 16
+ EQUB 125               \ Object 17
+ EQUB 125               \ Object 18
+ EQUB 125               \ Object 19
+ EQUB 125               \ Object 20
+ EQUB 125               \ Object 21
+ EQUB 125               \ Object 22
+ EQUB 125               \ Object 23
+ EQUB 125               \ Object 24
+ EQUB 125               \ Object 25
+ EQUB 125               \ Object 26
+ EQUB 125               \ Object 27
+ EQUB 125               \ Object 28
+ EQUB 125               \ Object 29
+ EQUB  25               \ Object 30
+ EQUB  90               \ Object 31
+ EQUB  90               \ Object 32
+ EQUB  90               \ Object 33
+ EQUB 125               \ Object 34
+ EQUB  58               \ Object 35
+ EQUB  66               \ Object 36
+ EQUB  78               \ Object 37
+ EQUB  69               \ Object 38
+ EQUB  32               \ Object 39
 
 \ ******************************************************************************
 \
@@ -21928,6 +21968,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: The point ID for a line's end point
+\  Deep dive: Lines and points
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22145,6 +22186,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: The current group number for object IDs 6, 7, 8 and 9
+\  Deep dive: 3D objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22195,46 +22237,47 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for objects in a group (6 to 9)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
 .xGroupObjectHi
 
- EQUB &C8               \ Object 6: group 0 has coordinate (&C800, &0000, &5200)
- EQUB &2A               \ Object 6: group 1 has coordinate (&2A00, &0000, &D200)
- EQUB &CF               \ Object 6: group 2 has coordinate (&CF00, &0000, &9A00)
- EQUB &82               \ Object 6: group 3 has coordinate (&8200, &0000, &C900)
- EQUB &1D               \ Object 6: group 4 has coordinate (&1D00, &0000, &3E00)
- EQUB &75               \ Object 6: group 5 has coordinate (&7500, &0000, &3300)
- EQUB &1A               \ Object 6: group 6 has coordinate (&1A00, &0000, &8A00)
- EQUB &CF               \ Object 6: group 7 has coordinate (&CF00, &0000, &EC00)
+ EQUB &C8               \ Object 6: tree 0 has coordinates (&C800, &0000, &5200)
+ EQUB &2A               \ Object 6: tree 1 has coordinates (&2A00, &0000, &D200)
+ EQUB &CF               \ Object 6: tree 2 has coordinates (&CF00, &0000, &9A00)
+ EQUB &82               \ Object 6: tree 3 has coordinates (&8200, &0000, &C900)
+ EQUB &1D               \ Object 6: tree 4 has coordinates (&1D00, &0000, &3E00)
+ EQUB &75               \ Object 6: tree 5 has coordinates (&7500, &0000, &3300)
+ EQUB &1A               \ Object 6: tree 6 has coordinates (&1A00, &0000, &8A00)
+ EQUB &CF               \ Object 6: tree 7 has coordinates (&CF00, &0000, &EC00)
 
- EQUB &9C               \ Object 7: group 0 has coordinate (&9C00, &0000, &C600)
- EQUB &43               \ Object 7: group 1 has coordinate (&4300, &0000, &E200)
- EQUB &E5               \ Object 7: group 2 has coordinate (&E500, &0000, &BA00)
- EQUB &8A               \ Object 7: group 3 has coordinate (&8A00, &0000, &7000)
- EQUB &EA               \ Object 7: group 4 has coordinate (&EA00, &0000, &6E00)
- EQUB &22               \ Object 7: group 5 has coordinate (&2200, &0000, &4400)
- EQUB &6A               \ Object 7: group 6 has coordinate (&6A00, &0000, &2000)
- EQUB &C5               \ Object 7: group 7 has coordinate (&C500, &0000, &1B00)
+ EQUB &9C               \ Object 7: tree 0 has coordinates (&9C00, &0000, &C600)
+ EQUB &43               \ Object 7: tree 1 has coordinates (&4300, &0000, &E200)
+ EQUB &E5               \ Object 7: tree 2 has coordinates (&E500, &0000, &BA00)
+ EQUB &8A               \ Object 7: tree 3 has coordinates (&8A00, &0000, &7000)
+ EQUB &EA               \ Object 7: tree 4 has coordinates (&EA00, &0000, &6E00)
+ EQUB &22               \ Object 7: tree 5 has coordinates (&2200, &0000, &4400)
+ EQUB &6A               \ Object 7: tree 6 has coordinates (&6A00, &0000, &2000)
+ EQUB &C5               \ Object 7: tree 7 has coordinates (&C500, &0000, &1B00)
 
- EQUB &15               \ Object 8: group 0 has coordinate (&1500, &0000, &2F00)
- EQUB &C4               \ Object 8: group 1 has coordinate (&C400, &0000, &0500)
- EQUB &C4               \ Object 8: group 2 has coordinate (&C400, &0000, &0500)
- EQUB &CE               \ Object 8: group 3 has coordinate (&CE00, &0000, &F500)
- EQUB &CE               \ Object 8: group 4 has coordinate (&CE00, &0000, &F500)
- EQUB &CE               \ Object 8: group 5 has coordinate (&CE00, &0000, &F500)
- EQUB &15               \ Object 8: group 6 has coordinate (&1500, &0000, &2F00)
- EQUB &11               \ Object 8: group 7 has coordinate (&1100, &0000, &D600)
+ EQUB &15               \ Object 8: hill 0 has coordinates (&1500, &0000, &2F00)
+ EQUB &C4               \ Object 8: hill 1 has coordinates (&C400, &0000, &0500)
+ EQUB &C4               \ Object 8: hill 2 has coordinates (&C400, &0000, &0500)
+ EQUB &CE               \ Object 8: hill 3 has coordinates (&CE00, &0000, &F500)
+ EQUB &CE               \ Object 8: hill 4 has coordinates (&CE00, &0000, &F500)
+ EQUB &CE               \ Object 8: hill 5 has coordinates (&CE00, &0000, &F500)
+ EQUB &15               \ Object 8: hill 6 has coordinates (&1500, &0000, &2F00)
+ EQUB &11               \ Object 8: hill 7 has coordinates (&1100, &0000, &D600)
 
- EQUB &38               \ Object 9: group 0 has coordinate (&3800, &0000, &1C00)
- EQUB &D5               \ Object 9: group 1 has coordinate (&D500, &0000, &2E00)
- EQUB &D5               \ Object 9: group 2 has coordinate (&D500, &0000, &2E00)
- EQUB &DA               \ Object 9: group 3 has coordinate (&DA00, &0000, &D300)
- EQUB &DA               \ Object 9: group 4 has coordinate (&DA00, &0000, &D300)
- EQUB &0D               \ Object 9: group 5 has coordinate (&0D00, &0000, &D900)
- EQUB &38               \ Object 9: group 6 has coordinate (&3800, &0000, &1C00)
- EQUB &0D               \ Object 9: group 7 has coordinate (&0D00, &0000, &D900)
+ EQUB &38               \ Object 9: hill 0 has coordinates (&3800, &0000, &1C00)
+ EQUB &D5               \ Object 9: hill 1 has coordinates (&D500, &0000, &2E00)
+ EQUB &D5               \ Object 9: hill 2 has coordinates (&D500, &0000, &2E00)
+ EQUB &DA               \ Object 9: hill 3 has coordinates (&DA00, &0000, &D300)
+ EQUB &DA               \ Object 9: hill 4 has coordinates (&DA00, &0000, &D300)
+ EQUB &0D               \ Object 9: hill 5 has coordinates (&0D00, &0000, &D900)
+ EQUB &38               \ Object 9: hill 6 has coordinates (&3800, &0000, &1C00)
+ EQUB &0D               \ Object 9: hill 7 has coordinates (&0D00, &0000, &D900)
 
 \ ******************************************************************************
 \
@@ -22242,46 +22285,47 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for objects in a group (6 to 9)
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
 .zGroupObjectHi
 
- EQUB &52               \ Object 6: group 0 has coordinate (&C800, &0000, &5200)
- EQUB &D2               \ Object 6: group 1 has coordinate (&2A00, &0000, &D200)
- EQUB &9A               \ Object 6: group 2 has coordinate (&CF00, &0000, &9A00)
- EQUB &C9               \ Object 6: group 3 has coordinate (&8200, &0000, &C900)
- EQUB &3E               \ Object 6: group 4 has coordinate (&1D00, &0000, &3E00)
- EQUB &33               \ Object 6: group 5 has coordinate (&7500, &0000, &3300)
- EQUB &8A               \ Object 6: group 6 has coordinate (&1A00, &0000, &8A00)
- EQUB &EC               \ Object 6: group 7 has coordinate (&CF00, &0000, &EC00)
+ EQUB &52               \ Object 6: tree 0 has coordinates (&C800, &0000, &5200)
+ EQUB &D2               \ Object 6: tree 1 has coordinates (&2A00, &0000, &D200)
+ EQUB &9A               \ Object 6: tree 2 has coordinates (&CF00, &0000, &9A00)
+ EQUB &C9               \ Object 6: tree 3 has coordinates (&8200, &0000, &C900)
+ EQUB &3E               \ Object 6: tree 4 has coordinates (&1D00, &0000, &3E00)
+ EQUB &33               \ Object 6: tree 5 has coordinates (&7500, &0000, &3300)
+ EQUB &8A               \ Object 6: tree 6 has coordinates (&1A00, &0000, &8A00)
+ EQUB &EC               \ Object 6: tree 7 has coordinates (&CF00, &0000, &EC00)
 
- EQUB &C6               \ Object 7: group 0 has coordinate (&9C00, &0000, &C600)
- EQUB &E2               \ Object 7: group 1 has coordinate (&4300, &0000, &E200)
- EQUB &BA               \ Object 7: group 2 has coordinate (&E500, &0000, &BA00)
- EQUB &70               \ Object 7: group 3 has coordinate (&8A00, &0000, &7000)
- EQUB &6E               \ Object 7: group 4 has coordinate (&EA00, &0000, &6E00)
- EQUB &44               \ Object 7: group 5 has coordinate (&2200, &0000, &4400)
- EQUB &20               \ Object 7: group 6 has coordinate (&6A00, &0000, &2000)
- EQUB &1B               \ Object 7: group 7 has coordinate (&C500, &0000, &1B00)
+ EQUB &C6               \ Object 7: tree 0 has coordinates (&9C00, &0000, &C600)
+ EQUB &E2               \ Object 7: tree 1 has coordinates (&4300, &0000, &E200)
+ EQUB &BA               \ Object 7: tree 2 has coordinates (&E500, &0000, &BA00)
+ EQUB &70               \ Object 7: tree 3 has coordinates (&8A00, &0000, &7000)
+ EQUB &6E               \ Object 7: tree 4 has coordinates (&EA00, &0000, &6E00)
+ EQUB &44               \ Object 7: tree 5 has coordinates (&2200, &0000, &4400)
+ EQUB &20               \ Object 7: tree 6 has coordinates (&6A00, &0000, &2000)
+ EQUB &1B               \ Object 7: tree 7 has coordinates (&C500, &0000, &1B00)
 
- EQUB &2F               \ Object 8: group 0 has coordinate (&1500, &0000, &2F00)
- EQUB &05               \ Object 8: group 1 has coordinate (&C400, &0000, &0500)
- EQUB &05               \ Object 8: group 2 has coordinate (&C400, &0000, &0500)
- EQUB &F5               \ Object 8: group 3 has coordinate (&CE00, &0000, &F500)
- EQUB &F5               \ Object 8: group 4 has coordinate (&CE00, &0000, &F500)
- EQUB &F5               \ Object 8: group 5 has coordinate (&CE00, &0000, &F500)
- EQUB &2F               \ Object 8: group 6 has coordinate (&1500, &0000, &2F00)
- EQUB &D6               \ Object 8: group 7 has coordinate (&1100, &0000, &D600)
+ EQUB &2F               \ Object 8: hill 0 has coordinates (&1500, &0000, &2F00)
+ EQUB &05               \ Object 8: hill 1 has coordinates (&C400, &0000, &0500)
+ EQUB &05               \ Object 8: hill 2 has coordinates (&C400, &0000, &0500)
+ EQUB &F5               \ Object 8: hill 3 has coordinates (&CE00, &0000, &F500)
+ EQUB &F5               \ Object 8: hill 4 has coordinates (&CE00, &0000, &F500)
+ EQUB &F5               \ Object 8: hill 5 has coordinates (&CE00, &0000, &F500)
+ EQUB &2F               \ Object 8: hill 6 has coordinates (&1500, &0000, &2F00)
+ EQUB &D6               \ Object 8: hill 7 has coordinates (&1100, &0000, &D600)
 
- EQUB &1C               \ Object 9: group 0 has coordinate (&3800, &0000, &1C00)
- EQUB &2E               \ Object 9: group 1 has coordinate (&D500, &0000, &2E00)
- EQUB &2E               \ Object 9: group 2 has coordinate (&D500, &0000, &2E00)
- EQUB &D3               \ Object 9: group 3 has coordinate (&DA00, &0000, &D300)
- EQUB &D3               \ Object 9: group 4 has coordinate (&DA00, &0000, &D300)
- EQUB &D9               \ Object 9: group 5 has coordinate (&0D00, &0000, &D900)
- EQUB &1C               \ Object 9: group 6 has coordinate (&3800, &0000, &1C00)
- EQUB &D9               \ Object 9: group 7 has coordinate (&0D00, &0000, &D900)
+ EQUB &1C               \ Object 9: hill 0 has coordinates (&3800, &0000, &1C00)
+ EQUB &2E               \ Object 9: hill 1 has coordinates (&D500, &0000, &2E00)
+ EQUB &2E               \ Object 9: hill 2 has coordinates (&D500, &0000, &2E00)
+ EQUB &D3               \ Object 9: hill 3 has coordinates (&DA00, &0000, &D300)
+ EQUB &D3               \ Object 9: hill 4 has coordinates (&DA00, &0000, &D300)
+ EQUB &D9               \ Object 9: hill 5 has coordinates (&0D00, &0000, &D900)
+ EQUB &1C               \ Object 9: hill 6 has coordinates (&3800, &0000, &1C00)
+ EQUB &D9               \ Object 9: hill 7 has coordinates (&0D00, &0000, &D900)
 
 \ ******************************************************************************
 \
@@ -22351,6 +22395,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: The point ID for a line's start point
+\  Deep dive: Lines and points
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22741,6 +22786,7 @@ NEXT
 \       Type: Variable
 \   Category: Main loop
 \    Summary: The main loop counter
+\  Deep dive: Scheduling tasks in the main loop
 \
 \ ******************************************************************************
 
@@ -23293,6 +23339,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: Low byte of the x-coordinate for an object
+\  Deep dive: 3D objects
+\             Placing objects on the map
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23300,91 +23348,50 @@ NEXT
 \
 \ This is called XALO in the original source code.
 \
-\ Object ID  0 has coordinate (  8227, 17731, 11856 ) - Dynamic, horizon
-\ Object ID  1 has coordinate ( 50790,     0, 17500 ) - Runway
-\ Object ID  2 has coordinate ( 19224,     0, 34406 ) - Suspension bridge
-\ Object ID  3 has coordinate ( 17885,     0, 25395 ) - Lake/river
-\ Object ID  4 has coordinate ( 21299,     0, 49152 ) - Lake/river
-\ Object ID  5 has coordinate ( 36591,     0, 49425 ) - Lake/river
-\ Object ID  6 has coordinate (     0,     0,     0 ) - Group, type 1 trees
-\ Object ID  7 has coordinate (     0,     0,     0 ) - Group, type 2 trees
-\ Object ID  8 has coordinate (     0,     0,     0 ) - Group, type 1 hills
-\ Object ID  9 has coordinate (     0,     0,     0 ) - Group, type 2 hills
-\ Object ID 10 has coordinate ( 19791,  3367, 23086 ) - Unused
-\ Object ID 11 has coordinate ( 20568,  1824, 21107 ) - Unused
-\ Object ID 12 has coordinate (     0,     0,     0 ) - Dynamic, bullets
-\ Object ID 13 has coordinate (     0,     0,     0 ) - Dynamic, bullets
-\ Object ID 14 has coordinate (     0,     0,     0 ) - Dynamic, bullets
-\ Object ID 15 has coordinate (     0,     0,     0 ) - Dynamic, bullets
-\ Object ID 16 has coordinate ( 36590,     0, 60070 ) - Field/alien spawning
-\ Object ID 17 has coordinate ( 60074,     0, 54610 ) - Field/alien spawning
-\ Object ID 18 has coordinate (  2184,     0, 25941 ) - Field/alien spawning
-\ Object ID 19 has coordinate (  9557,     0, 59801 ) - Field/alien spawning
-\ Object ID 20 has coordinate ( 22391,     0, 58709 ) - Field/alien spawning
-\ Object ID 21 has coordinate (  4915,     0, 43964 ) - Field/alien spawning
-\ Object ID 22 has coordinate ( 34679,     0, 38230 ) - Field/alien spawning
-\ Object ID 23 has coordinate ( 58163,     0, 39321 ) - Field/alien spawning
-\ Object ID 24 has coordinate ( 34406,     0, 19960 ) - Field/alien spawning
-\ Object ID 25 has coordinate ( 55432,     0,  1911 ) - Field/alien spawning
-\ Object ID 26 has coordinate ( 60894,     0, 16657 ) - Field/alien spawning
-\ Object ID 27 has coordinate ( 18022,     0, 11469 ) - Field/alien spawning
-\ Object ID 28 has coordinate ( 34406,     0,  1365 ) - Field/alien spawning
-\ Object ID 29 has coordinate ( 46421,     0, 29764 ) - Field/alien spawning
-\ Object ID 30 has coordinate (     0,     0,     0 ) - Dynamic, dormant alien
-\ Object ID 31 has coordinate (     0,     0,     0 ) - Dynamic, feeding alien
-\ Object ID 32 has coordinate (     0,     0,     0 ) - Dynamic, feeding alien
-\ Object ID 33 has coordinate (     0,     0,     0 ) - Dynamic, attacking alien
-\ Object ID 34 has coordinate (  1088,     0,   832 ) - Acornsville
-\ Object ID 35 has coordinate ( 16675, 14371, 16672 ) - Unused
-\ Object ID 36 has coordinate (  8243,  3380, 14880 ) - Unused
-\ Object ID 37 has coordinate ( 21297,  1850, 19488 ) - Unused
-\ Object ID 38 has coordinate ( 18746, 30282, 21280 ) - Unused
-\ Object ID 39 has coordinate ( 23106,  6733, 21024 ) - Unused
-\
 \ ******************************************************************************
 
 .xObjectLo
 
- EQUB &23               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
- EQUB &66               \ Object ID  1 has coordinate (&C666, &0000, &445C)
- EQUB &18               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
- EQUB &DD               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
- EQUB &33               \ Object ID  4 has coordinate (&5333, &0000, &C000)
- EQUB &EF               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
- EQUB &4F               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &58               \ Object ID 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
- EQUB &EE               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &AA               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &88               \ Object ID 18 has coordinate (&0888, &0000, &6555)
- EQUB &55               \ Object ID 19 has coordinate (&2555, &0000, &E999)
- EQUB &77               \ Object ID 20 has coordinate (&5777, &0000, &E555)
- EQUB &33               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &77               \ Object ID 22 has coordinate (&8777, &0000, &9556)
- EQUB &33               \ Object ID 23 has coordinate (&E333, &0000, &9999)
- EQUB &66               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &88               \ Object ID 25 has coordinate (&D888, &0000, &0777)
- EQUB &DE               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &66               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &66               \ Object ID 28 has coordinate (&8666, &0000, &0555)
- EQUB &55               \ Object ID 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
- EQUB &40               \ Object ID 34 has coordinate (&0440, &0000, &0340)
- EQUB &23               \ Object ID 35 has coordinate (&4123, &3823, &4120)
- EQUB &33               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &31               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
- EQUB &3A               \ Object ID 38 has coordinate (&493A, &764A, &5320)
- EQUB &42               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &23               \ Object  0 has dynamic coordinates
+ EQUB &66               \ Object  1 has fixed coordinates (&C666, &0000, &445C)
+ EQUB &18               \ Object  2 has fixed coordinates (&4B18, &0000, &8666)
+ EQUB &DD               \ Object  3 has fixed coordinates (&45DD, &0000, &6333)
+ EQUB &33               \ Object  4 has fixed coordinates (&5333, &0000, &C000)
+ EQUB &EF               \ Object  5 has fixed coordinates (&8EEF, &0000, &C111)
+ EQUB &00               \ Object  6 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  7 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  8 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  9 is a group, coords are in x/zGroupObjectHi
+ EQUB &4F               \ Object 10 is unused
+ EQUB &58               \ Object 11 is unused
+ EQUB &00               \ Object 12 has dynamic coordinates
+ EQUB &00               \ Object 13 has dynamic coordinates
+ EQUB &00               \ Object 14 has dynamic coordinates
+ EQUB &00               \ Object 15 has dynamic coordinates
+ EQUB &EE               \ Object 16 has fixed coordinates (&8EEE, &0000, &EAA6)
+ EQUB &AA               \ Object 17 has fixed coordinates (&EAAA, &0000, &D552)
+ EQUB &88               \ Object 18 has fixed coordinates (&0888, &0000, &6555)
+ EQUB &55               \ Object 19 has fixed coordinates (&2555, &0000, &E999)
+ EQUB &77               \ Object 20 has fixed coordinates (&5777, &0000, &E555)
+ EQUB &33               \ Object 21 has fixed coordinates (&1333, &0000, &ABBC)
+ EQUB &77               \ Object 22 has fixed coordinates (&8777, &0000, &9556)
+ EQUB &33               \ Object 23 has fixed coordinates (&E333, &0000, &9999)
+ EQUB &66               \ Object 24 has fixed coordinates (&8666, &0000, &4DF8)
+ EQUB &88               \ Object 25 has fixed coordinates (&D888, &0000, &0777)
+ EQUB &DE               \ Object 26 has fixed coordinates (&EDDE, &0000, &4111)
+ EQUB &66               \ Object 27 has fixed coordinates (&4666, &0000, &2CCD)
+ EQUB &66               \ Object 28 has fixed coordinates (&8666, &0000, &0555)
+ EQUB &55               \ Object 29 has fixed coordinates (&B555, &0000, &7444)
+ EQUB &00               \ Object 30 has dynamic coordinates
+ EQUB &00               \ Object 31 has dynamic coordinates
+ EQUB &00               \ Object 32 has dynamic coordinates
+ EQUB &00               \ Object 33 has dynamic coordinates
+ EQUB &40               \ Object 34 has fixed coordinates (&0440, &0000, &0340)
+ EQUB &23               \ Object 35 is unused
+ EQUB &33               \ Object 36 is unused
+ EQUB &31               \ Object 37 is unused
+ EQUB &3A               \ Object 38 is unused
+ EQUB &42               \ Object 39 is unused
 
 \ ******************************************************************************
 \
@@ -23392,6 +23399,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: Low byte of the y-coordinate for an object
+\  Deep dive: 3D objects
+\             Placing objects on the map
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23401,46 +23410,46 @@ NEXT
 
 .yObjectLo
 
- EQUB &43               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
- EQUB &00               \ Object ID  1 has coordinate (&C666, &0000, &445C)
- EQUB &00               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
- EQUB &00               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
- EQUB &00               \ Object ID  4 has coordinate (&5333, &0000, &C000)
- EQUB &00               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
- EQUB &27               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &20               \ Object ID 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &00               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &00               \ Object ID 18 has coordinate (&0888, &0000, &6555)
- EQUB &00               \ Object ID 19 has coordinate (&2555, &0000, &E999)
- EQUB &00               \ Object ID 20 has coordinate (&5777, &0000, &E555)
- EQUB &00               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &00               \ Object ID 22 has coordinate (&8777, &0000, &9556)
- EQUB &00               \ Object ID 23 has coordinate (&E333, &0000, &9999)
- EQUB &00               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &00               \ Object ID 25 has coordinate (&D888, &0000, &0777)
- EQUB &00               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &00               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &00               \ Object ID 28 has coordinate (&8666, &0000, &0555)
- EQUB &00               \ Object ID 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 34 has coordinate (&0440, &0000, &0340)
- EQUB &23               \ Object ID 35 has coordinate (&4123, &3823, &4120)
- EQUB &34               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &3A               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
- EQUB &4A               \ Object ID 38 has coordinate (&493A, &764A, &5320)
- EQUB &4D               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &43               \ Object  0 has dynamic coordinates
+ EQUB &00               \ Object  1 has fixed coordinates (&C666, &0000, &445C)
+ EQUB &00               \ Object  2 has fixed coordinates (&4B18, &0000, &8666)
+ EQUB &00               \ Object  3 has fixed coordinates (&45DD, &0000, &6333)
+ EQUB &00               \ Object  4 has fixed coordinates (&5333, &0000, &C000)
+ EQUB &00               \ Object  5 has fixed coordinates (&8EEF, &0000, &C111)
+ EQUB &00               \ Object  6 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  7 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  8 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  9 is a group, coords are in x/zGroupObjectHi
+ EQUB &27               \ Object 10 is unused
+ EQUB &20               \ Object 11 is unused
+ EQUB &00               \ Object 12 has dynamic coordinates
+ EQUB &00               \ Object 13 has dynamic coordinates
+ EQUB &00               \ Object 14 has dynamic coordinates
+ EQUB &00               \ Object 15 has dynamic coordinates
+ EQUB &00               \ Object 16 has fixed coordinates (&8EEE, &0000, &EAA6)
+ EQUB &00               \ Object 17 has fixed coordinates (&EAAA, &0000, &D552)
+ EQUB &00               \ Object 18 has fixed coordinates (&0888, &0000, &6555)
+ EQUB &00               \ Object 19 has fixed coordinates (&2555, &0000, &E999)
+ EQUB &00               \ Object 20 has fixed coordinates (&5777, &0000, &E555)
+ EQUB &00               \ Object 21 has fixed coordinates (&1333, &0000, &ABBC)
+ EQUB &00               \ Object 22 has fixed coordinates (&8777, &0000, &9556)
+ EQUB &00               \ Object 23 has fixed coordinates (&E333, &0000, &9999)
+ EQUB &00               \ Object 24 has fixed coordinates (&8666, &0000, &4DF8)
+ EQUB &00               \ Object 25 has fixed coordinates (&D888, &0000, &0777)
+ EQUB &00               \ Object 26 has fixed coordinates (&EDDE, &0000, &4111)
+ EQUB &00               \ Object 27 has fixed coordinates (&4666, &0000, &2CCD)
+ EQUB &00               \ Object 28 has fixed coordinates (&8666, &0000, &0555)
+ EQUB &00               \ Object 29 has fixed coordinates (&B555, &0000, &7444)
+ EQUB &00               \ Object 30 has dynamic coordinates
+ EQUB &00               \ Object 31 has dynamic coordinates
+ EQUB &00               \ Object 32 has dynamic coordinates
+ EQUB &00               \ Object 33 has dynamic coordinates
+ EQUB &00               \ Object 34 has fixed coordinates (&0440, &0000, &0340)
+ EQUB &23               \ Object 35 is unused
+ EQUB &34               \ Object 36 is unused
+ EQUB &3A               \ Object 37 is unused
+ EQUB &4A               \ Object 38 is unused
+ EQUB &4D               \ Object 39 is unused
 
 \ ******************************************************************************
 \
@@ -23448,6 +23457,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: Low byte of the z-coordinate for an object
+\  Deep dive: 3D objects
+\             Placing objects on the map
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23457,46 +23468,46 @@ NEXT
 
 .zObjectLo
 
- EQUB &50               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
- EQUB &5C               \ Object ID  1 has coordinate (&C666, &0000, &445C)
- EQUB &66               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
- EQUB &33               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
- EQUB &00               \ Object ID  4 has coordinate (&5333, &0000, &C000)
- EQUB &11               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
- EQUB &2E               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &73               \ Object ID 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
- EQUB &A6               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &52               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &55               \ Object ID 18 has coordinate (&0888, &0000, &6555)
- EQUB &99               \ Object ID 19 has coordinate (&2555, &0000, &E999)
- EQUB &55               \ Object ID 20 has coordinate (&5777, &0000, &E555)
- EQUB &BC               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &56               \ Object ID 22 has coordinate (&8777, &0000, &9556)
- EQUB &99               \ Object ID 23 has coordinate (&E333, &0000, &9999)
- EQUB &F8               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &77               \ Object ID 25 has coordinate (&D888, &0000, &0777)
- EQUB &11               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &CD               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &55               \ Object ID 28 has coordinate (&8666, &0000, &0555)
- EQUB &44               \ Object ID 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
- EQUB &40               \ Object ID 34 has coordinate (&0440, &0000, &0340)
- EQUB &20               \ Object ID 35 has coordinate (&4123, &3823, &4120)
- EQUB &20               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &20               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
- EQUB &20               \ Object ID 38 has coordinate (&493A, &764A, &5320)
- EQUB &20               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &50               \ Object  0 has dynamic coordinates
+ EQUB &5C               \ Object  1 has fixed coordinates (&C666, &0000, &445C)
+ EQUB &66               \ Object  2 has fixed coordinates (&4B18, &0000, &8666)
+ EQUB &33               \ Object  3 has fixed coordinates (&45DD, &0000, &6333)
+ EQUB &00               \ Object  4 has fixed coordinates (&5333, &0000, &C000)
+ EQUB &11               \ Object  5 has fixed coordinates (&8EEF, &0000, &C111)
+ EQUB &00               \ Object  6 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  7 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  8 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  9 is a group, coords are in x/zGroupObjectHi
+ EQUB &2E               \ Object 10 is unused
+ EQUB &73               \ Object 11 is unused
+ EQUB &00               \ Object 12 has dynamic coordinates
+ EQUB &00               \ Object 13 has dynamic coordinates
+ EQUB &00               \ Object 14 has dynamic coordinates
+ EQUB &00               \ Object 15 has dynamic coordinates
+ EQUB &A6               \ Object 16 has fixed coordinates (&8EEE, &0000, &EAA6)
+ EQUB &52               \ Object 17 has fixed coordinates (&EAAA, &0000, &D552)
+ EQUB &55               \ Object 18 has fixed coordinates (&0888, &0000, &6555)
+ EQUB &99               \ Object 19 has fixed coordinates (&2555, &0000, &E999)
+ EQUB &55               \ Object 20 has fixed coordinates (&5777, &0000, &E555)
+ EQUB &BC               \ Object 21 has fixed coordinates (&1333, &0000, &ABBC)
+ EQUB &56               \ Object 22 has fixed coordinates (&8777, &0000, &9556)
+ EQUB &99               \ Object 23 has fixed coordinates (&E333, &0000, &9999)
+ EQUB &F8               \ Object 24 has fixed coordinates (&8666, &0000, &4DF8)
+ EQUB &77               \ Object 25 has fixed coordinates (&D888, &0000, &0777)
+ EQUB &11               \ Object 26 has fixed coordinates (&EDDE, &0000, &4111)
+ EQUB &CD               \ Object 27 has fixed coordinates (&4666, &0000, &2CCD)
+ EQUB &55               \ Object 28 has fixed coordinates (&8666, &0000, &0555)
+ EQUB &44               \ Object 29 has fixed coordinates (&B555, &0000, &7444)
+ EQUB &00               \ Object 30 has dynamic coordinates
+ EQUB &00               \ Object 31 has dynamic coordinates
+ EQUB &00               \ Object 32 has dynamic coordinates
+ EQUB &00               \ Object 33 has dynamic coordinates
+ EQUB &40               \ Object 34 has fixed coordinates (&0440, &0000, &0340)
+ EQUB &20               \ Object 35 is unused
+ EQUB &20               \ Object 36 is unused
+ EQUB &20               \ Object 37 is unused
+ EQUB &20               \ Object 38 is unused
+ EQUB &20               \ Object 39 is unused
 
 \ ******************************************************************************
 \
@@ -23504,6 +23515,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for an object
+\  Deep dive: 3D objects
+\             Placing objects on the map
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23515,46 +23528,46 @@ NEXT
 
 .xObjectHi
 
- EQUB &20               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
- EQUB &C6               \ Object ID  1 has coordinate (&C666, &0000, &445C)
- EQUB &4B               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
- EQUB &45               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
- EQUB &53               \ Object ID  4 has coordinate (&5333, &0000, &C000)
- EQUB &8E               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
- EQUB &4D               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &50               \ Object ID 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
- EQUB &8E               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &EA               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &08               \ Object ID 18 has coordinate (&0888, &0000, &6555)
- EQUB &25               \ Object ID 19 has coordinate (&2555, &0000, &E999)
- EQUB &57               \ Object ID 20 has coordinate (&5777, &0000, &E555)
- EQUB &13               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &87               \ Object ID 22 has coordinate (&8777, &0000, &9556)
- EQUB &E3               \ Object ID 23 has coordinate (&E333, &0000, &9999)
- EQUB &86               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &D8               \ Object ID 25 has coordinate (&D888, &0000, &0777)
- EQUB &ED               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &46               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &86               \ Object ID 28 has coordinate (&8666, &0000, &0555)
- EQUB &B5               \ Object ID 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
- EQUB &04               \ Object ID 34 has coordinate (&0440, &0000, &0340)
- EQUB &41               \ Object ID 35 has coordinate (&4123, &3823, &4120)
- EQUB &20               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &53               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
- EQUB &49               \ Object ID 38 has coordinate (&493A, &764A, &5320)
- EQUB &5A               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &20               \ Object  0 has dynamic coordinates
+ EQUB &C6               \ Object  1 has fixed coordinates (&C666, &0000, &445C)
+ EQUB &4B               \ Object  2 has fixed coordinates (&4B18, &0000, &8666)
+ EQUB &45               \ Object  3 has fixed coordinates (&45DD, &0000, &6333)
+ EQUB &53               \ Object  4 has fixed coordinates (&5333, &0000, &C000)
+ EQUB &8E               \ Object  5 has fixed coordinates (&8EEF, &0000, &C111)
+ EQUB &00               \ Object  6 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  7 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  8 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  9 is a group, coords are in x/zGroupObjectHi
+ EQUB &4D               \ Object 10 is unused
+ EQUB &50               \ Object 11 is unused
+ EQUB &00               \ Object 12 has dynamic coordinates
+ EQUB &00               \ Object 13 has dynamic coordinates
+ EQUB &00               \ Object 14 has dynamic coordinates
+ EQUB &00               \ Object 15 has dynamic coordinates
+ EQUB &8E               \ Object 16 has fixed coordinates (&8EEE, &0000, &EAA6)
+ EQUB &EA               \ Object 17 has fixed coordinates (&EAAA, &0000, &D552)
+ EQUB &08               \ Object 18 has fixed coordinates (&0888, &0000, &6555)
+ EQUB &25               \ Object 19 has fixed coordinates (&2555, &0000, &E999)
+ EQUB &57               \ Object 20 has fixed coordinates (&5777, &0000, &E555)
+ EQUB &13               \ Object 21 has fixed coordinates (&1333, &0000, &ABBC)
+ EQUB &87               \ Object 22 has fixed coordinates (&8777, &0000, &9556)
+ EQUB &E3               \ Object 23 has fixed coordinates (&E333, &0000, &9999)
+ EQUB &86               \ Object 24 has fixed coordinates (&8666, &0000, &4DF8)
+ EQUB &D8               \ Object 25 has fixed coordinates (&D888, &0000, &0777)
+ EQUB &ED               \ Object 26 has fixed coordinates (&EDDE, &0000, &4111)
+ EQUB &46               \ Object 27 has fixed coordinates (&4666, &0000, &2CCD)
+ EQUB &86               \ Object 28 has fixed coordinates (&8666, &0000, &0555)
+ EQUB &B5               \ Object 29 has fixed coordinates (&B555, &0000, &7444)
+ EQUB &00               \ Object 30 has dynamic coordinates
+ EQUB &00               \ Object 31 has dynamic coordinates
+ EQUB &00               \ Object 32 has dynamic coordinates
+ EQUB &00               \ Object 33 has dynamic coordinates
+ EQUB &04               \ Object 34 has fixed coordinates (&0440, &0000, &0340)
+ EQUB &41               \ Object 35 is unused
+ EQUB &20               \ Object 36 is unused
+ EQUB &53               \ Object 37 is unused
+ EQUB &49               \ Object 38 is unused
+ EQUB &5A               \ Object 39 is unused
 
 \ ******************************************************************************
 \
@@ -23562,6 +23575,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the y-coordinate for an object
+\  Deep dive: 3D objects
+\             Placing objects on the map
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23571,46 +23586,46 @@ NEXT
 
 .yObjectHi
 
- EQUB &45               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
- EQUB &00               \ Object ID  1 has coordinate (&C666, &0000, &445C)
- EQUB &00               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
- EQUB &00               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
- EQUB &00               \ Object ID  4 has coordinate (&5333, &0000, &C000)
- EQUB &00               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
- EQUB &0D               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &07               \ Object ID 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &00               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &00               \ Object ID 18 has coordinate (&0888, &0000, &6555)
- EQUB &00               \ Object ID 19 has coordinate (&2555, &0000, &E999)
- EQUB &00               \ Object ID 20 has coordinate (&5777, &0000, &E555)
- EQUB &00               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &00               \ Object ID 22 has coordinate (&8777, &0000, &9556)
- EQUB &00               \ Object ID 23 has coordinate (&E333, &0000, &9999)
- EQUB &00               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &00               \ Object ID 25 has coordinate (&D888, &0000, &0777)
- EQUB &00               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &00               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &00               \ Object ID 28 has coordinate (&8666, &0000, &0555)
- EQUB &00               \ Object ID 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 34 has coordinate (&0440, &0000, &0340)
- EQUB &38               \ Object ID 35 has coordinate (&4123, &3823, &4120)
- EQUB &0D               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &07               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
- EQUB &76               \ Object ID 38 has coordinate (&493A, &764A, &5320)
- EQUB &1A               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &45               \ Object  0 has dynamic coordinates
+ EQUB &00               \ Object  1 has fixed coordinates (&C666, &0000, &445C)
+ EQUB &00               \ Object  2 has fixed coordinates (&4B18, &0000, &8666)
+ EQUB &00               \ Object  3 has fixed coordinates (&45DD, &0000, &6333)
+ EQUB &00               \ Object  4 has fixed coordinates (&5333, &0000, &C000)
+ EQUB &00               \ Object  5 has fixed coordinates (&8EEF, &0000, &C111)
+ EQUB &00               \ Object  6 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  7 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  8 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  9 is a group, coords are in x/zGroupObjectHi
+ EQUB &0D               \ Object 10 is unused
+ EQUB &07               \ Object 11 is unused
+ EQUB &00               \ Object 12 has dynamic coordinates
+ EQUB &00               \ Object 13 has dynamic coordinates
+ EQUB &00               \ Object 14 has dynamic coordinates
+ EQUB &00               \ Object 15 has dynamic coordinates
+ EQUB &00               \ Object 16 has fixed coordinates (&8EEE, &0000, &EAA6)
+ EQUB &00               \ Object 17 has fixed coordinates (&EAAA, &0000, &D552)
+ EQUB &00               \ Object 18 has fixed coordinates (&0888, &0000, &6555)
+ EQUB &00               \ Object 19 has fixed coordinates (&2555, &0000, &E999)
+ EQUB &00               \ Object 20 has fixed coordinates (&5777, &0000, &E555)
+ EQUB &00               \ Object 21 has fixed coordinates (&1333, &0000, &ABBC)
+ EQUB &00               \ Object 22 has fixed coordinates (&8777, &0000, &9556)
+ EQUB &00               \ Object 23 has fixed coordinates (&E333, &0000, &9999)
+ EQUB &00               \ Object 24 has fixed coordinates (&8666, &0000, &4DF8)
+ EQUB &00               \ Object 25 has fixed coordinates (&D888, &0000, &0777)
+ EQUB &00               \ Object 26 has fixed coordinates (&EDDE, &0000, &4111)
+ EQUB &00               \ Object 27 has fixed coordinates (&4666, &0000, &2CCD)
+ EQUB &00               \ Object 28 has fixed coordinates (&8666, &0000, &0555)
+ EQUB &00               \ Object 29 has fixed coordinates (&B555, &0000, &7444)
+ EQUB &00               \ Object 30 has dynamic coordinates
+ EQUB &00               \ Object 31 has dynamic coordinates
+ EQUB &00               \ Object 32 has dynamic coordinates
+ EQUB &00               \ Object 33 has dynamic coordinates
+ EQUB &00               \ Object 34 has fixed coordinates (&0440, &0000, &0340)
+ EQUB &38               \ Object 35 is unused
+ EQUB &0D               \ Object 36 is unused
+ EQUB &07               \ Object 37 is unused
+ EQUB &76               \ Object 38 is unused
+ EQUB &1A               \ Object 39 is unused
 
 \ ******************************************************************************
 \
@@ -23618,6 +23633,8 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for an object
+\  Deep dive: 3D objects
+\             Placing objects on the map
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23627,46 +23644,46 @@ NEXT
 
 .zObjectHi
 
- EQUB &2E               \ Object ID  0 has coordinate (&2023, &4543, &2E50)
- EQUB &44               \ Object ID  1 has coordinate (&C666, &0000, &445C)
- EQUB &86               \ Object ID  2 has coordinate (&4B18, &0000, &8666)
- EQUB &63               \ Object ID  3 has coordinate (&45DD, &0000, &6333)
- EQUB &C0               \ Object ID  4 has coordinate (&5333, &0000, &C000)
- EQUB &C1               \ Object ID  5 has coordinate (&8EEF, &0000, &C111)
- EQUB &00               \ Object ID  6 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  7 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  8 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID  9 has coordinate (&0000, &0000, &0000)
- EQUB &5A               \ Object ID 10 has coordinate (&4D4F, &0D27, &5A2E)
- EQUB &52               \ Object ID 11 has coordinate (&5058, &0720, &5273)
- EQUB &00               \ Object ID 12 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 13 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 14 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 15 has coordinate (&0000, &0000, &0000)
- EQUB &EA               \ Object ID 16 has coordinate (&8EEE, &0000, &EAA6)
- EQUB &D5               \ Object ID 17 has coordinate (&EAAA, &0000, &D552)
- EQUB &65               \ Object ID 18 has coordinate (&0888, &0000, &6555)
- EQUB &E9               \ Object ID 19 has coordinate (&2555, &0000, &E999)
- EQUB &E5               \ Object ID 20 has coordinate (&5777, &0000, &E555)
- EQUB &AB               \ Object ID 21 has coordinate (&1333, &0000, &ABBC)
- EQUB &95               \ Object ID 22 has coordinate (&8777, &0000, &9556)
- EQUB &99               \ Object ID 23 has coordinate (&E333, &0000, &9999)
- EQUB &4D               \ Object ID 24 has coordinate (&8666, &0000, &4DF8)
- EQUB &07               \ Object ID 25 has coordinate (&D888, &0000, &0777)
- EQUB &41               \ Object ID 26 has coordinate (&EDDE, &0000, &4111)
- EQUB &2C               \ Object ID 27 has coordinate (&4666, &0000, &2CCD)
- EQUB &05               \ Object ID 28 has coordinate (&8666, &0000, &0555)
- EQUB &74               \ Object ID 29 has coordinate (&B555, &0000, &7444)
- EQUB &00               \ Object ID 30 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 31 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 32 has coordinate (&0000, &0000, &0000)
- EQUB &00               \ Object ID 33 has coordinate (&0000, &0000, &0000)
- EQUB &03               \ Object ID 34 has coordinate (&0440, &0000, &0340)
- EQUB &41               \ Object ID 35 has coordinate (&4123, &3823, &4120)
- EQUB &3A               \ Object ID 36 has coordinate (&2033, &0D34, &3A20)
- EQUB &4C               \ Object ID 37 has coordinate (&5331, &073A, &4C20)
- EQUB &53               \ Object ID 38 has coordinate (&493A, &764A, &5320)
- EQUB &52               \ Object ID 39 has coordinate (&5A42, &1A4D, &5220)
+ EQUB &2E               \ Object  0 has dynamic coordinates
+ EQUB &44               \ Object  1 has fixed coordinates (&C666, &0000, &445C)
+ EQUB &86               \ Object  2 has fixed coordinates (&4B18, &0000, &8666)
+ EQUB &63               \ Object  3 has fixed coordinates (&45DD, &0000, &6333)
+ EQUB &C0               \ Object  4 has fixed coordinates (&5333, &0000, &C000)
+ EQUB &C1               \ Object  5 has fixed coordinates (&8EEF, &0000, &C111)
+ EQUB &00               \ Object  6 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  7 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  8 is a group, coords are in x/zGroupObjectHi
+ EQUB &00               \ Object  9 is a group, coords are in x/zGroupObjectHi
+ EQUB &5A               \ Object 10 is unused
+ EQUB &52               \ Object 11 is unused
+ EQUB &00               \ Object 12 has dynamic coordinates
+ EQUB &00               \ Object 13 has dynamic coordinates
+ EQUB &00               \ Object 14 has dynamic coordinates
+ EQUB &00               \ Object 15 has dynamic coordinates
+ EQUB &EA               \ Object 16 has fixed coordinates (&8EEE, &0000, &EAA6)
+ EQUB &D5               \ Object 17 has fixed coordinates (&EAAA, &0000, &D552)
+ EQUB &65               \ Object 18 has fixed coordinates (&0888, &0000, &6555)
+ EQUB &E9               \ Object 19 has fixed coordinates (&2555, &0000, &E999)
+ EQUB &E5               \ Object 20 has fixed coordinates (&5777, &0000, &E555)
+ EQUB &AB               \ Object 21 has fixed coordinates (&1333, &0000, &ABBC)
+ EQUB &95               \ Object 22 has fixed coordinates (&8777, &0000, &9556)
+ EQUB &99               \ Object 23 has fixed coordinates (&E333, &0000, &9999)
+ EQUB &4D               \ Object 24 has fixed coordinates (&8666, &0000, &4DF8)
+ EQUB &07               \ Object 25 has fixed coordinates (&D888, &0000, &0777)
+ EQUB &41               \ Object 26 has fixed coordinates (&EDDE, &0000, &4111)
+ EQUB &2C               \ Object 27 has fixed coordinates (&4666, &0000, &2CCD)
+ EQUB &05               \ Object 28 has fixed coordinates (&8666, &0000, &0555)
+ EQUB &74               \ Object 29 has fixed coordinates (&B555, &0000, &7444)
+ EQUB &00               \ Object 30 has dynamic coordinates
+ EQUB &00               \ Object 31 has dynamic coordinates
+ EQUB &00               \ Object 32 has dynamic coordinates
+ EQUB &00               \ Object 33 has dynamic coordinates
+ EQUB &03               \ Object 34 has fixed coordinates (&0440, &0000, &0340)
+ EQUB &41               \ Object 35 is unused
+ EQUB &3A               \ Object 36 is unused
+ EQUB &4C               \ Object 37 is unused
+ EQUB &53               \ Object 38 is unused
+ EQUB &52               \ Object 39 is unused
 
 \ ******************************************************************************
 \
@@ -23720,7 +23737,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: Sequences of related points that together make up objects
-\  Deep dive: Rotating and translating points in 3D space
+\  Deep dive: 3D objects
 \
 \ ******************************************************************************
 
@@ -24552,6 +24569,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the z-coordinate for a point
+\  Deep dive: Lines and points
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24641,6 +24659,7 @@ NEXT
 \       Type: Variable
 \   Category: 3D geometry
 \    Summary: High byte of the x-coordinate for a point
+\  Deep dive: Lines and points
 \
 \ ------------------------------------------------------------------------------
 \
