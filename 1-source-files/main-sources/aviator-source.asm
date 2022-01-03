@@ -14484,6 +14484,7 @@ ORG CODE%
 \   Category: Main loop
 \    Summary: Award points for a successful landing
 \  Deep dive: Program flow of the main game loop
+\             Take-offs and landings
 \
 \ ******************************************************************************
 
@@ -21265,6 +21266,7 @@ ORG CODE%
 \       Type: Variable
 \   Category: Scoring
 \    Summary: Low byte of the skill zone coordinates for testing flying skills
+\  Deep dive: Flying skills
 \
 \ ******************************************************************************
 
@@ -21285,6 +21287,7 @@ ORG CODE%
 \       Type: Variable
 \   Category: Scoring
 \    Summary: High byte of the skill zone coordinates for testing flying skills
+\  Deep dive: Flying skills
 \
 \ ******************************************************************************
 
@@ -21305,6 +21308,7 @@ ORG CODE%
 \       Type: Variable
 \   Category: Scoring
 \    Summary: Sizes of the skill zones for testing flying skills
+\  Deep dive: Flying skills
 \
 \ ******************************************************************************
 
@@ -22991,6 +22995,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Scoring
 \    Summary: Check whether we are performing one of the tests of flying skill
+\  Deep dive: Flying skills
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23133,6 +23138,7 @@ NEXT
 \   Category: Scoring
 \    Summary: Perform finer checks to see if we are flying under the bridge or
 \             along the main street of the town
+\  Deep dive: Flying skills
 \
 \ ******************************************************************************
 
@@ -23285,6 +23291,7 @@ NEXT
 \       Type: Variable
 \   Category: Flight model
 \    Summary: Scale factors for the flight forces (in signed powers of 2)
+\  Deep dive: The flight model
 \
 \ ******************************************************************************
 
@@ -25063,6 +25070,7 @@ NEXT
 \   Category: Scoring
 \    Summary: Check whether we are safely flying under the bridge or down the
 \             main street in Acornsville
+\  Deep dive: Flying skills
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25076,16 +25084,14 @@ NEXT
 \
 \   * The vector from the skill zone coordinate to the plane is in a positive
 \     direction along each axis, i.e. the plane is somewhere inside a cuboid
-\     that has the skill zone coordinate at its bottom-left corner, i.e. the
-\     point nearest to the origin in the cuboid is the skill zone coordinate
-\     (the origin is at ground level level in the bottom-left corner of the
-\     map).
+\     that has the skill zone coordinate at its bottom-left corner, nearest the
+\     origin (the origin is at ground level level in the bottom-left corner of
+\     the map).
 \
-\   * The length of the vector along each axis is < 1024, so the plane is close
-\     enough to the skill zone coordinate for the following check to be done,
-\     i.e. within the rectangular cuboid described above, it is within a cube,
-\     of size 1024, in the skill zone coordinate's corner, i.e. in the corner
-\     of the cuboid nearest the origin.
+\   * The length of this vector along each axis is < 1024, so the plane is close
+\     enough to the skill zone coordinate for the next check to be done, i.e.
+\     within the rectangular cuboid described above, so the plane is within a
+\     cube of size 1024 in the skill zone coordinate's corner.
 \
 \   * The length of the vector along each axis divided by 4 is within the margin
 \     for this skill zone (as defined in the skillZoneSize table), i.e. the
@@ -25093,17 +25099,16 @@ NEXT
 \     zone coordinate's corner, with dimensions given in the skillZoneSize
 \     table.
 \
-\ In short, the plane is in the skill zone if it's inside a box, whose
-\ dimensions are given in the skillZoneSize table, and whose corner nearest the
-\ origin is at the skill zone coordinate given in the skillZone table - in other
-\ words, the cuboid at the skill zone coordinate, with the dimensions in
-\ skillZoneSize.
+\ In short, the plane is in the skill zone if it's inside a box whose dimensions
+\ are given in the skillZoneSize table, and whose corner nearest the origin is
+\ at the skill zone coordinate given in the skillZone table - in other words,
+\ the cuboid at the skill zone coordinate, with the dimensions in skillZoneSize.
 \
 \ Or, even shorter, the plane is in a skill zone if this is true for all three
 \ axes:
 \
 \   skill zone    <=      plane      <   skill zone  +  skill zone
-\   coordinate         coordinate        coordinate        size
+\   coordinate         coordinate        coordinate      size * 4
 \
 \ Arguments:
 \
@@ -26738,6 +26743,8 @@ NEXT
 \   Category: Flight model
 \    Summary: The factors by which the flight forces are multiplied as part of
 \             the scaling process
+\  Deep dive: The flight model
+\             Stalling and recovery
 \
 \ ******************************************************************************
 
@@ -27170,7 +27177,8 @@ NEXT
 \    Summary: Apply the flight model to the plane, starting by calculating the
 \             effect of gravity and the undercarriage springs
 \  Deep dive: The flight model
-\
+\             On-ground calculations
+ \
 \ ------------------------------------------------------------------------------
 \
 \ This part does the following:
@@ -27321,7 +27329,7 @@ NEXT
 \     * If we are not already stalling, or we are possibly going fast enough to
 \       pull out of the stall (zVelocityPHi >= 11), we perform the stall check:
 \
-\         |yVelocityP| * 4 >= zVelocityP
+\         zVelocityP <= |yVelocityP| * 4
 \
 \       If this is true, then we are stalling.
 \
@@ -27633,6 +27641,7 @@ NEXT
 \   Category: Flight model
 \    Summary: Calculate the forces for when we are on the ground
 \  Deep dive: The flight model
+\             On-ground calculations
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27643,34 +27652,36 @@ NEXT
 \       * Apply ground steering to yTurn if the rudder is used and forward speed
 \         is >= 20.
 \
+\       * Stop the plane from rolling by setting the roll rate in dzTurn to 0.
+\
 \       * If the undercarriage is up, prevent the plane from pitching forward
 \         below the level of the ground.
 \
 \       * Calculate the effect of being on the ground on the forces and landing
 \         status:
 \
-\           * If the plane is stationary, set landingStatus = %01000000 and move
+\           * If the plane is stationary, set landingStatus = %01000000 and skip
 \             to the side velocity step below.
 \
 \           * If the plane is travelling forwards at a speed of 10 or less, set
-\             zLinear = -256 and landingStatus = %01000000 and move to the
+\             zLinear = -256 and landingStatus = %01000000 and skip to the
 \             side velocity step below.
 \
-\           * If the approach is good, the undercarriage is down and the brakes
-\             are off, set landingStatus = 0 and move to the side velocity step
-\             below.
+\           * If the plane is on the runway, the undercarriage is down and the
+\             brakes are off, set landingStatus = 0 and skip to the side
+\             velocity step below.
 \
 \           * Otherwise, set landingStatus = 0 and subtract the following from
 \             zLinearHi (from the least slowdown to the biggest slowdown):
 \
-\               * 7 if the approach is bad and:
+\               * 7 if the plane is not on the runway and:
 \                       undercarriage is down and brakes are off
 \
-\               * 11 if the approach is good and:
+\               * 11 if the plane is on the runway and:
 \                       undercarriage is up
 \                       or undercarriage is down and brakes are on
 \
-\               * 50 if the approach is bad and:
+\               * 50 if the plane is not on the runway and:
 \                       undercarriage is up
 \                       or undercarriage is down and brakes are on
 \
@@ -27687,7 +27698,7 @@ NEXT
 \
 \       * Calculate the effect of side velocity on xLinear:
 \
-\           xLinear  = -xVelocityPLo * 128
+\           xLinear = -xVelocityPLo * 128
 \
 \ ******************************************************************************
 
@@ -27813,10 +27824,10 @@ NEXT
 
 .fmod8
 
- JSR CheckApproachAngle \ Check the plane's approach angle for the runway
+ JSR CheckPlaneOnRunway \ Check whether the plane is over the runway
 
- BCC fmod10             \ If the approach is good, then jump to fmod10 to set
-                        \ A = 11
+ BCC fmod10             \ If the plane is on the runway, then jump to fmod10 to
+                        \ set A = 11
 
  LDA #50                \ Set A = 50 and jump to fmodll (this BNE is effectively
  BNE fmod11             \ a JMP as A is never zero)
@@ -27829,10 +27840,10 @@ NEXT
                         \ If we get here then the brakes are off and the
                         \ undercarriage is down
 
- JSR CheckApproachAngle \ Check the plane's approach angle for the runway
+ JSR CheckPlaneOnRunway \ Check whether the plane is over the runway
 
- BCC fmod15             \ If the approach is good, then jump to fmod15 to set
-                        \ landingStatus = 0
+ BCC fmod15             \ If the plane is on the runway, then jump to fmod15 to
+                        \ setlandingStatus = 0
 
  LDA #7                 \ Set A = 7 and jump to fmod11 (this BNE is effectively
  BNE fmod11             \ a JMP as A is never zero)
@@ -27851,7 +27862,7 @@ NEXT
 
                         \ If we get here then zVelocityPHi = 0
 
- LDX zVelocityPLo       \ if the plane is stationary (i.e. both zVelocityPLo and
+ LDX zVelocityPLo       \ If the plane is stationary (i.e. both zVelocityPLo and
  BEQ fmod14             \ zVelocityPHi = 0), jump to fmod14 to leave zLinear
                         \ untouched and set landingStatus = %01000000
 
@@ -27882,23 +27893,23 @@ NEXT
                         \     or less, in which case we already moved on with
                         \     zLinear = -256 and landingStatus = %01000000
                         \
-                        \   * The approach is good, the undercarriage is down,
-                        \     the brakes are off, in which case we already moved
-                        \     on with landingStatus = 0
+                        \   * The plane is on the runway, the undercarriage is
+                        \     down, the brakes are off, in which case we already
+                        \     moved on with landingStatus = 0
                         \
                         \ Otherwise, we get here and A is one of the following:
                         \
                         \   * 248 if the plane is going backwards
                         \
-                        \   * 11 if the approach is good and:
+                        \   * 11 if the plane is on the runway and:
                         \           either undercarriage is up
                         \           or undercarriage is down, brakes are on
                         \
-                        \   * 50 if the approach is bad and:
+                        \   * 50 if the plane is not on the runway and:
                         \           either undercarriage is up
                         \           or undercarriage is down, brakes are on
                         \
-                        \   * 7 if the approach is bad and:
+                        \   * 7 if the plane is not on the runway and:
                         \           undercarriage is down, brakes are off
                         \
                         \ We now subtract the value of A from zLinearHi
@@ -28565,7 +28576,7 @@ NEXT
  STA P
 
  ASL A                  \ Set xLiftDrag = xVelocityP << 1
- STA xLiftDragLo,X      \             = xVelocityP * 2
+ STA xLiftDragLo,X      \               = xVelocityP * 2
  LDA xVelocityPHi,X     \
  PHA                    \ and push xVelocityPHi onto the stack
  ROL A
@@ -28687,6 +28698,7 @@ NEXT
 \    Summary: Check whether the plane is stalling, and if it is, simulate one
 \             wing stalling before the other, and make the stalling sound
 \  Deep dive: The flight model
+\             Stalling and recovery
 \
 \ ------------------------------------------------------------------------------
 \
@@ -28698,7 +28710,7 @@ NEXT
 \   * If we are not already stalling, or we are possibly going fast enough to
 \     pull out of the stall (zVelocityPHi >= 11), we perform the stall check:
 \
-\       |yVelocityP| * 4 >= zVelocityP
+\       zVelocityP <= |yVelocityP| * 4
 \
 \     If this is true, then we are stalling.
 \
@@ -28751,7 +28763,7 @@ NEXT
                         \
                         \ The plane stalls if this is true:
                         \
-                        \   |yVelocityP| * 4 >= zVelocityP
+                        \   zVelocityP <= |yVelocityP| * 4
                         \
                         \ in other words, when the plane is moving forwards at
                         \ less than a quarter of the speed at which it is moving
@@ -28762,7 +28774,7 @@ NEXT
                         \ (though this is skipped if the plane is flying very
                         \ low, at less than 20 feet above the ground)
                         \
-                        \ A reminder that we set the following above:
+                        \ A reminder that we set the following in part 1:
                         \
                         \   (J I) = |yVelocityP| * 4
                         \
@@ -28778,7 +28790,7 @@ NEXT
                         \ but if (J I) >= zVelocityP, we are stalling, so that's
                         \ when:
                         \
-                        \   |yVelocityP| * 4 >= zVelocityP
+                        \   zVelocityP <= |yVelocityP| * 4
 
  LDA J                  \ If J < zVelocityPHi, then (J I) < zVelocityP, so jump
  CMP zVelocityPHi       \ to aero10 to maintain normal flight
@@ -28799,7 +28811,7 @@ NEXT
 
                         \ If we get here then (J I) >= zVelocityP, so:
                         \
-                        \   |yVelocityP| * 4 >= zVelocityP
+                        \   zVelocityP <= |yVelocityP| * 4
                         \
                         \ which means we are stalling
                         \
@@ -28961,7 +28973,7 @@ NEXT
 .aero13
 
                         \ For X = 3 to 5, we now fetch the relevant axis of
-                        \ xLiftDrag, which we set above to:
+                        \ xLiftDrag, which we set in part 1 to:
                         \
                         \   xLiftDrag = xVelocityP * 2
                         \
@@ -29168,6 +29180,8 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Scale the flight forces by the relevant scale factors
+\  Deep dive: The flight model
+\             Ripping the wings off
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29187,8 +29201,8 @@ NEXT
 \
 \ This routine also tests for high g-forces, which occur if:
 \
-\   |yLiftDrag| >= 4096 / 39 = 105      if we are stalling
-\                  4096 / 156 = 26      if we are not stalling
+\   |yLiftDrag| >= 2048 / 39  = 53      if we are stalling
+\                  2048 / 156 = 13      if we are not stalling
 \
 \ ******************************************************************************
 
@@ -29228,7 +29242,14 @@ NEXT
 
  JSR Multiply8x16-6     \ Store X in VV and set (G W V) = (A Y) * R
                         \
-                        \ Also set A to the high byte of the result (G)
+                        \ Also set A to the high byte of the result in G, so we
+                        \ have:
+                        \
+                        \   (A W V) = (A Y) * R
+                        \
+                        \ so:
+                        \
+                        \   (A W) = (A Y) * R / 256
 
  LDX VV                 \ Retrieve X from VV so it once again contains the loop
                         \ index
@@ -29246,7 +29267,7 @@ NEXT
  EOR #&FF               \ Set A = ~A, so A now contains the high byte of the
                         \ 24-bit result, flipped, so it contains:
                         \
-                        \   |A Y| * R / 512
+                        \   |A Y| * R / 256
 
 .scal3
 
@@ -29255,12 +29276,12 @@ NEXT
 
                         \ If we get here then A >= 8, so:
                         \
-                        \   |A Y| * R / 512 >= 8
+                        \   |A Y| * R / 256 >= 8
                         \
-                        \   |A Y| * R >= 4096
+                        \   |A Y| * R >= 2048
                         \
-                        \   |A Y| >= 4096 / 39 = 105 if we are stalling
-                        \            4096 / 156 = 26 if we are not stalling
+                        \   |A Y| >= 2048 / 39  = 53 if we are stalling
+                        \            2048 / 156 = 13 if we are not stalling
                         \
                         \ where |A Y| = |yLiftDrag|
 
@@ -29575,6 +29596,8 @@ NEXT
 \   Category: Flight model
 \    Summary: Calculate the effects of the primary flight controls (elevator,
 \             rudder and ailerons), and implement the "instant centre" feature
+\  Deep dive: The flight model
+\             On-ground calculations
 \
 \ ------------------------------------------------------------------------------
 \
@@ -30109,81 +30132,90 @@ NEXT
 
 \ ******************************************************************************
 \
-\       Name: CheckApproachAngle
+\       Name: CheckPlaneOnRunway
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: Check whether the plane is on a good approach angle for the runway
+\    Summary: Check whether the plane is over the runway
+\  Deep dive: Take-offs and landings
+\             On-ground calculations
 \
 \ ------------------------------------------------------------------------------
 \
-\ The runway runs north-south. The plane is on a good approach angle for the
-\ runway if:
+\ The runway runs north-south, and the runway's anchor point is in the southwest
+\ corner of the runway rectangle. The plane is on the runway if:
 \
-\   * The distance between the plane and the runway in the x-axis is < 256 (so
-\     the plane is not too far either side of the correct approach, i.e. not too
-\     far to the east or west of the line of the runway)
+\   * The x-axis distance between the plane and the runway's anchor point is
+\     less than 256 (so the runway is 256 wide, and this checks that the plane
+\     is not to the side of the runway)
 \
-\   * The distance between the plane and the runway in the z-axis is < 24 * 256
-\     (so the plane is not too far to the north or south of the runway)
+\   * The z-axis distance between the plane and the runway's anchor point is
+\     positive, and less than 24 * 256 (so the runway is 24 * 256 long, and
+\     this checks that the plane is not too far to the south or the north of the
+\     runway)
 \
-\ In other words, the runway approach corridor is a long, thin strip along the
-\ north-south alignment of the runway, with the strip being 24 times longer than
-\ it is wide.
+\ In other words, the runway is a long, thin strip with a north-south alignment
+\ with the strip being 24 times longer than it is wide, and with the anchor
+\ point at the southwest corner.
 \
 \ Returns:
 \
-\   C flag              Determines whether the plane is heading along a good
-\                       approach angle for the runway:
+\   C flag              Determines whether the plane is over the runway:
 \
-\                         * Clear if the plane is approaching the runway
+\                         * Clear if the plane is over the runway
 \
-\                         * Set if the plane is not approaching the runway
+\                         * Set if the plane is not over the runway
 \
 \ ******************************************************************************
 
-.CheckApproachAngle
+.CheckPlaneOnRunway
 
  LDA xPlaneLo           \ Set A to the high byte of the following:
  SEC                    \
  SBC xObjectLo+1        \   (xPlaneHi xPlaneLo) - (xObjectHi xObjectLo)
  LDA xPlaneHi           \
- SBC xObjectHi+1        \ for object ID 1, which is the runway
+ SBC xObjectHi+1        \ for object ID 1, which is the runway, so this
+                        \ calculates the distance in the x-axis between the
+                        \ plane and the runway's anchor point
 
- BNE crun1              \ If the high byte is non-zero, then the plane is a long
-                        \ way from the runway, so jump to crun1 to return from
-                        \ the subroutine with the "not approaching" result
+ BNE crun1              \ If the high byte is non-zero, then the plane is more
+                        \ than 256 from the runway's anchor point, so jump to
+                        \ crun1 to return from the subroutine with a negative
+                        \ result
 
-                        \ If we get here then the plane is reasonably close to
-                        \ the runway along the x-axis, so now we check the
-                        \ distance along the z-axis
+                        \ If we get here then the plane is over the runway in
+                        \ the x-axis, so now we check the z-axis
 
  LDA zPlaneLo           \ Set A to the high byte of the following:
  SEC                    \
  SBC zObjectLo+1        \   (zPlaneHi zPlaneLo) - (zObjectHi zObjectLo)
  LDA zPlaneHi           \
- SBC zObjectHi+1        \ for object ID 1, which is the runway
+ SBC zObjectHi+1        \ for object ID 1, which is the runway, so this
+                        \ calculates the distance in the z-axis between the
+                        \ plane and the runway's anchor point
 
- BMI crun1              \ If the high byte is > 127, then the plane is a long
-                        \ way from the runway, so jump to crun1, so jump to
-                        \ crun1 to return from the subroutine with the "not
-                        \ approaching" result
+ BMI crun1              \ If the result is negative then the plane is south of
+                        \ the anchor point, so it can't be on the runway, so
+                        \ jump to crun1 to return from the subroutine with a
+                        \ negative result
 
  CMP #24                \ Finally, if the high byte is less than 24, then this
                         \ will clear the C flag, otherwise it will set the C
-                        \ flag, so the C flag is only clear if:
+                        \ flag
+
+                        \ By this point, the C flag is only clear if:
                         \
-                        \   * The distance between the plane and the runway in
-                        \     the x-axis is < 256
+                        \   * The distance between the plane and the runway's
+                        \     anchor point in the x-axis is < 256
                         \
-                        \   * The distance between the plane and the runway in
-                        \     the z-axis is < 24 * 256
+                        \   * The distance between the plane and the runway's
+                        \     anchor point in the z-axis is < 24 * 256
 
  RTS                    \ Return from the subroutine
 
 .crun1
 
- SEC                    \ Set the C flag to indicate that the runway is not
-                        \ close
+ SEC                    \ Set the C flag to indicate that the plane is not over
+                        \ the runway
 
  RTS                    \ Return from the subroutine
 
@@ -30193,8 +30225,13 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: If this is an emergency landing, make the landing a bumpy one
+\  Deep dive: Take-offs and landings
 \
 \ ------------------------------------------------------------------------------
+\
+\ This part checks whether the plane is on the ground but not on the runway, and
+\ if this is the case, it implements a bumpy ride by randomly changing the
+\ plane's height and roll, with larger changes at bigger speeds.
 \
 \ Arguments:
 \
@@ -30213,15 +30250,15 @@ NEXT
  BEQ clan1              \ If onGround is zero then we are not on the ground, so
                         \ jump to clan1 to skip the bumpy ride
 
- JSR CheckApproachAngle \ Check the plane's approach angle for the runway
+ JSR CheckPlaneOnRunway \ Check whether the plane is over the runway
 
- BCC clan1              \ If the approach is good, then jump to clan1 to skip
-                        \ the bumpy ride
+ BCC clan1              \ If the plane is on the runway, then jump to clan1 to
+                        \ skip the bumpy ride
 
                         \ If we get here then we are on the ground but we aren't
-                        \ approaching the runway, so this must be an emergency
-                        \ landing outside the airport, and we apply a suitably
-                        \ bumpy ride, depending on the plane's velocity
+                        \ on the runway, so this must be an emergency landing
+                        \ outside the airport, and we apply a suitably bumpy
+                        \ ride, depending on the plane's velocity
 
  ASL landingStatus      \ Shift landingStatus left and set bit 0
 
@@ -30276,6 +30313,12 @@ NEXT
 \   Category: Flight model
 \    Summary: If we are too high to be touching the ground then we can't be
 \             landing, so stop the landing checks
+\  Deep dive: Take-offs and landings
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part checks whether the plane is touching the ground, and aborts the
+\ landing checks if it isn't.
 \
 \ ******************************************************************************
 
@@ -30326,8 +30369,14 @@ NEXT
 \       Name: ProcessLanding (Part 3 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: If we are already on the ground, stop the plane from falling and
-\             rolling, and make it horizontal
+\    Summary: If we are taxiing, restrict the plane's vertical movement and roll
+\  Deep dive: Take-offs and landings
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part checks whether we are in the process of landing, and if so we jump
+\ to part 6. Otherwise we have already landed and are taxxing, so we set the
+\ plane's height, vertical velocity and roll accordingly.
 \
 \ ******************************************************************************
 
@@ -30337,12 +30386,16 @@ NEXT
  LDX L                  \ Fetch the current value of onGround
 
  BEQ clan10             \ If L is zero then we are not on the ground, so jump
-                        \ to clan10 to skip the next two parts
+                        \ to clan10 to skip to part 6
 
                         \ If we get here then we are already on the ground, so
                         \ we are in the process of landing
 
- STA yPlaneLo           \ Set A to the low byte of the plane's y-coordinate
+ STA yPlaneLo           \ Set the low byte of the plane's y-coordinate to A,
+                        \ which contains the value of yLandingGear, so this sets
+                        \ the plane's height to the correct value for taxiing,
+                        \ i.e. the distance between the cockpit and the lowest
+                        \ part of the plane
 
  LDX yVelocityTop       \ If the top byte of the plane's vertical velocity is
  BPL clan5              \ positive, skip the following
@@ -30367,8 +30420,13 @@ NEXT
 \       Name: ProcessLanding (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: If we are already on the ground and the undercarriage is up, stop
-\             the plane from pitching down and make it level
+\    Summary: If we are taxiing with the undercarriage up, restrict pitching
+\  Deep dive: Take-offs and landings
+\
+\ ------------------------------------------------------------------------------
+\
+\ If we are taxiing with the undercarriage up, then if the plane is pitching
+\ forwards into the ground, the plane is made level and all pitching is stopped.
 \
 \ ******************************************************************************
 
@@ -30391,7 +30449,7 @@ NEXT
 .clan7
 
  LDX #&00               \ Set (xTurnTop xTurnHi) = 0 to stop the plane turning
- JSR ResetVariable      \ around the x-axis (i.e. stop the plane pitching down)
+ JSR ResetVariable      \ around the x-axis (i.e. stop the plane pitching)
 
 .clan8
 
@@ -30402,8 +30460,15 @@ NEXT
 \       Name: ProcessLanding (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: If we are already on the ground and the undercarriage is down,
-\             stop the plane from pitching down and tilt the plane backwards
+\    Summary: If we are taxiing with the undercarriage down, restrict pitching
+\             and tilt the plane backwards
+\  Deep dive: Take-offs and landings
+\
+\ ------------------------------------------------------------------------------
+\
+\ If we are taxiing with the undercarriage down, then the plane gets set to the
+\ default tilt of 9.84 degrees (as the undercarriage is taller than the rear
+\ tail wheel).
 \
 \ ******************************************************************************
 
@@ -30427,8 +30492,8 @@ NEXT
                         \ on the ground
 
  LDX xTurnTop           \ If the high byte of the xTurn rate is positive, jump
- BPL clan7              \ to clan7 to stop the plane from pitching down and
-                        \ return from the subroutine
+ BPL clan7              \ to clan7 to stop the plane from pitching and return
+                        \ from the subroutine
 
  RTS                    \ Return from the subroutine
 
@@ -30437,8 +30502,13 @@ NEXT
 \       Name: ProcessLanding (Part 6 of 7)
 \       Type: Subroutine
 \   Category: Flight model
-\    Summary: If we are not on the ground, process the touchdown, bouncing the
-\             plane and crashing if we are coming down too fast
+\    Summary: If we are not taxiing, process the landing
+\  Deep dive: Take-offs and landings
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part processes the touchdown part of the landing, bouncing the plane and
+\ crashing if we are coming down too fast.
 \
 \ ******************************************************************************
 
@@ -30483,16 +30553,16 @@ NEXT
 
  STA yVelocityTop       \ Update the top byte of the plane's vertical velocity
                         \ (this instruction should really be before the clan11
-                        \ label, as it has no effect here)
+                        \ label, as it has no effect if we jump straight here)
 
                         \ We now do various velocity checks to make sure we are
                         \ not coming down to fast (if we are, we crash)
 
- LSR A                  \ Shift bit 0 of the high byte of the plane's vertical
+ LSR A                  \ Shift bit 0 of the top byte of the plane's vertical
                         \ velocity into the C flag
 
  BNE clan13             \ If the above shift left any set bits in A, then the
-                        \ high byte of the plane's vertical velocity is >= 2,
+                        \ top byte of the plane's vertical velocity is >= 2,
                         \ so yVelocity >= 512, so jump to clan13 to crash the
                         \ plane, as the we are coming down far too fast to land
 
@@ -30559,9 +30629,9 @@ NEXT
                         \ If we get here then we are descending slowly enough
                         \ to make the landing
 
- JSR CheckApproachAngle \ Check the plane's approach angle for the runway
+ JSR CheckPlaneOnRunway \ Check whether the plane is over the runway
 
- BCC clan16             \ If the approach is good, then jump to clan16
+ BCC clan16             \ If the plane is on the runway, then jump to clan16
 
  LDA R                  \ We are not landing on the runway, so set the vertical
  STA yVelocityHi        \ velocity to R, which halves the vertical velocity
@@ -30599,6 +30669,11 @@ NEXT
 \   Category: Flight model
 \    Summary: We have successfully touched down without crashing, so process the
 \             effects of landing on the plane
+\  Deep dive: Take-offs and landings
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part processes a successful landing.
 \
 \ ******************************************************************************
 
@@ -30667,13 +30742,14 @@ NEXT
  JSR ResetVariable
 
  LDA xRotationHi        \ If the high byte of the plane's rotation around the
- BPL clan20             \ x-axis is positive, jump to clan20
+ BPL clan20             \ x-axis is positive, then the plane is tilting
+                        \ backwards, so jump to clan20 to skip the following
 
  LDA ucStatus           \ If ucStatus is non-zero, then the undercarriage
  BNE clan20             \ is down, so jump to clan20
 
  LDX #&EA               \ If we get here then the undercarriage is up and the
- JSR ResetVariable      \ plane is tilted back as we're landing, so we set
+ JSR ResetVariable      \ plane is tilted forwards as we're landing, so we set
                         \ (xRotationHi xRotationLo) = 0 to belly-flop the
                         \ plane forwards onto the ground, so it lands (and
                         \ slides) horizontally along the ground
@@ -30705,6 +30781,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Apply a random amount of roll or bumpiness to the plane
+\  Deep dive: Take-offs and landings
 \
 \ ------------------------------------------------------------------------------
 \
