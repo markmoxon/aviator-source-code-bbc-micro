@@ -17900,7 +17900,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateAliens (Part 1 of 4)
+\       Name: UpdateAliens (Part 1 of 5)
 \       Type: Subroutine
 \   Category: The Theme
 \    Summary: Update the aliens so they progress through their feeding or attack
@@ -17948,7 +17948,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateAliens (Part 2 of 4)
+\       Name: UpdateAliens (Part 2 of 5)
 \       Type: Subroutine
 \   Category: The Theme
 \    Summary: Manage alien slots 31 and 32, and if there's a vacancy, wake up a
@@ -18067,7 +18067,7 @@ ORG CODE%
 
 \ ******************************************************************************
 \
-\       Name: UpdateAliens (Part 3 of 4)
+\       Name: UpdateAliens (Part 3 of 5)
 \       Type: Subroutine
 \   Category: The Theme
 \    Summary: If alien slot 33 is free and there's an alien waiting to take off,
@@ -18081,7 +18081,8 @@ ORG CODE%
 \
 \   * If slot 33 is clear, then check slots 31 and 32 to see if either of then
 \     contains an alien in state 22 (i.e. an alien that has finished feeding and
-\     is ready to take off), and if so, move that alien into slot 33
+\     is ready to take off), and if so, move that alien into slot 33, promoting
+\     it to state 23 in the process
 \
 \ ******************************************************************************
 
@@ -18253,9 +18254,8 @@ ORG CODE%
 \
 \ This routine grows the alien in slot 31 or 32 by scaling the z-coordinates for
 \ the alien's four object points. Because object points are stored with the
-\ scale factor in bits 4 to 7, we can double the length of the alien by adding
-\ 16 to each z-coordinate (as the alien object's "nose" points along the
-\ z-axis).
+\ scale factor in bits 4 to 7, we can double the size of the alien by adding
+\ 16 to each z-coordinate, thus doubling the scale factor.
 \
 \ If bit 7 of A is set, then this routine resets the size to the smallest
 \ feeding stage, which has a scale factor of 32 (i.e. 2^2).
@@ -22857,7 +22857,7 @@ NEXT
 \ Once an alien is in state 1, the state gets incremented in the UpdateAliens
 \ routine on 2 of every 256 main loop iterations, until it reaches 22.
 \
-\ An alien is only promoted into state 22 if slot 33 becomes vacant, at which
+\ An alien is only promoted from state 22 if slot 33 becomes vacant, at which
 \ point it is bumped up to state 23 (preparing to take off).
 \
 \ Once an alien is in state 23, the state gets incremented in the UpdateAliens
@@ -25648,7 +25648,7 @@ NEXT
  ADC xTemp2Hi,Y
  STA xTemp2Hi,Y
 
- DEY                    \ Derement the loop counter to move on to the next axis
+ DEY                    \ Decrement the loop counter to move on to the next axis
 
  BPL expl4              \ Loop back until we have done all three axes
 
