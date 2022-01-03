@@ -17026,6 +17026,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: Move an alien towards Acornsville and check whether it has reached
 \             it yet (and if so, end the game)
+\  Deep dive: Aliens attack Acornsville!
 \
 \ ******************************************************************************
 
@@ -17797,8 +17798,9 @@ ORG CODE%
 \       Name: SpawnAlien
 \       Type: Subroutine
 \   Category: The Theme
-\    Summary:  If the Theme is enabled and the current wave does not yet have
-\              eight aliens in it, spawn a new alien
+\    Summary: If the Theme is enabled and the current wave does not yet have
+\             eight aliens in it, spawn a new alien
+\  Deep dive: Alien feeding and growth patterns
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17906,6 +17908,7 @@ ORG CODE%
 \    Summary: Update the aliens so they progress through their feeding or attack
 \             cycles
 \  Deep dive: Scheduling tasks in the main loop
+\             Alien feeding and growth patterns
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17953,6 +17956,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: Manage alien slots 31 and 32, and if there's a vacancy, wake up a
 \             dormant alien, move it into the slot and start its feeding cycle
+\  Deep dive: Alien feeding and growth patterns
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18072,6 +18076,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: If alien slot 33 is free and there's an alien waiting to take off,
 \             promote it into slot 33
+\  Deep dive: Alien feeding and growth patterns
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18138,6 +18143,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: When an alien reaches the next feeding stage, double its size
 \  Deep dive: Scheduling tasks in the main loop
+\             Alien feeding and growth patterns
 \
 \ ******************************************************************************
 
@@ -18196,6 +18202,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: Check whether the whole wave has been destroyed, and award points
 \             accordingly
+\  Deep dive: Alien feeding and growth patterns
 \
 \ ******************************************************************************
 
@@ -18249,6 +18256,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: The Theme
 \    Summary: Change the size of an alien so it grows bigger as it feeds
+\  Deep dive: Alien feeding and growth patterns
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20997,6 +21005,7 @@ ORG CODE%
 \   Category: The Theme
 \    Summary: The distance from the alien we just hit, so we can work out
 \             whether we get hit by turbulence
+\  Deep dive: Explosions and turbulence
 \
 \ ******************************************************************************
 
@@ -22843,6 +22852,7 @@ NEXT
 \       Type: Variable
 \   Category: The Theme
 \    Summary: The state of each of the eight aliens
+\  Deep dive: Alien feeding and growth patterns
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25520,6 +25530,7 @@ NEXT
 \       Type: Subroutine
 \   Category: The Theme
 \    Summary: Explode an alien, making the alien split apart
+\  Deep dive: Explosions and turbulence
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27475,6 +27486,7 @@ NEXT
 \   Category: Flight model
 \    Summary: If we are near to an exploding alien, apply turbulence
 \  Deep dive: The flight model
+\             Explosions and turbulence
 \
 \ ------------------------------------------------------------------------------
 \
