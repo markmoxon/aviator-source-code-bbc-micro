@@ -8030,6 +8030,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Multiply two unsigned 8-bit numbers
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8039,19 +8040,20 @@ ORG CODE%
 \
 \ It uses the following algorithm:
 \
-\   %XXXXxxxx * %YYYYyyyy = (%XXXX0000 + %0000xxxx) * (%YYYY0000 + %0000yyyy)
+\   X * Y = %XXXXxxxx * %YYYYyyyy
 \
-\                         = (%XXXX0000 * %YYYY0000) + (%XXXX0000 * %0000yyyy)
-\                                                   + (%0000xxxx * %YYYY0000)
-\                                                   + (%0000xxxx * %0000yyyy)
+\         = (%XXXX0000 + %0000xxxx) * (%YYYY0000 + %0000yyyy)
 \
-\                         = (%YYYY * %XXXX) << 8    + (%XXXX * %yyyy << 4)
-\                                                   + (%xxxx * %YYYY << 4)
-\                                                   + (%xxxx * %yyyy)
+\         = (%XXXX0000 * %YYYY0000) + (%XXXX0000 * %0000yyyy)
+\                                   + (%0000xxxx * %YYYY0000)
+\                                   + (%0000xxxx * %0000yyyy)
 \
-\                         = (%YYYY * %XXXX) << 8    + ((%XXXX * %yyyy)
-\                                                   + (%xxxx * %YYYY)) << 4
-\                                                   + (%xxxx * %yyyy)
+\         = (%YYYY * %XXXX) << 8    + (%XXXX * %yyyy << 4)
+\                                   + (%xxxx * %YYYY << 4)
+\                                   + (%xxxx * %yyyy)
+\
+\         = (%YYYY * %XXXX) << 8    + ((%XXXX * %yyyy) + (%xxxx * %YYYY)) << 4
+\                                   + (%xxxx * %yyyy)
 \
 \ Arguments:
 \
@@ -8405,6 +8407,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Calculate the sine of a 16-bit number
+\  Deep dive: Trigonometry
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8412,7 +8415,7 @@ ORG CODE%
 \
 \ where (X W) is a 16-bit angle, with 0 to 65535 representing a quarter circle.
 \
-\ The sine lookup table contains 256 entries that represent a quater circle, so
+\ The sine lookup table contains 256 entries that represent a quarter circle, so
 \ we work out the result by first looking up the sine for the high byte X, and
 \ then interpolating W/256 of the way between the results for X and X + 1. It
 \ might help to think of X being an integer (0 to 255) and W being a fraction
@@ -8503,6 +8506,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Multiply a 4-bit and a 16-bit number
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8583,9 +8587,9 @@ ORG CODE%
                         \            + %vvvv * %ssss
                         \          = %vvvv * (%SSSS << 4 + %ssss + %RRRR >> 4)
                         \          = %vvvv * (%SSSSssss + %RRRR >> 4)
-                        \          = %vvvv * (S R) >> 4
-                        \          = V * (S R) >> 4
-                        \          = V * (S R) / 16
+                        \          = %vvvv * (%SSSSssss + %RRRRrrrr >> 8)
+                        \          = %vvvv * (S R) >> 8
+                        \          = V * (S R) >> 8
 
  BIT K                  \ If bit 7 of K is clear, jump to mulp2 to skip the
  BPL mulp2              \ following and apply the correct sign to the result
@@ -9797,6 +9801,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Multiply two unsigned 16-bit numbers
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21055,6 +21060,7 @@ ORG CODE%
 \       Type: Variable
 \   Category: The Theme
 \    Summary: The time since we hit an alien, so we can time its explosion
+\  Deep dive: Explosions and turbulence
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21341,6 +21347,7 @@ ORG CODE%
 \   Category: Maths
 \    Summary: Lookup table for shifting a byte four places to the right, to
 \             extract the high nibble
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21364,6 +21371,7 @@ NEXT
 \   Category: Maths
 \    Summary: Lookup table for shifting a byte four places to the left, to
 \             extract the low nibble
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21435,6 +21443,7 @@ NEXT
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for multiplication times tables
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22658,6 +22667,7 @@ NEXT
 \       Type: Variable
 \   Category: Maths
 \    Summary: Low byte of the sine lookup table
+\  Deep dive: Trigonometry
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22705,6 +22715,7 @@ NEXT
 \       Type: Variable
 \   Category: Maths
 \    Summary: High byte of the sine lookup table
+\  Deep dive: Trigonometry
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23333,6 +23344,7 @@ NEXT
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for the low nibble of a value
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23708,6 +23720,7 @@ NEXT
 \       Type: Variable
 \   Category: Utility routines
 \    Summary: A list for keeping a list of random numbers
+\  Deep dive: Random numbers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23731,6 +23744,7 @@ NEXT
 \       Type: Variable
 \   Category: Maths
 \    Summary: Lookup table for the high nibble of a value
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25807,6 +25821,7 @@ NEXT
 \   Category: Utility routines
 \    Summary: Set the next item in the randomNumbers list to a new random number
 \             and update the pointer to point to it
+\  Deep dive: Random numbers
 \
 \ ******************************************************************************
 
@@ -25830,6 +25845,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Utility routines
 \    Summary: Point to the next item in the randomNumbers list
+\  Deep dive: Random numbers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29377,6 +29393,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Maths
 \    Summary: Multiply an 8-bit and a 16-bit number
+\  Deep dive: Times tables and nibble arithmetic
 \
 \ ------------------------------------------------------------------------------
 \
