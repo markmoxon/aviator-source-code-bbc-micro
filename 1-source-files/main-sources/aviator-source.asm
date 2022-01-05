@@ -998,7 +998,7 @@ ORG &0900
                         \   * axisKeyUsage+2 = aileron
                         \
                         \ In each case, the value is updated by adding the
-                        \ relevant keyLoggerLow value, which is 1 in each case,
+                        \ relevant keyLoggerLo value, which is 1 in each case,
                         \ so these count up by 1 every time a relevant axis
                         \ control key is pressed (in any direction), so they
                         \ measure "axis control key usage"
@@ -1649,16 +1649,16 @@ ORG &0900
 
  SKIP 3                 \ These bytes appear to be unused
 
-.keyLoggerLow
+.keyLoggerLo
 
- SKIP 6                 \ Key logger (low value)
+ SKIP 6                 \ Key logger (low byte)
                         \
                         \ Populated with values from keyTable1Lo or keyTable2Lo
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
-                        \   L or < (elevator dive/pitch)      =   1 or  1
-                        \   A or + (rudder yaw left/right)    =   1 or  1
-                        \   S or D (aileron bank left/right)  =   1 or  1
+                        \   L or < (elevator dive/pitch)      =  -1 or  1
+                        \   A or + (rudder yaw left/right)    =  -1 or  1
+                        \   S or D (aileron bank left/right)  =  -1 or  1
                         \   W or E (throttle down/up)         = -15 or 15
                         \   U or B (undercarriage, brakes)    =   4 or  7
                         \   F or SHIFT (flaps, fire)          =   5 or  8
@@ -1685,19 +1685,19 @@ ORG &0900
 
  SKIP 5                 \ These bytes appear to be unused
 
-.keyLoggerHigh
+.keyLoggerHi
 
- SKIP 6                 \ Key logger (high value)
+ SKIP 6                 \ Key logger (high byte)
                         \
                         \ Populated with values from keyTable1Hi or keyTable2Hi
                         \ when a key is pressed, or 0 if neither is pressed:
                         \
-                        \   L or < (elevator dive/pitch)      = -1 or 1
-                        \   A or + (rudder yaw left/right)    = -1 or 1
-                        \   S or D (aileron bank left/right)  = -1 or 1
-                        \   W or E (throttle down/up)         = -1 or 0
-                        \   U or B (undercarriage, brakes)    =  0 or 0
-                        \   F or SHIFT (flaps, fire)          =  0 or 0
+                        \   L or < (elevator dive/pitch)      =  -1 or  1
+                        \   A or + (rudder yaw left/right)    =  -1 or  1
+                        \   S or D (aileron bank left/right)  =  -1 or  1
+                        \   W or E (throttle down/up)         = -15 or 15
+                        \   U or B (undercarriage, brakes)    =   4 or  7
+                        \   F or SHIFT (flaps, fire)          =   5 or  8
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -4393,6 +4393,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Clip a line to fit on-screen, starting with the line deltas
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5119,6 +5120,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line in the canopy view
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5143,9 +5145,9 @@ ORG CODE%
 \
 \   V                   Direction of vector (T, U):
 \
-\                         * Bit 7 is the direction of the the x-delta
+\                         * Bit 7 is the direction of the x-delta
 \
-\                         * Bit 6 is the direction of the the y-delta
+\                         * Bit 6 is the direction of the y-delta
 \
 \                         * Bit 1 is set if this is the horizon line
 \
@@ -7137,9 +7139,9 @@ ORG CODE%
 \
 \   V                   Direction of the line:
 \
-\                         * Bit 7 is the direction of the the x-delta
+\                         * Bit 7 is the direction of the x-delta
 \
-\                         * Bit 6 is the direction of the the y-delta
+\                         * Bit 6 is the direction of the y-delta
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
@@ -7818,6 +7820,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw all the lines from a line buffer to erase them
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11503,6 +11506,7 @@ ORG CODE%
 \   Category: Drawing lines
 \    Summary: Draw a line on indicators 0 to 7, i.e. a dial hand (0-6) or an
 \             artificial horizon (7)
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11518,9 +11522,9 @@ ORG CODE%
 \
 \   R                   Direction of vector (T, U):
 \
-\                         * Bit 7 is the direction of the the x-delta
+\                         * Bit 7 is the direction of the x-delta
 \
-\                         * Bit 6 is the direction of the the y-delta
+\                         * Bit 6 is the direction of the y-delta
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
@@ -11589,8 +11593,8 @@ ORG CODE%
  LDA #%10001000         \ Redraw the single pixel at the right end of the
  STA row23_block14_4    \ artificial horizon's centre line
 
- LDA S                  \ Fetch the x-coordinate of the the starting point of
-                        \ the new line from S
+ LDA S                  \ Fetch the x-coordinate of the starting point of the
+                        \ new line from S
 
  STA I                  \ Set I = the x-coordinate of the starting point of the
                         \ new line to draw
@@ -11761,9 +11765,9 @@ ORG CODE%
 \
 \   R                   Direction of vector (T, U):
 \
-\                         * Bit 7 is the direction of the the x-delta
+\                         * Bit 7 is the direction of the x-delta
 \
-\                         * Bit 6 is the direction of the the y-delta
+\                         * Bit 6 is the direction of the y-delta
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right, so this means the following:
@@ -11962,6 +11966,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Drawing lines
 \    Summary: Draw a line: set up pixel bytes and slope variables
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12006,9 +12011,9 @@ ORG CODE%
 \
 \   V                   Direction of vector (T, U):
 \
-\                         * Bit 7 is the direction of the the x-delta
+\                         * Bit 7 is the direction of the x-delta
 \
-\                         * Bit 6 is the direction of the the y-delta
+\                         * Bit 6 is the direction of the y-delta
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
@@ -12774,6 +12779,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Apply any axis control key presses to the current axis values
+\  Deep dive: The key logger
 \
 \ ******************************************************************************
 
@@ -12781,7 +12787,7 @@ ORG CODE%
 
  LDX #2                 \ We start with the aileron, rudder and elevator key
                         \ pairs, whose values are stored in these key logger
-                        \ offsets in keyLoggerLow and keyLoggerHigh:
+                        \ offsets in (keyLoggerHi keyLoggerLo):
                         \
                         \   * 2 = aileron
                         \   * 1 = rudder
@@ -12794,7 +12800,7 @@ ORG CODE%
 
  CLC                    \ Clear the C flag for the addition below
 
- LDA keyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
+ LDA keyLoggerLo,X      \ Fetch the low byte for this key pair, which will be 1
                         \ if a key is being pressed, or 0 if no key is pressed
 
  BEQ umod4              \ If A = 0 then neither key in this key pair is being
@@ -12804,9 +12810,10 @@ ORG CODE%
  STA axisKeyUsage,X     \ this key pair in axisKeyUsage, so we increment the
                         \ value every time a key from this pair is used
 
- LDA keyLoggerHigh,X    \ Fetch the high value for this key pair, which will be
+ LDA keyLoggerHi,X      \ Fetch the high byte for this key pair, which will be
                         \ +1 or -1 if a key is being pressed, or 0 if no key is
-                        \ pressed
+                        \ pressed (so it contains the sign of the key logger
+                        \ value)
 
  STA P                  \ Store the value in P so we can check its sign below
 
@@ -12832,7 +12839,7 @@ ORG CODE%
                         \ If we get here, then this key pair's axisChangeRate
                         \ value has been reduced down to zero by repeated calls
                         \ to UpdateFlightModel with the key being held down, so
-                        \ the relavant control is now fully engaged and we bump
+                        \ the relevant control is now fully engaged and we bump
                         \ up the rate of change by another 3 in the relevant
                         \ direction
 
@@ -12911,6 +12918,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Apply any throttle key presses to the current thrust value
+\  Deep dive: The key logger
 \
 \ ******************************************************************************
 
@@ -12918,7 +12926,7 @@ ORG CODE%
 
  CLC                    \ Clear the C flag for the addition below
 
- LDA keyLoggerLow+3     \ Fetch the low value for the throttle key
+ LDA keyLoggerLo+3      \ Fetch the low byte for the throttle key
 
  BEQ umod11             \ If A = 0 then neither key in this key pair is being
                         \ pressed, so jump down to umod11 to skip the throttle
@@ -12927,14 +12935,14 @@ ORG CODE%
                         \ We now want to add the key logger value to the current
                         \ thrust value, which we do like this:
                         \
-                        \   (Y X) = (keyLoggerHigh+3 keyLoggerLow+3)
+                        \   (Y X) = (keyLoggerHi+3 keyLoggerLo+3)
                         \           +  (thrustHi thrustLo)
 
  ADC thrustLo           \ We start by adding the low bytes
  TAX
 
 
- LDA keyLoggerHigh+3    \ And then add the high bytes, so now (Y X) contains the
+ LDA keyLoggerHi+3      \ And then add the high bytes, so now (Y X) contains the
  ADC thrustHi           \ updated thrust value
  TAY
 
@@ -12975,6 +12983,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Flight model
 \    Summary: Process the undercarriage, brake, flaps and fire keys
+\  Deep dive: The key logger
 \
 \ ******************************************************************************
 
@@ -13076,6 +13085,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Apply the undercarriage, brakes, flaps and fire keys
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13106,7 +13116,7 @@ ORG CODE%
 
 .ProcessOtherKeys
 
- LDA keyLoggerLow,X     \ Fetch the low value for this key pair
+ LDA keyLoggerLo,X      \ Fetch the low byte for this key pair
 
  BNE poth2              \ If A is non-zero then a key from this key pair is
                         \ being pressed, so jump down to poth2 to process the
@@ -13590,6 +13600,7 @@ ORG CODE%
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Scan the keyboard for a specific key
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13626,13 +13637,15 @@ ORG CODE%
 \   Category: Keyboard
 \    Summary: Scan the keyboard for keys in the two key tables and update the
 \             key logger
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine updates the key logger, which is stored in keyLoggerHigh and
-\ keyLoggerLow. If a key is pressed, then the corresponding 16-bit value in the
-\ key logger is set to the corresponding value from the KeyTable tables, which
-\ are stored in keyTable1Lo/keyTable1Hi and keyTable2Lo/keyTable2Hi.
+\ This routine updates the value in the key logger, which is stored in
+\ (keyLoggerHi keyLoggerLo). If a key is pressed, then the corresponding 16-bit
+\ value in the key logger is set to the corresponding value from the KeyTable
+\ tables, which are stored at (keyTable1Hi keyTable1Lo) and (keyTable2Hi
+\ keyTable2Lo).
 \
 \ ******************************************************************************
 
@@ -13685,11 +13698,11 @@ ORG CODE%
 
 .klog4
 
- STA keyLoggerHigh,X    \ Store the high byte of the key logger value in (A Y)
-                        \ in the X-th byte of keyLoggerHigh
+ STA keyLoggerHi,X      \ Store the high byte of the key logger value in (A Y)
+                        \ in the X-th byte of keyLoggerHi
 
  TYA                    \ Store the low byte of the key logger value in (A Y)
- STA keyLoggerLow,X     \ in the X-th byte of keyLoggerLow
+ STA keyLoggerLo,X      \ in the X-th byte of keyLoggerLo
 
  DEC V                  \ Decrement the offset to point to the next key to
                         \ process
@@ -15966,8 +15979,8 @@ ORG CODE%
                         \     points 216 to 255 contain the calculated
                         \     coordinates for objects 0 to 39
                         \
-                        \ So in the the following, we set the coordinates of
-                        \ the point whose ID is in GG, i.e. point GG
+                        \ So in the following, we set the coordinates of the
+                        \ point whose ID is in GG, i.e. point GG
 
                         \ We do the following calculation with 24-bit values,
                         \ so we can do the visibility checks. This means we
@@ -17207,9 +17220,9 @@ ORG CODE%
 \   V                   The direction of the line (runway), or an arbitrary
 \                       direction for the dot, because it doesn't matter (alien)
 \
-\                         * Bit 7 is the direction of the the x-delta
+\                         * Bit 7 is the direction of the x-delta
 \
-\                         * Bit 6 is the direction of the the y-delta
+\                         * Bit 6 is the direction of the y-delta
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
@@ -18445,7 +18458,7 @@ ORG CODE%
                         \
                         \ Note that the feeding stage goes from 4 (dormant) down
                         \ to 0 (fully fed) as the alien feeds and grows bigger,
-                        \ so we need to invert the scale of the the z-coordinate
+                        \ so we need to invert the scale of the z-coordinate
                         \ to get the correct value for the feeding stage
 
  LDA zObjectPoint,X     \ Set A to the object point's z-coordinate
@@ -20975,6 +20988,7 @@ ORG CODE%
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: The x-coordinates of the runway and alien on the radar
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -20992,6 +21006,7 @@ ORG CODE%
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: The y-coordinates of the runway and alien on the radar
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -21770,6 +21785,7 @@ NEXT
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the start x-coordinate (R)
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21809,6 +21825,7 @@ NEXT
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the max/min x-coordinate (W)
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21848,6 +21865,7 @@ NEXT
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the start y-coordinate (S)
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21887,6 +21905,7 @@ NEXT
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the max/min y-coordinate (G)
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21926,6 +21945,7 @@ NEXT
 \       Type: Variable
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the line's |x-delta| (T)
+\  Deep dive: Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24024,7 +24044,7 @@ NEXT
  BEQ rjoy1
 
  LDA #8                 \ The fire button is being pressed, so update the key
- STA keyLoggerLow+5     \ logger at keyLoggerLow+5, which corresponds to the
+ STA keyLoggerLo+5      \ logger at keyLoggerLo+5, which corresponds to the
                         \ flaps and fire keys. We set the value to 8, the value
                         \ from keyTable2Lo for the fire button
 
@@ -24564,6 +24584,7 @@ NEXT
 \   Category: Drawing lines
 \    Summary: Line buffer storage for the line direction (V)
 \  Deep dive: Source code clues hidden in the game binary
+\             Line buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24816,6 +24837,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Utility routines
 \    Summary: Copy a point from the variable workspace to the point tables
+\  Deep dive: Multi-byte variables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24860,6 +24882,7 @@ NEXT
 \       Type: Subroutine
 \   Category: Utility routines
 \    Summary: Copy a point from the point tables to the variable workspace
+\  Deep dive: Multi-byte variables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25713,7 +25736,7 @@ NEXT
  BNE expl8
 
                         \ If we get here then hitTimer = 26, so it was 27 before
-                        \ the decrement above, which is right at the the start
+                        \ the decrement above, which is right at the start
                         \ of the explosion
 
  LDA zTemp2Hi           \ Set A to the high byte of the alien's new z-coordinate
@@ -26571,6 +26594,7 @@ NEXT
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Internal key numbers of high priority keys that are scanned first
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26600,6 +26624,7 @@ NEXT
 \   Category: Keyboard
 \    Summary: Internal key numbers of lower priority keys that are scanned
 \             second
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26652,6 +26677,7 @@ NEXT
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (low byte) for key presses in keyTable2
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26676,6 +26702,7 @@ NEXT
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (high byte) for key presses in keyTable2
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26700,6 +26727,7 @@ NEXT
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (low byte) for key presses in keyTable1
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26724,6 +26752,7 @@ NEXT
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Key logger value (high byte) for key presses in keyTable1
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26735,10 +26764,10 @@ NEXT
 
 .keyTable1Hi
 
- EQUB 255               \ L         Elevator (stick forwards, dive)
- EQUB 255               \ A         Left rudder
- EQUB 255               \ S         Aileron (joystick left, bank left)
- EQUB 255               \ W         Decrease throttle
+ EQUB &FF               \ L         Elevator (stick forwards, dive)
+ EQUB &FF               \ A         Left rudder
+ EQUB &FF               \ S         Aileron (joystick left, bank left)
+ EQUB &FF               \ W         Decrease throttle
  EQUB 0                 \ U         Undercarriage up/down
  EQUB 0                 \ F         Flaps on/off
 
@@ -26904,6 +26933,7 @@ NEXT
 \   Category: Dashboard
 \    Summary: Line buffer storage for the start x-coordinate for each indicator
 \             line (I)
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -26930,6 +26960,7 @@ NEXT
 \   Category: Dashboard
 \    Summary: Line buffer storage for the start y-coordinate for each indicator
 \             line (J)
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -27025,6 +27056,7 @@ NEXT
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: Line buffer storage for the indicator line's |x-delta| (T)
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -27049,6 +27081,7 @@ NEXT
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: Line buffer storage for the indicator line's |y-delta| (U)
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -27073,6 +27106,7 @@ NEXT
 \       Type: Variable
 \   Category: Dashboard
 \    Summary: Line buffer storage for the indicator line's direction (V)
+\  Deep dive: Line buffers
 \
 \ ******************************************************************************
 
@@ -27979,7 +28013,7 @@ NEXT
  STA V                  \ contains the bit 0 of xVelocityPLo that we shifted
                         \ into the C flag above
 
- LDA xVelocityPHi       \ Set Q = P with the the sign bit from xVelocityPHi
+ LDA xVelocityPHi       \ Set Q = P with the sign bit from xVelocityPHi
  AND #%10000000         \       = xVelocityPLo / 2 with the correct sign
  ORA P
  STA Q
@@ -28448,7 +28482,7 @@ NEXT
                         \
                         \ Fiknally, to support negative velocities, we extend
                         \ xVelocity with new high and top bytes, set to 0 or &FF
-                        \ depending on the the sign of xVelocity, so that's:
+                        \ depending on the sign of xVelocity, so that's:
                         \
                         \   (0 0 xVelocityTop xVelocityHi)
                         \
@@ -28755,7 +28789,7 @@ NEXT
 \
 \       * A = xTurnTop EOR #%00111111
 \
-\   * Set the the force factor for yLiftDrag according to the stalling state.
+\   * Set the force factor for yLiftDrag according to the stalling state.
 \
 \ ******************************************************************************
 
@@ -29671,7 +29705,7 @@ NEXT
                         \
                         \ We also work through the aileron, rudder and elevator
                         \ key pairs, whose values are stored in these key logger
-                        \ offsets in keyLoggerLow and keyLoggerHigh, to check
+                        \ offsets in (keyLoggerHi keyLoggerLo), to check
                         \ whether any of the relevant control keys are being
                         \ pressed
                         \
@@ -29683,7 +29717,7 @@ NEXT
  LDA elevatorPosition,X \ Fetch the position of the flight control that affects
  BEQ fcon7              \ the axis we are currently processing
 
- LDY keyLoggerLow,X     \ Fetch the low value for this key pair, which will be 1
+ LDY keyLoggerLo,X      \ Fetch the low byte for this key pair, which will be 1
                         \ if a key is being pressed, or 0 if no key is pressed
 
  BNE fcon3              \ If Y is non-zero then a key in this key pair is being
@@ -29749,7 +29783,7 @@ NEXT
                         \ ground steering, by applying the brakes to the
                         \ individual wheels
 
- EOR keyLoggerHigh,X    \ The relevant entry in keyLoggerHigh will be -1 or +1
+ EOR keyLoggerHi,X      \ The relevant entry in keyLoggerHi will be -1 or +1
                         \ depending on the direction of the aileron or rudder
                         \ key being applied, so this EOR compares the key's
                         \ direction with the current position, setting bit 7
@@ -30295,7 +30329,7 @@ NEXT
                         \ variable, so it makes the plane bump up by a random
                         \ amount
 
- CLC                    \ Clear the C flag so the the call to ApplyBumpyRide
+ CLC                    \ Clear the C flag so the call to ApplyBumpyRide
                         \ adds a random amount to yPlane (rather than taking it
                         \ away)
 
