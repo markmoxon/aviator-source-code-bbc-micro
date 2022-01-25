@@ -35,7 +35,7 @@ This repository contains source code for Aviator on the BBC Micro, with every si
 
 You can build the fully functioning game from this source. One release is currently supported: the version from the Complete BBC Micro Games Archive at bbcmicro.co.uk.
 
-It is a companion to the [aviator.bbcelite.com website](https://aviator.bbcelite.com) website, which contains all the code from this repository, but laid out in a much more human-friendly fashion.
+It is a companion to the [aviator.bbcelite.com website](https://aviator.bbcelite.com), which contains all the code from this repository, but laid out in a much more human-friendly fashion.
 
 * If you want to browse the source and read about how Aviator works under the hood, you will probably find [the website](https://aviator.bbcelite.com) is a better place to start than this repository.
 
