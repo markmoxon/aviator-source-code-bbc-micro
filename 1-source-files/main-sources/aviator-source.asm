@@ -24339,10 +24339,7 @@ NEXT
 \   Category: Graphics
 \    Summary: Lookup table for converting pixel y-coordinate to low byte of
 \             screen address
-\
-\ ------------------------------------------------------------------------------
-\
-\ See yLookupHi for an explanation of this table.
+\  Deep dive: Converting pixel coordinates to screen addresses
 \
 \ ******************************************************************************
 
