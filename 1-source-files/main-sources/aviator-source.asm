@@ -26025,8 +26025,11 @@ NEXT
 
 .senv1
 
- JSR OSWORD             \ Call OSWORD with A = 8 to set up the sound envelope at
-                        \ location (Y X)
+ JSR OSWORD             \ Call OSWORD with action A, as follows:
+                        \
+                        \  * A = 7 to make the sound at location (Y X)
+                        \
+                        \  * A = 8 to set up the sound envelope at location (Y X)
 
  RTS                    \ Return from the subroutine
 
