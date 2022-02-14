@@ -26027,9 +26027,9 @@ NEXT
 
  JSR OSWORD             \ Call OSWORD with action A, as follows:
                         \
-                        \  * A = 7 to make the sound at location (Y X)
+                        \  * A = 7 to make the sound at (Y X)
                         \
-                        \  * A = 8 to set up the sound envelope at location (Y X)
+                        \  * A = 8 to set up the sound envelope at (Y X)
 
  RTS                    \ Return from the subroutine
 
