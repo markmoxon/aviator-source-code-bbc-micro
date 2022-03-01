@@ -26425,11 +26425,12 @@ NEXT
 \ where each value consists of two bytes, with the low byte first and the high
 \ byte second.
 \
-\ For the channel/flush parameter, the first byte is the channel while the
-\ second is the flush control (where a flush control of 0 queues the sound,
-\ while a flush control of 1 makes the sound instantly). When written in
-\ hexadecimal, the first figure gives the flush control, while the second is
-\ the channel (so &13 indicates flush control = 1 and channel = 3).
+\ For the channel/flush parameter, the top nibble of the low byte is the channel
+\ number, while the bottom nibble of the low byte is the flush control (where a
+\ flush control of 0 queues the sound, and a flush control of 1 makes the sound
+\ instantly). When written in hexadecimal, the first figure gives the flush
+\ control, while the second is the channel (so &13 indicates flush control = 1
+\ and channel = 3).
 \
 \ So when we call MakeSound with A = 5 to make sound #5, this is what the
 \ routine effectively does:
@@ -26449,7 +26450,7 @@ NEXT
 
 .soundData
 
- EQUB &10, &00          \ Sound #0: Stop engine sound  (SOUND &10, 0, 0, 0)
+ EQUB &10, &00          \ Sound #0: Stop engine sound (SOUND &10, 0, 0, 0)
  EQUB &00, &00
  EQUB &00, &00
  EQUB &00, &00
