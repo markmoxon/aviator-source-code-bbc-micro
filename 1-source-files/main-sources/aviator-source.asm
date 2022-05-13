@@ -27240,7 +27240,7 @@ NEXT
 \             effect of gravity and the undercarriage springs
 \  Deep dive: The flight model
 \             On-ground calculations
- \
+\
 \ ------------------------------------------------------------------------------
 \
 \ This part does the following:
