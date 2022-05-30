@@ -17865,7 +17865,7 @@ ORG CODE%
                         \ in the wave
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &64) which decrements one million
+                        \ counter (SHEILA &64), which decrements one million
                         \ times a second and will therefore be pretty random
 
  AND #15                \ Reduce the random number to the range 0 to 15
@@ -25850,7 +25850,7 @@ NEXT
  LDX randomNumbers      \ Fetch the pointer for the randomNumbers list
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &64) which decrements one million
+                        \ counter (SHEILA &64), which decrements one million
                         \ times a second and will therefore be pretty random
 
  STA randomNumbers+1,X  \ Set the next item in the list to the random number we
@@ -30358,7 +30358,7 @@ NEXT
                         \ random value in the range 0 to 74 (as 2368 >> 5 is 74)
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &64) which decrements one million
+                        \ counter (SHEILA &64), which decrements one million
                         \ times a second and will therefore be pretty random
 
  LSR A                  \ Set the C flag randomly, so the call to ApplyBumpyRide
@@ -30893,7 +30893,7 @@ NEXT
  BMI ScaleByAltitude-1  \ subroutine (as ScaleByAltitude-1 contains an RTS)
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &44) which decrements one million
+                        \ counter (SHEILA &44), which decrements one million
                         \ times a second and will therefore be pretty random
                         \
                         \ Because we are AND'ing zVelocityPHi with a random
