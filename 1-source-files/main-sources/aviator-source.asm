@@ -17865,8 +17865,8 @@ ORG CODE%
                         \ in the wave
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &44) which increments 1000 times a
-                        \ second so this will be pretty random
+                        \ counter (SHEILA &64) which decrements one million
+                        \ times a second and will therefore be pretty random
 
  AND #15                \ Reduce the random number to the range 0 to 15
 
@@ -25850,8 +25850,8 @@ NEXT
  LDX randomNumbers      \ Fetch the pointer for the randomNumbers list
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &44) which increments 1000 times a
-                        \ second so this will be pretty random
+                        \ counter (SHEILA &64) which decrements one million
+                        \ times a second and will therefore be pretty random
 
  STA randomNumbers+1,X  \ Set the next item in the list to the random number we
                         \ just fetched
@@ -30358,8 +30358,8 @@ NEXT
                         \ random value in the range 0 to 74 (as 2368 >> 5 is 74)
 
  LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &44) which increments 1000 times a
-                        \ second so this will be pretty random
+                        \ counter (SHEILA &64) which decrements one million
+                        \ times a second and will therefore be pretty random
 
  LSR A                  \ Set the C flag randomly, so the call to ApplyBumpyRide
                         \ randomly adds or subtracts the random roll amount
@@ -30893,8 +30893,8 @@ NEXT
  BMI ScaleByAltitude-1  \ subroutine (as ScaleByAltitude-1 contains an RTS)
 
  AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
-                        \ counter (SHEILA &44) which increments 1000 times a
-                        \ second so this will be pretty random
+                        \ counter (SHEILA &44) which decrements one million
+                        \ times a second and will therefore be pretty random
                         \
                         \ Because we are AND'ing zVelocityPHi with a random
                         \ number, the result will be random but can't be higher
