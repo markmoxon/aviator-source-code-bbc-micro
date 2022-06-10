@@ -31,7 +31,7 @@ See the [introduction](#introduction) for more information.
 
 ## Introduction
 
-This repository contains source code for Aviator on the BBC Micro, with every single line documented and (for the most part) explained..
+This repository contains source code for Aviator on the BBC Micro, with every single line documented and (for the most part) explained.
 
 You can build the fully functioning game from this source. One release is currently supported: the version from the Complete BBC Micro Games Archive at bbcmicro.co.uk.
 

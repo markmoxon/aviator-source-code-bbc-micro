@@ -9674,7 +9674,7 @@ ORG CODE%
 \
 \ This routine reads one of the projected coordinate values that we calculated
 \ in ProjectAxisAngle (in mx1 to mz2), performs a multiplication, and writes the
-\ result to the sprcified entry in matrix 1.
+\ result to the specified entry in matrix 1.
 \
 \ If mRead is the matrix entry in X (from mx1 to mz2) and mWrite is the matrix
 \ entry in Y (from m0 to m8), then it calculates the following:
