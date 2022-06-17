@@ -4,7 +4,8 @@
 \
 \ Aviator was written by Geoffrey J Crammond and is copyright Acornsoft 1983
 \
-\ The code on this site has been disassembled from the original game discs
+\ The code on this site has been reconstructed from a disassembly of the
+\ original game binaries
 \
 \ The commentary is copyright Mark Moxon, and any misunderstandings or mistakes
 \ in the documentation are entirely my fault
