@@ -24,7 +24,7 @@
 \
 \ ******************************************************************************
 
-GUARD &6000             \ Guard against assembling over screen memory
+ GUARD &6000            \ Guard against assembling over screen memory
 
 \ ******************************************************************************
 \
@@ -32,9 +32,9 @@ GUARD &6000             \ Guard against assembling over screen memory
 \
 \ ******************************************************************************
 
-LOAD% = &1100           \ The load address of the main code binary
+ LOAD% = &1100          \ The load address of the main code binary
 
-CODE% = &0B00           \ The address of the main game code once the code has
+ CODE% = &0B00          \ The address of the main game code once the code has
                         \ been rearranged. The code starts off at &1100-&5EFF
                         \ and is moved in three stages:
                         \
@@ -45,7 +45,7 @@ CODE% = &0B00           \ The address of the main game code once the code has
                         \ This address points to the start of the executable
                         \ code after all these moves, which is at &0B00
 
-nextAxis = 40           \ The xObject, yObject and zObject tables each contain
+ nextAxis = 40          \ The xObject, yObject and zObject tables each contain
                         \ 40 bytes, and they are positioned one after the other
                         \ in memory, so if we access, say, the x-coordinate for
                         \ object Y at xObjectHi+Y, then adding #nextAxis to Y
@@ -55,68 +55,68 @@ nextAxis = 40           \ The xObject, yObject and zObject tables each contain
                         \ The following configuration variables represent screen
                         \ addresses, with names in the following format:
                         \
-                        \   row1_block2_3 = Row 1, block 2, byte 3
+                        \   row1_char2_3 = Row 1, character block 2, byte 3
                         \
                         \ The first batch refers to screen addresses in the
                         \ canopy (character rows 0 to 19)
 
-row1_block1_0 = &5948   \ Second block on second row
-row1_block38_0 = &5A68  \ Last block but one on second row
-row1_block39_0 = &5A70  \ Last block on second row
+ row1_char1_0 = &5948   \ Second block on second row
+ row1_char38_0 = &5A68  \ Last block but one on second row
+ row1_char39_0 = &5A70  \ Last block on second row
 
-row3_block1_0 = &5BC8   \ Top-left corner of the on-screen score display
+ row3_char1_0 = &5BC8   \ Top-left corner of the on-screen score display
 
-row6_block1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
+ row6_char1_0 = &5F88   \ Top-left corner of the canopy-wide rectangle
                         \ containing the gun sights on rows 6, 7 and 8
 
-row6_block20_0 = &6020  \ Top block of the vertical line in the gun sights
-row7_block20_0 = &6160  \ Bottom block of the vertical line in the gun sights
-row8_block11_0 = &6258  \ Left end of horizontal bar in the gun sights
+ row6_char20_0 = &6020  \ Top block of the vertical line in the gun sights
+ row7_char20_0 = &6160  \ Bottom block of the vertical line in the gun sights
+ row8_char11_0 = &6258  \ Left end of horizontal bar in the gun sights
 
                         \ The second batch refers to screen addresses in the
                         \ dashboard (character rows 20 to 31)
 
-row21_block20_7 = &72E7 \ Top block of joystick position display y-axis
-row22_block20_7 = &7427 \ Second block of joystick position display y-axis
-row23_block20_7 = &7567 \ Third block of joystick position display y-axis
-row24_block20_7 = &76A7 \ Fourth block of joystick position display y-axis and
+ row21_char20_7 = &72E7 \ Top block of joystick position display y-axis
+ row22_char20_7 = &7427 \ Second block of joystick position display y-axis
+ row23_char20_7 = &7567 \ Third block of joystick position display y-axis
+ row24_char20_7 = &76A7 \ Fourth block of joystick position display y-axis and
                         \ right-middle block of joystick position display x-axis
-row25_block20_7 = &77E7 \ Fifth block of joystick position display y-axis
-row26_block20_7 = &7927 \ Sixth block of joystick position display y-axis
-row27_block20_7 = &7A67 \ Bottom block of joystick position display y-axis
+ row25_char20_7 = &77E7 \ Fifth block of joystick position display y-axis
+ row26_char20_7 = &7927 \ Sixth block of joystick position display y-axis
+ row27_char20_7 = &7A67 \ Bottom block of joystick position display y-axis
 
-row24_block18_7 = &7697 \ Left block of joystick position display x-axis
-row24_block19_7 = &769F \ Left-middle block of joystick position display x-axis
-row24_block21_7 = &76AF \ Right block of joystick position display x-axis
+ row24_char18_7 = &7697 \ Left block of joystick position display x-axis
+ row24_char19_7 = &769F \ Left-middle block of joystick position display x-axis
+ row24_char21_7 = &76AF \ Right block of joystick position display x-axis
 
-row23_block12_4 = &7524 \ Left block of artificial horizon centre marker
-row23_block13_2 = &752A \ Middle block of artificial horizon centre marker
-row23_block14_4 = &7534 \ Right block of artificial horizon centre marker
-row25_block13_1 = &77A9 \ Bottom middle block of artificial horizon
+ row23_char12_4 = &7524 \ Left block of artificial horizon centre marker
+ row23_char13_2 = &752A \ Middle block of artificial horizon centre marker
+ row23_char14_4 = &7534 \ Right block of artificial horizon centre marker
+ row25_char13_1 = &77A9 \ Bottom middle block of artificial horizon
 
-row25_block34_7 = &7857 \ Left spur of the radar's cross
-row25_block35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
-row25_block35_7 = &785F \ Centre and right spur of the radar's cross
-row26_block35_0 = &7998 \ Top pixel of the bottom spur of the radar's cross
-row26_block35_1 = &7999 \ Bottom pixel of the bottom spur of the radar's cross
+ row25_char34_7 = &7857 \ Left spur of the radar's cross
+ row25_char35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
+ row25_char35_7 = &785F \ Centre and right spur of the radar's cross
+ row26_char35_0 = &7998 \ Top pixel of the bottom spur of the radar's cross
+ row26_char35_1 = &7999 \ Bottom pixel of the bottom spur of the radar's cross
 
-row28_block26_5 = &7BD5 \ Centre block of the slip-and-turn indicator
+ row28_char26_5 = &7BD5 \ Centre block of the slip-and-turn indicator
 
-row29_block20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
+ row29_char20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
 
-row30_block0_2 = &7D82  \ Theme indicator
-row30_block32_2 = &7E82 \ Undercarriage indicator
-row30_block35_2 = &7E9A \ Flaps indicator
-row30_block37_2 = &7EAA \ Brakes indicator
+ row30_char0_2 = &7D82  \ Theme indicator
+ row30_char32_2 = &7E82 \ Undercarriage indicator
+ row30_char35_2 = &7E9A \ Flaps indicator
+ row30_char37_2 = &7EAA \ Brakes indicator
 
-VIA = &FE00             \ Memory-mapped space for accessing internal hardware,
+ VIA = &FE00            \ Memory-mapped space for accessing internal hardware,
                         \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
                         \ known as SHEILA)
 
-OSBYTE = &FFF4          \ The address for the OSBYTE routine
-OSWORD = &FFF1          \ The address for the OSWORD routine
-OSWRCH = &FFEE          \ The address for the OSWRCH routine
-OSCLI = &FFF7           \ The address for the OSCLI routine
+ OSBYTE = &FFF4         \ The address for the OSBYTE routine
+ OSWORD = &FFF1         \ The address for the OSWORD routine
+ OSWRCH = &FFEE         \ The address for the OSWRCH routine
+ OSCLI = &FFF7          \ The address for the OSCLI routine
 
 \ ******************************************************************************
 \
@@ -128,7 +128,7 @@ OSCLI = &FFF7           \ The address for the OSCLI routine
 \
 \ ******************************************************************************
 
-ORG &0070
+ ORG &0070
 
 .P
 
@@ -288,7 +288,7 @@ ORG &0070
 \
 \ ******************************************************************************
 
-ORG &0100
+ ORG &0100
 
 .lineBufferU
 
@@ -306,7 +306,7 @@ ORG &0100
                         \ screen at any one time is 48 lines out of the 193
                         \ lines defined in the world
 
-ORG &0160
+ ORG &0160
 
 .mx1Lo
 
@@ -350,7 +350,7 @@ ORG &0160
                         \
                         \ Stored as a 16-bit value (mz2Hi mz2Lo)
 
-ORG &0170
+ ORG &0170
 
 .mx1Hi
 
@@ -404,7 +404,7 @@ ORG &0170
 \
 \ ******************************************************************************
 
-ORG &0400
+ ORG &0400
 
 .pointStatus
 
@@ -537,7 +537,7 @@ ORG &0400
                         \
                         \ Stored as a 16-bit value (zTempPoint2Hi zTempPoint2Lo)
 
-ORG &0900
+ ORG &0900
 
 .xPointLo
 
@@ -2343,10 +2343,10 @@ ORG &0900
 \
 \ ******************************************************************************
 
-CLEAR &0B00, &0D00      \ Clear the guard on the &0B00-&0CFF workspace so we can
+ CLEAR &0B00, &0D00     \ Clear the guard on the &0B00-&0CFF workspace so we can
                         \ assemble the loader code into this address range
 
-ORG CODE%
+ ORG CODE%
 
 \ ******************************************************************************
 \
@@ -11222,20 +11222,20 @@ ORG CODE%
  JSR DrawJoystickCross  \ display using EOR logic, which removes it
 
  LDA #%00100010         \ Redraw the joystick position display's x-axis, in case
- STA row24_block18_7    \ the old cross was overwriting the axis
- STA row24_block21_7
+ STA row24_char18_7     \ the old cross was overwriting the axis
+ STA row24_char21_7
  LDA #%01000100
- STA row24_block19_7
+ STA row24_char19_7
 
  LDA #%10011001         \ Redraw the joystick position display's y-axis, in case
- STA row24_block20_7    \ the old cross was overwriting the axis
+ STA row24_char20_7     \ the old cross was overwriting the axis
  LDA #%10001000
- STA row21_block20_7
- STA row22_block20_7
- STA row23_block20_7
- STA row25_block20_7
- STA row26_block20_7
- STA row27_block20_7
+ STA row21_char20_7
+ STA row22_char20_7
+ STA row23_char20_7
+ STA row25_char20_7
+ STA row26_char20_7
+ STA row27_char20_7
 
  LDA aileronPosition    \ Set A = aileronPosition, the x-position of the
                         \ joystick
@@ -11577,7 +11577,7 @@ ORG CODE%
 
 .dinl1
 
- STA row23_block13_2,Y  \ Redraw the Y-th pixel row in the centre block
+ STA row23_char13_2,Y   \ Redraw the Y-th pixel row in the centre block
 
  LDA #%01000100         \ The top two pixel rows of the centre block contain the
                         \ vertical mark at the centre of the indicator, so set A
@@ -11589,10 +11589,10 @@ ORG CODE%
                         \ in the centre block
 
  LDA #%00110011         \ Redraw the two-pixels at the left end of the
- STA row23_block12_4    \ artificial horizon's centre line
+ STA row23_char12_4     \ artificial horizon's centre line
 
  LDA #%10001000         \ Redraw the single pixel at the right end of the
- STA row23_block14_4    \ artificial horizon's centre line
+ STA row23_char14_4     \ artificial horizon's centre line
 
  LDA S                  \ Fetch the x-coordinate of the starting point of the
                         \ new line from S
@@ -12770,7 +12770,7 @@ ORG CODE%
  JSR UpdateIndicator    \ Update indicator X (7 to 11)
 
  LDA #%01110111         \ Redraw the small horizontal line in the centre of the
- STA row28_block26_5    \ slip-and-turn indicator
+ STA row28_char26_5     \ slip-and-turn indicator
 
  RTS                    \ Return from the subroutine
 
@@ -13253,7 +13253,7 @@ ORG CODE%
 
 .indu3
 
- STA row30_block32_2,X  \ Update pixel row X of the undercarriage indicator to
+ STA row30_char32_2,X   \ Update pixel row X of the undercarriage indicator to
                         \ the pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -13336,7 +13336,7 @@ ORG CODE%
 
 .indf3
 
- STA row30_block35_2,X  \ Update pixel row X of the flaps indicator to the pixel
+ STA row30_char35_2,X   \ Update pixel row X of the flaps indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -13548,7 +13548,7 @@ ORG CODE%
 
 .indb2
 
- STA row30_block37_2,X  \ Update pixel row X of the brakes indicator to the
+ STA row30_char37_2,X   \ Update pixel row X of the brakes indicator to the
                         \ pixel pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -13586,7 +13586,7 @@ ORG CODE%
 
 .indt2
 
- STA row30_block0_2,X   \ Update pixel row X of the Theme indicator to the pixel
+ STA row30_char0_2,X    \ Update pixel row X of the Theme indicator to the pixel
                         \ pattern in A
 
  DEX                    \ Decrement the byte counter to the pixel row above
@@ -16957,16 +16957,16 @@ ORG CODE%
                         \ centre, so we redraw it
 
  LDA #%10001000         \ Redraw the top-but-one pixel of the cross (though,
- STA row25_block35_6    \ oddly, not the very top pixel)
+ STA row25_char35_6     \ oddly, not the very top pixel)
 
- STA row26_block35_0    \ Redraw the bottom two pixels of the cross
- STA row26_block35_1
+ STA row26_char35_0     \ Redraw the bottom two pixels of the cross
+ STA row26_char35_1
 
  LDA #%00010001         \ Redraw the left pixel of the cross
- STA row25_block34_7
+ STA row25_char34_7
 
  LDA #%11001100         \ Redraw the centre and right pixels of the cross
- STA row25_block35_7
+ STA row25_char35_7
 
 .drbl1
 
@@ -17597,8 +17597,8 @@ ORG CODE%
  STX R                  \ canopy view except for the top row containing the
                         \ canopy edge)
 
- LDY #HI(row1_block1_0) \ Set (Y X) to the screen address for row 1, block 1
- LDX #LO(row1_block1_0)
+ LDY #HI(row1_char1_0)  \ Set (Y X) to the screen address for row 1, character
+ LDX #LO(row1_char1_0)  \ block 1
 
                         \ Fall through into FillCanopyRows to fill the canopy
                         \ view, from the top row to the bottom, avoiding the top
@@ -19127,7 +19127,7 @@ ORG CODE%
 
 .upsi2
 
- STA row25_block13_1    \ Set the line at the bottom of the artificial horizon
+ STA row25_char13_1     \ Set the line at the bottom of the artificial horizon
                         \ indicator to the pixel pattern in A (0 if the plane is
                         \ the right way up, %00001110 if it is upside down)
 
@@ -21374,11 +21374,11 @@ ORG CODE%
 
 .shift4Right
 
-FOR I%, 0, 255
+ FOR I%, 0, 255
 
- EQUB HI(I% * 16)
+  EQUB HI(I% * 16)
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -21398,11 +21398,11 @@ NEXT
 
 .shift4Left
 
-FOR I%, 0, 255
+ FOR I%, 0, 255
 
- EQUB LO(I% * 16)
+  EQUB LO(I% * 16)
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -21477,15 +21477,15 @@ NEXT
 
 .timesTable
 
-FOR I%, 0, 15
+ FOR I%, 0, 15
 
- FOR J%, 0, 15
+  FOR J%, 0, 15
 
-  EQUB I% * J%
+   EQUB I% * J%
+
+  NEXT
 
  NEXT
-
-NEXT
 
 \ ******************************************************************************
 \
@@ -22718,17 +22718,17 @@ NEXT
 
 .sinLo
 
-FOR I%, 0, 256
-
- N = SIN((I% / 256) * (PI / 2))
-
- IF N >= 1
-  EQUB 255
- ELSE
-  EQUB LO(INT(N * 65536))
- ENDIF
-
-NEXT
+ FOR I%, 0, 256
+ 
+  N = SIN((I% / 256) * (PI / 2))
+ 
+  IF N >= 1
+   EQUB 255
+  ELSE
+   EQUB LO(INT(N * 65536))
+  ENDIF
+ 
+ NEXT
 
 \ ******************************************************************************
 \
@@ -22746,17 +22746,17 @@ NEXT
 
 .sinHi
 
-FOR I%, 0, 256
-
- N = SIN((I% / 256) * (PI / 2))
-
- IF N >= 1
-  EQUB 255
- ELSE
-  EQUB HI(INT(N * 65536))
- ENDIF
-
-NEXT
+ FOR I%, 0, 256
+ 
+  N = SIN((I% / 256) * (PI / 2))
+ 
+  IF N >= 1
+   EQUB 255
+  ELSE
+   EQUB HI(INT(N * 65536))
+  ENDIF
+ 
+ NEXT
 
 \ ******************************************************************************
 \
@@ -23237,7 +23237,7 @@ NEXT
  LDA #&20               \ Set A = &20 so we award 200 points for flying down
                         \ main street while upside down
 
- LDX row25_block13_1    \ If there is a line at the bottom of the artificial
+ LDX row25_char13_1     \ If there is a line at the bottom of the artificial
  BNE skil10             \ horizon indicator, then the plane is upside down, so
                         \ jump to skil10 to bank these points in pointsToAward
                         \ and return from the subroutine
@@ -23277,7 +23277,7 @@ NEXT
                         \ earned ourselves some points, to be awarded when we
                         \ exit skill zone 6 or enter skill zone 3
 
- LDX row25_block13_1    \ If there is a line at the bottom of the artificial
+ LDX row25_char13_1     \ If there is a line at the bottom of the artificial
  BNE skil6              \ horizon indicator, then the plane is upside down, so
                         \ jump to skil6 to award 100 points for flying under the
                         \ bridge upside down
@@ -23377,11 +23377,11 @@ NEXT
 
 .lowNibble
 
-FOR I%, 0, 255
+ FOR I%, 0, 255
 
- EQUB I% AND %00001111
+  EQUB I% AND %00001111
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -23777,11 +23777,11 @@ NEXT
 
 .highNibble
 
-FOR I%, 0, 255
+ FOR I%, 0, 255
 
- EQUB I% AND %11110000
+  EQUB I% AND %11110000
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -24024,7 +24024,7 @@ NEXT
 
 .ReadJoystick
 
- LDA row29_block20_4    \ If the screen byte at row 29, block 20, pixel row 4 is
+ LDA row29_char20_4     \ If the screen byte at row 29, block 20, pixel row 4 is
  BEQ rjoy1              \ zero (i.e. black) then the joystick is not enabled, so
                         \ jump to rjoy1 to return from the subroutine
 
@@ -24346,17 +24346,17 @@ NEXT
 
 .yLookupLo
 
-FOR I%, 19, 0, -1
+ FOR I%, 19, 0, -1
 
- EQUB LO(&5800 + (I% * &138))
+  EQUB LO(&5800 + (I% * &138))
 
-NEXT
+ NEXT
 
-FOR I%, 31, 20, -1
+ FOR I%, 31, 20, -1
 
- EQUB LO(&5800 + (I% * &138))
+  EQUB LO(&5800 + (I% * &138))
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -24371,17 +24371,17 @@ NEXT
 
 .yLookupHi
 
-FOR I%, 19, 0, -1
+ FOR I%, 19, 0, -1
 
- EQUB HI(&5800 + (I% * &138))
+  EQUB HI(&5800 + (I% * &138))
 
-NEXT
+ NEXT
 
-FOR I%, 31, 20, -1
+ FOR I%, 31, 20, -1
 
- EQUB HI(&5800 + (I% * &138))
+  EQUB HI(&5800 + (I% * &138))
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -24427,7 +24427,7 @@ NEXT
 
 .corn2
 
- LDA row1_block1_0,X    \ We want to update the X-th pixel row in the character
+ LDA row1_char1_0,X     \ We want to update the X-th pixel row in the character
                         \ block in the top-left corner of the canopy, so fetch
                         \ the current contents of the row
 
@@ -24437,13 +24437,13 @@ NEXT
  ORA Q                  \ Set the pixel pointed to by Q, which on the first
                         \ iteration round the loop will be the first pixel
 
- STA row1_block1_0,X    \ Store the updated pixel row back in screen memory, so
+ STA row1_char1_0,X     \ Store the updated pixel row back in screen memory, so
                         \ on the first iteration round the loop, we just set the
                         \ first pixel in the bottom pixel row, which is the
                         \ bottom-left pixel of the diagonal in the top-left
                         \ corner of the canopy
 
- LDA row1_block39_0,X   \ We want to update the X-th pixel row in the character
+ LDA row1_char39_0,X    \ We want to update the X-th pixel row in the character
                         \ block in the top-right corner of the canopy, so fetch
                         \ the current contents of the row
 
@@ -24453,7 +24453,7 @@ NEXT
  ORA S                  \ Set the pixel pointed to by S, which on the first
                         \ iteration round the loop will be the last pixel
 
- STA row1_block39_0,X   \ Store the updated pixel row back in screen memory, so
+ STA row1_char39_0,X    \ Store the updated pixel row back in screen memory, so
                         \ on the first iteration round the loop, we just set the
                         \ last pixel in the bottom pixel row, which is the
                         \ bottom-right pixel of the diagonal in the top-right
@@ -24553,8 +24553,8 @@ NEXT
 
 .RemoveScore
 
- LDY #HI(row3_block1_0) \ Set (Y X) to the screen address for row 3, block 1
- LDX #LO(row3_block1_0)
+ LDY #HI(row3_char1_0)  \ Set (Y X) to the screen address for row 3, character
+ LDX #LO(row3_char1_0)  \ block 1
 
  LDA #8                 \ Set R = 19, so we clear 8 character rows
  STA R
@@ -26238,8 +26238,8 @@ NEXT
 
  PHA                    \ Store A on the stack so we can retrieve it below
 
- LDY #HI(row6_block1_0) \ Set (Y X) to the screen address for row 6, block 0
- LDX #LO(row6_block1_0)
+ LDY #HI(row6_char1_0)  \ Set (Y X) to the screen address for row 6, character
+ LDX #LO(row6_char1_0)  \ block 1
 
  LDA #3                 \ Set R = 3, so we clear 3 character rows for the sights
  STA R
@@ -26282,12 +26282,12 @@ NEXT
 .guns4
 
  LDA #%10001000         \ Draw a vertical bar in the first pixel of the Y-th
- ORA row6_block20_0,Y   \ pixel row in block 20 on row 6, keeping whatever is
- STA row6_block20_0,Y   \ already on screen
+ ORA row6_char20_0,Y    \ pixel row in character block 20 on row 6, keeping
+ STA row6_char20_0,Y    \ whatever is already on screen
 
  LDA #%10001000         \ Draw a vertical bar in the first pixel of the Y-th
- ORA row7_block20_0,Y   \ pixel row in block 20 on row 7, keeping whatever is
- STA row7_block20_0,Y   \ already on screen
+ ORA row7_char20_0,Y    \ pixel row in character block 20 on row 7, keeping
+ STA row7_char20_0,Y    \ whatever is already on screen
 
  DEY                    \ Decrement the pixel row counter
 
@@ -26297,8 +26297,8 @@ NEXT
                         \ Now to draw the horizontal bar of the gun sights
 
  LDA #%01110111         \ First we draw the left end of the horizontal bar,
- ORA row8_block11_0     \ which is starts with the three rightmost pixels in
- STA row8_block11_0     \ block 11 on row 8
+ ORA row8_char11_0      \ which is starts with the three rightmost pixels in
+ STA row8_char11_0      \ character block 11 on row 8
 
  SEC                    \ Set the C flag for the subtraction below
 
@@ -26311,7 +26311,8 @@ NEXT
 .guns5
 
  LDA #%11111111         \ Draw a horizontal bar of four pixels starting at the
- STA row8_block11_0,Y   \ Y-th offset from the start of block 11 on row 8
+ STA row8_char11_0,Y    \ Y-th offset from the start of character block 11 on
+                        \ row 8
 
  TYA                    \ Set Y = Y - 8, so Y now points to the four pixels to
  SBC #8                 \ the left, as we work or way along the line
@@ -26332,7 +26333,7 @@ NEXT
 \
 \ ------------------------------------------------------------------------------
 \
-\ Note that the game uses row29_block20_4 to check the joystick status, so it
+\ Note that the game uses row29_char20_4 to check the joystick status, so it
 \ is not only an on-screen indicator, it's also the joystick status variable.
 \
 \ ******************************************************************************
@@ -26351,9 +26352,9 @@ NEXT
                         \ This is a new press of TAB, so now we want to toggle
                         \ the joystick setting
 
- LDA row29_block20_4    \ Toggle the joystick indicator pixel above the middle
+ LDA row29_char20_4     \ Toggle the joystick indicator pixel above the middle
  EOR #%10001000         \ of the rudder indicator
- STA row29_block20_4
+ STA row29_char20_4
 
  LDA #128               \ Set A = 128 to use as the value for pressingTab below,
                         \ to indicate that TAB is being pressed
@@ -26557,11 +26558,11 @@ NEXT
 
 .xLookupLo
 
-FOR I%, 0, 39
+ FOR I%, 0, 39
 
- EQUB LO(I% * 8)
+  EQUB LO(I% * 8)
 
-NEXT
+ NEXT
 
 \ ******************************************************************************
 \
@@ -26583,11 +26584,11 @@ NEXT
 
 .xLookupHi
 
-FOR I%, 0, 39
+ FOR I%, 0, 39
 
- EQUB HI(I% * 8)
+  EQUB HI(I% * 8)
 
-NEXT
+ NEXT
 
 
 \ ******************************************************************************
@@ -31108,7 +31109,7 @@ NEXT
 \
 \ ******************************************************************************
 
-ORG &5E00
+ ORG &5E00
 
 .Entry
 
@@ -31182,10 +31183,10 @@ ORG &5E00
 \
 \ ******************************************************************************
 
-\ Code between &0D00 and &10FF starts out at &5800 before being moved
-COPYBLOCK &0D00, &1100, &5800
+ COPYBLOCK &0D00, &1100, &5800      \ Code between &0D00 and &10FF starts out at
+                                    \ &5800 before being moved
 
-\ Code between &0B00 and &0CFF starts out at &5C00 before being moved
-COPYBLOCK &0B00, &0D00, &5C00
+ COPYBLOCK &0B00, &0D00, &5C00      \ Code between &0B00 and &0CFF starts out at
+                                    \ &5C00 before being moved
 
-SAVE "3-assembled-output/AVIA.bin", LOAD%, P%
+ SAVE "3-assembled-output/AVIA.bin", LOAD%, P%
