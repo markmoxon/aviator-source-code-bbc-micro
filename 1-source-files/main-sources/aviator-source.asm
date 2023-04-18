@@ -2257,7 +2257,7 @@
                         \   * Non-zero = yes
                         \
                         \ The height measured is 512 feet, rather than the 500
-                        \ feet mentioned in the maunal, as this is set to
+                        \ feet mentioned in the manual, as this is set to
                         \ non-zero when the plane's altitude in yPlaneHi >= 2
 
 .xRotationHi
@@ -2535,8 +2535,8 @@
                         \ top two character rows (rows 0 and 1)
 
  LDA #&58               \ Set (Q P) = &58FF, so the call to ClearRows starts
- STA Q                  \ clearingfrom character block 32 in the first character
- LDA #&FF               \ row on-screen
+ STA Q                  \ clearing from character block 32 in the first
+ LDA #&FF               \ character row on-screen
  STA P
 
  LDA #2                 \ Set R = 2, so we clear 2 character rows
@@ -2741,7 +2741,7 @@
 \       Name: VduPlot
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Perform a plot command the standard VDU routines
+\    Summary: Perform a plot command using the standard VDU routines
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3144,7 +3144,7 @@
  STA QQ                 \ Set QQ = the high byte of the point's x-coordinate
 
  LDA xPointLo,X         \ Set PP = the low byte of the point's x-coordinate, so
- STA PP                 \ so (QQ PP) now contains |xPoint|, as required
+ STA PP                 \ (QQ PP) now contains |xPoint|, as required
 
  JMP proj7              \ Jump to proj7 to move on to the point's y-coordinate
 
@@ -3503,7 +3503,7 @@
 \
 \ where (X Y) is a positive 16-bit number and (TT S) is the entry in the
 \ (divisionHi divisionLo) table for the denominator after being scaled by the
-\ ScaledUp routine.
+\ ScaleUp routine.
 \
 \ Arguments:
 \
@@ -3986,7 +3986,7 @@
                         \ These instructions remove two bytes from the top of
                         \ the stack so the RTS below returns an extra level up
                         \ the call chain, and as DivideScaled itself must have
-                        \ beencalled from ProjectPoint, this returns us to
+                        \ been called from ProjectPoint, this returns us to
                         \ ProjectPoint with the following results
 
  LDA #0                 \ Set (Q P) = 0
@@ -4919,9 +4919,9 @@
 
                         \ If we get here then the one point is off-screen but
                         \ in front of us, and the other point is behind us and
-                        \ can't be used as our vector line starting point
-                        \ point, and we've set the start point to be the point
-                        \ that is in front of us
+                        \ can't be used as our vector line starting point, and
+                        \ we've set the start point to be the point that is in
+                        \ front of us
 
  JSR ClipStartOfLine    \ Clip the line at the start to move the start point
                         \ on-screen, so we can use it as our vector line's
@@ -5062,7 +5062,7 @@
 \ ******************************************************************************
 
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
- BMI draw23             \ jump down to draw23 to add a line to buffer 1
+ BMI draw23             \ down to draw23 to add a line to buffer 1
 
  LDX lineBuffer2Count   \ If lineBuffer2Count <> 95, line buffer 2 is not full,
  CPX #95                \ so jump down to draw22 to add a new line to the buffer
@@ -5422,8 +5422,8 @@
                         \ V, as well as the current colour cycle
                         \
                         \ To keep things simple, we will only document the
-                        \ the default code, which is for a shallow horizontal
-                        \ slope with the following:
+                        \ default code, which is for a shallow horizontal slope
+                        \ with the following:
                         \
                         \   * Bit 7 of V is clear, so we step along the x-axis
                         \     in a positive direction, i.e. to the right
@@ -5476,7 +5476,7 @@
  CMP #2
  BCC dlin8
 
-                        \ If we get here thenU >= 2, and this is either the
+                        \ If we get here then U >= 2, and this is either the
                         \ horizon line or the line has been clipped
 
  LDA #255               \ Set SS = 255
@@ -5799,9 +5799,9 @@
                         \ block number
 
  LDA QQ                 \ If QQ <> I, then we haven't yet reached the right edge
- CMP I                  \ edge of the screen (whose character block number we
- BNE dlin12             \ set in I in part 2), so jump back to dlin12 to keep
-                        \ drawing the line
+ CMP I                  \ of the screen (whose character block number we set in
+ BNE dlin12             \ I in part 2), so jump back to dlin12 to keep drawing
+                        \ the line
 
  JMP dlin65             \ Otherwise we have reached the edge of the screen, so
                         \ jump to dlin65 to process the clipped part of the
@@ -5890,9 +5890,9 @@
                         \ block number
 
  LDA QQ                 \ If QQ <> I, then we haven't yet reached the right edge
- CMP I                  \ edge of the screen (whose character block number we
- BNE dlin12             \ set in I in part 2), so jump back to dlin12 to keep
-                        \ drawing the line
+ CMP I                  \ of the screen (whose character block number we set in
+ BNE dlin12             \ I in part 2), so jump back to dlin12 to keep drawing
+                        \ the line
 
  JMP dlin65             \ Otherwise we have reached the edge of the screen, so
                         \ jump to dlin65 to process the clipped part of the
@@ -6230,8 +6230,8 @@
                         \ V
                         \
                         \ To keep things simple, we will only document the
-                        \ the default code, which is for a steep vertical slope
-                        \ with the following:
+                        \ default code, which is for a steep vertical slope with
+                        \ the following:
                         \
                         \   * Bit 7 of V is clear, so we step along the x-axis
                         \     in a positive direction, i.e. to the right
@@ -6660,7 +6660,7 @@
 
  ASL A                  \ Shift A left so it contains V again
 
- EOR #%11000000         \ Flip bits 6 and 7 of V to reverse the dirction of the
+ EOR #%11000000         \ Flip bits 6 and 7 of V to reverse the direction of the
  STA V                  \ line
 
  LDA xTemp1Lo           \ Set (R, S) = (xTemp1Lo, yTemp1Lo), which we set to the
@@ -6787,7 +6787,7 @@
                         \   ORA (P),Y -> AND (P),Y
 
  LDA colourCycle        \ If bit 7 of colourCycle is set, i.e. %11110000, jump
- BMI modd1              \ jump down to modd1
+ BMI modd1              \ down to modd1
 
  LDA #LO(colour1Row)    \ Bit 7 of colourCycle is clear, i.e. %00001111, so set
                         \ A to LO(colour1Row) so the instructions below are
@@ -7097,8 +7097,8 @@
                         \ call to ClipBestEndOfLine is in the DrawClippedLine
                         \ routine, and the only call to DrawClippedLine is in
                         \ DrawCanopyView, so this ensures that the RTS below
-                        \ returns us to to DrawCanopyView without drawing the
-                        \ line and without leaving anything on the stack
+                        \ returns us to DrawCanopyView without drawing the line
+                        \ and without leaving anything on the stack
                         \
                         \ In short, this makes the RTS abort the drawing of this
                         \ line
@@ -7377,7 +7377,7 @@
 \   Bit 7 of HH = direction of the x-delta
 \   (PP N) = |y-delta| + 1
 \   Set bit 6 of WW
-\   Cet (RR R) = (SS S), so start_x is set to start_y
+\   Set (RR R) = (SS S), so start_x is set to start_y
 \
 \ ******************************************************************************
 
@@ -8498,7 +8498,7 @@
                         \
                         \   (A Y) = sin(X) + (dX * W / 256)
                         \
-                        \ which is the reault we want, as it takes sin(X) and
+                        \ which is the result we want, as it takes sin(X) and
                         \ adds on W/256 of the difference between sin(X) and
                         \ sin(X + 1)
 
@@ -8760,7 +8760,7 @@
                         \   * xTemp1 += yObjectPoint * m1
                         \   * xTemp1 += xObjectPoint * m0
                         \
-                        \ Or, to switch it around the othee way and plug in the
+                        \ Or, to switch it around the other way and plug in the
                         \ initial value of (xTemp1, yTemp1, zTemp1) = (0, 0, 0),
                         \ we get:
                         \
@@ -8905,7 +8905,7 @@
                         \ the result by 2^n, which we can do by shifting left
                         \ by n places (where n is in the range 0 to 8)
                         \
-                        \ Note that n can also be 9, in which case we aleady
+                        \ Note that n can also be 9, in which case we already
                         \ doubled the result in part 1, so by this point we only
                         \ need to shift a maximum of 8 places
                         \
@@ -10116,7 +10116,7 @@
                         \   * xTemp1 += yPoint * m1
                         \   * xTemp1 += xPoint * m0
                         \
-                        \ Or, to switch it around the othee way and plug in the
+                        \ Or, to switch it around the other way and plug in the
                         \ initial value of (xTemp1, yTemp1, zTemp1) = (0, 0, 0),
                         \ we get:
                         \
@@ -11287,7 +11287,7 @@
 \ ------------------------------------------------------------------------------
 \
 \ This section takes the thrust from (thrustHi thrustLo) and reduces it to the
-\ range 0 to 60, before falling througn into DrawIndicatorBar to update the
+\ range 0 to 60, before falling through into DrawIndicatorBar to update the
 \ rudder indicator.
 \
 \ ******************************************************************************
@@ -11573,7 +11573,7 @@
  LDY #2                 \ We want to redraw the three pixel rows in the centre
                         \ block of the artificial horizon's centre line, which
                         \ from bottom to top contain 3 pixels, 1 pixel and 1
-                        \ pixel, so so set a counter in Y for 3 bytes
+                        \ pixel, so set a counter in Y for 3 bytes
 
 .dinl1
 
@@ -11814,7 +11814,7 @@
                         \ skip the following two instructions
 
                         \ The subtraction underflowed, so we know that the hand
-                        \ is in the first quadrant, i.e 3 to 6 o'clock
+                        \ is in the first quadrant, i.e. 3 to 6 o'clock
 
  ADC K                  \ Reverse the subtraction by adding K to A, so A is now
                         \ back to its original value
@@ -11834,13 +11834,13 @@
                         \ this using two's complement by simply inverting all
                         \ the bits, as we have already subtracted 1, and we can
                         \ negate by either inverting-and-adding-1, or by
-                        \ subtracting-1-and-inverting (as they are equivelent)
+                        \ subtracting-1-and-inverting (as they are equivalent)
 
  BCS dhvc3              \ If the subtraction didn't underflow, jump to dhvc3 to
                         \ skip the following three instructions
 
                         \ The subtraction underflowed, so we know that the hand
-                        \ is in the second quadrant, i.e 6 to 9 o'clock
+                        \ is in the second quadrant, i.e. 6 to 9 o'clock
 
  LDY #%01000000         \ Set bit 6 of R to indicate that the x-delta for the
  STY R                  \ line is positive and the y-delta is negative
@@ -12118,7 +12118,7 @@
  BVC dvec4              \ the y-axis in a positive direction
 
  DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
-                        \ J so we move along the y-axis in a negative dirction
+                        \ J so we move along the y-axis in a negative direction
 
  BVS dvec5              \ Jump to dvec5 to do the step along the x-axis by one
                         \ pixel (this BVS is effectively a JMP as we know the V
@@ -12140,7 +12140,7 @@
  BPL dvec6              \ the x-axis in a positive direction
 
  DEC I                  \ Bit 7 of V is set, so decrement the x-coordinate in
-                        \ I so we move along the x-axis in a negative dirction
+                        \ I so we move along the x-axis in a negative direction
 
  JMP dvec11             \ Now that we have moved (I, J) to the next pixel in the
                         \ line, jump to dvec11 to plot the next pixel
@@ -12212,7 +12212,7 @@
                         \ direction given in V
 
  BIT V                  \ If bit 6 of V is clear, jump to dvec10 to step along
- BVC dvec10             \ the y-axis in a positive direction, i.e up the screen
+ BVC dvec10             \ the y-axis in a positive direction, i.e. up the screen
 
  DEC J                  \ Bit 6 of V is set, so decrement the y-coordinate in
                         \ J so we move along the y-axis in a negative direction,
@@ -12322,7 +12322,7 @@
 
 .dvec13
 
- STA (P),Y              \ Store the byte in A in sceen memory at (Q P) + Y,
+ STA (P),Y              \ Store the byte in A in screen memory at (Q P) + Y,
                         \ which sets all four pixels to the pixel pattern in A,
                         \ which either draws or erases the pixel at (I, J)
 
@@ -12967,7 +12967,7 @@
 .umod9
 
  LDX #0                 \ Zero the low byte of the new thrust as we are either
-                        \ at the maxiumum value of (5 0) or the minimum value of
+                        \ at the maximum value of (5 0) or the minimum value of
                         \ (0 0)
 
 .umod10
@@ -13276,7 +13276,7 @@
 \       Name: IndicatorF
 \       Type: Subroutine
 \   Category: Dashboard
-\    Summary: Update the flaps indicator ("F") and and related variables
+\    Summary: Update the flaps indicator ("F") and related variables
 \
 \ ******************************************************************************
 
@@ -13879,7 +13879,7 @@
  STA randomNumbers      \ Set randomNumbers = 0 to reset the pointer for the
                         \ list of random numbers
 
- STA scoreLo            \ Set (scoreHi scoreLo) = 0 to resen the current score
+ STA scoreLo            \ Set (scoreHi scoreLo) = 0 to reset the current score
  STA scoreHi
 
 .rset1
@@ -14679,7 +14679,7 @@
  JSR RemoveScore        \ Remove the score from the screen
 
  LDA #0                 \ Set scoreDisplayTimer = 0 as we are no longer showing
- STA scoreDisplayTimer  \ the score on-screeen
+ STA scoreDisplayTimer  \ the score on-screen
 
 \ ******************************************************************************
 \
@@ -15364,7 +15364,7 @@
                         \ object ID at the end of the linked list of points
 
  TAY                    \ Copy the new point's ID into Y so we can use it as an
-                        \ an index into pointStatus
+                        \ index into pointStatus
 
  LDA pointStatus,Y      \ If bit 7 of the new point's status byte is set, then
  BMI plin14             \ we have already calculated the coordinates and
@@ -15389,7 +15389,7 @@
  STA relatedPoints,X    \ relatedPoints list
 
  BNE plin5              \ Jump back to plin5 to recurse through the new point
-                        \ (this BNE is effectively a JMP as A is is never zero,
+                        \ (this BNE is effectively a JMP as A is never zero,
                         \ because objectPoints does not contain a value of 40)
 
 \ ******************************************************************************
@@ -15463,7 +15463,7 @@
  BNE plin10             \ have already set this object's coordinates in this
                         \ iteration of the main loop, so skip the following
 
- JSR SetObjectCoords    \ Calculate the object's coordinates and visibilty,
+ JSR SetObjectCoords    \ Calculate the object's coordinates and visibility,
                         \ updating the object's status byte with the results
                         \ and setting isObject to the object ID
 
@@ -18357,7 +18357,7 @@
                         \
                         \   z = 32 + (z + 16) MOD 16
                         \
-                        \ This gives us a result iwith 32 in bits 4 to 7 (i.e. a
+                        \ This gives us a result with 32 in bits 4 to 7 (i.e. a
                         \ scale factor of 2^2) while retaining the value in bits
                         \ 0 to 3
 
@@ -18939,7 +18939,7 @@
  LDA T                  \ If the low byte in T is >= the corresponding value in
  CMP PP,X               \ PP, QQ or RR (for the z, y and x-axes respectively),
  BCS spot2              \ then the bullet is too far away from the weak spot to
-                        \ to do any damage, so jump to spot2 to return from the
+                        \ do any damage, so jump to spot2 to return from the
                         \ subroutine
 
  DEX                    \ Otherwise the bullet is close enough to the weak spot
@@ -19053,7 +19053,7 @@
 .bulv2
 
  LSR P                  \ Shift (A V R) right by one place, shifting one of the
- ROR A                  \ sign bits from P into bit 7 of of A
+ ROR A                  \ sign bits from P into bit 7 of A
  ROR V
  ROR R
 
@@ -19342,7 +19342,7 @@
                         \ to keep going
 
  LDA #%01000000         \ At least one of the calculations above overflowed, so
- STA objectStatus+1     \ at leat one coordinate is outside the boundaries of
+ STA objectStatus+1     \ at least one coordinate is outside the boundaries of
                         \ the world, so set bit 6 of the status byte for the
                         \ runway object to indicate that we have now calculated
                         \ the runway object's coordinates and visibility, and
@@ -25138,8 +25138,8 @@
 \   * The vector from the skill zone coordinate to the plane is in a positive
 \     direction along each axis, i.e. the plane is somewhere inside a cuboid
 \     that has the skill zone coordinate at its bottom-left corner, nearest the
-\     origin (the origin is at ground level level in the bottom-left corner of
-\     the map).
+\     origin (the origin is at ground level in the bottom-left corner of the
+\     map).
 \
 \   * The length of this vector along each axis is < 1024, so the plane is close
 \     enough to the skill zone coordinate for the next check to be done, i.e.
@@ -25337,7 +25337,7 @@
                         \ high1 to update the high score
 
  LDA scoreLo            \ If we get here then scoreHi = highScoreHi, so now we
- CMP highScoreLo        \ check the low bytes. If ScoreHLo < highScoreLo then we
+ CMP highScoreLo        \ check the low bytes. If ScoreLo < highScoreLo then we
  BCC high3              \ have not achieved a high score, so jump to high3 to
                         \ return from the subroutine
 
@@ -26106,7 +26106,7 @@
  BEQ engs4              \ running, so jump to engs4 to return from the
                         \ subroutine
 
- LDA thrustHi           \ Set (K A) = (Thrusthi thrustLo)
+ LDA thrustHi           \ Set (K A) = (thrusthi thrustLo)
  STA K                  \           = Thrust
  LDA thrustLo
 
@@ -26951,8 +26951,8 @@
 .indicatorLineI
 
                         \ Storage for the x-coordinate of the starting point of
-                        \ of the current hand on indicators 0-7, so we can erase
-                        \ it again (this value matches the value of I passed to
+                        \ the current hand on indicators 0-7, so we can erase it
+                        \ again (this value matches the value of I passed to
                         \ DrawVectorLine)
 
  EQUB 54                \ Start x-coordinate for indicator 0 (compass)
@@ -26978,8 +26978,8 @@
 .indicatorLineJ
 
                         \ Storage for the y-coordinate of the starting point of
-                        \ of the current hand on indicators 0-6, so we can erase
-                        \ it again (this value matches the value of J passed to
+                        \ the current hand on indicators 0-6, so we can erase it
+                        \ again (this value matches the value of J passed to
                         \ DrawVectorLine and is relative to the top of the
                         \ dashboard at screen y-coordinate 160)
 
@@ -26992,8 +26992,8 @@
  EQUB -70               \ Start y-coordinate for indicator 6 (slip)
 
                         \ Storage for the y-coordinate of the starting point of
-                        \ of the current artificial horizon on indicator 7, so
-                        \ we can erase it again (this value matches the value of
+                        \ the current artificial horizon on indicator 7, so we
+                        \ can erase it again (this value matches the value of
                         \ H passed to DrawVectorLine)
 
  EQUB 88                \ Start y-coordinate for indicator 7 (horizon)
@@ -27352,7 +27352,7 @@
                         \ rather than the world
                         \
                         \ We can get away with only rotating in the pitch and
-                        \ roll axes as the gravity vector only has an non-zero
+                        \ roll axes as the gravity vector only has a non-zero
                         \ value in the y-axis, so the yaw rotation wouldn't
                         \ affect the result anyway
 
@@ -27761,7 +27761,7 @@
 \               * 248 if the plane is going backwards (zVelocityP < 0)
 \
 \             In other words, the following factors slow us down when travelling
-\             fowards along the ground:
+\             forwards along the ground:
 \
 \               * Having the brakes on
 \
@@ -27916,7 +27916,7 @@
  JSR CheckPlaneOnRunway \ Check whether the plane is over the runway
 
  BCC fmod15             \ If the plane is on the runway, then jump to fmod15 to
-                        \ setlandingStatus = 0
+                        \ set landingStatus = 0
 
  LDA #7                 \ Set A = 7 and jump to fmod11 (this BNE is effectively
  BNE fmod11             \ a JMP as A is never zero)
@@ -28304,7 +28304,7 @@
 
 .fmod19
 
- LDA #0                 \ The fuel tank is emptry, so turn the engine off
+ LDA #0                 \ The fuel tank is empty, so turn the engine off
  JSR SetEngine
 
 .fmod20
@@ -28491,7 +28491,7 @@
                         \ effectively adding xVelocityTop, but keeping track of
                         \ the fractional tally in xPlaneBot
                         \
-                        \ Fiknally, to support negative velocities, we extend
+                        \ Finally, to support negative velocities, we extend
                         \ xVelocity with new high and top bytes, set to 0 or &FF
                         \ depending on the sign of xVelocity, so that's:
                         \
@@ -29519,7 +29519,7 @@
                         \
                         \ which is the result we want
                         \
-                        \ We we don't need to calculate the lowest bytes, as we
+                        \ We don't need to calculate the lowest bytes, as we
                         \ already know that V + 0 = V, so we just do the middle
                         \ and high bytes
 
@@ -29768,7 +29768,7 @@
                         \ control and A contains the control's current position
 
  CPX #1                 \ If the axis in X < 1, then an elevator key is being
- BCC fcon7              \ pressed, so jump to fcon7 to leave the contol's
+ BCC fcon7              \ pressed, so jump to fcon7 to leave the control's
                         \ position alone
 
  BNE fcon4              \ If the axis in X <> 0, then an aileron key is being
@@ -29780,7 +29780,7 @@
  LDY L                  \ Fetch the current value of onGround
 
  BEQ fcon7              \ If onGround is zero then we are not on the ground, so
-                        \ jump to fcon7 to leave the contol's position alone,
+                        \ jump to fcon7 to leave the control's position alone,
                         \ otherwise keep going to check whether to apply the
                         \ ground steering's "instant centre" feature
 
@@ -29803,7 +29803,7 @@
 
  BPL fcon7              \ If bit 7 is clear, then the key's direction and the
                         \ current position of the control have the same sign, so
-                        \ jump to fcon7 to leave the contol's position alone
+                        \ jump to fcon7 to leave the control's position alone
                         \
                         \ Otherwise we are pressing a key in the opposite
                         \ direction to the current aileron or ground steering
@@ -30449,7 +30449,7 @@
 \ ------------------------------------------------------------------------------
 \
 \ This part checks whether we are in the process of landing, and if so we jump
-\ to part 6. Otherwise we have already landed and are taxxing, so we set the
+\ to part 6. Otherwise we have already landed and are taxiing, so we set the
 \ plane's height, vertical velocity and roll accordingly.
 \
 \ ******************************************************************************
