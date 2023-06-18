@@ -8184,7 +8184,7 @@
 \   * (mz2Hi mz2Lo), which we can refer to as mz2
 \
 \ The calculation is done for one axis at a time, so the same routine not only
-\ sets mx1 and mx2, but also my1 and my2, and mx1 and mz2.
+\ sets mx1 and mx2, but also my1 and my2, and mz1 and mz2.
 \
 \ If we take the x-axis as an example, and assume for simplicity that the angle
 \ in xRotation is less than 90 degrees, the routine will calculate the
