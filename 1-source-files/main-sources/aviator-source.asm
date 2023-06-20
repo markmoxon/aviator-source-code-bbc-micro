@@ -6997,7 +6997,7 @@
 \
 \ Other entry points:
 \
-\  AbortLine            Abort drawing this line
+\   AbortLine           Abort drawing this line
 \
 \ ******************************************************************************
 
@@ -7833,16 +7833,16 @@
 \
 \ If colourCycle = %00001111, then colour 1 is white and colour 2 is black:
 \
-\  *  Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
-\  *  Colour 2 on-screen is %11110000, so AND'ing with %00001111 gives 0
-\  *  So this erases all the lines in buffer 1, which are on-screen in colour 2
+\   * Draw the lines in line buffer 1, using AND logic and bit pattern %00001111
+\   * Colour 2 on-screen is %11110000, so AND'ing with %00001111 gives 0
+\   * So this erases all the lines in buffer 1, which are on-screen in colour 2
 \     i.e. we erase all the lines in line buffer 1 from the hidden screen
 \
 \ If colourCycle = %11110000, then colour 1 is black and colour 2 is white:
 \
-\  *  Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
-\  *  Colour 1 is %00001111, so AND'ing with %11110000 gives 0
-\  *  So this erases all the lines in buffer 2, which are on-screen in colour 1
+\   * Draw the lines in line buffer 2, using AND logic and bit pattern %11110000
+\   * Colour 1 is %00001111, so AND'ing with %11110000 gives 0
+\   * So this erases all the lines in buffer 2, which are on-screen in colour 1
 \     i.e. we erase all the lines in line buffer 2 from the hidden screen
 \
 \ ******************************************************************************
@@ -9724,7 +9724,7 @@
 \
 \ Returns:
 \
-\   mWrite              (J I) * mRead >> 16
+\   mWrite              Set to (J I) * mRead >> 16
 \
 \   (S R)               The value of mRead
 \
@@ -9829,20 +9829,20 @@
 \
 \ The multiplication is done using the following algorithm:
 \
-\  (J I) * (S R) = (J << 8 + I) * (S << 8 + R)
-\                = (J << 8 * S << 8) + (J << 8 * R)
-\                                    + (I * S << 8)
-\                                    + (I * R)
-\                = (J * S) << 16 + (J * R) << 8
-\                                + (I * S) << 8
-\                                + (I * R)
+\   (J I) * (S R) = (J << 8 + I) * (S << 8 + R)
+\                 = (J << 8 * S << 8) + (J << 8 * R)
+\                                     + (I * S << 8)
+\                                     + (I * R)
+\                 = (J * S) << 16 + (J * R) << 8
+\                                 + (I * S) << 8
+\                                 + (I * R)
 \
 \ This returns a fractional result with the lowest byte containing the fraction.
 \ The routine doesn't care about the very lowest byte, so it actually calculates
 \ the following, effectively shifting the above to the right by 8 places and
 \ dropping the (I * R) part:
 \
-\  (J I) * (S R) = (J * S) << 8 + (J * R) + (I * S)
+\   (J I) * (S R) = (J * S) << 8 + (J * R) + (I * S)
 \
 \ before adding 128 to round the result up or down.
 \
@@ -19964,13 +19964,13 @@
 \ so to extend the line to point 32, we simply add w and h to the coordinates
 \ for point 30, like this:
 \
-\  x_32 = x_30 + w
-\       = x_30 + x_30 - x_31
-\       = (x_30 * 2) - x_31
+\   x_32 = x_30 + w
+\        = x_30 + x_30 - x_31
+\        = (x_30 * 2) - x_31
 \
-\  y_32 = y_30 + h
-\       = y_30 + y_30 - y_31
-\       = (y_30 * 2) - y_31
+\   y_32 = y_30 + h
+\        = y_30 + y_30 - y_31
+\        = (y_30 * 2) - y_31
 \
 \ This routine draws the horizon from point 30 to point 32, while the other half
 \ from point 31 to 30 is drawn along with all the other lines in DrawCanopyView.
@@ -30004,19 +30004,20 @@
 \
 \ If zVelocityPHi >= 48 (so forward speed >= 500 mph), we calculate:
 \
-\  [ xLinear ]   [       0      ]   [   xLiftDragSc   ]
-\  [ yLinear ] = [ yFlapsLiftSc ] - [   yLiftDragSc   ]
-\  [ zLinear ]   [       0      ]   [ (&EA zLinearLo) ]
+\   [ xLinear ]   [       0      ]   [   xLiftDragSc   ]
+\   [ yLinear ] = [ yFlapsLiftSc ] - [   yLiftDragSc   ]
+\   [ zLinear ]   [       0      ]   [ (&EA zLinearLo) ]
 \
 \ If zVelocityPHi < 48 (so forward speed < 500 mph), we calculate:
 \
-\  [ xLinear ]   [       0      ]   [ xLiftDragSc ]   [    0    ]
-\  [ yLinear ] = [ yFlapsLiftSc ] - [ yLiftDragSc ] + [    0    ]
-\  [ zLinear ]   [       0      ]   [ zLiftDragSc ]   [ zEngine ]
+\   [ xLinear ]   [       0      ]   [ xLiftDragSc ]   [    0    ]
+\   [ yLinear ] = [ yFlapsLiftSc ] - [ yLiftDragSc ] + [    0    ]
+\   [ zLinear ]   [       0      ]   [ zLiftDragSc ]   [ zEngine ]
 \
 \ where zEngine is 0 if the engine is off, or the following if the engine is on:
 \
-\  zEngine = max(0, thrustScaled - (max(0, zVelocityP) / 16)) * airDensity / 512
+\   zEngine = max(0, thrustScaled - (max(0, zVelocityP) / 16))
+\             * airDensity / 512
 \
 \ and:
 \
