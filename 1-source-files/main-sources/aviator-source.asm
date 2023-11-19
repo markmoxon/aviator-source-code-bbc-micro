@@ -7789,7 +7789,6 @@
 \
 \ Returns:
 \
-\
 \   (RR R)              Gets set to the x-coordinate above
 \
 \   (SS S)              Gets set to the y-coordinate above
@@ -16248,7 +16247,6 @@
 \                       to 0 will ensure that the object is always reported as
 \                       being visible
 \
-\
 \ Returns:
 \
 \   A                   Contains the result as follows:
@@ -24079,7 +24077,6 @@
 \ Bits 3 to 7 contain the low byte of the division lookup, with bits 0 to 2
 \ zeroed, and the high byte coming from divisionHi.
 \
-\
 \ ******************************************************************************
 
 .divisionLo
@@ -30931,7 +30928,6 @@
 \   variable = variable + (A 0) >> (Y + 1)
 \
 \ Arguments:
-\
 \
 \   A                   The top byte of the value to scale and add
 \
