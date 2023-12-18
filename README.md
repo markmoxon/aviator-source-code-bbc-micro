@@ -26,6 +26,7 @@ See the [introduction](#introduction) for more information.
   * [Build targets](#build-targets)
   * [Windows](#windows)
   * [Mac and Linux](#mac-and-linux)
+  * [Build options](#build-options)
   * [Verifying the output](#verifying-the-output)
   * [Log files](#log-files)
 
@@ -99,6 +100,8 @@ There are five main folders in this repository, which reflect the order of the b
 
 ## Building Aviator from the source
 
+Builds are supported for both Windows and Mac/Linux systems. In all cases the build process is defined in the `Makefile` provided.
+
 ### Requirements
 
 You will need the following to build Aviator from the source:
@@ -111,22 +114,14 @@ You will need the following to build Aviator from the source:
 
 Let's look at how to build Aviator from the source.
 
-### Build targets
-
-There is one main build target available:
-
-* `build` - A version that exactly matches the original binaries
-
-Builds are supported for both Windows and Mac/Linux systems. In all cases the build process is defined in the `Makefile` provided.
-
 ### Windows
 
 For Windows users, there is a batch file called `make.bat` to which you can pass one of the build targets above. Before this will work, you should edit the batch file and change the values of the `BEEBASM` and `PYTHON` variables to point to the locations of your `beebasm.exe` and `python.exe` executables. You also need to change directory to the repository folder (i.e. the same folder as `make.bat`).
 
-All being well, doing the following:
+All being well, entering the following into a command window:
 
 ```
-make.bat build
+make.bat
 ```
 
 will produce a file called `aviator-bbcmicro-co-uk.ssd` in the `5-compiled-game-discs` folder that contains the version of the game from bbcmicro.co.uk, which you can then load into an emulator, or into a real BBC Micro using a device like a Gotek.
@@ -135,41 +130,31 @@ will produce a file called `aviator-bbcmicro-co-uk.ssd` in the `5-compiled-game-
 
 The build process uses a standard GNU `Makefile`, so you just need to install `make` if your system doesn't already have it. If BeebAsm or Python are not on your path, then you can either fix this, or you can edit the `Makefile` and change the `BEEBASM` and `PYTHON` variables in the first two lines to point to their locations. You also need to change directory to the repository folder (i.e. the same folder as `Makefile`).
 
-All being well, doing the following:
+All being well, entering the following into a terminal window:
 
 ```
-make build
+make
 ```
 
 will produce a file called `aviator-bbcmicro-co-uk.ssd` in the `5-compiled-game-discs` folder that contains the version of the game from bbcmicro.co.uk, which you can then load into an emulator, or into a real BBC Micro using a device like a Gotek.
 
+### Build options
+
+By default the build process will create a typical Aviator game disc with verified binaries. There is one argument you can pass to the build to change how it works. It is:
+
+* `verify=no` - Disable crc32 verification of the game binaries
+
+So, for example:
+
+`make verify=no`
+
+will build an Aviator disc with no crc32 verification.
+
+See below for more on the verification process.
+
 ### Verifying the output
 
-The build process also supports a verification target that prints out checksums of all the generated files, along with the checksums of the files from the original sources.
-
-You can run this verification step on its own, or you can run it once a build has finished. To run it on its own, use the following command on Windows:
-
-```
-make.bat verify
-```
-
-or on Mac/Linux:
-
-```
-make verify
-```
-
-To run a build and then verify the results, you can add two targets, like this on Windows:
-
-```
-make.bat build verify
-```
-
-or this on Mac/Linux:
-
-```
-make build verify
-```
+The default build process prints out checksums of all the generated files, along with the checksums of the files from the original sources. You can disable verification by passing `verify=no` to the build.
 
 The Python script `crc32.py` in the `2-build-files` folder does the actual verification, and shows the checksums and file sizes of both sets of files, alongside each other, and with a Match column that flags any discrepancies.
 
