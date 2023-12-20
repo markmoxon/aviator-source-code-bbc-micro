@@ -2884,6 +2884,8 @@
 \ the width of the area to blank (with a value of 8 per character block), and R
 \ contains the number of rows to blank.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   Y                   The width of each character row to zero (in bytes),
@@ -2985,6 +2987,8 @@
 \
 \   * Part 3 calculates the addition of (80, 96)
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   GG                  The point ID to process
@@ -2994,6 +2998,8 @@
 \   yPoint+GG           The point's y-coordinate in 3D space
 \
 \   zPoint+GG           The point's z-coordinate in 3D space
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -3505,6 +3511,8 @@
 \ (divisionHi divisionLo) table for the denominator after being scaled by the
 \ ScaleUp routine.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (X Y)               A positive 16-bit number containing a number to be
@@ -3521,6 +3529,8 @@
 \                       are dividing by)
 \
 \   K                   The low byte of the scaled up denominator
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -3790,6 +3800,8 @@
 \ The number of shifts is returned (in the form of the minimum number of binary
 \ digits in the original number) so we know how much the value was scaled up by.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (X Y)               A positive 16-bit number containing a coordinate
@@ -3800,6 +3812,8 @@
 \
 \   R                   Contains %00010000 (which is set at the start of
 \                       ProjectPoint)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -4011,6 +4025,8 @@
 \
 \ The commentary in this routine is a work in progress.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   UU                  Scale factor for the z-coordinate from ScaleUp routine
@@ -4022,6 +4038,8 @@
 \   (QQ PP)             Result from DivideScaled routine for x-coordinate
 \
 \   (Q P)               Result from DivideScaled routine for y-coordinate
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -4403,6 +4421,8 @@
 \   L                   The point ID for the line's start point
 \
 \   M                   The point ID for the line's end point
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -5133,6 +5153,8 @@
 \ The default code (i.e. the unmodified version in the source) is run when U < T
 \ (shallow horizontal slope), bit 6 of V is clear (y-axis up) and bit 7 is set
 \ (x-axis left).
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -6979,6 +7001,8 @@
 \
 \   UU                  The clipping requirements for the end point
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   (RR R)              The x-coordinate of the line's new start point, clipped
@@ -6994,6 +7018,8 @@
 \   W                   Max/min x-coordinate for the new end of the line
 \
 \   G                   Max/min y-coordinate for the new end of the line
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -7116,6 +7142,8 @@
 \
 \ The commentary in this routine is a work in progress.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (RR R)              The x-coordinate of the line's start point
@@ -7146,6 +7174,8 @@
 \
 \                       Direction is like a clock, so positive (clear) is up and
 \                       right
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -7787,6 +7817,8 @@
 \
 \   UU                  The clipping requirements for the end point
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   (RR R)              Gets set to the x-coordinate above
@@ -7947,6 +7979,8 @@
 \
 \   (H G W) = (J I) * (S R)
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (J I)               A signed 16-bit number, with the sign in bit 7 of J
@@ -7960,6 +7994,8 @@
 \                         * 128 = calculate -(J I) * (S R) >> 16
 \
 \                       In practice, this routine is always called with K = 0
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -8058,11 +8094,15 @@
 \         = (%YYYY * %XXXX) << 8    + ((%XXXX * %yyyy) + (%xxxx * %YYYY)) << 4
 \                                   + (%xxxx * %yyyy)
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   X                   An unsigned 8-bit value (0 to 255)
 \
 \   Y                   An unsigned 8-bit value (0 to 255)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -8199,6 +8239,8 @@
 \ projecting a line rotated by that amount onto the Cartesian axes; in a
 \ sense, we are converting from Polar coordinates into Cartesian, so we can
 \ use those coordinates to populate the rotation matrices in SetMatrices.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -8426,10 +8468,14 @@
 \ entry for X and doing linear interpolation between X and X + 1 for the
 \ fractional amount.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (X W)               The 16-bit angle, representing a quarter-circle in the
 \                       range 0 to 255
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -8519,6 +8565,8 @@
 \   (G W) = V * (S R) >> 8
 \
 \ If bit 7 of K is set, the routine returns double this amount.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -8671,6 +8719,8 @@
 \
 \   objectAnchorPoint   Point ID of the anchor point to which we add the final
 \                       result to
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -9057,11 +9107,15 @@
 \
 \ We also set showLine to "hidden" if the addition overflows in any of the axes.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   X                   The ID of the point in which to store the result
 \
 \   Y                   The ID of the point to add to the xTemp1 vector
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -9127,11 +9181,15 @@
 \
 \ The result in (S R) has the sign in bit 0 of the low byte.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (H G)               A signed 16-bit number, with the sign in bit 0 of G
 \
 \   (J I)               A signed 16-bit number, with the sign in bit 0 of I
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -9289,6 +9347,8 @@
 \
 \ The m6 entry is not set by any code, but it contains a zero in the source code
 \ and stays that way.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -9681,6 +9741,8 @@
 \
 \   mWrite = (J I) * mRead >> 16
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   X                   The matrix entry to read (mRead):
@@ -9721,6 +9783,8 @@
 \                       routine with a non-zero value of matrixAxis would allow
 \                       different mRead values to be used, i.e. matrixAxis+X
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   mWrite              Set to (J I) * mRead >> 16
@@ -9728,6 +9792,8 @@
 \   (S R)               The value of mRead
 \
 \   (H G)               The value written to mWrite
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -9845,11 +9911,15 @@
 \
 \ before adding 128 to round the result up or down.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (S R)               An unsigned 16-bit number
 \
 \   (J I)               An unsigned 16-bit number
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -9973,11 +10043,15 @@
 \
 \ The result in (H G) has the sign in bit 0 of the low byte.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (J I)               A signed 16-bit number, with the sign in bit 0 of I
 \
 \   (S R)               A signed 16-bit number, with the sign in bit 0 of R
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -10038,6 +10112,8 @@
 \                         * 27 = matrix 4
 \
 \   xPointHi etc.       The point's coordinates before rotation
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -11668,6 +11744,8 @@
 \ This routine draws a cross, relative to a centre point of (80, 216), and with
 \ a 3-pixel horizontal bar and a 5-pixel vertical bar.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   A                   Drawing mode:
@@ -11756,6 +11834,8 @@
 \ Arguments:
 \
 \   A                   The value to show as a hand on the dial indicator
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -11977,6 +12057,8 @@
 \ each step. All the while we keep a cumulative tally of fractional pixel counts
 \ along the shorter axis (known as the "slope error"), and move one pixel along
 \ the shorter axis when the tally reaches a multiple of the axis length.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -12379,6 +12461,8 @@
 \ itself gets moved to the location of the on-screen indicator in part 11 of
 \ UpdateIndicator.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   K                   The axis to calculate:
@@ -12392,6 +12476,8 @@
 \                         * 0 = coordinate of starting point
 \
 \                         * 3 = deltas (i.e. coordinates of end point)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -12531,6 +12617,8 @@
 \
 \                         * 128 = Erase (using EOR logic)
 \
+\ ------------------------------------------------------------------------------
+\
 \ Other entry points:
 \
 \   EraseOrthoLine      Use the value of G instead of H (so the coordinate is
@@ -12611,6 +12699,8 @@
 \ 0 (specifically, 4 to 7), and in all cases the final scaling is rounded up, so
 \ this routine shows small deviations on the rudder and joystick indicators that
 \ otherwise wouldn't register.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -12727,6 +12817,8 @@
 \ Also, because the first group covers seven indicators (0 to 6) and the second
 \ group covers five (7 to 11), the indicators in the second group are updated
 \ more frequently than those in the first group.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -13096,6 +13188,8 @@
 \                         * 4 = "U" or "B" (undercarriage, brakes)
 \
 \                         * 5 = "F" or SHIFT (flaps, fire)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -13608,6 +13702,8 @@
 \
 \   X                   The internal key number of the key to scan for
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   Z flag              If set (BEQ) then the key is being pressed, if clear
@@ -13726,6 +13822,8 @@
 \
 \ This is called MOBJ or UOBJ in the original source code.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   X                   The ID of the point vector to add to the object
@@ -13807,6 +13905,8 @@
 \                         * 1 = joystick X
 \
 \                         * 2 = joystick Y
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -15142,6 +15242,8 @@
 \ Check the visibility of a line and either add it to the linesToShow list
 \ or the linesToHide list, depending on whether it is visible.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   lineId              The line ID to process
@@ -15214,6 +15316,8 @@
 \
 \                         * Non-zero = skip the distance check
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   showLine            Whether this line is visible:
@@ -15221,6 +15325,8 @@
 \                         * 0 = line is visible
 \
 \                         * Non-zero = line is not visible
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -15686,6 +15792,8 @@
 \
 \   GG                  For bullets only (12, 13, 14 or 15), the point ID for
 \                       the bullet's anchor point
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -16232,6 +16340,8 @@
 \ object is visible. This is used by the bullets, to ensure that they remain
 \ visible, whatever their distance from the plane.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   Y                   The object ID of the object to check
@@ -16246,6 +16356,8 @@
 \   K                   The non-zero return value (see below), so setting this
 \                       to 0 will ensure that the object is always reported as
 \                       being visible
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -16746,6 +16858,8 @@
 \ This routine calculates the screen coordinates for a blip on the radar, which
 \ it then passes to DrawRadarBlip to update the blip.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   Y                   The item to update on the radar:
@@ -17213,6 +17327,8 @@
 \                         * 0 = runway line
 \
 \                         * Non-zero = alien (shown as a dot)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -18289,6 +18405,8 @@
 \ If bit 7 of A is set, then this routine resets the size to the smallest
 \ feeding stage, which has a scale factor of 32 (i.e. 2^2).
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   A                   Determines how the alien is resized:
@@ -18304,6 +18422,8 @@
 \                         * Resize object points 183 to 186 for alien slot 31
 \
 \                         * Resize object points 188 to 191 for alien slot 32
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -18790,11 +18910,15 @@
 
 \ This is called STIP in the original source code.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   Y                   The object ID of the alien (30 to 33)
 \
 \   Q                   The low byte of the amount to add
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -18877,6 +19001,8 @@
 \ the CheckIfAlienIsHit routine, in part 6 of the main loop.
 \
 \ This is called HITS in the original source code.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -18979,6 +19105,8 @@
 \
 \ This is called ADIF in the original source code.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   X                   The bullet trail to be calculated:
@@ -18986,6 +19114,8 @@
 \                         * 228 = left bullet trail
 \
 \                         * 230 = right bullet trail
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -19152,6 +19282,8 @@
 \                         * 1 to 4 are the runway outline
 \
 \                         * 5 to 11 are the dashes down the middle of the runway
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -22385,6 +22517,8 @@
 \
 \   P                   The current time, incrementing 100 times a second
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   C flag              Returns:
@@ -23060,6 +23194,8 @@
 \ There are multiple skill zones defined for each object (the bridge and the
 \ main street). To earn the points, we need to fly into the correct skill zones
 \ while avoiding others, and then back out again without hitting the ground.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -24992,6 +25128,8 @@
 \
 \   Y                   The point ID of the point to check
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   A                   Contains the result as follows:
@@ -25160,6 +25298,8 @@
 \   skill zone    <=      plane      <   skill zone  +  skill zone
 \   coordinate         coordinate        coordinate      size * 4
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   A                   Determines which skill zone coordinate to check:
@@ -25167,6 +25307,8 @@
 \                         * 0, 3, 6 = under the suspension bridge
 \
 \                         * 9, 12, 15, 18 = along main street in Acornsville
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -25523,9 +25665,13 @@
 \   * Object 8 increments objectGroup+2 through 16 to 23 and round again
 \   * Object 9 increments objectGroup+3 through 24 to 31 and round again
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   Y                   The Object ID to move on to the next set of coordinates
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -25878,6 +26024,8 @@
 \ The pointer for the randomNumbers list is stored in the first location. Each
 \ call to this routine increments the pointer through 0 to 10, after which it
 \ wraps back round to 0.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
@@ -28615,6 +28763,8 @@
 \
 \       (SS RR) = max(|velocityP|) * 2 * ~yPlaneHi / 256
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   L                   The current value of onGround:
@@ -29451,17 +29601,23 @@
 \   = (Q << 8) * R + (P * R)
 \   = (Q * R) << 8 + (P * R)
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (Q P)               A signed 16-bit number
 \
 \   R                   An unsigned 8-bit number
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   (G W V)             The result, (Q P) * R
 \
 \   A                   The high byte of the result (G)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -29555,6 +29711,8 @@
 \
 \   C flag              Must be set on entry to get the correct result
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   (G W)               The original value, negated, i.e. -(G W)
@@ -29595,6 +29753,8 @@
 \
 \ which contain the moments due to the plane's current movement. These then get
 \ scaled by altitude and put into (xMoments yMoments zMoments).
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -29690,6 +29850,8 @@
 \ to the elevator or rudder, though it does apply to the rudder controls when on
 \ the ground, as they double-up as brake controls for ground steering, which
 \ does have this feature.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -29905,6 +30067,8 @@
 \                [  yGravity  ]   [      0      ]
 \              + [      0     ] - [      0      ]
 \                [      0     ]   [ zSlipMoment ]
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -30229,6 +30393,8 @@
 \ with the strip being 24 times longer than it is wide, and with the anchor
 \ point at the southwest corner.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   C flag              Determines whether the plane is over the runway:
@@ -30304,6 +30470,8 @@
 \ This part checks whether the plane is on the ground but not on the runway, and
 \ if this is the case, it implements a bumpy ride by randomly changing the
 \ plane's height and roll, with larger changes at bigger speeds.
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -30875,6 +31043,8 @@
 \ of roll or bumpiness is dependent on the forward velocity of the plane, so the
 \ higher the speed, the bumpier the ride.
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   X                   The offset from xTurnHi of the low byte of the variable
@@ -30926,6 +31096,8 @@
 \ (A 0) right-shifted by Y + 1 places, so this calculates:
 \
 \   variable = variable + (A 0) >> (Y + 1)
+\
+\ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
@@ -31029,13 +31201,19 @@
 \
 \   (Y X V) = (Y X) * ~yPlaneHi
 \
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   (Y X)               A signed 16-bit number
 \
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   (Y X V)             The result, (Y X) * ~yPlaneHi
+\
+\ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
@@ -31088,6 +31266,8 @@
 \                       In the case of the two 24-bit variables, X is the offset
 \                       of the high byte, and we have to zero the low byte
 \                       manually after the routine call
+\
+\ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
