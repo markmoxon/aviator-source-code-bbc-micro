@@ -78,7 +78,7 @@ If you want to browse the source in an IDE, you might find the following useful.
 
   * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they are, however, completely optional, and it is possible to skip these and run the game using `*RUN AVIA?` or just plain `*AVIA?`.
 
-* It's probably worth skimming through the [notes on terminology and notations](https://aviator.bbcelite.com/about_site/terminology_used_in_this_commentary.html) on the accompanying website, as this explains a number of terms used in the commentary, without which it might be a bit tricky to follow at times (in particular, you should understand the terminology I use for multi-byte numbers).
+* It's probably worth skimming through the [notes on terminology and notations](https://aviator.bbcelite.com/terminology/) on the accompanying website, as this explains a number of terms used in the commentary, without which it might be a bit tricky to follow at times (in particular, you should understand the terminology I use for multi-byte numbers).
 
 * The entry point for the [main game code](1-source-files/main-sources/aviator-source.asm) is routine `Entry`, which you can find by searching for `Name: Entry`.
 
