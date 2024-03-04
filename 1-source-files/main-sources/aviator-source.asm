@@ -61,7 +61,9 @@
                         \ canopy (character rows 0 to 19)
 
  row1_char1_0 = &5948   \ Second block on second row
+
  row1_char38_0 = &5A68  \ Last block but one on second row
+
  row1_char39_0 = &5A70  \ Last block on second row
 
  row3_char1_0 = &5BC8   \ Top-left corner of the on-screen score display
@@ -70,34 +72,51 @@
                         \ containing the gun sights on rows 6, 7 and 8
 
  row6_char20_0 = &6020  \ Top block of the vertical line in the gun sights
+
  row7_char20_0 = &6160  \ Bottom block of the vertical line in the gun sights
+
  row8_char11_0 = &6258  \ Left end of horizontal bar in the gun sights
 
                         \ The second batch refers to screen addresses in the
                         \ dashboard (character rows 20 to 31)
 
  row21_char20_7 = &72E7 \ Top block of joystick position display y-axis
+
  row22_char20_7 = &7427 \ Second block of joystick position display y-axis
+
  row23_char20_7 = &7567 \ Third block of joystick position display y-axis
+
  row24_char20_7 = &76A7 \ Fourth block of joystick position display y-axis and
                         \ right-middle block of joystick position display x-axis
+
  row25_char20_7 = &77E7 \ Fifth block of joystick position display y-axis
+
  row26_char20_7 = &7927 \ Sixth block of joystick position display y-axis
+
  row27_char20_7 = &7A67 \ Bottom block of joystick position display y-axis
 
  row24_char18_7 = &7697 \ Left block of joystick position display x-axis
+
  row24_char19_7 = &769F \ Left-middle block of joystick position display x-axis
+
  row24_char21_7 = &76AF \ Right block of joystick position display x-axis
 
  row23_char12_4 = &7524 \ Left block of artificial horizon centre marker
+
  row23_char13_2 = &752A \ Middle block of artificial horizon centre marker
+
  row23_char14_4 = &7534 \ Right block of artificial horizon centre marker
+
  row25_char13_1 = &77A9 \ Bottom middle block of artificial horizon
 
  row25_char34_7 = &7857 \ Left spur of the radar's cross
+
  row25_char35_6 = &785E \ Bottom pixel of the top spur of the radar's cross
+
  row25_char35_7 = &785F \ Centre and right spur of the radar's cross
+
  row26_char35_0 = &7998 \ Top pixel of the bottom spur of the radar's cross
+
  row26_char35_1 = &7999 \ Bottom pixel of the bottom spur of the radar's cross
 
  row28_char26_5 = &7BD5 \ Centre block of the slip-and-turn indicator
@@ -105,8 +124,11 @@
  row29_char20_4 = &7CE4 \ Joystick indicator block (above middle of rudder)
 
  row30_char0_2 = &7D82  \ Theme indicator
+
  row30_char32_2 = &7E82 \ Undercarriage indicator
+
  row30_char35_2 = &7E9A \ Flaps indicator
+
  row30_char37_2 = &7EAA \ Brakes indicator
 
  VIA = &FE00            \ Memory-mapped space for accessing internal hardware,
@@ -114,8 +136,11 @@
                         \ known as SHEILA)
 
  OSBYTE = &FFF4         \ The address for the OSBYTE routine
+
  OSWORD = &FFF1         \ The address for the OSWORD routine
+
  OSWRCH = &FFEE         \ The address for the OSWRCH routine
+
  OSCLI = &FFF7          \ The address for the OSCLI routine
 
 \ ******************************************************************************
