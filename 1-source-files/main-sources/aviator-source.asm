@@ -18931,8 +18931,9 @@
 \
 \   * z-coordinate = (zObjectHi zObjectLo) + (5 Q)
 \
-\ where Q is
-
+\ where Q is the low byte of the amount to add, depending on the feeding state
+\ of the alien.
+\
 \ This is called STIP in the original source code.
 \
 \ ------------------------------------------------------------------------------
