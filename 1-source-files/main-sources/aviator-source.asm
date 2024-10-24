@@ -32,8 +32,6 @@
 \
 \ ******************************************************************************
 
- LOAD% = &1100          \ The load address of the main code binary
-
  CODE% = &0B00          \ The address of the main game code once the code has
                         \ been rearranged. The code starts off at &1100-&5EFF
                         \ and is moved in three stages:
@@ -44,6 +42,8 @@
                         \
                         \ This address points to the start of the executable
                         \ code after all these moves, which is at &0B00
+
+ LOAD% = &1100          \ The load address of the main code binary
 
  nextAxis = 40          \ The xObject, yObject and zObject tables each contain
                         \ 40 bytes, and they are positioned one after the other
