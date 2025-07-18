@@ -18,6 +18,10 @@
 \
 \ ------------------------------------------------------------------------------
 \
+\ This source file produces an SSD disc image for Aviator on the BBC Micro.
+\
+\ ------------------------------------------------------------------------------
+\
 \ This source file produces the following SSD disc image:
 \
 \   * aviator-bbcmicro-co-uk.ssd

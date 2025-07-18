@@ -18,6 +18,10 @@
 \
 \ ------------------------------------------------------------------------------
 \
+\ This source file contains the main game code for Aviator on the BBC Micro.
+\
+\ ------------------------------------------------------------------------------
+\
 \ This source file produces the following binary file:
 \
 \   * AVIA.bin
