@@ -153,7 +153,7 @@
 \
 \ ******************************************************************************
 
- ORG &0070
+ ORG &0070              \ Set the assembly address to &0070
 
 .P
 
@@ -313,7 +313,7 @@
 \
 \ ******************************************************************************
 
- ORG &0100
+ ORG &0100              \ Set the assembly address to &0100
 
 .lineBufferU
 
@@ -331,7 +331,7 @@
                         \ screen at any one time is 48 lines out of the 193
                         \ lines defined in the world
 
- ORG &0160
+ ORG &0160              \ Set the assembly address to &0160
 
 .mx1Lo
 
@@ -375,7 +375,7 @@
                         \
                         \ Stored as a 16-bit value (mz2Hi mz2Lo)
 
- ORG &0170
+ ORG &0170              \ Set the assembly address to &0170
 
 .mx1Hi
 
@@ -429,7 +429,7 @@
 \
 \ ******************************************************************************
 
- ORG &0400
+ ORG &0400              \ Set the assembly address to &0400
 
 .pointStatus
 
@@ -562,7 +562,7 @@
                         \
                         \ Stored as a 16-bit value (zTempPoint2Hi zTempPoint2Lo)
 
- ORG &0900
+ ORG &0900              \ Set the assembly address to &0900
 
 .xPointLo
 
@@ -2371,7 +2371,7 @@
  CLEAR &0B00, &0D00     \ Clear the guard on the &0B00-&0CFF workspace so we can
                         \ assemble the loader code into this address range
 
- ORG CODE%
+ ORG CODE%              \ Set the assembly address to CODE%
 
 \ ******************************************************************************
 \
@@ -31320,7 +31320,7 @@
 \
 \ ******************************************************************************
 
- ORG &5E00
+ ORG &5E00              \ Set the assembly address to &5E00
 
 .Entry
 
