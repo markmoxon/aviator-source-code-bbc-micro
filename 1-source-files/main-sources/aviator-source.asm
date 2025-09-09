@@ -135,7 +135,7 @@
 
  row30_char37_2 = &7EAA \ Brakes indicator
 
- VIA = &FE00            \ Memory-mapped space for accessing internal hardware,
+ SHEILA = &FE00         \ Memory-mapped space for accessing internal hardware,
                         \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
                         \ known as SHEILA)
 
@@ -14235,11 +14235,11 @@
  JSR IndicatorB         \ Update the brakes indicator
 
  LDA #%01000000         \ Set the 6522 User VIA auxiliary control register
- STA VIA+&6B            \ (SHEILA &6B) to %01000000 to disable the shift
+ STA SHEILA+&6B         \ (SHEILA &6B) to %01000000 to disable the shift
                         \ register
 
  LDA #234               \ Set 6522 User VIA T1C-L timer 1 high-order counter
- STA VIA+&65            \ (SHEILA &65) to 234 to start the T1 counter
+ STA SHEILA+&65         \ (SHEILA &65) to 234 to start the T1 counter
                         \ counting down at a rate of 1 MHz
 
 \ ******************************************************************************
@@ -18012,7 +18012,7 @@
                         \ any objects that are currently in use by other aliens
                         \ in the wave
 
- LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
+ LDA SHEILA+&64         \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &64), which decrements one million
                         \ times a second and will therefore be pretty random
 
@@ -26031,7 +26031,7 @@
 
  LDX randomNumbers      \ Fetch the pointer for the randomNumbers list
 
- LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
+ LDA SHEILA+&64         \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &64), which decrements one million
                         \ times a second and will therefore be pretty random
 
@@ -30563,7 +30563,7 @@
                         \ (9 64) = 2368, then this would roll the plane by a
                         \ random value in the range 0 to 74 (as 2368 >> 5 is 74)
 
- LDA VIA+&64            \ Read the 6522 User VIA T1C-L timer 1 low-order
+ LDA SHEILA+&64         \ Read the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &64), which decrements one million
                         \ times a second and will therefore be pretty random
 
@@ -31100,7 +31100,7 @@
  LDA zVelocityPHi       \ If zVelocityPHi is negative, return from the
  BMI ScaleByAltitude-1  \ subroutine (as ScaleByAltitude-1 contains an RTS)
 
- AND VIA+&64            \ AND with the 6522 User VIA T1C-L timer 1 low-order
+ AND SHEILA+&64         \ AND with the 6522 User VIA T1C-L timer 1 low-order
                         \ counter (SHEILA &44), which decrements one million
                         \ times a second and will therefore be pretty random
                         \
