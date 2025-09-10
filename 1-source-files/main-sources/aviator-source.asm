@@ -18459,7 +18459,7 @@
 \   zObjectPoint        Updated z-coordinates for the relevant object points,
 \                       scaled as required
 \
-\   Y                   Y is unchanged
+\   Y                   Y is preserved
 \
 \ ******************************************************************************
 
