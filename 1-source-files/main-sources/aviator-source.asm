@@ -26601,9 +26601,9 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ Sound data. To make a sound, the MakeSound passes the bytes in this table to
-\ OSWORD 7. These bytes are the OSWORD equivalents of the parameters passed to
-\ the SOUND keyword in BASIC. The parameters have these meanings:
+\ Sound data. To make a sound, the MakeSound routine passes the bytes in this
+\ table to OSWORD 7. These bytes are the OSWORD equivalents of the parameters
+\ passed to the SOUND keyword in BASIC. The parameters have these meanings:
 \
 \   channel/flush, amplitude (or envelope number if 1-4), pitch, duration
 \
