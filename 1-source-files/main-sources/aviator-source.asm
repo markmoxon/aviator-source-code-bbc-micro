@@ -18502,7 +18502,7 @@
  ORA #32                \ scale to the first feeding stage, which we can do like
                         \ this:
                         \
-                        \   z = 32 + (z + 16) MOD 16
+                        \   z = 32 + (z + 16) mod 16
                         \
                         \ This gives us a result with 32 in bits 4 to 7 (i.e. a
                         \ scale factor of 2^2) while retaining the value in bits
