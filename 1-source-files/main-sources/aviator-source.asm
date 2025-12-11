@@ -21314,7 +21314,7 @@
  EQUB 188               \ Alien slot 32 moves points 191 to 188 when it explodes
  EQUB 193               \ Alien slot 33 moves points 200 to 193 when it explodes
 
- EQUB 15                \ This byte appears to be unused
+ EQUB &0F               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -26855,7 +26855,7 @@
  EQUB 0                 \ The rate of change of the rudder (yaw)
  EQUB 0                 \ The rate of change of the aileron (roll)
 
- EQUB 0                 \ This byte appears to be unused
+ EQUB &00               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
