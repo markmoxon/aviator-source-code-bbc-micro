@@ -86,7 +86,7 @@ If you want to browse the source in an IDE, you might find the following useful.
 
 * The most interesting files are in the [main-sources](1-source-files/main-sources) folder:
 
-  * The main game's source code is in the [aviator-source.asm](1-source-files/main-sources/aviator-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `AVIA?` that contains the entire game.
+  * The main game's source code is in the [aviator-source.asm](1-source-files/main-sources/aviator-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `AVIA.bin` that contains the entire game.
 
   * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they are, however, completely optional, and it is possible to skip these and run the game using `*RUN AVIA?` or just plain `*AVIA?`.
 
