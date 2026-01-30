@@ -31329,17 +31329,15 @@
 .Entry
 
  LDA #129               \ Call OSBYTE with A = 129, X = 0 and Y = &FF to detect
- LDX #0                 \ the machine type. This call is undocumented and is not
- LDY #&FF               \ the recommended way to determine the machine type
- JSR OSBYTE             \ (OSBYTE 0 is the correct way), but this call returns
-                        \ the following:
+ LDX #0                 \ the machine type, which returns the following in X:
+ LDY #&FF               \
+ JSR OSBYTE             \   * 0 if this is a BBC Micro with MOS 0.1
                         \
-                        \   * X = Y = 0   if this is a BBC Micro with MOS 0.1
-                        \   * X = Y = &FF if this is a BBC Micro with MOS 1.20
+                        \   * &FF if this is a BBC Micro with MOS 1.00 or 1.20
 
- CPX #0                 \ This checks the MOS version, but presumably this
- NOP                    \ contained some kind of copy protection or decryption
- NOP                    \ code that has been replaced by NOPs in this
+ CPX #0                 \ This checks whether this is MOS 0.1 but does nothing,
+ NOP                    \ so perhaps this is some kind of copy protection or
+ NOP                    \ decryption code that has been replaced by NOPs in this
                         \ unprotected version of the game
 
  LDA #200               \ Call OSBYTE with A = 200, X = 3 and Y = 0 to disable
