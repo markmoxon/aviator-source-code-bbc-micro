@@ -37,8 +37,10 @@
 \ ******************************************************************************
 
  CODE% = &0B00          \ The address of the main game code once the code has
-                        \ been rearranged. The code starts off at &1100-&5EFF
-                        \ and is moved in three stages:
+                        \ been rearranged
+                        \
+                        \ The code starts off at &1100-&5EFF and is moved in
+                        \ three stages:
                         \
                         \   * &5800-&5BFF is copied to &0400-&07FF
                         \   * &5C00-&5DFF is copied to &0B00-&0CFF
@@ -1018,7 +1020,9 @@
 
 .axisKeyUsage
 
- SKIP 3                 \ The following locations are updated when keys are
+ SKIP 3                 \ Stores details of axis-related key presses
+                        \
+                        \ The following locations are updated when keys are
                         \ pressed in UpdateFlightModel:
                         \
                         \   * axisKeyUsage   = elevator
@@ -1796,7 +1800,7 @@
 .colourLogic
 
  SKIP 1                 \ Determines the logic and bit patterns used to draw the
-                        \ canopy view:
+                        \ canopy view
                         \
                         \   * %00000000 = erase lines
                         \     Gets set to this value after each screen flip
@@ -1878,7 +1882,7 @@
 .showRunwayDashes
 
  SKIP 1                 \ Determines whether the dashes down the middle of the
-                        \ runway are close enough to be visible:
+                        \ runway are close enough to be visible
                         \
                         \   * Bit 7:
                         \
@@ -1888,11 +1892,14 @@
 
 .matrixNumber
 
- SKIP 1                 \ The matrix used in matrix operations:
+ SKIP 1                 \ The matrix used in matrix operations
                         \
                         \   * 0 = matrix 1
+                        \
                         \   * 9 = matrix 2
+                        \
                         \   * 18 = matrix 3
+                        \
                         \   * 27 = matrix 4
 
 .objectId
@@ -1913,7 +1920,7 @@
 
 .showLine
 
- SKIP 1                 \ Determines whether a line is visible:
+ SKIP 1                 \ Determines whether a line is visible
                         \
                         \   * Bit 6:
                         \
@@ -1977,8 +1984,11 @@
 
 .pressingUFBS
 
- SKIP 5                 \ Determines whether any of the following keys are
-                        \ being pressed:
+ SKIP 5                 \ Records whether "U", "F", "B" or SHIFT are being
+                        \ pressed
+                        \
+                        \ This variable determines whether any of the following
+                        \ keys are being pressed as follows:
                         \
                         \   * pressingUFBS = 1 while the undercarriage key "U"
                         \     is being pressed, 0 otherwise
