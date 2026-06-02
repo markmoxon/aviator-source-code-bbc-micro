@@ -12091,11 +12091,11 @@
 \
 \ Draw/erase a line from (I, J) as a vector (T, U) with direction V.
 \
-\ This routine uses Bresenham's algorithm to draw the line, by working along the
-\ longer axis of the line vector, one pixel at a time, plotting a pixel after
-\ each step. All the while we keep a cumulative tally of fractional pixel counts
-\ along the shorter axis (known as the "slope error"), and move one pixel along
-\ the shorter axis when the tally reaches a multiple of the axis length.
+\ This routine draw the line by working along the longer axis of the line
+\ vector, one pixel at a time, plotting a pixel after each step. All the while
+\ we keep a cumulative tally of fractional pixel counts along the shorter axis
+\ (known as the "slope error"), and move one pixel along the shorter axis when
+\ the tally reaches a multiple of the axis length.
 \
 \ ------------------------------------------------------------------------------
 \
