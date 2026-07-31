@@ -344,42 +344,42 @@
  SKIP 1                 \ The value of mx1, used when constructing the rotation
                         \ matrices (low byte)
                         \
-                        \ Stored as a 16-bit value (mx1Hi mx1Lo)
+                        \ Stored as a 16-bit value mx1(Hi Lo)
 
 .my1Lo
 
  SKIP 1                 \ The value of my1, used when constructing the rotation
                         \ matrices (low byte)
                         \
-                        \ Stored as a 16-bit value (my1Hi my1Lo)
+                        \ Stored as a 16-bit value my1(Hi Lo)
 
 .mz1Lo
 
  SKIP 1                 \ The value of mz1, used when constructing the rotation
                         \ matrices (low byte)
                         \
-                        \ Stored as a 16-bit value (mz1Hi mz1Lo)
+                        \ Stored as a 16-bit value mz1(Hi Lo)
 
 .mx2Lo
 
  SKIP 1                 \ The value of mx2, used when constructing the rotation
                         \ matrices (low byte)
                         \
-                        \ Stored as a 16-bit value (mx2Hi mx2Lo)
+                        \ Stored as a 16-bit value mx2(Hi Lo)
 
 .my2Lo
 
  SKIP 1                 \ The value of my2, used when constructing the rotation
                         \ matrices (low byte)
                         \
-                        \ Stored as a 16-bit value (my2Hi my2Lo)
+                        \ Stored as a 16-bit value my2(Hi Lo)
 
 .mz2Lo
 
  SKIP 1                 \ The value of mz2, used when constructing the rotation
                         \ matrices (low byte)
                         \
-                        \ Stored as a 16-bit value (mz2Hi mz2Lo)
+                        \ Stored as a 16-bit value mz2(Hi Lo)
 
  ORG &0170              \ Set the assembly address to &0170
 
@@ -388,42 +388,42 @@
  SKIP 1                 \ The value of mx1, used when constructing the rotation
                         \ matrices (high byte)
                         \
-                        \ Stored as a 16-bit value (mx1Hi mx1Lo)
+                        \ Stored as a 16-bit value mx1(Hi Lo)
 
 .my1Hi
 
  SKIP 1                 \ The value of my1, used when constructing the rotation
                         \ matrices (high byte)
                         \
-                        \ Stored as a 16-bit value (my1Hi my1Lo)
+                        \ Stored as a 16-bit value my1(Hi Lo)
 
 .mz1Hi
 
  SKIP 1                 \ The value of mz1, used when constructing the rotation
                         \ matrices (high byte)
                         \
-                        \ Stored as a 16-bit value (mz1Hi mz1Lo)
+                        \ Stored as a 16-bit value mz1(Hi Lo)
 
 .mx2Hi
 
  SKIP 1                 \ The value of mx2, used when constructing the rotation
                         \ matrices (high byte)
                         \
-                        \ Stored as a 16-bit value (mx2Hi mx2Lo)
+                        \ Stored as a 16-bit value mx2(Hi Lo)
 
 .my2Hi
 
  SKIP 1                 \ The value of my2, used when constructing the rotation
                         \ matrices (high byte)
                         \
-                        \ Stored as a 16-bit value (my2Hi my2Lo)
+                        \ Stored as a 16-bit value my2(Hi Lo)
 
 .mz2Hi
 
  SKIP 1                 \ The value of mz2, used when constructing the rotation
                         \ matrices (high byte)
                         \
-                        \ Stored as a 16-bit value (mz2Hi mz2Lo)
+                        \ Stored as a 16-bit value mz2(Hi Lo)
 
 \ ******************************************************************************
 \
@@ -530,7 +530,7 @@
  SKIP 252               \ The low byte of the z-coordinate for the point with
                         \ ID X is at zPointLo,X
                         \
-                        \ Stored as a 16-bit value (zPointHi zPointLo)
+                        \ Stored as a 16-bit value zPoint(Hi Lo)
 
 .zLinearLo
 
@@ -539,7 +539,7 @@
                         \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
-                        \ Stored as a 16-bit value (zLinearHi zLinearLo)
+                        \ Stored as a 16-bit value zLinear(Hi Lo)
 
 .zGravityLo
 
@@ -548,7 +548,7 @@
                         \ Point 253 is used to store the gravity vector when
                         \ calculating the flight model
                         \
-                        \ Stored as a 16-bit value (zGravityHi zGravityLo)
+                        \ Stored as a 16-bit value zGravity(Hi Lo)
 
 .zTempPoint1Lo
 
@@ -557,7 +557,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (zTempPoint1Hi zTempPoint1Lo)
+                        \ Stored as a 16-bit value zTempPoint1(Hi Lo)
 
 .zTempPoint2Lo
 
@@ -566,7 +566,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (zTempPoint2Hi zTempPoint2Lo)
+                        \ Stored as a 16-bit value zTempPoint2(Hi Lo)
 
  ORG &0900              \ Set the assembly address to &0900
 
@@ -575,7 +575,7 @@
  SKIP 252               \ The low byte of the x-coordinate for the point with
                         \ ID X is at xPointLo,X
                         \
-                        \ Stored as a 16-bit value (xPointHi xPointLo)
+                        \ Stored as a 16-bit value xPoint(Hi Lo)
 
 .xLinearLo
 
@@ -584,7 +584,7 @@
                         \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
-                        \ Stored as a 16-bit value (xLinearHi xLinearLo)
+                        \ Stored as a 16-bit value xLinear(Hi Lo)
 
 .xGravityLo
 
@@ -593,7 +593,7 @@
                         \ Point 253 is used to store the gravity vector when
                         \ calculating the flight model
                         \
-                        \ Stored as a 16-bit value (xGravityHi xGravityLo)
+                        \ Stored as a 16-bit value xGravity(Hi Lo)
 
 .xTempPoint1Lo
 
@@ -602,7 +602,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (xTempPoint1Hi xTempPoint1Lo)
+                        \ Stored as a 16-bit value xTempPoint1(Hi Lo)
 
 .xTempPoint2Lo
 
@@ -611,14 +611,14 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (xTempPoint2Hi xTempPoint2Lo)
+                        \ Stored as a 16-bit value xTempPoint2(Hi Lo)
 
 .yPointLo
 
  SKIP 252               \ The low byte of the y-coordinate for the point with
                         \ ID X is at yPointLo,X
                         \
-                        \ Stored as a 16-bit value (yPointHi yPointLo)
+                        \ Stored as a 16-bit value yPoint(Hi Lo)
 
 .yLinearLo
 
@@ -627,7 +627,7 @@
                         \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
-                        \ Stored as a 16-bit value (yLinearHi yLinearLo)
+                        \ Stored as a 16-bit value yLinear(Hi Lo)
 
 .yGravityLo
 
@@ -636,7 +636,7 @@
                         \ Point 253 is used to store the gravity vector when
                         \ calculating the flight model
                         \
-                        \ Stored as a 16-bit value (yGravityHi yGravityLo)
+                        \ Stored as a 16-bit value yGravity(Hi Lo)
 
 .yTempPoint1Lo
 
@@ -645,7 +645,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (yTempPoint1Hi yTempPoint1Lo)
+                        \ Stored as a 16-bit value yTempPoint1(Hi Lo)
 
 .yTempPoint2Lo
 
@@ -654,14 +654,14 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (yTempPoint2Hi yTempPoint2Lo)
+                        \ Stored as a 16-bit value yTempPoint2(Hi Lo)
 
 .yPointHi
 
  SKIP 252               \ The high byte of the y-coordinate for the point with
                         \ ID X is at yPointHi,X
                         \
-                        \ Stored as a 16-bit value (yPointHi yPointLo)
+                        \ Stored as a 16-bit value yPoint(Hi Lo)
 
 .yLinearHi
 
@@ -670,7 +670,7 @@
                         \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
-                        \ Stored as a 16-bit value (yLinearHi yLinearLo)
+                        \ Stored as a 16-bit value yLinear(Hi Lo)
 
 .yGravityHi
 
@@ -679,7 +679,7 @@
                         \ Point 253 is used to store the gravity vector when
                         \ calculating the flight model
                         \
-                        \ Stored as a 16-bit value (yGravityHi yGravityLo)
+                        \ Stored as a 16-bit value yGravity(Hi Lo)
 
 .yTempPoint1Hi
 
@@ -688,7 +688,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (yTempPoint1Hi yTempPoint1Lo)
+                        \ Stored as a 16-bit value yTempPoint1(Hi Lo)
 
 .yTempPoint2Hi
 
@@ -697,13 +697,13 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (yTempPoint2Hi yTempPoint2Lo)
+                        \ Stored as a 16-bit value yTempPoint2(Hi Lo)
 
 .xTurnHi
 
  SKIP 1                 \ Turn rate around the x-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (xTurnTop xTurnHi xTurnLo)
+                        \ Stored as a 24-bit value xTurn(Top Hi Lo)
 
 .yTurnHi
 
@@ -713,27 +713,27 @@
                         \
                         \ Shown on indicator 5
                         \
-                        \ Stored as a 24-bit value (yTurnTop yTurnHi yTurnLo)
+                        \ Stored as a 24-bit value yTurn(Top Hi Lo)
 
 .zTurnHi
 
  SKIP 1                 \ Turn rate around the z-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (zTurnTop zTurnHi zTurnLo)
+                        \ Stored as a 24-bit value zTurn(Top Hi Lo)
 
 .xVelocityPLo
 
  SKIP 1                 \ Plane velocity along the x-axis from the perspective
                         \ of the pilot (low byte)
                         \
-                        \ Stored as a 16-bit value (xVelocityPHi xVelocityPLo)
+                        \ Stored as a 16-bit value xVelocityP(Hi Lo)
 
 .yVelocityPLo
 
  SKIP 1                 \ Plane velocity along the y-axis from the perspective
                         \ of the pilot (low byte)
                         \
-                        \ Stored as a 16-bit value (yVelocityPHi yVelocityPLo)
+                        \ Stored as a 16-bit value yVelocityP(Hi Lo)
 
 .zVelocityPLo
 
@@ -751,46 +751,43 @@
                         \
                         \ Shown on indicator 1
                         \
-                        \ Stored as a 16-bit value (zVelocityPHi zVelocityPLo)
+                        \ Stored as a 16-bit value zVelocityP(Hi Lo)
 
 .xTemp3Lo
 
  SKIP 1                 \ The low byte of the xTemp3 temporary variable
                         \
-                        \ Stored as a 16-bit value (xTemp3Hi xTemp3Lo)
+                        \ Stored as a 16-bit value xTemp3(Hi Lo)
 
 .yTemp3Lo
 
  SKIP 1                 \ The low byte of the yTemp3 temporary variable
                         \
-                        \ Stored as a 16-bit value (yTemp3Hi yTemp3Lo)
+                        \ Stored as a 16-bit value yTemp3(Hi Lo)
 
 .zTemp3Lo
 
  SKIP 1                 \ The low byte of the zTemp3 temporary variable
                         \
-                        \ Stored as a 16-bit value (zTemp3Hi zTemp3Lo)
+                        \ Stored as a 16-bit value zTemp3(Hi Lo)
 
 .xPlaneBot
 
  SKIP 1                 \ The bottom byte of the plane's coordinate (x-axis)
                         \
-                        \ Stored as a 32-bit value (xPlaneTop xPlaneHi xPlaneLo
-                        \ xPlaneBot)
+                        \ Stored as a 32-bit value xPlane(Top Hi Lo Bot)
 
 .yPlaneBot
 
  SKIP 1                 \ The bottom byte of the plane's coordinate (y-axis)
                         \
-                        \ Stored as a 32-bit value (yPlaneTop yPlaneHi yPlaneLo
-                        \ yPlaneBot)
+                        \ Stored as a 32-bit value yPlane(Top Hi Lo Bot)
 
 .zPlaneBot
 
  SKIP 1                 \ The bottom byte of the plane's coordinate (z-axis)
                         \
-                        \ Stored as a 32-bit value (zPlaneTop zPlaneHi zPlaneLo
-                        \ zPlaneBot)
+                        \ Stored as a 32-bit value zPlane(Top Hi Lo Bot)
 
 .elevatorPosition
 
@@ -824,13 +821,13 @@
                         \
                         \ Shown on indicator 11
                         \
-                        \ Stored as a 16-bit value (thrustHi thrustLo)
+                        \ Stored as a 16-bit value thrust(Hi Lo)
 
 .xTurnTop
 
  SKIP 1                 \ Turn rate around the x-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (xTurnTop xTurnHi xTurnLo)
+                        \ Stored as a 24-bit value xTurn(Top Hi Lo)
 
 .yTurnTop
 
@@ -840,27 +837,27 @@
                         \
                         \ Shown on indicator 5
                         \
-                        \ Stored as a 24-bit value (yTurnTop yTurnHi yTurnLo)
+                        \ Stored as a 24-bit value yTurn(Top Hi Lo)
 
 .zTurnTop
 
  SKIP 1                 \ Turn rate around the z-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (zTurnTop zTurnHi zTurnLo)
+                        \ Stored as a 24-bit value zTurn(Top Hi Lo)
 
 .xVelocityPHi
 
  SKIP 1                 \ Plane velocity along the x-axis from the perspective
                         \ of the pilot (high byte)
                         \
-                        \ Stored as a 16-bit value (xVelocityPHi xVelocityPLo)
+                        \ Stored as a 16-bit value xVelocityP(Hi Lo)
 
 .yVelocityPHi
 
  SKIP 1                 \ Plane velocity along the y-axis from the perspective
                         \ of the pilot (high byte)
                         \
-                        \ Stored as a 16-bit value (yVelocityPHi yVelocityPLo)
+                        \ Stored as a 16-bit value yVelocityP(Hi Lo)
 
 .zVelocityPHi
 
@@ -878,43 +875,43 @@
                         \
                         \ Shown on indicator 1
                         \
-                        \ Stored as a 16-bit value (zVelocityPHi zVelocityPLo)
+                        \ Stored as a 16-bit value zVelocityP(Hi Lo)
 
 .xTemp3Hi
 
  SKIP 1                 \ The high byte of the xTemp3 temporary variable
                         \
-                        \ Stored as a 16-bit value (xTemp3Hi xTemp3Lo)
+                        \ Stored as a 16-bit value xTemp3(Hi Lo)
 
 .yTemp3Hi
 
  SKIP 1                 \ The high byte of the yTemp3 temporary variable
                         \
-                        \ Stored as a 16-bit value (yTemp3Hi yTemp3Lo)
+                        \ Stored as a 16-bit value yTemp3(Hi Lo)
 
 .zTemp3Hi
 
  SKIP 1                 \ The high byte of the zTemp3 temporary variable
                         \
-                        \ Stored as a 16-bit value (zTemp3Hi zTemp3Lo)
+                        \ Stored as a 16-bit value zTemp3(Hi Lo)
 
 .xTurnLo
 
  SKIP 1                 \ Turn rate around the x-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (xTurnTop xTurnHi xTurnLo)
+                        \ Stored as a 24-bit value xTurn(Top Hi Lo)
 
 .yTurnLo
 
  SKIP 1                 \ Turn rate around the y-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (yTurnTop yTurnHi yTurnLo)
+                        \ Stored as a 24-bit value yTurn(Top Hi Lo)
 
 .zTurnLo
 
  SKIP 1                 \ Turn rate around the z-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (zTurnTop zTurnHi zTurnLo)
+                        \ Stored as a 24-bit value zTurn(Top Hi Lo)
 
  SKIP 3                 \ These bytes appear to be unused
 
@@ -926,71 +923,63 @@
                         \
                         \ Shown on indicator 11
                         \
-                        \ Stored as a 16-bit value (thrustHi thrustLo)
+                        \ Stored as a 16-bit value thrust(Hi Lo)
 
 .xMomentsScLo
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the x-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (xMomentsScTop xMomentsScHi
-                        \ xMomentsScLo)
+                        \ Stored as a 24-bit value xMomentsSc(Top Hi Lo)
 
 .yMomentsScLo
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the y-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (yMomentsScTop yMomentsScHi
-                        \ yMomentsScLo)
+                        \ Stored as a 24-bit value yMomentsSc(Top Hi Lo)
 
 .zMomentsScLo
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the z-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (zMomentsScTop zMomentsScHi
-                        \ zMomentsScLo)
+                        \ Stored as a 24-bit value zMomentsSc(Top Hi Lo)
 
 .xLiftDragScLo
 
  SKIP 1                 \ Scaled linear force due to lift in the x-axis (low
                         \ byte)
                         \
-                        \ Stored as a 24-bit value (xLiftDragScTop xLiftDragScHi
-                        \ xLiftDragScLo)
+                        \ Stored as a 24-bit value xLiftDragSc(Top Hi Lo)
 
 .yLiftDragScLo
 
  SKIP 1                 \ Scaled linear force due to side forces in the y-axis
                         \ (low byte)
                         \
-                        \ Stored as a 24-bit value (yLiftDragScTop yLiftDragScHi
-                        \ yLiftDragScLo)
+                        \ Stored as a 24-bit value yLiftDragSc(Top Hi Lo)
 
 .zLiftDragScLo
 
  SKIP 1                 \ Scaled linear force due to drag in the z-axis (low
                         \ byte)
                         \
-                        \ Stored as a 24-bit value (zLiftDragScTop zLiftDragScHi
-                        \ zLiftDragScLo)
+                        \ Stored as a 24-bit value zLiftDragSc(Top Hi Lo)
 
 .zSlipMomentScLo
 
  SKIP 1                 \ Scaled angular force in the z-axis due to aircraft
                         \ slip (low byte)
                         \
-                        \ Stored as a 24-bit value (zSlipMomentScTop
-                        \ zSlipMomentScHi zSlipMomentScLo)
+                        \ Stored as a 24-bit value zSlipMomentSc(Top Hi Lo)
 
 .yFlapsLiftScLo
 
  SKIP 1                 \ Scaled linear force in the y-axis due to lift from the
                         \ flaps (low byte)
                         \
-                        \ Stored as a 24-bit value (yFlapsLiftScTop
-                        \ yFlapsLiftScHi yFlapsLiftScLo)
+                        \ Stored as a 24-bit value yFlapsLiftSc(Top Hi Lo)
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -999,24 +988,21 @@
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the x-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (xControlsScTop xControlsScHi
-                        \ xControlsScLo)
+                        \ Stored as a 24-bit value xControlsSc(Top Hi Lo)
 
 .yControlsScLo
 
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the y-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (yControlsScTop yControlsScHi
-                        \ yControlsScLo)
+                        \ Stored as a 24-bit value yControlsSc(Top Hi Lo)
 
 .zControlsScLo
 
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the z-axis (low byte)
                         \
-                        \ Stored as a 24-bit value (zControlsScTop zControlsScHi
-                        \ zControlsScLo)
+                        \ Stored as a 24-bit value zControlsSc(Top Hi Lo)
 
 .axisKeyUsage
 
@@ -1042,21 +1028,21 @@
  SKIP 1                 \ Rate of change of the plane's turn rate in the x-axis
                         \ (low byte)
                         \
-                        \ Stored as a 24-bit value (dxTurnTop dxTurnHi dxTurnLo)
+                        \ Stored as a 24-bit value dxTurn(Top Hi Lo)
 
 .dyTurnLo
 
  SKIP 1                 \ Rate of change of the plane's turn rate in the y-axis
                         \ (low byte)
                         \
-                        \ Stored as a 24-bit value (dyTurnTop dyTurnHi dyTurnLo)
+                        \ Stored as a 24-bit value dyTurn(Top Hi Lo)
 
 .dzTurnLo
 
  SKIP 1                 \ Rate of change of the plane's turn rate in the z-axis
                         \ (low byte)
                         \
-                        \ Stored as a 24-bit value (dzTurnTop dzTurnHi dzTurnLo)
+                        \ Stored as a 24-bit value dzTurn(Top Hi Lo)
 
  SKIP 13                \ These bytes appear to be unused
 
@@ -1065,54 +1051,54 @@
  SKIP 1                 \ Angular force due to airflow over the plane in the
                         \ x-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (xMomentsHi xMomentsLo)
+                        \ Stored as a 16-bit value xMoments(Hi Lo)
 
 .yMomentsLo
 
  SKIP 1                 \ Angular force due to airflow over the plane in the
                         \ y-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (yMomentsHi yMomentsLo)
+                        \ Stored as a 16-bit value yMoments(Hi Lo)
 
 .zMomentsLo
 
  SKIP 1                 \ Angular force due to airflow over the plane in the
                         \ z-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (zMomentsHi zMomentsLo)
+                        \ Stored as a 16-bit value zMoments(Hi Lo)
 
 .xLiftDragLo
 
  SKIP 1                 \ Linear force due to lift in the x-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (xLiftDragHi xLiftDragLo)
+                        \ Stored as a 16-bit value xLiftDrag(Hi Lo)
 
 .yLiftDragLo
 
  SKIP 1                 \ Linear force due to side forces in the y-axis (low
                         \ byte)
                         \
-                        \ Stored as a 16-bit value (yLiftDragHi yLiftDragLo)
+                        \ Stored as a 16-bit value yLiftDrag(Hi Lo)
 
 .zLiftDragLo
 
  SKIP 1                 \ Linear force due to drag in the z-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (zLiftDragHi zLiftDragLo)
+                        \ Stored as a 16-bit value zLiftDrag(Hi Lo)
 
 .zSlipMomentLo
 
  SKIP 1                 \ Angular force in the z-axis due to aircraft slip (low
                         \ byte)
                         \
-                        \ Stored as a 16-bit value (zSlipMomentHi zSlipMomentLo)
+                        \ Stored as a 16-bit value zSlipMoment(Hi Lo)
 
 .yFlapsLiftLo
 
  SKIP 1                 \ Linear force in the y-axis due to lift from the flaps
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (yFlapsLiftHi yFlapsLiftLo)
+                        \ Stored as a 16-bit value yFlapsLift(Hi Lo)
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -1121,21 +1107,21 @@
  SKIP 1                 \ Angular force due to the plane's controls in the
                         \ x-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (xControlsHi xControlsLo)
+                        \ Stored as a 16-bit value xControls(Hi Lo)
 
 .yControlsLo
 
  SKIP 1                 \ Angular force due to the plane's controls in the
                         \ y-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (yControlsHi yControlsLo)
+                        \ Stored as a 16-bit value yControls(Hi Lo)
 
 .zControlsLo
 
  SKIP 1                 \ Angular force due to the plane's controls in the
                         \ z-axis (low byte)
                         \
-                        \ Stored as a 16-bit value (zControlsHi zControlsLo)
+                        \ Stored as a 16-bit value zControls(Hi Lo)
 
  SKIP 3                 \ These bytes appear to be unused
 
@@ -1144,54 +1130,54 @@
  SKIP 1                 \ Angular force due to airflow over the plane in the
                         \ x-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (xMomentsHi xMomentsLo)
+                        \ Stored as a 16-bit value xMoments(Hi Lo)
 
 .yMomentsHi
 
  SKIP 1                 \ Angular force due to airflow over the plane in the
                         \ y-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (yMomentsHi yMomentsLo)
+                        \ Stored as a 16-bit value yMoments(Hi Lo)
 
 .zMomentsHi
 
  SKIP 1                 \ Angular force due to airflow over the plane in the
                         \ z-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (zMomentsHi zMomentsLo)
+                        \ Stored as a 16-bit value zMoments(Hi Lo)
 
 .xLiftDragHi
 
  SKIP 1                 \ Linear force due to lift in the x-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (xLiftDragHi xLiftDragLo)
+                        \ Stored as a 16-bit value xLiftDrag(Hi Lo)
 
 .yLiftDragHi
 
  SKIP 1                 \ Linear force due to side forces in the y-axis (high
                         \ byte)
                         \
-                        \ Stored as a 16-bit value (yLiftDragHi yLiftDragLo)
+                        \ Stored as a 16-bit value yLiftDrag(Hi Lo)
 
 .zLiftDragHi
 
  SKIP 1                 \ Linear force due to drag in the z-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (zLiftDragHi zLiftDragLo)
+                        \ Stored as a 16-bit value zLiftDrag(Hi Lo)
 
 .zSlipMomentHi
 
  SKIP 1                 \ Angular force in the z-axis due to aircraft slip (high
                         \ byte)
                         \
-                        \ Stored as a 16-bit value (zSlipMomentHi zSlipMomentLo)
+                        \ Stored as a 16-bit value zSlipMoment(Hi Lo)
 
 .yFlapsLiftHi
 
  SKIP 1                 \ Linear force in the y-axis due to lift from the flaps
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (yFlapsLiftHi yFlapsLiftLo)
+                        \ Stored as a 16-bit value yFlapsLift(Hi Lo)
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -1200,21 +1186,21 @@
  SKIP 1                 \ Angular force due to the plane's controls in the
                         \ x-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (xControlsHi xControlsLo)
+                        \ Stored as a 16-bit value xControls(Hi Lo)
 
 .yControlsHi
 
  SKIP 1                 \ Angular force due to the plane's controls in the
                         \ y-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (yControlsHi yControlsLo)
+                        \ Stored as a 16-bit value yControls(Hi Lo)
 
 .zControlsHi
 
  SKIP 1                 \ Angular force due to the plane's controls in the
                         \ z-axis (high byte)
                         \
-                        \ Stored as a 16-bit value (zControlsHi zControlsLo)
+                        \ Stored as a 16-bit value zControls(Hi Lo)
 
  SKIP 3                 \ These bytes appear to be unused
 
@@ -1223,64 +1209,56 @@
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the x-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (xMomentsScTop xMomentsScHi
-                        \ xMomentsScLo)
+                        \ Stored as a 24-bit value xMomentsSc(Top Hi Lo)
 
 .yMomentsScHi
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the y-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (yMomentsScTop yMomentsScHi
-                        \ yMomentsScLo)
+                        \ Stored as a 24-bit value yMomentsSc(Top Hi Lo)
 
 .zMomentsScHi
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the z-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (zMomentsScTop zMomentsScHi
-                        \ zMomentsScLo)
+                        \ Stored as a 24-bit value zMomentsSc(Top Hi Lo)
 
 .xLiftDragScHi
 
  SKIP 1                 \ Scaled linear force due to lift in the x-axis (high
                         \ byte)
                         \
-                        \ Stored as a 24-bit value (xLiftDragScTop xLiftDragScHi
-                        \ xLiftDragScLo)
+                        \ Stored as a 24-bit value xLiftDragSc(Top Hi Lo)
 
 .yLiftDragScHi
 
  SKIP 1                 \ Scaled linear force due to side forces in the y-axis
                         \ (high byte)
                         \
-                        \ Stored as a 24-bit value (yLiftDragScTop yLiftDragScHi
-                        \ yLiftDragScLo)
+                        \ Stored as a 24-bit value yLiftDragSc(Top Hi Lo)
 
 .zLiftDragScHi
 
  SKIP 1                 \ Scaled linear force due to drag in the z-axis (high
                         \ byte)
                         \
-                        \ Stored as a 24-bit value (zLiftDragScTop zLiftDragScHi
-                        \ zLiftDragScLo)
+                        \ Stored as a 24-bit value zLiftDragSc(Top Hi Lo)
 
 .zSlipMomentScHi
 
  SKIP 1                 \ Scaled angular force in the z-axis due to aircraft
                         \ slip (high byte)
                         \
-                        \ Stored as a 24-bit value (zSlipMomentScTop
-                        \ zSlipMomentScHi zSlipMomentScLo)
+                        \ Stored as a 24-bit value zSlipMomentSc(Top Hi Lo)
 
 .yFlapsLiftScHi
 
  SKIP 1                 \ Scaled linear force in the y-axis due to lift from the
                         \ flaps (high byte)
                         \
-                        \ Stored as a 24-bit value (yFlapsLiftScTop
-                        \ yFlapsLiftScHi yFlapsLiftScLo)
+                        \ Stored as a 24-bit value yFlapsLiftSc(Top Hi Lo)
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -1289,112 +1267,98 @@
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the x-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (xControlsScTop xControlsScHi
-                        \ xControlsScLo)
+                        \ Stored as a 24-bit value xControlsSc(Top Hi Lo)
 
 .yControlsScHi
 
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the y-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (yControlsScTop yControlsScHi
-                        \ yControlsScLo)
+                        \ Stored as a 24-bit value yControlsSc(Top Hi Lo)
 
 .zControlsScHi
 
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the z-axis (high byte)
                         \
-                        \ Stored as a 24-bit value (zControlsScTop zControlsScHi
-                        \ zControlsScLo)
+                        \ Stored as a 24-bit value zControlsSc(Top Hi Lo)
 
 .xPlaneTop
 
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in xPlaneHi
                         \
-                        \ Stored as a 32-bit value (xPlaneTop xPlaneHi xPlaneLo
-                        \ xPlaneBot)
+                        \ Stored as a 32-bit value xPlane(Top Hi Lo Bot)
 
 .yPlaneTop
 
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in yPlaneHi
                         \
-                        \ Stored as a 32-bit value (yPlaneTop yPlaneHi yPlaneLo
-                        \ yPlaneBot)
+                        \ Stored as a 32-bit value yPlane(Top Hi Lo Bot)
 
 .zPlaneTop
 
  SKIP 1                 \ The top byte of the plane's location, which is the
                         \ byte above the high byte in zPlaneHi
                         \
-                        \ Stored as a 32-bit value (zPlaneTop zPlaneHi zPlaneLo
-                        \ zPlaneBot)
+                        \ Stored as a 32-bit value zPlane(Top Hi Lo Bot)
 
 .xMomentsScTop
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the x-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (xMomentsScTop xMomentsScHi
-                        \ xMomentsScLo)
+                        \ Stored as a 24-bit value xMomentsSc(Top Hi Lo)
 
 .yMomentsScTop
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the y-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (yMomentsScTop yMomentsScHi
-                        \ yMomentsScLo)
+                        \ Stored as a 24-bit value yMomentsSc(Top Hi Lo)
 
 .zMomentsScTop
 
  SKIP 1                 \ Scaled angular force due to forces on the plane in
                         \ the z-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (zMomentsScTop zMomentsScHi
-                        \ zMomentsScLo)
+                        \ Stored as a 24-bit value zMomentsSc(Top Hi Lo)
 
 .xLiftDragScTop
 
  SKIP 1                 \ Scaled linear force due to lift in the x-axis (top
                         \ byte)
                         \
-                        \ Stored as a 24-bit value (xLiftDragScTop xLiftDragScHi
-                        \ xLiftDragScLo)
+                        \ Stored as a 24-bit value xLiftDragSc(Top Hi Lo)
 
 .yLiftDragScTop
 
  SKIP 1                 \ Scaled linear force due to side forces in the y-axis
                         \ (top byte)
                         \
-                        \ Stored as a 24-bit value (yLiftDragScTop yLiftDragScHi
-                        \ yLiftDragScLo)
+                        \ Stored as a 24-bit value yLiftDragSc(Top Hi Lo)
 
 .zLiftDragScTop
 
  SKIP 1                 \ Scaled linear force due to drag in the z-axis (top
                         \ byte)
                         \
-                        \ Stored as a 24-bit value (zLiftDragScTop zLiftDragScHi
-                        \ zLiftDragScLo)
+                        \ Stored as a 24-bit value zLiftDragSc(Top Hi Lo)
 
 .zSlipMomentScTop
 
  SKIP 1                 \ Scaled angular force in the z-axis due to aircraft
                         \ slip (top byte)
                         \
-                        \ Stored as a 24-bit value (zSlipMomentScTop
-                        \ zSlipMomentScHi zSlipMomentScLo)
+                        \ Stored as a 24-bit value zSlipMomentSc(Top Hi Lo)
 
 .yFlapsLiftScTop
 
  SKIP 1                 \ Scaled linear force in the y-axis due to lift from the
                         \ flaps (top byte)
                         \
-                        \ Stored as a 24-bit value (yFlapsLiftScTop
-                        \ yFlapsLiftScHi yFlapsLiftScLo)
+                        \ Stored as a 24-bit value yFlapsLiftSc(Top Hi Lo)
 
  SKIP 2                 \ These bytes appear to be unused
 
@@ -1403,24 +1367,21 @@
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the x-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (xControlsScTop xControlsScHi
-                        \ xControlsScLo)
+                        \ Stored as a 24-bit value xControlsSc(Top Hi Lo)
 
 .yControlsScTop
 
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the y-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (yControlsScTop yControlsScHi
-                        \ yControlsScLo)
+                        \ Stored as a 24-bit value yControlsSc(Top Hi Lo)
 
 .zControlsScTop
 
  SKIP 1                 \ Scaled angular force due to the plane's controls in
                         \ the z-axis (top byte)
                         \
-                        \ Stored as a 24-bit value (zControlsScTop zControlsScHi
-                        \ zControlsScLo)
+                        \ Stored as a 24-bit value zControlsSc(Top Hi Lo)
 
  SKIP 3                 \ These bytes appear to be unused
 
@@ -1429,71 +1390,70 @@
  SKIP 1                 \ Rate of change of the plane's turn rate in the x-axis
                         \ (high byte)
                         \
-                        \ Stored as a 24-bit value (dxTurnTop dxTurnHi dxTurnLo)
+                        \ Stored as a 24-bit value dxTurn(Top Hi Lo)
 
 .dyTurnHi
 
  SKIP 1                 \ Rate of change of the plane's rate turn in the y-axis
                         \ (high byte)
                         \
-                        \ Stored as a 24-bit value (dyTurnTop dyTurnHi dyTurnLo)
+                        \ Stored as a 24-bit value dyTurn(Top Hi Lo)
 
 .dzTurnHi
 
  SKIP 1                 \ Rate of change of the plane's rate turn in the z-axis
                         \ (high byte)
                         \
-                        \ Stored as a 24-bit value (dzTurnTop dzTurnHi dzTurnLo)
+                        \ Stored as a 24-bit value dzTurn(Top Hi Lo)
 
 .dxVelocityLo
 
  SKIP 1                 \ Rate of change of the plane's velocity in the x-axis
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dyVelocityLo
 
  SKIP 1                 \ Rate of change of the plane's velocity in the y-axis
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dzVelocityLo
 
  SKIP 1                 \ Rate of change of the plane's velocity in the z-axis
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dxRotationLo
 
  SKIP 1                 \ Rate of change of the plane's rotation in the x-axis
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dyRotationLo
 
  SKIP 1                 \ Rate of change of the plane's rotation in the y-axis
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (dyVelocityHi dyVelocityLo)
+                        \ Stored as a 16-bit value dyVelocity(Hi Lo)
 
 .dzRotationLo
 
  SKIP 1                 \ Rate of change of the plane's rotation in the z-axis
                         \ (low byte)
                         \
-                        \ Stored as a 16-bit value (dzVelocityHi dzVelocityLo)
+                        \ Stored as a 16-bit value dzVelocity(Hi Lo)
 
 .xVelocityHi
 
  SKIP 1                 \ Plane velocity in the x-axis from the perspective
                         \ of the outside world (high byte)
                         \
-                        \ Stored as a 24-bit value (xVelocityTop xVelocityHi
-                        \ xVelocityLo)
+                        \ Stored as a 24-bit value xVelocity(Top Hi Lo)
 
 .yVelocityHi
 
@@ -1517,24 +1477,21 @@
                         \
                         \ Shown on indicator 4
                         \
-                        \ Stored as a 24-bit value (yVelocityTop yVelocityHi
-                        \ yVelocityLo)
+                        \ Stored as a 24-bit value yVelocity(Top Hi Lo)
 
 .zVelocityHi
 
  SKIP 1                 \ Plane velocity in the z-axis from the perspective
                         \ of the outside world (high byte)
                         \
-                        \ Stored as a 24-bit value (zVelocityTop zVelocityHi
-                        \ zVelocityLo)
+                        \ Stored as a 24-bit value zVelocity(Top Hi Lo)
 
 .xVelocityLo
 
  SKIP 1                 \ Plane velocity in the x-axis from the perspective
                         \ of the outside world (low byte)
                         \
-                        \ Stored as a 24-bit value (xVelocityTop xVelocityHi
-                        \ xVelocityLo)
+                        \ Stored as a 24-bit value xVelocity(Top Hi Lo)
 
 .yVelocityLo
 
@@ -1558,16 +1515,14 @@
                         \
                         \ Shown on indicator 4
                         \
-                        \ Stored as a 24-bit value (yVelocityTop yVelocityHi
-                        \ yVelocityLo)
+                        \ Stored as a 24-bit value yVelocity(Top Hi Lo)
 
 .zVelocityLo
 
  SKIP 1                 \ Plane velocity in the z-axis from the perspective
                         \ of the outside world (low byte)
                         \
-                        \ Stored as a 24-bit value (zVelocityTop zVelocityHi
-                        \ zVelocityLo)
+                        \ Stored as a 24-bit value zVelocity(Top Hi Lo)
 
  SKIP 1                 \ This byte appears to be unused
 
@@ -1576,71 +1531,70 @@
  SKIP 1                 \ Rate of change of the plane's turn rate in the x-axis
                         \ (top byte)
                         \
-                        \ Stored as a 24-bit value (dxTurnTop dxTurnHi dxTurnLo)
+                        \ Stored as a 24-bit value dxTurn(Top Hi Lo)
 
 .dyTurnTop
 
  SKIP 1                 \ Rate of change of the plane's turn rate in the y-axis
                         \ (top byte)
                         \
-                        \ Stored as a 24-bit value (dyTurnTop dyTurnHi dyTurnLo)
+                        \ Stored as a 24-bit value dyTurn(Top Hi Lo)
 
 .dzTurnTop
 
  SKIP 1                 \ Rate of change of the plane's turn rate in the z-axis
                         \ (top byte)
                         \
-                        \ Stored as a 24-bit value (dzTurnTop dzTurnHi dzTurnLo)
+                        \ Stored as a 24-bit value dzTurn(Top Hi Lo)
 
 .dxVelocityHi
 
  SKIP 1                 \ Rate of change of the plane's velocity in the x-axis
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dyVelocityHi
 
  SKIP 1                 \ Rate of change of the plane's velocity in the y-axis
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dzVelocityHi
 
  SKIP 1                 \ Rate of change of the plane's velocity in the z-axis
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dxRotationHi
 
  SKIP 1                 \ Rate of change of the plane's rotation in the x-axis
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (dxVelocityHi dxVelocityLo)
+                        \ Stored as a 16-bit value dxVelocity(Hi Lo)
 
 .dyRotationHi
 
  SKIP 1                 \ Rate of change of the plane's rotation in the y-axis
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (dyVelocityHi dyVelocityLo)
+                        \ Stored as a 16-bit value dyVelocity(Hi Lo)
 
 .dzRotationHi
 
  SKIP 1                 \ Rate of change of the plane's rotation in the z-axis
                         \ (high byte)
                         \
-                        \ Stored as a 16-bit value (dzVelocityHi dzVelocityLo)
+                        \ Stored as a 16-bit value dzVelocity(Hi Lo)
 
 .xVelocityTop
 
  SKIP 1                 \ Plane velocity in the x-axis from the perspective
                         \ of the outside world (top byte)
                         \
-                        \ Stored as a 24-bit value (xVelocityTop xVelocityHi
-                        \ xVelocityLo)
+                        \ Stored as a 24-bit value xVelocity(Top Hi Lo)
 
 .yVelocityTop
 
@@ -1664,16 +1618,14 @@
                         \
                         \ Shown on indicator 4
                         \
-                        \ Stored as a 24-bit value (yVelocityTop yVelocityHi
-                        \ yVelocityLo)
+                        \ Stored as a 24-bit value yVelocity(Top Hi Lo)
 
 .zVelocityTop
 
  SKIP 1                 \ Plane velocity in the z-axis from the perspective
                         \ of the outside world (top byte)
                         \
-                        \ Stored as a 24-bit value (zVelocityTop zVelocityHi
-                        \ zVelocityLo)
+                        \ Stored as a 24-bit value zVelocity(Top Hi Lo)
 
 .slipRate
 
@@ -1703,19 +1655,19 @@
 
  SKIP 1                 \ The low byte of the xTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (xTemp2Top xTemp2Hi xTemp2Lo)
+                        \ Stored as a 24-bit value xTemp2(Top Hi Lo)
 
 .yTemp2Lo
 
  SKIP 1                 \ The low byte of the yTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (yTemp2Top yTemp2Hi yTemp2Lo)
+                        \ Stored as a 24-bit value yTemp2(Top Hi Lo)
 
 .zTemp2Lo
 
  SKIP 1                 \ The low byte of the zTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (zTemp2Top zTemp2Hi zTemp2Lo)
+                        \ Stored as a 24-bit value zTemp2(Top Hi Lo)
 
  SKIP 5                 \ These bytes appear to be unused
 
@@ -1739,37 +1691,37 @@
 
  SKIP 1                 \ The high byte of the xTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (xTemp2Top xTemp2Hi xTemp2Lo)
+                        \ Stored as a 24-bit value xTemp2(Top Hi Lo)
 
 .yTemp2Hi
 
  SKIP 1                 \ The high byte of the yTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (yTemp2Top yTemp2Hi yTemp2Lo)
+                        \ Stored as a 24-bit value yTemp2(Top Hi Lo)
 
 .zTemp2Hi
 
  SKIP 1                 \ The high byte of the zTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (zTemp2Top zTemp2Hi zTemp2Lo)
+                        \ Stored as a 24-bit value zTemp2(Top Hi Lo)
 
 .xTemp2Top
 
  SKIP 1                 \ The top byte of the xTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (xTemp2Top xTemp2Hi xTemp2Lo)
+                        \ Stored as a 24-bit value xTemp2(Top Hi Lo)
 
 .yTemp2Top
 
  SKIP 1                 \ The top byte of the yTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (yTemp2Top yTemp2Hi yTemp2Lo)
+                        \ Stored as a 24-bit value yTemp2(Top Hi Lo)
 
 .zTemp2Top
 
  SKIP 1                 \ The top byte of the zTemp2 temporary variable
                         \
-                        \ Stored as a 24-bit value (zTemp2Top zTemp2Hi zTemp2Lo)
+                        \ Stored as a 24-bit value zTemp2(Top Hi Lo)
 
 .gunSights
 
@@ -2027,79 +1979,73 @@
 
  SKIP 1                 \ The low byte of the xDashesVector temporary variable
                         \
-                        \ Stored as a 16-bit value (xDashesVectorHi
-                        \ xDashesVectorLo)
+                        \ Stored as a 16-bit value xDashesVector(Hi Lo)
 
 .yDashesVectorLo
 
  SKIP 1                 \ The low byte of the yDashesVector temporary variable
                         \
-                        \ Stored as a 16-bit value (yDashesVectorHi
-                        \ yDashesVectorLo)
+                        \ Stored as a 16-bit value yDashesVector(Hi Lo)
 
 .zDashesVectorLo
 
  SKIP 1                 \ The low byte of the yDashesVector temporary variable
                         \
-                        \ Stored as a 16-bit value (zDashesVectorHi
-                        \ zDashesVectorLo)
+                        \ Stored as a 16-bit value zDashesVector(Hi Lo)
 
 .xDashesVectorHi
 
  SKIP 1                 \ The high byte of the xDashesVector temporary variable
                         \
-                        \ Stored as a 16-bit value (xDashesVectorHi
-                        \ xDashesVectorLo)
+                        \ Stored as a 16-bit value xDashesVector(Hi Lo)
 
 .yDashesVectorHi
 
  SKIP 1                 \ The high byte of the yDashesVector temporary variable
                         \
-                        \ Stored as a 16-bit value (yDashesVectorHi
-                        \ yDashesVectorLo)
+                        \ Stored as a 16-bit value yDashesVector(Hi Lo)
 
 .zDashesVectorHi
 
  SKIP 1                 \ The high byte of the yDashesVector temporary variable
                         \
-                        \ Stored as a 16-bit value (zDashesVectorHi
-                        \ zDashesVectorLo)
+                        \ Stored as a 16-bit value zDashesVector(Hi Lo)
 
 .xTemp1Lo
 
  SKIP 1                 \ The low byte of the xTemp1 temporary variable
                         \
-                        \ Stored as a 16-bit value (xTemp1Hi xTemp1Lo)
+                        \ Stored as a 16-bit value xTemp1(Hi Lo)
 
 .yTemp1Lo
 
  SKIP 1                 \ The low byte of the yTemp1 temporary variable
                         \
-                        \ Stored as a 16-bit value (yTemp1Hi yTemp1Lo)
+                        \ Stored as a 16-bit value yTemp1(Hi Lo)
 
 .zTemp1Lo
 
  SKIP 1                 \ The low byte of the zTemp1 temporary variable
                         \
-                        \ Stored as a 16-bit value (zTemp1Hi zTemp1Lo)
+                        \ Stored as a 16-bit value zTemp1(Hi Lo)
 
 .xTemp1Hi
 
  SKIP 1                 \ The high byte of the xTemp1 temporary variable
                         \
-                        \ Stored as a 16-bit value (xTemp1Hi xTemp1Lo)
+                        \ Stored as a 16-bit value xTemp1(Hi Lo)
 
 .yTemp1Hi
 
  SKIP 1                 \ The high byte of the yTemp1 temporary variable
                         \
-                        \ Stored as a 16-bit value (yTemp1Hi yTemp1Lo)
+                        \ Stored as a 16-bit value yTemp1(Hi Lo)
 
 .zTemp1Hi
 
  SKIP 1                 \ The high byte of the zTemp1 temporary variable
                         \
-                        \ Stored as a 16-bit value (zTemp1Hi zTemp1Lo)
+                        \ Stored as a 16-bit value zTemp1(Hi Lo)
 
 .alien
 
@@ -2165,7 +2111,7 @@
                         \
                         \ Same as the plane's pitch angle
                         \
-                        \ Stored as a 16-bit value (xRotationHi xRotationLo)
+                        \ Stored as a 16-bit value xRotation(Hi Lo)
 
 .yRotationLo
 
@@ -2174,7 +2120,7 @@
                         \ Same as the plane's yaw angle, which is also the
                         \ direction of the compass (i.e. the plane's heading)
                         \
-                        \ Stored as a 16-bit value (yRotationHi yRotationLo)
+                        \ Stored as a 16-bit value yRotation(Hi Lo)
 
 .zRotationLo
 
@@ -2182,7 +2128,7 @@
                         \
                         \ Same as the plane's roll angle
                         \
-                        \ Stored as a 16-bit value (zRotationHi zRotationLo)
+                        \ Stored as a 16-bit value zRotation(Hi Lo)
 
 .xPlaneLo
 
@@ -2190,8 +2136,7 @@
                         \
                         \ Set to &C6E5 in ResetVariables
                         \
-                        \ Stored as a 32-bit value (xPlaneTop xPlaneHi xPlaneLo
-                        \ xPlaneBot)
+                        \ Stored as a 32-bit value xPlane(Top Hi Lo Bot)
 
 .yPlaneLo
 
@@ -2203,8 +2148,7 @@
                         \
                         \ Set to (0 10) in ResetVariables
                         \
-                        \ Stored as a 32-bit value (yPlaneTop yPlaneHi yPlaneLo
-                        \ yPlaneBot)
+                        \ Stored as a 32-bit value yPlane(Top Hi Lo Bot)
 
 .zPlaneLo
 
@@ -2212,8 +2156,7 @@
                         \
                         \ Set to &485C in ResetVariables
                         \
-                        \ Stored as a 32-bit value (zPlaneTop zPlaneHi zPlaneLo
-                        \ zPlaneBot)
+                        \ Stored as a 32-bit value zPlane(Top Hi Lo Bot)
 
 .yLandingGear
 
@@ -2312,7 +2255,7 @@
                         \
                         \ Set to 7 in ResetVariables
                         \
-                        \ Stored as a 16-bit value (xRotationHi xRotationLo)
+                        \ Stored as a 16-bit value xRotation(Hi Lo)
 
 .yRotationHi
 
@@ -2328,7 +2271,7 @@
                         \
                         \ Shown on indicator 0
                         \
-                        \ Stored as a 16-bit value (yRotationHi yRotationLo)
+                        \ Stored as a 16-bit value yRotation(Hi Lo)
 
 .zRotationHi
 
@@ -2341,7 +2284,7 @@
                         \   * 128 = upside down     (bit 6 clear, bit 7 set)
                         \   * 192 = vertical left   (bit 6 set,   bit 7 set)
                         \
-                        \ Stored as a 16-bit value (zRotationHi zRotationLo)
+                        \ Stored as a 16-bit value zRotation(Hi Lo)
 
 .xPlaneHi
 
@@ -2349,8 +2292,7 @@
                         \
                         \ Set to &C6E5 in ResetVariables
                         \
-                        \ Stored as a 32-bit value (xPlaneTop xPlaneHi xPlaneLo
-                        \ xPlaneBot)
+                        \ Stored as a 32-bit value xPlane(Top Hi Lo Bot)
 
 .yPlaneHi
 
@@ -2362,8 +2304,7 @@
                         \
                         \ Set to (0 10) in ResetVariables
                         \
-                        \ Stored as a 32-bit value (yPlaneTop yPlaneHi yPlaneLo
-                        \ yPlaneBot)
+                        \ Stored as a 32-bit value yPlane(Top Hi Lo Bot)
 
 .zPlaneHi
 
@@ -2371,8 +2312,7 @@
                         \
                         \ Set to &485C in ResetVariables
                         \
-                        \ Stored as a 32-bit value (zPlaneTop zPlaneHi zPlaneLo
-                        \ zPlaneBot)
+                        \ Stored as a 32-bit value zPlane(Top Hi Lo Bot)
 
 \ ******************************************************************************
 \
@@ -3440,7 +3380,7 @@
                         \ x-coordinate is positive - in other words, the point's
                         \ x- and z-coordinates have opposite signs
 
- LDA #80                \ Set (xPointHi xPointLo) = 80 - (SS QQ)
+ LDA #80                \ Set xPoint(Hi Lo) = 80 - (SS QQ)
  SEC                    \
  SBC QQ                 \ starting with the low bytes
  STA xPointLo,X
@@ -3459,7 +3399,7 @@
                         \ x-coordinate is negative - in other words, the point's
                         \ x- and z-coordinates have the same sign
 
- LDA #80                \ Set (xPointHi xPointLo) = 80 + (SS QQ)
+ LDA #80                \ Set xPoint(Hi Lo) = 80 + (SS QQ)
  CLC                    \
  ADC QQ                 \ starting with the low bytes
  STA xPointLo,X
@@ -3501,7 +3441,7 @@
                         \ y-coordinate is positive - in other words, the point's
                         \ y- and z-coordinates have opposite signs
 
- LDA #96                \ Set (yPointHi yPointLo) = 96 - (RR Q)
+ LDA #96                \ Set yPoint(Hi Lo) = 96 - (RR Q)
  SEC                    \
  SBC Q                  \ starting with the low bytes
  STA yPointLo,X
@@ -3514,7 +3454,7 @@
 
 .proj20
 
- LDA #96                \ Set (yPointHi yPointLo) = 96 + (RR Q)
+ LDA #96                \ Set yPoint(Hi Lo) = 96 + (RR Q)
  CLC                    \
  ADC Q                  \ starting with the low bytes
  STA yPointLo,X
@@ -3547,8 +3487,8 @@
 \   (Q P) = (X Y) divided by (TT S)
 \
 \ where (X Y) is a positive 16-bit number and (TT S) is the entry in the
-\ (divisionHi divisionLo) table for the denominator after being scaled by the
-\ ScaleUp routine.
+\ division(Hi Lo) table for the denominator after being scaled by the ScaleUp
+\ routine.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3563,9 +3503,9 @@
 \   R                   Contains %00010000 (which is set at the start of
 \                       ProjectPoint)
 \
-\   (TT S)              The lookup from (divisionHi divisionLo) for the high
-\                       byte of the scaled up denominator (i.e. the number we
-\                       are dividing by)
+\   (TT S)              The lookup from division(Hi Lo) for the high byte of the
+\                       scaled up denominator (i.e. the number we are dividing
+\                       by)
 \
 \   K                   The low byte of the scaled up denominator
 \
@@ -4499,17 +4439,17 @@
 
  LDY M                  \ Set Y to the point ID for the line's end point
 
- LDA xPointLo,X         \ Set (RR R) = the X-th entry from (xPointHi xPointLo)
+ LDA xPointLo,X         \ Set (RR R) = the X-th entry from xPoint(Hi Lo)
  STA R                  \
  LDA xPointHi,X         \ i.e. the x-coordinate of the line's start point
  STA RR
 
- LDA yPointLo,X         \ Set (SS S) = the X-th entry from (yPointHi yPointLo)
+ LDA yPointLo,X         \ Set (SS S) = the X-th entry from yPoint(Hi Lo)
  STA S                  \
  LDA yPointHi,X         \ i.e. the y-coordinate of the line's start point
  STA SS
 
- LDA xPointLo,Y         \ Set (QQ W) = the Y-th entry from (xPointHi xPointLo)
+ LDA xPointLo,Y         \ Set (QQ W) = the Y-th entry from xPoint(Hi Lo)
  STA W                  \
                         \ starting with the low byte in W
 
@@ -4519,7 +4459,7 @@
                         \
                         \   (I T) = (QQ W) - (RR R)
 
- LDA xPointHi,Y         \ Set (QQ W) = the Y-th entry from (xPointHi xPointLo)
+ LDA xPointHi,Y         \ Set (QQ W) = the Y-th entry from xPoint(Hi Lo)
  STA QQ                 \
                         \ i.e. the x-coordinate of the line's end point
 
@@ -4556,7 +4496,7 @@
 
 .draw2
 
- LDA yPointLo,Y         \ Set (H G) = the Y-th entry from (yPointHi yPointLo)
+ LDA yPointLo,Y         \ Set (H G) = the Y-th entry from yPoint(Hi Lo)
  STA G                  \
                         \ starting with the low byte in G
 
@@ -4566,7 +4506,7 @@
                         \
                         \   (J U) = (H G) - (SS S)
 
- LDA yPointHi,Y         \ Set (H G) = the Y-th entry from (yPointHi yPointLo)
+ LDA yPointHi,Y         \ Set (H G) = the Y-th entry from yPoint(Hi Lo)
  STA H                  \
                         \ i.e. the y-coordinate of the line's end point
 
@@ -8252,14 +8192,14 @@
 \ rotation matrices. There are six of these values, each of which is a 16-bit
 \ number with the sign in bit 0:
 \
-\   * (mx1Hi mx1Lo), which we can refer to as mx1
-\   * (mx2Hi mx2Lo), which we can refer to as mx2
+\   * mx1(Hi Lo), which we can refer to as mx1
+\   * mx2(Hi Lo), which we can refer to as mx2
 \
-\   * (my1Hi my1Lo), which we can refer to as my1
-\   * (my2Hi my2Lo), which we can refer to as my2
+\   * my1(Hi Lo), which we can refer to as my1
+\   * my2(Hi Lo), which we can refer to as my2
 \
-\   * (mz1Hi mz1Lo), which we can refer to as mz1
-\   * (mz2Hi mz2Lo), which we can refer to as mz2
+\   * mz1(Hi Lo), which we can refer to as mz1
+\   * mz2(Hi Lo), which we can refer to as mz2
 \
 \ The calculation is done for one axis at a time, so the same routine not only
 \ sets mx1 and mx2, but also my1 and my2, and mz1 and mz2.
@@ -8273,11 +8213,11 @@
 \
 \ Considering the x-axis calculation, the routine sets mx1 and mx2 according to
 \ the current rotation of the plane around the x-axis, which is stored in
-\ (xRotationHi xRotationLo), which we can refer to as xRotation. The routine
-\ converts the angle in xRotation into a pair of Cartesian coordinates, by
-\ projecting a line rotated by that amount onto the Cartesian axes; in a
-\ sense, we are converting from Polar coordinates into Cartesian, so we can
-\ use those coordinates to populate the rotation matrices in SetMatrices.
+\ xRotation(Hi Lo), which we can refer to as xRotation. The routine converts the
+\ angle in xRotation into a pair of Cartesian coordinates, by projecting a line
+\ rotated by that amount onto the Cartesian axes; in a sense, we are converting
+\ from Polar coordinates into Cartesian, so we can use those coordinates to
+\ populate the rotation matrices in SetMatrices.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8302,7 +8242,7 @@
                         \ values of mx1 and mx2 depending on the value of
                         \ xRotation
 
- LDA xRotationHi,Y      \ Set (G A) = (xRotationHi xRotationLo) for axis Y
+ LDA xRotationHi,Y      \ Set (G A) = xRotation(Hi Lo) for axis Y
  STA G                  \
                         \ starting with the high byte
 
@@ -8361,7 +8301,7 @@
                         \ is a matrix number)
                         \
                         \ We do this based on the value in K, which contains the
-                        \ high byte of (xRotationHi xRotationLo) for this axis
+                        \ high byte of xRotation(Hi Lo) for this axis
                         \
                         \   *   0 to  63 (bit 6 clear, bit 7 clear)
                         \   *  64 to 127 (bit 6 set,   bit 7 clear)
@@ -8394,14 +8334,14 @@
                         \
                         \ so this is the first quadrant of the axis' rotation
 
- LDA Q                  \ Set (mx2Hi mx2Lo) = (Q P)
- STA mx2Hi,Y            \                   = sin(xRotation)
+ LDA Q                  \ Set mx2(Hi Lo) = (Q P)
+ STA mx2Hi,Y            \                = sin(xRotation)
  LDA P                  \
  AND #%11111110         \ with bit 0 clear (positive)
  STA mx2Lo,Y
 
- LDA S                  \ Set (mx1Hi mx1Lo) = (S R)
- STA mx1Hi,Y            \                   = -cos(xRotation)
+ LDA S                  \ Set mx1(Hi Lo) = (S R)
+ STA mx1Hi,Y            \                = -cos(xRotation)
  LDA R                  \
  AND #%11111110         \ with bit 0 clear (positive)
  STA mx1Lo,Y
@@ -8417,13 +8357,13 @@
                         \
                         \ so this is the third quadrant of the axis' rotation
 
- LDA Q                  \ Set (mx2Hi mx2Lo) = -(Q P)
+ LDA Q                  \ Set mx2(Hi Lo) = -(Q P)
  STA mx2Hi,Y            \
  LDA P                  \ with bit 0 set (negative)
  ORA #1
  STA mx2Lo,Y
 
- LDA S                  \ Set (mx1Hi mx1Lo) = -(S R)
+ LDA S                  \ Set mx1(Hi Lo) = -(S R)
  STA mx1Hi,Y            \
  LDA R                  \
  ORA #1                 \ with bit 0 set (negative)
@@ -8445,13 +8385,13 @@
                         \
                         \ so this is the second quadrant of the axis' rotation
 
- LDA S                  \ Set (mx2Hi mx2Lo) = (S R)
+ LDA S                  \ Set mx2(Hi Lo) = (S R)
  STA mx2Hi,Y            \
  LDA R                  \ with bit 0 clear (positive)
  AND #%11111110
  STA mx2Lo,Y
 
- LDA Q                  \ Set (mx1Hi mx1Lo) = -(Q P)
+ LDA Q                  \ Set mx1(Hi Lo) = -(Q P)
  STA mx1Hi,Y            \
  LDA P                  \ with bit 0 set (negative)
  ORA #1
@@ -8469,13 +8409,13 @@
                         \
                         \ so this is the fourth quadrant of the axis' rotation
 
- LDA S                  \ Set (mx2Hi mx2Lo) = -(S R)
+ LDA S                  \ Set mx2(Hi Lo) = -(S R)
  STA mx2Hi,Y            \
  LDA R                  \ with bit 0 set (negative)
  ORA #1
  STA mx2Lo,Y
 
- LDA Q                  \ Set (mx1Hi mx1Lo) = (Q P)
+ LDA Q                  \ Set mx1(Hi Lo) = (Q P)
  STA mx1Hi,Y            \
  LDA P                  \ with bit 0 clear (positive)
  AND #%11111110
@@ -9029,9 +8969,9 @@
                         \   (0 xTemp1Hi xTemp1Lo) << 8 = (xTemp1Hi xTemp1Lo 0)
                         \
                         \ from which we would then drop the least significant
-                        \ byte to give (xTemp1Hi xTemp1Lo)... which is what we
-                        \ already have, so when Y >= 8 we can simply jump to
-                        \ objp9 to move on to the next axis
+                        \ byte to give xTemp1(Hi Lo)... which is what we already
+                        \ have, so when Y >= 8 we can simply jump to objp9 to
+                        \ move on to the next axis
                         \
                         \ (As noted above, if Y = 9 then we already doubled the
                         \ result in part 1, so the above approach works for both
@@ -9169,7 +9109,7 @@
 
  LDA xTemp1Lo           \ Set point X's x-coordinate to the following:
  CLC                    \
- ADC xPointLo,Y         \  (xTemp1Hi xTemp1Lo) + (xPointHi+Y xPointLo+Y)
+ ADC xPointLo,Y         \  xTemp1(Hi Lo) + (xPointHi+Y xPointLo+Y)
  STA xPointLo,X         \
  LDA xTemp1Hi           \ i.e. we add xTemp1 and point Y's x-coordinate
  ADC xPointHi,Y
@@ -9180,7 +9120,7 @@
 
  CLC                    \ Set point X's y-coordinate to the following:
  LDA yTemp1Lo           \
- ADC yPointLo,Y         \  (yTemp1Hi yTemp1Lo) + (yPointHi+Y yPointLo+Y)
+ ADC yPointLo,Y         \  yTemp1(Hi Lo) + (yPointHi+Y yPointLo+Y)
  STA yPointLo,X         \
  LDA yTemp1Hi           \ i.e. we add yTemp1 and point Y's y-coordinate
  ADC yPointHi,Y
@@ -9191,7 +9131,7 @@
 
  CLC                    \ Set point X's z-coordinate to the following:
  LDA zTemp1Lo           \
- ADC zPointLo,Y         \  (zTemp1Hi zTemp1Lo) + (zPointHi+Y zPointLo+Y)
+ ADC zPointLo,Y         \  zTemp1(Hi Lo) + (zPointHi+Y zPointLo+Y)
  STA zPointLo,X         \
  LDA zTemp1Hi           \ i.e. we add zTemp1 and point Y's z-coordinate
  ADC zPointHi,Y
@@ -9411,7 +9351,7 @@
                         \ in the matrix 1 variables (we will populate matrix 1
                         \ properly after we have populated matrices 2, 3 and 4)
 
- LDA mx1Lo,X            \ Set (J I) = -(mx1Hi mx1Lo)
+ LDA mx1Lo,X            \ Set (J I) = -mx1(Hi Lo)
  EOR #1                 \           = -mx1
  STA I                  \
  LDA mx1Hi,X            \ by flipping the sign in bit 0
@@ -10375,17 +10315,17 @@
 
 .CopyTempToPoint
 
- LDA xTemp1Lo           \ Set point X's x-coordinate to (xTemp1Hi xTemp1Lo)
+ LDA xTemp1Lo           \ Set point X's x-coordinate to xTemp1(Hi Lo)
  STA xPointLo,X
  LDA xTemp1Hi
  STA xPointHi,X
 
- LDA yTemp1Lo           \ Set point X's y-coordinate to (yTemp1Hi yTemp1Lo)
+ LDA yTemp1Lo           \ Set point X's y-coordinate to yTemp1(Hi Lo)
  STA yPointLo,X
  LDA yTemp1Hi
  STA yPointHi,X
 
- LDA zTemp1Lo           \ Set point X's z-coordinate to (zTemp1Hi zTemp1Lo)
+ LDA zTemp1Lo           \ Set point X's z-coordinate to zTemp1(Hi Lo)
  STA zPointLo,X
  LDA zTemp1Hi
  STA zPointHi,X
@@ -10527,10 +10467,10 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the forward airspeed from (zVelocityPHi zVelocityPLo) and
-\ reduces it to match the scale of the indicator, which is represented by a
-\ value of 9 (for 50 mph) to 74 (for 400 mph). The airspeed value can be outside
-\ these limits, but these examples show the scale factor.
+\ This section takes the forward airspeed from zVelocityP(Hi Lo) and reduces it
+\ to match the scale of the indicator, which is represented by a value of 9 (for
+\ 50 mph) to 74 (for 400 mph). The airspeed value can be outside these limits,
+\ but these examples show the scale factor.
 \
 \ It then passes this value to the DrawIndicatorHand to update the on-screen
 \ airspeed indicator.
@@ -10550,7 +10490,7 @@
 
 .uind3
 
- LDA zVelocityPLo       \ Set A = (zVelocityPHi zVelocityPLo) * 2 / 256
+ LDA zVelocityPLo       \ Set A = zVelocityP(Hi Lo) * 2 / 256
  ASL A
  LDA zVelocityPHi
  ROL A
@@ -10568,7 +10508,7 @@
                         \ represents 400 mph (as 48 + 74 = 122), for example
                         \
                         \ These values correspond to the following 16-bit values
-                        \ of (zVelocityPHi zVelocityPLo):
+                        \ of zVelocityP(Hi Lo):
                         \
                         \   * If A = 9, then airspeed = (00000100 10100000),
                         \     which is 1184, or 50 mph
@@ -10594,9 +10534,9 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the altitude from (yPlaneHi yPlaneLo) and reduces it to
-\ the range 0 to 254, before passing it to the DrawIndicatorHand to update the
-\ small hand of the on-screen altimeter.
+\ This section takes the altitude from yPlane(Hi Lo) and reduces it to the range
+\ 0 to 254, before passing it to the DrawIndicatorHand to update the small hand
+\ of the on-screen altimeter.
 \
 \ It also sets altitudeMinutes to the low byte of the altitude, reduced to the
 \ range 0 to 104, so it can be used in part 5 to update the large hand of the
@@ -10608,16 +10548,16 @@
 
                         \ If we get here then the indicator number in X is 2
 
- LDA yPlaneLo           \ Set (A R) = (yPlaneHi yPlaneLo)
+ LDA yPlaneLo           \ Set (A R) = yPlane(Hi Lo)
  STA R
  LDA yPlaneHi
 
  LSR A                  \ Set (S R) = (A R) / 4
- ROR R                  \           = (yPlaneHi yPlaneLo) / 4
+ ROR R                  \           = yPlane(Hi Lo) / 4
  LSR A                  \           = altitude
  ROR R                  \
  STA S                  \ so (S R) is the altitude in feet, as the value stored
-                        \ in (yPlaneHi yPlaneLo) is the actual altitude x 4
+                        \ in yPlane(Hi Lo) is the actual altitude x 4
 
  LDA #0                 \ Set T = 0
  STA T
@@ -10810,9 +10750,9 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the vertical speed from (yVelocityTop yVelocityHi) and
-\ reduces it to the range -40 to +40, before passing it to the DrawIndicatorHand
-\ routine to update the on-screen vertical speed indicator.
+\ This section takes the vertical speed from yVelocity(Top Hi) and reduces it to
+\ the range -40 to +40, before passing it to the DrawIndicatorHand routine to
+\ update the on-screen vertical speed indicator.
 \
 \ ******************************************************************************
 
@@ -10820,7 +10760,7 @@
 
                         \ If we get here then the indicator number in X is 4
 
- LDA yVelocityHi        \ Set (A T) = (yVelocityTop yVelocityHi)
+ LDA yVelocityHi        \ Set (A T) = yVelocity(Top Hi)
  STA T                  \           = yVelocity
  LDA yVelocityTop
 
@@ -10974,9 +10914,8 @@
 \ ------------------------------------------------------------------------------
 \
 \ This section takes the turn rate around the y-axis (i.e. the yaw rate) from
-\ (yTurnTop yTurnHi) and reduces it to the range -19 to +19, before passing it
-\ to the DrawIndicatorHand to update the bottom part of the slip-and-turn
-\ indicator.
+\ yTurn(Top Hi) and reduces it to the range -19 to +19, before passing it to the
+\ DrawIndicatorHand to update the bottom part of the slip-and-turn indicator.
 \
 \ ******************************************************************************
 
@@ -10984,7 +10923,7 @@
 
                         \ If we get here then the indicator number in X is 5
 
- LDA yTurnHi            \ Set (A T) = (yTurnTop yTurnHi)
+ LDA yTurnHi            \ Set (A T) = yTurn(Top Hi)
  STA T                  \            = yTurn
  LDA yTurnTop
 
@@ -11400,9 +11339,9 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This section takes the thrust from (thrustHi thrustLo) and reduces it to the
-\ range 0 to 60, before falling through into DrawIndicatorBar to update the
-\ rudder indicator.
+\ This section takes the thrust from thrust(Hi Lo) and reduces it to the range 0
+\ to 60, before falling through into DrawIndicatorBar to update the rudder
+\ indicator.
 \
 \ ******************************************************************************
 
@@ -11419,7 +11358,7 @@
  STA W                  \ thrust indicator (i.e. the left end of the bar, as we
                         \ are only showing positive thrust values)
 
- LDA thrustHi           \ Set (R A) = (thrustHi thrustLo)
+ LDA thrustHi           \ Set (R A) = thrust(Hi Lo)
  STA R                  \           = Thrust
  LDA thrustLo
 
@@ -12918,7 +12857,7 @@
 
  LDX #2                 \ We start with the aileron, rudder and elevator key
                         \ pairs, whose values are stored in these key logger
-                        \ offsets in (keyLoggerHi keyLoggerLo):
+                        \ offsets in keyLogger(Hi Lo):
                         \
                         \   * 2 = aileron
                         \   * 1 = rudder
@@ -13066,8 +13005,8 @@
                         \ We now want to add the key logger value to the current
                         \ thrust value, which we do like this:
                         \
-                        \   (Y X) = (keyLoggerHi+3 keyLoggerLo+3)
-                        \           +  (thrustHi thrustLo)
+                        \   (Y X) =   (keyLoggerHi+3 keyLoggerLo+3)
+                        \           + thrust(Hi Lo)
 
  ADC thrustLo           \ We start by adding the low bytes
  TAX
@@ -13102,8 +13041,8 @@
 
 .umod10
 
- STX thrustLo           \ Store the thrust value in (thrustHi thrustLo) to the
- STY thrustHi           \ updated thrust value in (Y X)
+ STX thrustLo           \ Store the thrust value in thrust(Hi Lo) to the updated
+ STY thrustHi           \ thrust value in (Y X)
 
  LDX #11                \ Update the thrust indicator
  JSR UpdateIndicator
@@ -13777,10 +13716,9 @@
 \ ------------------------------------------------------------------------------
 \
 \ This routine updates the value in the key logger, which is stored in
-\ (keyLoggerHi keyLoggerLo). If a key is pressed, then the corresponding 16-bit
-\ value in the key logger is set to the corresponding value from the KeyTable
-\ tables, which are stored at (keyTable1Hi keyTable1Lo) and (keyTable2Hi
-\ keyTable2Lo).
+\ keyLogger(Hi Lo). If a key is pressed, then the corresponding 16-bit value in
+\ the key logger is set to the corresponding value from the KeyTable tables,
+\ which are stored at keyTable1(Hi Lo) and keyTable2(Hi Lo).
 \
 \ ******************************************************************************
 
@@ -14017,7 +13955,7 @@
  STA randomNumbers      \ Set randomNumbers = 0 to reset the pointer for the
                         \ list of random numbers
 
- STA scoreLo            \ Set (scoreHi scoreLo) = 0 to reset the current score
+ STA scoreLo            \ Set score(Hi Lo) = 0 to reset the current score
  STA scoreHi
 
 .rset1
@@ -14067,17 +14005,17 @@
  BPL rset3              \ Loop back until we have zeroed alienState to
                         \ alienState+7
 
- LDA #&48               \ Set (zPlaneHi zPlaneLo) = &485C
+ LDA #&48               \ Set zPlane(Hi Lo) = &485C
  STA zPlaneHi
  LDA #&5C
  STA zPlaneLo
 
- LDA #&C6               \ Set (xPlaneHi xPlaneLo) = &C6E5
+ LDA #&C6               \ Set xPlane(Hi Lo) = &C6E5
  STA xPlaneHi
  LDA #&E5
  STA xPlaneLo
 
- LDA #&0A               \ Set (yPlaneHi yPlaneLo) = &000A
+ LDA #&0A               \ Set yPlane(Hi Lo) = &000A
  STA yPlaneLo
 
  STA alienSpeed         \ Set alienSpeed = 10, the movement speed for the first
@@ -14206,7 +14144,7 @@
 
 .StartGame
 
- LDA #0                 \ Set the high score in (highScoreHi highScoreLo) to 0
+ LDA #0                 \ Set the high score in highScore(Hi Lo) to 0
  STA highScoreHi
  STA highScoreLo
 
@@ -16146,7 +16084,7 @@
                         \
                         \   xPoint  is (A xPointHi xPointLo)
                         \   xObject is (0 xObjectHi xObjectLo)
-                        \   xPlane  is (xPlaneTop xPlaneHi xPlaneLo)
+                        \   xPlane  is xPlane(Top Hi Lo)
                         \
                         \ and we pass the top byte of the result, in A, to the
                         \ CheckObjDistance routine, so it can be used in the
@@ -16949,9 +16887,9 @@
 
 .blip1
 
- LDA xObjectHi,Y        \ Set (xTemp2Hi xTemp2Lo) to the following:
+ LDA xObjectHi,Y        \ Set xTemp2(Hi Lo) to the following:
  SEC                    \
- SBC xPlaneHi,X         \   (0 xObjectHi) - (xPlaneTop xPlaneHi)
+ SBC xPlaneHi,X         \   (0 xObjectHi) - xPlane(Top Hi)
  STA xTemp2Lo,X         \
                         \ starting with the top bytes
 
@@ -18848,9 +18786,9 @@
 .ahit10
 
                         \ Above we set (xTemp2Hi xTemp2Lo xTemp1Lo) to the 1/32
-                        \ vector, but we only copied (xTemp2Hi xTemp2Lo) into
-                        \ point 0, and ignored the fractional part, so we add
-                        \ that part to the object 0 coordinate first
+                        \ vector, but we only copied xTemp2(Hi Lo) into point 0,
+                        \ and ignored the fractional part, so we add that part
+                        \ to the object 0 coordinate first
 
  LDA xTemp1Lo,Y         \ Set xTemp2Hi = xTemp2Hi + xTemp1Lo
  CLC                    \
@@ -18867,9 +18805,8 @@
                         \ integer (1) to the object 0 coordinate
 
  INC xObjectLo,X        \ Increment the object coordinate for object 0 in
- BNE ahit11             \ (xObjectHi xObjectLo), starting with the low byte
- INC xObjectHi,X        \ and incrementing the high byte if the low byte
-                        \ overflows
+ BNE ahit11             \ xObject(Hi Lo), starting with the low byte and
+ INC xObjectHi,X        \ incrementing the high byte if the low byte overflows
 
 .ahit11
 
@@ -18939,11 +18876,11 @@
 \
 \ The alien's weak spot is calculated as follows:
 \
-\   * x-coordinate = (xObjectHi xObjectLo) + (5 Q)
+\   * x-coordinate = xObject(Hi Lo) + (5 Q)
 \
-\   * y-coordinate = (yObjectHi yObjectLo)
+\   * y-coordinate = yObject(Hi Lo)
 \
-\   * z-coordinate = (zObjectHi zObjectLo) + (5 Q)
+\   * z-coordinate = zObject(Hi Lo) + (5 Q)
 \
 \ where Q is the low byte of the amount to add, depending on the feeding state
 \ of the alien.
@@ -18977,21 +18914,21 @@
                         \
                         \ When X = 2:
                         \
-                        \   * (I+2 W+2) = (xObjectHi xObjectLo) + (5 Q)
+                        \   * (I+2 W+2) = xObject(Hi Lo) + (5 Q)
                         \
                         \ When X = 1:
                         \
-                        \   * (I+1 W+1) = (yObjectHi yObjectLo)
+                        \   * (I+1 W+1) = yObject(Hi Lo)
                         \
                         \ When X = 0:
                         \
-                        \   * (I W) = (zObjectHi zObjectLo) + (5 Q)
+                        \   * (I W) = zObject(Hi Lo) + (5 Q)
                         \
                         \ note that
 
 .weak1
 
- LDA xObjectLo,Y        \ Set (I+X W+X) = (xObjectHi xObjectLo) + (5 Q)
+ LDA xObjectLo,Y        \ Set (I+X W+X) = xObject(Hi Lo) + (5 Q)
  CLC                    \
  ADC Q                  \ starting with the low bytes
  STA W,X
@@ -19078,7 +19015,7 @@
                         \ trailing end is within the weak spot, rather than the
                         \ bullets themselves
 
- LDA xObjectLo,Y        \ Set (A T) = (xObjectHi xObjectLo) - (I+X W+X)
+ LDA xObjectLo,Y        \ Set (A T) = xObject(Hi Lo) - (I+X W+X)
  SEC                    \
  SBC W,X                \ starting with the low bytes
  STA T
@@ -19454,8 +19391,8 @@
                         \   xTemp2Hi,  yTemp2Hi,  zTemp2Hi
                         \   xTemp2Top, yTemp2Top, zTemp2Top
                         \
-                        \ so (xTemp2Top xTemp2Hi) etc. contain the vector from
-                        \ the anchor point to the point 2
+                        \ so xTemp2(Top Hi) etc. contain the vector from the
+                        \ anchor point to the point 2
 
  LDX #5                 \ Set a counter for six bytes
 
@@ -19631,18 +19568,17 @@
 
 .prun13
 
- CLC                    \ Clear the C flag, to use when (xTemp1Hi xTemp1Lo) is
+ CLC                    \ Clear the C flag, to use when xTemp1(Hi Lo) is
                         \ positive
 
  LDA xTemp1Hi,X         \ If xTemp1Hi is positive, skip the next instruction
  BPL prun14
 
- SEC                    \ Set the C flag, to use when (xTemp1Hi xTemp1Lo) is
-                        \ negative
+ SEC                    \ Set the C flag, to use when xTemp1(Hi Lo) is negative
 
 .prun14
 
- ROR A                  \ Shift (xTemp1Hi xTemp1Lo) to the right by one place,
+ ROR A                  \ Shift xTemp1(Hi Lo) to the right by one place,
  STA xTemp1Hi,X         \ inserting the C flag into the top bit of xTemp1Hi,
  LDA xTemp1Lo,X         \ which ensures that we retain the same sign
  ROR A
@@ -19709,9 +19645,8 @@
 
  BPL prun16             \ Loop back until we have zeroed all six bytes
 
-                        \ In part 2 above, we set (xTemp2Top xTemp2Hi) etc. to
-                        \ the vector from the anchor point (i.e. point 1) to
-                        \ point 2
+                        \ In part 2 above, we set xTemp2(Top Hi) etc. to the
+                        \ vector from the anchor point (i.e. point 1) to point 2
 
  LDX #2                 \ Set a counter in X to work through the three axes (the
                         \ comments below cover the iteration for the x-axis)
@@ -20036,8 +19971,8 @@
 
 .prun27
 
- LDA #0                 \ Negate (xTemp1Hi xTemp1Lo), starting with the low
- SEC                    \ bytes
+ LDA #0                 \ Negate xTemp1(Hi Lo), starting with the low bytes
+ SEC
  SBC xTemp1Lo,X
  STA xTemp1Lo,X
 
@@ -22882,8 +22817,8 @@
 \
 \ but assembly language doesn't support fractions, so instead we store the sine
 \ in a 16-bit number that contains the sine multiplied by 65536, so the range of
-\ (sinHi sinLo) over the course of the quarter circle is 0 to 65536. It might
-\ help to think of sinHi as an integer ranging from 0 to 256 across the quarter
+\ sin(Hi Lo) over the course of the quarter circle is 0 to 65536. It might help
+\ to think of sinHi as an integer ranging from 0 to 256 across the quarter
 \ circle, with sinLo as the fractional part ranging from 0 to 255; this is the
 \ approach taken in the Sine16Bit routine.
 \
@@ -24806,7 +24741,7 @@
 \
 \ The high byte of the z-coordinate for the point with ID X is at zPointHi,X.
 \
-\ The coordinate is stored as a 16-bit value (zPointHi zPointLo).
+\ The coordinate is stored as a 16-bit value zPoint(Hi Lo).
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
@@ -24855,7 +24790,7 @@
                         \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
-                        \ Stored as a 16-bit value (zLinearHi zLinearLo)
+                        \ Stored as a 16-bit value zLinear(Hi Lo)
 
 .zGravityHi
 
@@ -24864,7 +24799,7 @@
                         \ Point 253 is used to store the gravity vector when
                         \ calculating the flight model
                         \
-                        \ Stored as a 16-bit value (zGravityHi zGravityLo)
+                        \ Stored as a 16-bit value zGravity(Hi Lo)
 
 .zTempPoint1Hi
 
@@ -24873,7 +24808,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (zTempPoint1Hi zTempPoint1Lo)
+                        \ Stored as a 16-bit value zTempPoint1(Hi Lo)
 
 .zTempPoint2Hi
 
@@ -24882,7 +24817,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (zTempPoint2Hi zTempPoint2Lo)
+                        \ Stored as a 16-bit value zTempPoint2(Hi Lo)
 
 \ ******************************************************************************
 \
@@ -24896,7 +24831,7 @@
 \
 \ The high byte of the x-coordinate for the point with ID X is at xPointHi,X.
 \
-\ The coordinate is stored as a 16-bit value (xPointHi xPointLo).
+\ The coordinate is stored as a 16-bit value xPoint(Hi Lo).
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
@@ -24954,7 +24889,7 @@
                         \ Point 252 is used to store the sum of all the forces
                         \ on the plane when calculating the flight model
                         \
-                        \ Stored as a 16-bit value (xLinearHi xLinearLo)
+                        \ Stored as a 16-bit value xLinear(Hi Lo)
 
 \ ******************************************************************************
 \
@@ -24972,7 +24907,7 @@
                         \ Point 253 is used to store the gravity vector when
                         \ calculating the flight model
                         \
-                        \ Stored as a 16-bit value (xGravityHi xGravityLo)
+                        \ Stored as a 16-bit value xGravity(Hi Lo)
 
 \ ******************************************************************************
 \
@@ -24990,7 +24925,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (xTempPoint1Hi xTempPoint1Lo)
+                        \ Stored as a 16-bit value xTempPoint1(Hi Lo)
 
 \ ******************************************************************************
 \
@@ -25008,7 +24943,7 @@
                         \ Used as temporary point storage when rotating points
                         \ in space
                         \
-                        \ Stored as a 16-bit value (xTempPoint2Hi xTempPoint2Lo)
+                        \ Stored as a 16-bit value xTempPoint2(Hi Lo)
 
 \ ******************************************************************************
 \
@@ -25303,8 +25238,8 @@
 \ ------------------------------------------------------------------------------
 \
 \ This routine checks whether the plane is within a certain distance of a
-\ specific coordinate from the (skillZoneHi skillZoneLo) table. If it is within
-\ the correct distance, then it is within the skill zone.
+\ specific coordinate from the skillZone(Hi Lo) table. If it is within the
+\ correct distance, then it is within the skill zone.
 \
 \ The plane is said to be within a coordinate's skill zone if the following
 \ checks are all true. They start with larger checks and whittle it down to more
@@ -25471,8 +25406,8 @@
                         \ we set the D flag to switch arithmetic to decimal
 
  CLC                    \ We now want to add (X A) points to the score in
- ADC scoreLo            \ (scoreHi scoreLo), so we start by adding the low bytes
- STA scoreLo            \ and store the result in scoreLo
+ ADC scoreLo            \ score(Hi Lo), so we start by adding the low bytes and
+ STA scoreLo            \ store the result in scoreLo
 
  TXA                    \ And then we add the high bytes and store the result
  ADC scoreHi            \ in scoreHi
@@ -25522,9 +25457,9 @@
 
 .high1
 
- LDA scoreLo            \ (scoreHi scoreLo) > (highScoreHi highScoreLo), so this
- STA highScoreLo        \ is a new high score, so update the 16-bit high score
- LDA scoreHi            \ to the new score
+ LDA scoreLo            \ score(Hi Lo) > highScore(Hi Lo), so this is a new high
+ STA highScoreLo        \ score, so update the 16-bit high score to the new
+ LDA scoreHi            \ score
  STA highScoreHi
 
 .high3
@@ -25877,7 +25812,7 @@
 
 .expl5
 
- ADC xTemp2Lo,Y         \ Set (xTemp2Hi xTemp2Lo) = (xTemp2Hi xTemp2Lo) + (R A)
+ ADC xTemp2Lo,Y         \ Set xTemp2(Hi Lo) = xTemp2(Hi Lo) + (R A)
  STA xTemp2Lo,Y         \
                         \ starting with the low bytes
 
@@ -26291,7 +26226,7 @@
  BEQ engs4              \ running, so jump to engs4 to return from the
                         \ subroutine
 
- LDA thrustHi           \ Set (K A) = (thrusthi thrustLo)
+ LDA thrustHi           \ Set (K A) = thrust(Hi Lo)
  STA K                  \           = Thrust
  LDA thrustLo
 
@@ -27498,7 +27433,7 @@
                         \ the gravity vector so it pushes upwards, to simulate
                         \ the springs in the undercarriage
 
- STX Q                  \ Set (Q A) = (dyVelocityHi dyVelocityLo)
+ STX Q                  \ Set (Q A) = dyVelocity(Hi Lo)
  LDA dyVelocityLo       \           = dyVelocity
 
  SEC                    \ Set (Q A) = (Q A) / 2
@@ -27865,7 +27800,7 @@
 \
 \           airDensity = ~yPlaneHi * 2
 \
-\         and thrustScaled is the thrust in (thrustHi thrustLo), but:
+\         and thrustScaled is the thrust in thrust(Hi Lo), but:
 \
 \           * Doubled if thrust >= 1024
 \
@@ -28040,13 +27975,13 @@
                         \ So we have now set yTurn to groundSteering * 4, so the
                         \ plane steers on the ground when we apply the rudder
 
- LDX #&82               \ Set (dzTurnTop dzTurnHi) = 0
+ LDX #&82               \ Set dzTurn(Top Hi) = 0
  JSR ResetVariable      \
                         \ This also sets A = 0
 
  STA dzTurnLo           \ Set dzTurnLo = 0, so by now we have:
                         \
-                        \   (dzTurnTop dzTurnHi dzTurnLo) = 0
+                        \   dzTurn(Top Hi Lo) = 0
 
                         \ We now work out the effect of the various landing
                         \ configurations to get the amount that the plane is
@@ -28072,13 +28007,13 @@
                         \ ground, so we now set dxTurn to 0 to stop the plane
                         \ from pitching any further into the ground
 
- LDX #&80               \ Set (dxTurnTop dxTurnHi) = 0
+ LDX #&80               \ Set dxTurn(Top Hi) = 0
  JSR ResetVariable      \
                         \ This also sets A = 0
 
  STA dxTurnLo           \ Set dxTurnLo = 0, so by now we have:
                         \
-                        \   (dxTurnTop dxTurnHi dxTurnLo) = 0
+                        \   dxTurn(Top Hi Lo) = 0
 
 .fmod8
 
@@ -28417,7 +28352,7 @@
                         \ fuel, so we need to calculate the correct consumption
                         \ rate and deplete the fuel supplies
 
- LDA thrustHi           \ Set (R A) = (thrustHi thrustLo)
+ LDA thrustHi           \ Set (R A) = thrust(Hi Lo)
  STA R                  \           = thrust
  LDA thrustLo
 
@@ -28509,7 +28444,7 @@
 \ to each axis of the plane's turn rate. Specifically, it does the following for
 \ each of the three axes (x, y and z):
 \
-\   (xTurnTop xTurnHi xTurnLo) += (dxTurnTop dxTurnHi dxTurnLo)
+\   xTurn(Top Hi Lo) += dxTurn(Top Hi Lo)
 \
 \ so that's:
 \
@@ -28561,7 +28496,7 @@
 \ vector to each axis of the plane's velocity vector. Specifically, it does the
 \ following for each of the three axes (x, y and z):
 \
-\   (xVelocityTop xVelocityHi xVelocityLo) += (dxVelocityHi dxVelocityLo) * 2
+\   xVelocity(Top Hi Lo) += dxVelocity(Hi Lo) * 2
 \
 \ so that's:
 \
@@ -28585,7 +28520,7 @@
  LDA #0                 \ Set R = 0, to use as the top byte in (R A V)
  STA R
 
- LDA dxVelocityLo,X     \ Set (A V) = (dxVelocityHi dxVelocityLo)
+ LDA dxVelocityLo,X     \ Set (A V) = dxVelocity(Hi Lo)
  STA V                  \           = dxVelocity
  LDA dxVelocityHi,X
 
@@ -28662,11 +28597,11 @@
                         \ xPlane coordinate and append an extra bottom byte in
                         \ xPlaneBot, like this:
                         \
-                        \   (xPlaneTop xPlaneHi xPlaneLo xPlaneBot)
+                        \   xPlane(Top Hi Lo Bot)
                         \
                         \ and then we add the 16-bit velocity, like this:
                         \
-                        \   (xVelocityTop xVelocityHi)
+                        \   xVelocity(Top Hi)
                         \
                         \ The xPlaneBot byte is not used anywhere else, it's
                         \ just used to keep track of the fractional part of this
@@ -28718,8 +28653,7 @@
  ADC R                  \
  STA xPlaneTop,X        \ so we now have the result we want:
                         \
-                        \   (xPlaneTop xPlaneHi xPlaneLo xPlaneBot) +=
-                        \                             (xVelocityTop xVelocityHi)
+                        \   xPlane(Top Hi Lo Bot) += xVelocity(Top Hi)
 
  LDA xRotationLo,X      \ Set xRotation = xRotation + dxRotation
  CLC                    \
@@ -28844,7 +28778,7 @@
 
  PLA                    \ Set A = xVelocityPHi, so we have
                         \
-                        \   (A P) = (xVelocityPHi xVelocityPLo)
+                        \   (A P) = xVelocityP(Hi Lo)
                         \         = xVelocityP
 
  BPL aero2              \ If A is positive, then skip the following as (A P) is
@@ -29603,13 +29537,12 @@
 
 .scal7
 
- LDA G                  \ Set (xMomentsScTop xMomentsScHi xMomentsScLo)
- STA xMomentsScTop,X    \                                          = (G W V)
- LDA W                  \
- STA xMomentsScHi,X     \ so we have:
- LDA V                  \
- STA xMomentsScLo,X     \   scaledForce = unscaledForce * forceFactor
-                        \                               * 2 ^ scaleFactor
+ LDA G                  \ Set xMomentsSc(Top Hi Lo) = (G W V)
+ STA xMomentsScTop,X    \                                         
+ LDA W                  \ so we have:
+ STA xMomentsScHi,X     \
+ LDA V                  \   scaledForce = unscaledForce * forceFactor
+ STA xMomentsScLo,X     \                               * 2 ^ scaleFactor
 
  DEX                    \ Decrement the loop counter to move to the next flight
                         \ factor
@@ -29811,7 +29744,7 @@
  LDA #125               \ Set R = 125
  STA R
 
- LDA xTurnHi,X          \ Set (Q P) = (xTurnTop xTurnHi)
+ LDA xTurnHi,X          \ Set (Q P) = xTurn(Top Hi)
  STA P                  \           = xTurn
  LDA xTurnTop,X
  STA Q
@@ -29846,7 +29779,7 @@
 
  BPL torq1              \ Loop back until we have processed both axes
 
- SEC                    \ Set (A zTemp3Lo) = 0 - (zTurnTop zTurnHi)
+ SEC                    \ Set (A zTemp3Lo) = 0 - zTurn(Top Hi)
  LDA #0                 \                   = -zTurn
  SBC zTurnHi            \
  STA zTemp3Lo           \ starting with the high bytes
@@ -29854,8 +29787,8 @@
  LDA #0                 \ And then the low bytes
  SBC zTurnTop
 
- ASL zTemp3Lo           \ Set (zTemp3Hi zTemp3Lo) = (A zTemp3Lo) << 1
- ROL A                  \                           = -zTurn * 2
+ ASL zTemp3Lo           \ Set zTemp3(Hi Lo) = (A zTemp3Lo) << 1
+ ROL A                  \                   = -zTurn * 2
  STA zTemp3Hi
 
  RTS                    \ Return from the subroutine
@@ -29915,9 +29848,8 @@
                         \
                         \ We also work through the aileron, rudder and elevator
                         \ key pairs, whose values are stored in these key logger
-                        \ offsets in (keyLoggerHi keyLoggerLo), to check
-                        \ whether any of the relevant control keys are being
-                        \ pressed
+                        \ offsets in keyLogger(Hi Lo), to check whether any of
+                        \ the relevant control keys are being pressed
                         \
                         \ We set a counter in X to count down through these
                         \ index values, from 2 to 1 to 0
@@ -30224,7 +30156,7 @@
 \
 \   airDensity = ~yPlaneHi * 2
 \
-\ and thrustScaled is the thrust in (thrustHi thrustLo), but:
+\ and thrustScaled is the thrust in thrust(Hi Lo), but:
 \
 \   * Doubled if thrust >= 1024
 \
@@ -30314,7 +30246,7 @@
 
  LDY thrustHi           \ Set Y to the high byte of the current thrust
 
- STY R                  \ Set (R A) = (thrustHi thrustLo)
+ STY R                  \ Set (R A) = thrust(Hi Lo)
  LDA thrustLo           \           = thrust
 
  LDX L                  \ Fetch the current value of onGround
@@ -30449,7 +30381,7 @@
 
  LDA xPlaneLo           \ Set A to the high byte of the following:
  SEC                    \
- SBC xObjectLo+1        \   (xPlaneHi xPlaneLo) - (xObjectHi xObjectLo)
+ SBC xObjectLo+1        \   xPlane(Hi Lo) - xObject(Hi Lo)
  LDA xPlaneHi           \
  SBC xObjectHi+1        \ for object ID 1, which is the runway, so this
                         \ calculates the distance in the x-axis between the
@@ -30465,7 +30397,7 @@
 
  LDA zPlaneLo           \ Set A to the high byte of the following:
  SEC                    \
- SBC zObjectLo+1        \   (zPlaneHi zPlaneLo) - (zObjectHi zObjectLo)
+ SBC zObjectLo+1        \   zPlane(Hi Lo) - zObject(Hi Lo)
  LDA zPlaneHi           \
  SBC zObjectHi+1        \ for object ID 1, which is the runway, so this
                         \ calculates the distance in the z-axis between the
@@ -30634,7 +30566,7 @@
 .clan3
 
  LDX #&EE               \ If we get here then yPlaneHi is negative, so set
- JSR ResetVariable      \ (yPlaneHi yPlaneLo) = 0 as we can't be below ground
+ JSR ResetVariable      \ yPlane(Hi Lo) = 0 as we can't be below ground
 
 .clan4
 
@@ -30681,16 +30613,16 @@
  BPL clan5              \ positive, skip the following
 
  LDX #&8A               \ We are on the ground and the plane's vertical velocity
- JSR ResetVariable      \ is negative, so set (yVelocityTop yVelocityHi) = 0 as
-                        \ the plane can't travel down into the ground
+ JSR ResetVariable      \ is negative, so set yVelocity(Top Hi) = 0 as the plane
+                        \ can't travel down into the ground
 
 .clan5
 
- LDX #&EC               \ Set (zRotationHi zRotationLo) = 0 to set the plane to
- JSR ResetVariable      \ the horizontal position (i.e. zero roll angle)
+ LDX #&EC               \ Set zRotation(Hi Lo) = 0 to set the plane to the
+ JSR ResetVariable      \ horizontal position (i.e. zero roll angle)
 
- LDX #&02               \ Set (zTurnTop zTurnHi) = 0 to stop the plane turning
- JSR ResetVariable      \ around the z-axis (i.e. stop the plane rolling)
+ LDX #&02               \ Set zTurn(Top Hi) = 0 to stop the plane turning around
+ JSR ResetVariable      \ the z-axis (i.e. stop the plane rolling)
 
  LDX ucStatus           \ If ucStatus is non-zero then the undercarriage is
  BNE clan9              \ down, so jump to clan9
@@ -30723,13 +30655,13 @@
  LDX xRotationHi        \ If the high byte of the plane's rotation in the x-axis
  BPL clan8              \ is positive, skip the following
 
- LDX #&EA               \ Set (xRotationHi xRotationLo) = 0 to set the plane to
- JSR ResetVariable      \ the horizontal position (i.e. zero pitch angle)
+ LDX #&EA               \ Set xRotation(Hi Lo) = 0 to set the plane to the
+ JSR ResetVariable      \ horizontal position (i.e. zero pitch angle)
 
 .clan7
 
- LDX #&00               \ Set (xTurnTop xTurnHi) = 0 to stop the plane turning
- JSR ResetVariable      \ around the x-axis (i.e. stop the plane pitching)
+ LDX #&00               \ Set xTurn(Top Hi) = 0 to stop the plane turning around
+ JSR ResetVariable      \ the x-axis (i.e. stop the plane pitching)
 
 .clan8
 
@@ -30765,11 +30697,10 @@
  BCC clan8              \ is positive and less than 7, jump to clan8 to return
                         \ from the subroutine
 
- LDA #7                 \ Set (xRotationHi xRotationLo) = (7 0), which is the
- STA xRotationHi        \ default tilt of the plane - the undercarriage is
- LDA #0                 \ taller than the rear tail wheel, so the whole plane
- STA xRotationLo        \ points up by 7/256 = 9.84 degrees when its wheels are
-                        \ on the ground
+ LDA #7                 \ Set xRotation(Hi Lo) = (7 0), which is the default
+ STA xRotationHi        \ tilt of the plane - the undercarriage is taller than
+ LDA #0                 \ the rear tail wheel, so the whole plane points up by
+ STA xRotationLo        \ 7/256 = 9.84 degrees when its wheels are on the ground
 
  LDX xTurnTop           \ If the high byte of the xTurn rate is positive, jump
  BPL clan7              \ to clan7 to stop the plane from pitching and return
@@ -30846,7 +30777,7 @@
                         \ so yVelocity >= 512, so jump to clan13 to crash the
                         \ plane, as the we are coming down far too fast to land
 
- LDA yVelocityHi        \ Set A = (yVelocityTop yVelocityHi) / 2
+ LDA yVelocityHi        \ Set A = yVelocity(Top Hi) / 2
  ROR A                  \       = yVelocity / 2
                         \
                         \ by shifting the low byte right by one place and
@@ -31009,8 +30940,8 @@
                         \ feed bits of the correct polarity into the high byte
 
 
- STA zTurnTop           \ Set (zTurnTop zTurnHi) = (A W)
- LDA W                  \                       = -zRotation * yVelocity / 8
+ STA zTurnTop           \ Set zTurn(Top Hi) = (A W)
+ LDA W                  \                   = -zRotation * yVelocity / 8
  STA zTurnHi            \
                         \ so this applies a turn moment to the plane that is in
                         \ the opposite direction to the current roll rotation,
@@ -31018,7 +30949,7 @@
                         \ in fast and at a large roll angle, then the plane will
                         \ be turned fast in the opposite direction
 
- LDX #&EC               \ Set (zRotationHi zRotationLo) = 0
+ LDX #&EC               \ Set zRotation(Hi Lo) = 0
  JSR ResetVariable
 
  LDA xRotationHi        \ If the high byte of the plane's rotation around the
@@ -31030,9 +30961,9 @@
 
  LDX #&EA               \ If we get here then the undercarriage is up and the
  JSR ResetVariable      \ plane is tilted forwards as we're landing, so we set
-                        \ (xRotationHi xRotationLo) = 0 to belly-flop the
-                        \ plane forwards onto the ground, so it lands (and
-                        \ slides) horizontally along the ground
+                        \ xRotation(Hi Lo) = 0 to belly-flop the plane forwards
+                        \ onto the ground, so it lands (and slides) horizontally
+                        \ along the ground
 
 .clan20
 
@@ -31090,9 +31021,9 @@
 \   X                   The offset from xTurnHi of the low byte of the variable
 \                       to zero:
 \
-\                         * &EC = (zRotationHi zRotationLo) to apply roll
+\                         * &EC = zRotation(Hi Lo) to apply roll
 \
-\                         * &EE = (yPlaneHi yPlaneLo) to apply bumpiness
+\                         * &EE = yPlane(Hi Lo) to apply bumpiness
 \
 \   Y                   The scale factor
 \
@@ -31146,17 +31077,17 @@
 \   X                   The offset from xTurnHi of the low byte of the variable
 \                       to zero:
 \
-\                         * &02 = (zTurnTop zTurnHi)
+\                         * &02 = zTurn(Top Hi)
 \
-\                         * &6A = (xControlsScTop xControlsScHi)
+\                         * &6A = xControlsSc(Top Hi)
 \
-\                         * &6B = (yControlsScTop yControlsScHi)
+\                         * &6B = yControlsSc(Top Hi)
 \
-\                         * &6C = (zControlsScTop zControlsScHi)
+\                         * &6C = zControlsSc(Top Hi)
 \
-\                         * &EC = (zRotationHi zRotationLo)
+\                         * &EC = zRotation(Hi Lo)
 \
-\                         * &EE = (yPlaneHi yPlaneLo)
+\                         * &EE = yPlane(Hi Lo)
 \
 \   Y                   The scale factor
 \
@@ -31294,14 +31225,14 @@
 \   X                   The offset from xTurnHi of the low byte of the variable
 \                       to zero:
 \
-\                         * &00 = (xTurnTop xTurnHi)
-\                         * &02 = (zTurnTop zTurnHi)
-\                         * &80 = (dxTurnTop dxTurnHi)
-\                         * &82 = (dzTurnTop dzTurnHi)
-\                         * &8A = (yVelocityTop yVelocityHi)
-\                         * &EA = (xRotationHi xRotationLo)
-\                         * &EC = (zRotationHi zRotationLo)
-\                         * &EE = (yPlaneHi yPlaneLo)
+\                         * &00 = xTurn(Top Hi)
+\                         * &02 = zTurn(Top Hi)
+\                         * &80 = dxTurn(Top Hi)
+\                         * &82 = dzTurn(Top Hi)
+\                         * &8A = yVelocity(Top Hi)
+\                         * &EA = xRotation(Hi Lo)
+\                         * &EC = zRotation(Hi Lo)
+\                         * &EE = yPlane(Hi Lo)
 \
 \                       In the case of the two 24-bit variables, X is the offset
 \                       of the high byte, and we have to zero the low byte
