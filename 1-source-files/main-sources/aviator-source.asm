@@ -11359,7 +11359,7 @@
                         \ are only showing positive thrust values)
 
  LDA thrustHi           \ Set (R A) = thrust(Hi Lo)
- STA R                  \           = Thrust
+ STA R                  \           = thrust
  LDA thrustLo
 
  LDX #3                 \ Set X = 3 to act as a shift counter in the following
@@ -11368,7 +11368,7 @@
 .uind27
 
  LSR R                  \ Set (R A) = (R A) / 2
- ROR A                  \           = Thrust / 2
+ ROR A                  \           = thrust / 2
 
  DEX                    \ Decrement the shift counter
 
@@ -11376,18 +11376,18 @@
                         \ we now have:
                         \
                         \   (R A) = (R A) / 8
-                        \         = Thrust / 8
+                        \         = thrust / 8
                         \
                         \ We now ignore the high byte in R, so presumably it is
                         \ zero
 
  STA R                  \ Set A = A + A / 2
  LSR A                  \       = 1.5 * A
- ADC R                  \       = 1.5 * (Thrust / 8), rounded up
-                        \       = Thrust * 3 / 16
+ ADC R                  \       = 1.5 * (thrust / 8), rounded up
+                        \       = thrust * 3 / 16
 
  LSR A                  \ Set A = A / 4
- LSR A                  \       = Thrust * 3 / 64
+ LSR A                  \       = thrust * 3 / 64
 
  STA H                  \ Store the scaled value in H, which has now been
                         \ reduced from the range 0 to 1280 down to 0 to 60,
@@ -26227,7 +26227,7 @@
                         \ subroutine
 
  LDA thrustHi           \ Set (K A) = thrust(Hi Lo)
- STA K                  \           = Thrust
+ STA K                  \           = thrust
  LDA thrustLo
 
  LDY #3                 \ Set Y = 3 to act as a shift counter in the following
@@ -26236,7 +26236,7 @@
 .engs1
 
  LSR K                  \ Set (K A) = (R A) / 2
- ROR A                  \           = Thrust / 2
+ ROR A                  \           = thrust / 2
 
  DEY                    \ Decrement the shift counter
 
@@ -26244,17 +26244,17 @@
                         \ we now have:
                         \
                         \   (K A) = (K A) / 8
-                        \         = Thrust / 8
+                        \         = thrust / 8
                         \
                         \ We now ignore the high byte in K, so presumably it is
                         \ zero
 
  CLC                    \ Set K = A + zVelocityPHi
- ADC zVelocityPHi       \       = (Thrust / 8) + zVelocityPHi
+ ADC zVelocityPHi       \       = (thrust / 8) + zVelocityPHi
  STA K
 
  LDA #50                \ Set A = 50 - K
- SEC                    \       = 50 - ((Thrust / 8) + zVelocityPHi)
+ SEC                    \       = 50 - ((thrust / 8) + zVelocityPHi)
  SBC K
 
  BEQ engs2              \ If A = 0, jump to engs2 to set the engine choppiness
@@ -26302,7 +26302,7 @@
                         \ pitch value
 
  LDA K                  \ Set A = K + 80
- CLC                    \       = (Thrust / 8) + zVelocityPHi + 50
+ CLC                    \       = (thrust / 8) + zVelocityPHi + 50
  ADC #80                \
                         \ so A is a higher value when we have higher thrust and
                         \ airspeed, which is what we want
